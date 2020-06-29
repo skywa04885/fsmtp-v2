@@ -1,0 +1,8 @@
+build/*
+.idea/*
+*.o
+*.tmp
+*.out
+*.gch
+.env
+env/*
