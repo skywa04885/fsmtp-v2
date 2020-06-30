@@ -20,6 +20,39 @@ namespace FSMTP::SMTP
 {
 	ServerResponse::ServerResponse(
 		const SMTPResponseCommand &r_CType,
+		const std::string &r_Message
+	): r_CType(r_CType)
+	{
+		switch (r_CType)
+		{
+			case SMTPResponseCommand::SRC_PROCEED:
+			{
+				this->r_Message = "250";
+				break;
+			}
+			case SMTPResponseCommand::SRC_SYNTAX_ARG_ERR:
+			{
+				this->r_Message = "501";
+				break;
+			}
+			case SMTPResponseCommand::SRC_SYNTAX_ERR_INVALID_COMMAND:
+			{
+				this->r_Message += "500";
+				break;
+			}
+			default:
+			{
+				throw std::runtime_error("ServerResponse::ServerResponse() failed: invalid command type selected !");
+				break;
+			}
+		}
+
+		this->r_Message += ' ';
+		this->r_Message += r_Message;
+	}
+
+	ServerResponse::ServerResponse(
+		const SMTPResponseCommand &r_CType,
 		const bool &r_ESMTP,
 		const std::vector<SMTPServiceFunction> *services
 	):
@@ -30,15 +63,26 @@ namespace FSMTP::SMTP
 		// - one ;/
 		switch (r_CType)
 		{
-			case SRC_PROCEED:
+			case SMTPResponseCommand::SRC_PROCEED:
 			{
-				this->r_Message = "OK";
+				this->r_Message = "250 OK";
 				break;
 			}
-			case SRC_HELO_RESP:
+			case SMTPResponseCommand::SRC_READY_START_TLS:
+			{
+				this->r_Message = "250 Go ahead";
+				break;
+			}
+			case SMTPResponseCommand::SRC_SYNTAX_ERR_INVALID_COMMAND:
+			{
+				this->r_Message = "500 Syntax error: invalid command";
+				break;
+			}
+			case SMTPResponseCommand::SRC_HELO_RESP:
 			{
 				if (!r_ESMTP)
 				{
+					this->r_Message += "250";
 					this->r_Message = _SMTP_SERVICE_DOMAIN;
 					this->r_Message += ", nice to meet you !";
 				} else
@@ -48,7 +92,8 @@ namespace FSMTP::SMTP
 					// - nullptr get default message
 					if (services == nullptr)
 					{
-						this->r_Message = _SMTP_SERVICE_DOMAIN;
+						this->r_Message += "250 ";
+						this->r_Message += _SMTP_SERVICE_DOMAIN;
 						this->r_Message += ", nice to meet you !";
 					} else
 					{
@@ -92,19 +137,27 @@ namespace FSMTP::SMTP
 				}
 				break;
 			}
-			case SRC_INIT:
+			case SMTPResponseCommand::SRC_INIT:
 			{
+				this->r_Message += "220 ";
+				this->r_Message = _SMTP_SERVICE_DOMAIN;
 				if (r_ESMTP)
-				{
-					this->r_Message = _SMTP_SERVICE_DOMAIN;
 					this->r_Message += " ESMTP ";
-					this->r_Message += _SMTP_SERVICE_NODE_NAME;
-				} else
-				{
-					this->r_Message = _SMTP_SERVICE_DOMAIN;
+				else
 					this->r_Message += " SMTP ";
-					this->r_Message += _SMTP_SERVICE_NODE_NAME;
-				}
+				this->r_Message += _SMTP_SERVICE_NODE_NAME;
+				break;
+			}
+			case SMTPResponseCommand::SRC_QUIT_RESP:
+			{
+				this->r_Message += "221 closing connection ";
+				this->r_Message += _SMTP_SERVICE_NODE_NAME;
+				break;
+			}
+			case SMTPResponseCommand::SRC_SYNTAX_ARG_ERR:
+			{
+				this->r_Message += "501";
+				this->r_Message += " Syntax Error";
 				break;
 			}
 		}

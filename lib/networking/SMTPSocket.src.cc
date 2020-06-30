@@ -87,7 +87,7 @@ namespace FSMTP::Networking
 		std::atomic<bool> &run,
 		const std::size_t delay,
 		std::atomic<bool> &running,
-		const std::function<void(std::shared_ptr<struct sockaddr_in>, int32_t, void *)> &cb,
+		const std::function<void(struct sockaddr_in *, int32_t, void *)> &cb,
 		void *u
 	)
 	{
@@ -117,8 +117,8 @@ namespace FSMTP::Networking
 
 			// Prepares the data, and then creates an new thread for the
 			// - callback which will handle the request stuff ;)
-			std::shared_ptr<struct sockaddr_in> sAddr = std::make_shared<struct sockaddr_in>();
-			memcpy(sAddr.get(), &clientSockAddr, sizeof (struct sockaddr_in));
+			struct sockaddr_in *sAddr = new sockaddr_in;
+			memcpy(sAddr, &clientSockAddr, sizeof (struct sockaddr_in));
 
 			std::thread t(cb, sAddr, clientSockFD, u);
 			t.detach();
@@ -142,7 +142,7 @@ namespace FSMTP::Networking
 	}
 
 	void SMTPSocket::startAcceptorSync(
-		const std::function<void(std::shared_ptr<struct sockaddr_in>, int32_t, void *)> &cb,
+		const std::function<void(struct sockaddr_in *, int32_t, void *)> &cb,
 		const std::size_t delay,
 		const bool &mult,
 		std::atomic<bool> &run,
@@ -223,5 +223,63 @@ namespace FSMTP::Networking
 		// - after that we free the buffer which is now trash
 		ret = std::string(reinterpret_cast<char *>(buffer), bufferPos - 2);
 		free(buffer);
+	}
+
+	int SMTPSocket::readSSLPassphrase(char *buffer, int size, int rwflag, void *u)
+	{
+		// Reads the file and stores it inside the buffer
+		// - if something goes wrong we simply throw an error
+		FILE *f = fopen(_SMTP_SSL_PASSPHRASE_PATH, "r");
+		if (!f)
+		{
+			std::string error = "fopen() failed: ";
+			error += strerror(errno);
+			throw std::runtime_error(error);
+		}
+
+		fgets(buffer, size, f);
+		return strlen(buffer);
+	}
+
+	void SMTPSocket::upgradeToSSL(int32_t &sfd, SSL *ssl, SSL_CTX *sslCtx)
+	{
+		int32_t rc;
+
+		// Creates the SSL context and if something goes
+		// - wrong we throw an error
+		const SSL_METHOD *sslMethod = SSLv23_server_method();
+		sslCtx = SSL_CTX_new(sslMethod);
+		if (!sslCtx)
+			throw std::runtime_error("Could not create context !");
+
+		// Configures the SSL context, with the keys etcetera
+		SSL_CTX_set_ecdh_auto(sslCtx, 0x1);
+		SSL_CTX_set_default_passwd_cb(sslCtx, &SMTPSocket::readSSLPassphrase);
+		
+		rc = SSL_CTX_use_certificate_file(sslCtx, _SMTP_SSL_CERT_PATH, SSL_FILETYPE_PEM);
+		if (rc < 0)
+		{
+			ERR_print_errors_fp(stderr);
+			throw std::runtime_error("Could not read cert !");
+		}
+
+		rc = SSL_CTX_use_PrivateKey_file(sslCtx, _SMTP_SSL_KEY_PATH, SSL_FILETYPE_PEM);
+		if (rc < 0)
+		{
+			ERR_print_errors_fp(stderr);
+			throw std::runtime_error("Could not read private key !");
+		}
+
+		// Creates the ssl element and binds it with the socket,
+		// - after that we accept the connection with the client
+		ssl = SSL_new(sslCtx);
+		SSL_set_fd(ssl, sfd);
+
+		rc = SSL_accept(ssl);
+		if (rc < 0)
+		{
+			ERR_print_errors_fp(stderr);
+			throw std::runtime_error("Could not accept SSL connection !");
+		}
 	}
 }

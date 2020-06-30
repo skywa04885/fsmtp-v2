@@ -15,3 +15,12 @@
 */
 
 #pragma once
+
+#include <string>
+#include <cstdint>
+
+namespace FSMTP::Cleanup
+{
+	void reduceWhitespace(const std::string &raw, std::string &ret);
+	void removeFirstAndLastWhite(std::string &str);
+}

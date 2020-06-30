@@ -30,8 +30,11 @@
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <memory.h>
+#include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
 #include "../general/macros.src.h"
 
@@ -62,9 +65,11 @@ namespace FSMTP::Networking
 
 		static void sendString(int32_t &sfd, const bool& ssl, std::string& data);
 		static void receiveString(int32_t &sfd, const bool& ssl, const bool &bigData, std::string& ret);
+		static void upgradeToSSL(int32_t &sfd, SSL *ssl, SSL_CTX *sslCtx);
+		static int readSSLPassphrase(char *buffer, int size, int rwflag, void *u);
 
 		void startAcceptorSync(
-			const std::function<void(std::shared_ptr<struct sockaddr_in>, int32_t, void *)> &cb,
+			const std::function<void(struct sockaddr_in *, int32_t, void *)> &cb,
 			const std::size_t delay,
 			const bool &mult,
 			std::atomic<bool> &run,
@@ -76,7 +81,7 @@ namespace FSMTP::Networking
 			std::atomic<bool> &run,
 			const std::size_t delay,
 			std::atomic<bool> &running,
-			const std::function<void(std::shared_ptr<struct sockaddr_in>, int32_t, void *)> &cb,
+			const std::function<void(struct sockaddr_in *, int32_t, void *)> &cb,
 			void *u
 		);
 

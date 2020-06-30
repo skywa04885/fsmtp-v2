@@ -72,14 +72,17 @@ namespace FSMTP::Server
 		return this->s_Socket;
 	}
 
-	void SMTPServer::onClientSync(std::shared_ptr<struct sockaddr_in> sockaddr, int32_t fd, void *u)
+	void SMTPServer::onClientSync(struct sockaddr_in *sAddr, int32_t fd, void *u)
 	{
+		bool usesSsl = false;
+		SSL_CTX *sslCtx = nullptr;
+		SSL *ssl = nullptr;
 		SMTPServer &server = *reinterpret_cast<SMTPServer *>(u);
 
 		// Creates the logger with the clients address
 		// - so we can get awesome debug messages
 		std::string prefix = "client:";
-		prefix += inet_ntoa(sockaddr.get()->sin_addr);
+		prefix += inet_ntoa(sAddr->sin_addr);
 		Logger logger(prefix, LoggerLevel::DEBUG);
 
 		// Prints the initial client information and then
@@ -95,7 +98,6 @@ namespace FSMTP::Server
 
 		// Starts the infinite reading and writing loop
 		// - in here we will handle commands and send responses
-		bool ssl = false;
 		while (true)
 		{
 			// Receives the data from the client
@@ -105,12 +107,89 @@ namespace FSMTP::Server
 			// Performs the parsing of the command and then checks which
 			// - method we need to call to perform the command
 			ClientCommand command(rawData);
-			DEBUG_ONLY(logger << DEBUG << "C: " << rawData << " [pClass: " << command.c_CommandType << "]" << ENDL << CLASSIC);
+			DEBUG_ONLY(logger << DEBUG << "[pClass: " << command.c_CommandType << ", argC: " << command.c_Arguments.size() << "] -> C: " << rawData << ENDL << CLASSIC);
 
+			if (command.c_CommandType == ClientCommandType::CCT_QUIT)
+			{
+				std::string message;
+				ServerResponse resp(SMTPResponseCommand::SRC_QUIT_RESP, server.s_UseESMTP, nullptr);
+				resp.build(message);
+				SMTPSocket::sendString(fd, usesSsl, message);
+				break;
+			}
+
+			try 
+			{
+				switch (command.c_CommandType)
+				{
+					case ClientCommandType::CCT_HELO:
+					{
+						actionHelloInitial(command, fd, sAddr, usesSsl, server.s_UseESMTP);
+						break;
+					}
+					case ClientCommandType::CCT_START_TLS:
+					{
+						DEBUG_ONLY(logger << DEBUG << "Secure connection requested" << ENDL << CLASSIC);
+
+						// Sends the message that the client may
+						// - proceed with the STARTTLS stuff
+						std::string message;
+						ServerResponse resp(SMTPResponseCommand::SRC_READY_START_TLS, server.s_UseESMTP, nullptr);
+						resp.build(message);
+						SMTPSocket::sendString(fd, usesSsl, message);
+
+						// Upgrades the socket connection to use TLS,
+						// - after that we print the message to the console
+						try {
+							SMTPSocket::upgradeToSSL(fd, ssl, sslCtx);
+							DEBUG_ONLY(logger << DEBUG << "Connection secured !" << ENDL << CLASSIC);
+						} catch (const std::runtime_error &e)
+						{
+							DEBUG_ONLY(logger << ERROR << "Could not secure connection, closing transmission channel ..." << ENDL << CLASSIC);
+							goto smtp_server_close_conn;
+						}
+						break;
+					}
+					case ClientCommandType::CCT_MAIL_FROM:
+					{
+						break;
+					}
+					case ClientCommandType::CCT_RCPT_TO:
+					{
+						break;
+					}
+					case ClientCommandType::CCT_DATA:
+					{
+						break;
+					}
+					case ClientCommandType::CCT_UNKNOWN:
+					{
+						std::string message;
+						ServerResponse resp(SMTPResponseCommand::SRC_SYNTAX_ERR_INVALID_COMMAND, server.s_UseESMTP, nullptr);
+						resp.build(message);
+						SMTPSocket::sendString(fd, usesSsl, message);
+						break;
+					}
+				}
+			} catch (const std::runtime_error &e)
+			{
+				std::string message;
+				ServerResponse resp(SMTPResponseCommand::SRC_SYNTAX_ARG_ERR, e.what());
+				resp.build(message);
+				SMTPSocket::sendString(fd, usesSsl, message);
+			}
 		}
+
+	smtp_server_close_conn:
+
+		// Closes the connection with the client, and if
+		// - an message needs to be sent, please do this before
+		shutdown(fd, SHUT_RDWR);
+		logger << WARN << "Connection closed" << ENDL << CLASSIC;
+		free(sAddr);
 	}
 
-	void SMTPServer::shutdown(void)
+	void SMTPServer::shutdownServer(void)
 	{
 		// Stores the start time and closes the threads
 		// - after that we will see the duration of the

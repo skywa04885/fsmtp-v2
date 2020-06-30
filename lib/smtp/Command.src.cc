@@ -65,7 +65,7 @@ namespace FSMTP::SMTP
 		// - specific compare operations
 		switch (command[0])
 		{
-			case 'h':
+			case 'h': case 'e':
 			{
 				if (command.substr(0, 4) == "helo" || command.substr(0, 4) == "ehlo")
 					this->c_CommandType = ClientCommandType::CCT_HELO;
@@ -121,10 +121,14 @@ namespace FSMTP::SMTP
 		}
 
 		// Checks if we may have arguments, if so it will start parsing
-		// - them, maybe with a custom parser if required
+		// - them, maybe with a custom parser if required.. After that
+		// - we remove all the double whitespace, to make it more easy
+		// - for later processing
 		if (containsArgs == false) return;
 		std::string argsRaw = raw.substr(++index);
-		std::cout << argsRaw << std::endl;
+		std::string ret;
+		reduceWhitespace(argsRaw, ret);
+		this->c_Arguments.push_back(ret);
 	}
 
 	void ClientCommand::build(std::string &ret)

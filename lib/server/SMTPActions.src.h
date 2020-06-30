@@ -32,5 +32,19 @@ using namespace FSMTP::Networking;
 
 namespace FSMTP::Server::Actions
 {
-	void actionHelloInitial(const ClientCommand &command, int32_t &fd, struct sockaddr_in &sAddr, const bool &ssl, const bool &esmtp);
+	void actionHelloInitial(
+		const ClientCommand &command,
+		int32_t &fd, 
+		struct sockaddr_in *sAddr,
+		const bool &ssl, 
+		const bool &esmtp
+	);
+
+	void actionMailFrom(
+		const ClientCommand &command,
+		int32_t &fd, 
+		struct sockaddr_in *sAddr,
+		const bool &ssl, 
+		const bool &esmtp
+	);
 }

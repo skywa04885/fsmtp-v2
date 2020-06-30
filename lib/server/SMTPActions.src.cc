@@ -20,7 +20,13 @@
 
 namespace FSMTP::Server::Actions
 {
-	void actionHelloInitial(const ClientCommand &command, int32_t &fd, struct sockaddr_in &sAddr, const bool &ssl, const bool &esmtp)
+	void actionHelloInitial(
+		const ClientCommand &command,
+		int32_t &fd,
+		struct sockaddr_in *sAddr,
+		const bool &ssl,
+		const bool &esmtp
+	)
 	{
 		// Performs some checks if the arguments are actually
 		// - valid for usage, if not throw an error

@@ -23,6 +23,10 @@
 #include <algorithm>
 #include <cctype>
 
+#include "../general/cleanup.src.h"
+
+using namespace FSMTP::Cleanup;
+
 namespace FSMTP::SMTP
 {
 	typedef enum : uint32_t {

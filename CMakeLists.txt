@@ -13,44 +13,33 @@ file(GLOB general_headers "lib/general/*.h")
 file(GLOB smtp_sources "lib/smtp/*.cc")
 file(GLOB smtp_headers "lib/smtp/*.h")
 
+file(GLOB models_sources "lib/models/*.cc")
+file(GLOB models_headers "lib/models/*.h")
+
 set(sources "main.cc")
 set(headers "main.h")
-set(args "-lpthread")
-
-add_library(
-	networking STATIC
-
-	${networking_headers}
-	${networking_sources}
-)
-
-add_library(
-	smtp STATIC
-
-	${smtp_headers}
-	${smtp_sources}
-)
-
-
-add_library(
-	server STATIC
-
-	${server_sources}
-	${server_headers}
-)
-
-add_library(
-	general STATIC
-
-	${general_sources}
-	${general_headers}
-)
+set(args "-lpthread -lssl -lcrypto")
 
 add_executable(
 	${PROJECT_NAME}
 
 	${headers}
 	${sources}
+
+	${general_headers}
+	${general_sources}
+
+	${server_sources}
+	${server_headers}
+
+	${smtp_headers}
+	${smtp_sources}
+
+	${networking_headers}
+	${networking_sources}
+
+	${models_sources}
+	${models_headers}
 )
 
-target_link_libraries(${PROJECT_NAME} networking general server smtp ${args})
+target_link_libraries(${PROJECT_NAME} ${args})

@@ -50,3 +50,15 @@
 #ifndef _SMTP_RECEIVE_BUFFER_SIZE
 #define _SMTP_RECEIVE_BUFFER_SIZE 32
 #endif
+
+#ifndef _SMTP_SSL_CERT_PATH
+#define _SMTP_SSL_CERT_PATH "../env/keys/cert.pem"
+#endif
+
+#ifndef _SMTP_SSL_KEY_PATH
+#define _SMTP_SSL_KEY_PATH "../env/keys/key.pem"
+#endif
+
+#ifndef _SMTP_SSL_PASSPHRASE_PATH
+#define _SMTP_SSL_PASSPHRASE_PATH "../env/keys/pass.txt"
+#endif

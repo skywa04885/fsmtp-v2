@@ -20,11 +20,14 @@
 #include <string>
 #include <atomic>
 #include <vector>
+#include <stdexcept>
 #include <bitset>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
 #include "../smtp/Response.src.h"
 #include "../smtp/Command.src.h"
@@ -44,6 +47,7 @@ using namespace FSMTP;
 using namespace FSMTP::SMTP;
 using namespace FSMTP::Networking;
 using namespace FSMTP::Networking;
+using namespace FSMTP::Server::Actions;
 
 namespace FSMTP::Server
 {
@@ -54,8 +58,8 @@ namespace FSMTP::Server
 
 		SMTPSocket &getSocket(void);
 
-		static void onClientSync(std::shared_ptr<struct sockaddr_in> sockaddr, int32_t fd, void *u);
-		void shutdown(void);
+		static void onClientSync(struct sockaddr_in *sockaddr, int32_t fd, void *u);
+		void shutdownServer(void);
 
 		std::vector<SMTPServiceFunction> s_Services;
 
