@@ -14,19 +14,23 @@
 	limitations under the License.
 */
 
-#include "main.h"
+#pragma once
 
-int main(const int argc, const char **argv)
+#include <cstdint>
+#include <stdexcept>
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include "../smtp/Command.src.h"
+#include "../smtp/Response.src.h"
+#include "../networking/SMTPSocket.src.h"
+
+using namespace FSMTP::SMTP;
+using namespace FSMTP::Networking;
+
+namespace FSMTP::Server::Actions
 {
-	int32_t opts = 0x0;
-
-	opts |= _SERVER_OPT_ENABLE_AUTH;
-	opts |= _SERVER_OPT_ENABLE_TLS;
-
-	SMTPServer server(3000, true, opts);
-
-	std::cin.get();
-	server.shutdown();
-
-	return 0;
+	void actionHelloInitial(const ClientCommand &command, int32_t &fd, struct sockaddr_in &sAddr, const bool &ssl, const bool &esmtp);
 }

@@ -16,40 +16,35 @@
 
 #pragma once
 
-#include <vector>
-#include <string>
+#include <iostream>
 #include <cstdint>
-
-#include "../general/macros.src.h"
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <cctype>
 
 namespace FSMTP::SMTP
 {
 	typedef enum : uint32_t {
-		SRC_INIT = 0,
-		SRC_HELO_RESP,
-		SRC_READY_START_TLS,
-		SRC_PROCEED
-	} SMTPResponseCommand;
+		CCT_HELO = 0,
+		CCT_START_TLS,
+		CCT_MAIL_FROM,
+		CCT_RCPT_TO,
+		CCT_DATA,
+		CCT_QUIT,
+		CCT_UNKNOWN
+	} ClientCommandType;
 
-	typedef struct {
-		const char *s_Name;
-		const std::vector<const char *> s_SubArgs;
-	} SMTPServiceFunction;
-
-	class ServerResponse
+	class ClientCommand
 	{
 	public:
-		ServerResponse(
-			const SMTPResponseCommand &r_CType,
-			const bool &r_ESMTP, 
-			const std::vector<SMTPServiceFunction> *services
-		);
-		ServerResponse(const SMTPResponseCommand &r_CType, const std::string &r_Message);
+		ClientCommand(const ClientCommandType &c_CommandType, const std::vector<std::string> &c_Arguments);
+		ClientCommand();
+		ClientCommand(const std::string &raw);
 
 		void build(std::string &ret);
-	private:
-		std::string r_Message;
-		SMTPResponseCommand r_CType;
-		bool r_ESMTP;
+		
+		ClientCommandType c_CommandType;
+		std::vector<std::string> c_Arguments;
 	};
 }

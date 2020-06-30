@@ -1,3 +1,19 @@
+/*
+	Copyright [2020] [Luke A.C.A. Rieff]
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+*/
+
 #include "SMTPSocket.src.h"
 
 namespace FSMTP::Networking
@@ -154,7 +170,7 @@ namespace FSMTP::Networking
 
 	void SMTPSocket::sendString(int32_t &sfd, const bool &ssl, std::string &data)
 	{
-		int32_t rc;
+		std::size_t rc;
 		if (ssl)
 		{
 			return;
@@ -170,12 +186,42 @@ namespace FSMTP::Networking
 		}
 	}
 
-	void SMTPSocket::receiveString(int32_t &sfd, const bool &ssl, std::string &ret)
+	void SMTPSocket::receiveString(int32_t &sfd, const bool &ssl, const bool &bigData, std::string &ret)
 	{
-		int32_t rc;
+		uint8_t *buffer = reinterpret_cast<uint8_t *>(malloc(sizeof (uint8_t) * _SMTP_RECEIVE_BUFFER_SIZE));
+		std::size_t rc, bufferPos = 0, bufferSize = _SMTP_RECEIVE_BUFFER_SIZE;
 		if (ssl)
 		{
 			return;
 		}
+
+		// Creates the read loop and resizes the buffer if
+		// the buffer size is exceeded
+		while (true)
+		{
+			// Checks if we need to allocate more memory
+			// - since it will otherwise use unallocated memory
+			// - which will just break everything
+			if (bufferPos >= bufferSize)
+			{
+				bufferSize += _SMTP_RECEIVE_BUFFER_SIZE;
+				buffer = reinterpret_cast<uint8_t *>(realloc(buffer, bufferSize));
+			}
+
+			// Receives the data and then increments the buffer position
+			// - after that we check if there is a <CR><LF> in the message
+			rc = recv(sfd, reinterpret_cast<char *>(&buffer[bufferPos]), _SMTP_RECEIVE_BUFFER_SIZE, 0x0);
+			if (rc < 0) continue;
+			bufferPos += rc;
+
+      if (bufferPos >= 2) if (
+				memcmp(&buffer[bufferPos-2], "\r\n", 2) == 0
+			) break;
+		}
+
+		// Creates an deep copy of the buffer into an string
+		// - after that we free the buffer which is now trash
+		ret = std::string(reinterpret_cast<char *>(buffer), bufferPos - 2);
+		free(buffer);
 	}
 }

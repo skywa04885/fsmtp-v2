@@ -53,4 +53,4 @@ add_executable(
 	${sources}
 )
 
-target_link_libraries(${PROJECT_NAME} server networking general smtp ${args})
+target_link_libraries(${PROJECT_NAME} networking general server smtp ${args})

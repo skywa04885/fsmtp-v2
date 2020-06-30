@@ -1,3 +1,19 @@
+/*
+	Copyright [2020] [Luke A.C.A. Rieff]
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+*/
+
 #include "SMTPServer.src.h"
 
 namespace FSMTP::Server
@@ -70,11 +86,27 @@ namespace FSMTP::Server
 		// - we sent the initial hello message to the SMTP client
 		logger << "onClientSync() called, connection initialized !" << ENDL;
 
-		{
+		{ // ( Initial message )
 			ServerResponse response(SRC_INIT, server.s_UseESMTP, nullptr);
 			std::string message;
 			response.build(message);
 			SMTPSocket::sendString(fd, false, message);
+		}
+
+		// Starts the infinite reading and writing loop
+		// - in here we will handle commands and send responses
+		bool ssl = false;
+		while (true)
+		{
+			// Receives the data from the client
+			std::string rawData;
+			SMTPSocket::receiveString(fd, ssl, false, rawData);
+
+			// Performs the parsing of the command and then checks which
+			// - method we need to call to perform the command
+			ClientCommand command(rawData);
+			DEBUG_ONLY(logger << DEBUG << "C: " << rawData << " [pClass: " << command.c_CommandType << "]" << ENDL << CLASSIC);
+
 		}
 	}
 

@@ -6,3 +6,5 @@ build/*
 *.gch
 .env
 env/*
+cmake-build-debug/*
+cmake-build-release/*

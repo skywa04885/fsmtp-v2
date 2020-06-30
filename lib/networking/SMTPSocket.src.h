@@ -1,3 +1,21 @@
+/*
+	Copyright [2020] [Luke A.C.A. Rieff]
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+*/
+
+#pragma once
+
 #include <cstdint>
 #include <string>
 #include <stdexcept>
@@ -13,8 +31,9 @@
 #include <netinet/in.h>
 #include <memory.h>
 #include <errno.h>
+#include <string.h>
 
-#pragma once
+#include "../general/macros.src.h"
 
 #ifndef _SOCKET_MAX_IN_QUEUE
 #define _SOCKET_MAX_IN_QUEUE 40
@@ -42,7 +61,7 @@ namespace FSMTP::Networking
 		void startConnecting(void);
 
 		static void sendString(int32_t &sfd, const bool& ssl, std::string& data);
-		static void receiveString(int32_t &sfd, const bool& ssl, std::string& ret);
+		static void receiveString(int32_t &sfd, const bool& ssl, const bool &bigData, std::string& ret);
 
 		void startAcceptorSync(
 			const std::function<void(std::shared_ptr<struct sockaddr_in>, int32_t, void *)> &cb,
