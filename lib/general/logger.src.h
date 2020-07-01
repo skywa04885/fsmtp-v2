@@ -99,7 +99,7 @@ namespace FSMTP
 						}
 						case LoggerLevel::FATAL:
 						{
-							std::cout << "\033[31m[fatale fout@" << this->l_Prefix << "]: \033[0m";
+							std::cout << "\033[31m[super-fout@" << this->l_Prefix << "]: \033[0m";
 							break;
 						}
 					}

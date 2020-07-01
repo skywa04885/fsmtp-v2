@@ -41,7 +41,8 @@ namespace FSMTP::Server::Actions
 
 	void actionMailFrom(
 		BasicActionData &data,
-		Logger& logger
+		Logger& logger,
+		std::unique_ptr<CassandraConnection> &database
 	)
 	{
 		// Performs some check if the arguments are there
@@ -62,6 +63,6 @@ namespace FSMTP::Server::Actions
 		}
 
 		// Checks if this is an receive operation or relay operation
-		// - by reading the local addresses from the database 
+		// - by reading the local addresses from the database
 	}
 }

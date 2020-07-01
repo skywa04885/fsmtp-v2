@@ -14,17 +14,22 @@
 	limitations under the License.
 */
 
+#pragma once
+
 #include <iostream>
 #include <memory>
 #include <cstdint>
 #include <bitset>
+#include <vector>
+#include <string>
 
 #include "lib/networking/SMTPSocket.src.h"
 #include "lib/server/SMTPServer.src.h"
 #include "lib/smtp/Response.src.h"
 #include "lib/models/email.src.h"
-
-#pragma once
+#include "lib/general/connections.src.h"
+#include "lib/general/macros.src.h"
+#include "lib/general/logger.src.h"
 
 using namespace FSMTP;
 using Networking::SMTPSocketType;

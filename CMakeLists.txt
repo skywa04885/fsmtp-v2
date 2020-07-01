@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(fsmtp VERSION 1.0)
 
+set (CMAKE_CXX_STANDARD 17)
+
 file(GLOB networking_sources "lib/networking/*.cc")
 file(GLOB networking_headers "lib/networking/*.h")
 
@@ -18,7 +20,7 @@ file(GLOB models_headers "lib/models/*.h")
 
 set(sources "main.cc")
 set(headers "main.h")
-set(args "-lpthread -lssl -lcrypto")
+set(args "-lpthread -lssl -lcrypto -lcassandra -lboost_system -lboost_program_options")
 
 add_executable(
 	${PROJECT_NAME}

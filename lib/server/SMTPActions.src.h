@@ -18,6 +18,8 @@
 
 #include <cstdint>
 #include <stdexcept>
+#include <variant>
+#include <memory>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -29,10 +31,13 @@
 #include "SMTPServerExceptions.src.h"
 #include "../models/email.src.h"
 #include "../general/logger.src.h"
+#include "../general/macros.src.h"
+#include "../general/connections.src.h"
 
 using namespace FSMTP::SMTP;
 using namespace FSMTP::Networking;
 using namespace FSMTP::Models;
+using namespace FSMTP::Connections;
 
 namespace FSMTP::Server::Actions
 {
@@ -51,6 +56,7 @@ namespace FSMTP::Server::Actions
 
 	void actionMailFrom(
 		BasicActionData &data,
-		Logger& logger
+		Logger& logger,
+		std::unique_ptr<CassandraConnection> &database
 	);
 }

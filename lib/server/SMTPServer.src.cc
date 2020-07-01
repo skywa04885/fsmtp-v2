@@ -86,6 +86,16 @@ namespace FSMTP::Server
 		prefix += inet_ntoa(sAddr->sin_addr);
 		Logger logger(prefix, LoggerLevel::DEBUG);
 
+		// Creates the database connection
+		std::unique_ptr<CassandraConnection> database;
+		try {
+			database = std::make_unique<CassandraConnection>(_CASSANDRA_DATABASE_CONTACT_POINTS);
+		} catch (const std::runtime_error &e)
+		{
+			logger << FATAL << "Kon geen verbinding met Apache Cassandra maken, verbinding wordt gesloten !" << ENDL << CLASSIC;
+			goto smtp_server_close_conn;
+		}
+
 		// Prints the initial client information and then
 		// - we sent the initial hello message to the SMTP client
 		logger << "onClientSync() aangeroepen, verbinding gemaakt." << ENDL;
@@ -162,7 +172,7 @@ namespace FSMTP::Server
 					}
 					case ClientCommandType::CCT_MAIL_FROM:
 					{
-						actionMailFrom(actionData, logger);
+						actionMailFrom(actionData, logger, database);
 						break;
 					}
 					case ClientCommandType::CCT_RCPT_TO:

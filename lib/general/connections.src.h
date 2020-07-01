@@ -16,6 +16,9 @@
 
 #pragma once
 
+#include <cstdint>
+#include <stdexcept>
+
 #include <cassandra.h>
 
 namespace FSMTP::Connections
@@ -24,9 +27,16 @@ namespace FSMTP::Connections
 	{
 	public:
 		CassandraConnection(const char *hosts);
+		~CassandraConnection();
 	private:
 		CassSession *c_Session;
 		CassCluster *c_Cluster;
 		CassFuture *c_ConnectFuture;
+	};
+
+	class MongoDBConnection
+	{
+	public:
+	private:
 	};
 }

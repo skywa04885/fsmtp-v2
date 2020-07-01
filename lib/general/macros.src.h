@@ -62,3 +62,13 @@
 #ifndef _SMTP_SSL_PASSPHRASE_PATH
 #define _SMTP_SSL_PASSPHRASE_PATH "../env/keys/pass.txt"
 #endif
+
+#ifndef _CASSANDRA_DATABASE_CONTACT_POINTS
+#define _CASSANDRA_DATABASE_CONTACT_POINTS "192.168.188.130"
+#endif
+
+#define _BASH_CHECKMARK "\u2713"
+#define _BASH_CROSS "\u2717"
+#define _BASH_SUCCESS_MARK "\033[32m[\u2713]:\033[0m "
+#define _BASH_FAIL_MARK "\033[31m[\u2717]:\033[0m "
+#define _BASH_UNKNOWN_MARK "\033[35m[?]:\033[0m "
