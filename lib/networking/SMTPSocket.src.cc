@@ -18,6 +18,13 @@
 
 namespace FSMTP::Networking
 {
+	/**
+	 * The constructor for the SMTPSocket class
+	 *
+	 * @Param {SMTPSocketType &} s_SocketType
+	 * @Param {int32_t &} s_SocketPort
+	 * @Return void
+	 */
 	SMTPSocket::SMTPSocket(
 		const SMTPSocketType &s_SocketType,
 		const int32_t &s_SocketPort
@@ -83,6 +90,17 @@ namespace FSMTP::Networking
 		);
 	}
 
+	/**
+	 * An single instance of an acceptor thread,
+	 * - these accept the clients
+	 *
+	 * @Param {std::atomic<bool> &} run
+	 * @Param {std::size_t} delay
+	 * @Param {std::atomic<bool> &} running
+	 * @Param {std::function<void(params)> &} cb
+	 * @param {void *} u
+	 * @Return void
+	 */
 	void SMTPSocket::asyncAcceptorThread(
 		std::atomic<bool> &run,
 		const std::size_t delay,
@@ -126,6 +144,12 @@ namespace FSMTP::Networking
 		running = false;
 	}
 
+	/**
+	 * Starts listening the socket ( server only )
+	 *
+	 * @Param void
+	 * @Return void
+	 */
 	void SMTPSocket::startListening(void)
 	{
 		int32_t rc;
@@ -141,6 +165,17 @@ namespace FSMTP::Networking
 		}
 	}
 
+	/**
+	 * Starts the client acceptor in sync mode ( The slow and blocking one )
+	 *
+	 * @Param {std::function<void(params)> &} cb
+	 * @Param {std::size_t} delay
+	 * @Param {bool &} mult
+	 * @Param {std::atomic<bool> &} run
+	 * @Param {std::atomic<bool> &} running
+	 * @param {void *} u
+	 * @Return void
+	 */
 	void SMTPSocket::startAcceptorSync(
 		const std::function<void(struct sockaddr_in *, int32_t, void *)> &cb,
 		const std::size_t delay,
@@ -154,6 +189,13 @@ namespace FSMTP::Networking
 		t.detach();
 	}
 
+	/**
+	 * Closes the threads
+	 *
+	 * @Param {std::atomic<bool> &} run
+	 * @Param {std::atomic<bool> &} running
+	 * @Return void
+	 */
 	void SMTPSocket::closeThread(std::atomic<bool> &run, std::atomic<bool> &running)
 	{
 		run = false;
@@ -161,6 +203,14 @@ namespace FSMTP::Networking
 		while (running) std::this_thread::sleep_for(std::chrono::milliseconds(_SOCKET_THREAD_SHUTDOWN_DELAY));
 	}
 
+
+	/**
+	 * Default destructor which closes the socket, so no errors
+	 * - will occur
+	 *
+	 * @Param void
+	 * @Return void
+	 */
 	SMTPSocket::~SMTPSocket()
 	{
 		// Closes the socket inside of the SMTPSocket instance
@@ -168,6 +218,14 @@ namespace FSMTP::Networking
 		shutdown(this->s_SocketFD, SHUT_RDWR);
 	}
 
+	/**
+	 * Static method which sends an string to an client
+	 * 
+	 * @Param {int32_t &} sfd
+	 * @Param {bool &} ssl
+	 * @Param {std::string &} data
+	 * @Return void
+	 */
 	void SMTPSocket::sendString(int32_t &sfd, const bool &ssl, std::string &data)
 	{
 		std::size_t rc;
@@ -186,6 +244,15 @@ namespace FSMTP::Networking
 		}
 	}
 
+	/**
+	 * Static method which receives an string fron an socket
+	 * 
+	 * @Param {int32_t &} sfd
+	 * @Param {bool &} ssl
+	 * @Param {bool &} bigData - If we are getting the DATA section of message
+	 * @Param {std::string &} ret
+	 * @Return void
+	 */
 	void SMTPSocket::receiveString(int32_t &sfd, const bool &ssl, const bool &bigData, std::string &ret)
 	{
 		uint8_t *buffer = reinterpret_cast<uint8_t *>(malloc(sizeof (uint8_t) * _SMTP_RECEIVE_BUFFER_SIZE));
@@ -225,6 +292,15 @@ namespace FSMTP::Networking
 		free(buffer);
 	}
 
+	/**
+	 * Static single-usage method for reading the OpenSSL keys passphrase
+	 *
+	 * @Param {char *} buffer
+	 * @Param {int} size
+	 * @Param {int} rwflag
+	 * @param {void *} u
+	 * @Return int
+	 */
 	int SMTPSocket::readSSLPassphrase(char *buffer, int size, int rwflag, void *u)
 	{
 		// Reads the file and stores it inside the buffer
@@ -241,6 +317,14 @@ namespace FSMTP::Networking
 		return strlen(buffer);
 	}
 
+	/**
+	 * Static method to upgrade an existing socket to an SSL socket
+	 *
+	 * @Param {int32_t &} sfd
+	 * @Param {SSL *} ssl
+	 * @Param {SSL_CTX *} sslCtx
+	 * @Return void
+	 */
 	void SMTPSocket::upgradeToSSL(int32_t &sfd, SSL *ssl, SSL_CTX *sslCtx)
 	{
 		int32_t rc;

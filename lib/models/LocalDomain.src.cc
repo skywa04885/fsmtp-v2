@@ -58,6 +58,6 @@ namespace FSMTP::Models
 		std::unique_ptr<CassandraConnection>& database
 	)
 	{
-
+		
 	}
 }

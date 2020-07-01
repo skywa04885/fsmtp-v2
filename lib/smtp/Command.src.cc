@@ -131,6 +131,13 @@ namespace FSMTP::SMTP
 		if (!ret.empty()) this->c_Arguments.push_back(ret);
 	}
 
+
+	/**
+	 * Builds the client command
+	 *
+	 * @Param {std::string &} ret
+	 * @Return void
+	 */
 	void ClientCommand::build(std::string &ret)
 	{
 		// Adds the command name and later the parameters

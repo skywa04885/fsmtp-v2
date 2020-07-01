@@ -46,6 +46,12 @@ namespace FSMTP::SMTP
 		ClientCommand();
 		ClientCommand(const std::string &raw);
 
+		/**
+		 * Builds the client command
+		 *
+		 * @Param {std::string &} ret
+		 * @Return void
+		 */
 		void build(std::string &ret);
 		
 		ClientCommandType c_CommandType;
