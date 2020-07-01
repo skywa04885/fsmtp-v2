@@ -35,6 +35,7 @@
 #include "../general/logger.src.h"
 #include "../general/macros.src.h"
 #include "SMTPActions.src.h"
+#include "SMTPServerExceptions.src.h"
 
 #define _SERVER_OPT_ENABLE_AUTH 0x1
 #define _SERVER_OPT_ENABLE_TLS 0x2

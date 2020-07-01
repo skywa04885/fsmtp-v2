@@ -14,21 +14,19 @@
 	limitations under the License.
 */
 
-#include <iostream>
-#include <memory>
-#include <cstdint>
-#include <bitset>
-
-#include "lib/networking/SMTPSocket.src.h"
-#include "lib/server/SMTPServer.src.h"
-#include "lib/smtp/Response.src.h"
-#include "lib/models/email.src.h"
-
 #pragma once
 
-using namespace FSMTP;
-using Networking::SMTPSocketType;
-using Networking::SMTPSocket;
-using Server::SMTPServer;
+#include <cassandra.h>
 
-int main(const int argc, const char **argv);
+namespace FSMTP::Connections
+{
+	class CassandraConnection
+	{
+	public:
+		CassandraConnection(const char *hosts);
+	private:
+		CassSession *c_Session;
+		CassCluster *c_Cluster;
+		CassFuture *c_ConnectFuture;
+	};
+}

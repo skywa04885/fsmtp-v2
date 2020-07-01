@@ -21,25 +21,47 @@
 namespace FSMTP::Server::Actions
 {
 	void actionHelloInitial(
-		const ClientCommand &command,
-		int32_t &fd,
-		struct sockaddr_in *sAddr,
-		const bool &ssl,
-		const bool &esmtp
+		BasicActionData &data
 	)
 	{
 		// Performs some checks if the arguments are actually
 		// - valid for usage, if not throw an error
-		if (command.c_Arguments.size() == 0)
-			throw std::runtime_error("Empty HELO or EHLO is not allowed");
-		if (command.c_Arguments.size() > 1)
-			throw std::runtime_error("Only one argument is allowed");
+		if (data.command.c_Arguments.size() == 0)
+			throw SyntaxException("Empty HELO or EHLO is not allowed");
+		if (data.command.c_Arguments.size() > 1)
+			throw SyntaxException("Only one argument is allowed");
 
 		// Sends the response since everything seems fine to
 		// - me, and then we return without any error
-		ServerResponse resp(SMTPResponseCommand::SRC_HELO_RESP, esmtp, nullptr);
+		ServerResponse resp(SMTPResponseCommand::SRC_HELO_RESP, data.esmtp, nullptr);
 		std::string mess;
 		resp.build(mess);
-		SMTPSocket::sendString(fd, false, mess);
+		SMTPSocket::sendString(data.fd, false, mess);
+	}
+
+	void actionMailFrom(
+		BasicActionData &data,
+		Logger& logger
+	)
+	{
+		// Performs some check if the arguments are there
+		// - if not there we throw an error
+		if (data.command.c_Arguments.size() == 0)
+			throw SyntaxException("Empty MAIL FROM is not allowed");
+		else if (data.command.c_Arguments.size() > 1)
+			throw SyntaxException("MAIL FROM may only have one single argument");
+
+		// Parses the email address
+		try
+		{
+			EmailAddress addr(data.command.c_Arguments[0]);
+		DEBUG_ONLY(logger << DEBUG << "Email from: " << addr.getName() << '<' << addr.getAddress() << '>' << ENDL << CLASSIC);
+		} catch (const std::runtime_error &e)
+		{
+			throw SyntaxException(e.what());
+		}
+
+		// Checks if this is an receive operation or relay operation
+		// - by reading the local addresses from the database 
 	}
 }

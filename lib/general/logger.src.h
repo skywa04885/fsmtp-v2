@@ -84,22 +84,22 @@ namespace FSMTP
 						}
 						case LoggerLevel::INFO:
 						{
-							std::cout << "\033[32m[info@" << this->l_Prefix << "]: \033[0m";
+							std::cout << "\033[32m[informatie@" << this->l_Prefix << "]: \033[0m";
 							break;
 						}
 						case LoggerLevel::WARN:
 						{
-							std::cout << "\033[33m[warning@" << this->l_Prefix << "]: \033[0m";
+							std::cout << "\033[33m[waarschuwing@" << this->l_Prefix << "]: \033[0m";
 							break;
 						}
 						case LoggerLevel::ERROR:
 						{
-							std::cout << "\033[31m[error@" << this->l_Prefix << "]: \033[0m";
+							std::cout << "\033[31m[fout@" << this->l_Prefix << "]: \033[0m";
 							break;
 						}
 						case LoggerLevel::FATAL:
 						{
-							std::cout << "\033[31m[fatal@" << this->l_Prefix << "]: \033[0m";
+							std::cout << "\033[31m[fatale fout@" << this->l_Prefix << "]: \033[0m";
 							break;
 						}
 					}

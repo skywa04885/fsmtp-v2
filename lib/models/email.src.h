@@ -19,6 +19,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 #include "../general/cleanup.src.h"
 
@@ -53,10 +54,20 @@ namespace FSMTP::Models
 		std::string e_Value;
 	};
 
+  typedef enum : uint8_t
+  {
+
+  } FullEmailType;
+
 	class FullEmail
 	{
 	public:
+    FullEmail();
 	private:
+
+    FullEmailType e_Type;
+    std::string e_TransportFrom;
+		std::string e_TransportTo;
 		std::string e_Subject;
 		std::vector<EmailAddress> e_From;
 		std::vector<EmailAddress> e_To;

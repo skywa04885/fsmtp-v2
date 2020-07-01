@@ -26,25 +26,31 @@
 #include "../smtp/Command.src.h"
 #include "../smtp/Response.src.h"
 #include "../networking/SMTPSocket.src.h"
+#include "SMTPServerExceptions.src.h"
+#include "../models/email.src.h"
+#include "../general/logger.src.h"
 
 using namespace FSMTP::SMTP;
 using namespace FSMTP::Networking;
+using namespace FSMTP::Models;
 
 namespace FSMTP::Server::Actions
 {
+	typedef struct
+	{
+		const ClientCommand &command;
+		struct sockaddr_in *sAddr;
+		const bool &esmtp;
+		const bool &ssl;
+		int32_t &fd;
+	} BasicActionData;
+
 	void actionHelloInitial(
-		const ClientCommand &command,
-		int32_t &fd, 
-		struct sockaddr_in *sAddr,
-		const bool &ssl, 
-		const bool &esmtp
+		BasicActionData &data
 	);
 
 	void actionMailFrom(
-		const ClientCommand &command,
-		int32_t &fd, 
-		struct sockaddr_in *sAddr,
-		const bool &ssl, 
-		const bool &esmtp
+		BasicActionData &data,
+		Logger& logger
 	);
 }

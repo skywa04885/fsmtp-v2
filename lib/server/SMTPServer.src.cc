@@ -28,10 +28,10 @@ namespace FSMTP::Server
 		this->s_ShouldBeRunning = true;
 
 		std::bitset<32> optsCheck(s_Opts);
-		this->s_Logger << DEBUG << "Options received: 0b" << optsCheck << ENDL << CLASSIC;
+		this->s_Logger << DEBUG << "Ontvangen configuratie: 0b" << optsCheck << ENDL << CLASSIC;
 		if (BINARY_COMPARE(this->s_Opts, _SERVER_OPT_ENABLE_AUTH))
 		{
-			this->s_Logger << INFO << "Using SMTP Authentication" << ENDL << CLASSIC;
+			this->s_Logger << INFO << "SMTP Authenticatie is toegestaan." << ENDL << CLASSIC;
 			this->s_Services.push_back({
 				"AUTH",
 				{"LOGIN", "DIGEST-MD5", "PLAIN"}
@@ -39,7 +39,7 @@ namespace FSMTP::Server
 		}
 		if (BINARY_COMPARE(this->s_Opts, _SERVER_OPT_ENABLE_PIPELINING))
 		{
-			this->s_Logger << INFO << "Using SMTP pipelining" << ENDL << CLASSIC;
+			this->s_Logger << INFO << "Pipelining is toegestaan." << ENDL << CLASSIC;
 			this->s_Services.push_back({
 				"PIPELINING",
 				{}
@@ -47,7 +47,7 @@ namespace FSMTP::Server
 		}
 		if (BINARY_COMPARE(this->s_Opts, _SERVER_OPT_ENABLE_TLS))
 		{
-			this->s_Logger << INFO << "Using SMTP STARTTLS" << ENDL << CLASSIC;
+			this->s_Logger << INFO << "TLS Verbinding is toegestaan." << ENDL << CLASSIC;
 			this->s_Services.push_back({
 				"STARTTLS",
 				{}
@@ -64,7 +64,7 @@ namespace FSMTP::Server
 			reinterpret_cast<void *>(this)
 		);
 
-		this->s_Logger << "FSMTP listening on port: " << port << ENDL;
+		this->s_Logger << "Fannst ESMTP Server luistert nu op port " << port << '.' << ENDL;
 	}
 
 	SMTPSocket &SMTPServer::getSocket(void)
@@ -77,6 +77,7 @@ namespace FSMTP::Server
 		bool usesSsl = false;
 		SSL_CTX *sslCtx = nullptr;
 		SSL *ssl = nullptr;
+		int32_t executed = 0x0;
 		SMTPServer &server = *reinterpret_cast<SMTPServer *>(u);
 
 		// Creates the logger with the clients address
@@ -87,7 +88,7 @@ namespace FSMTP::Server
 
 		// Prints the initial client information and then
 		// - we sent the initial hello message to the SMTP client
-		logger << "onClientSync() called, connection initialized !" << ENDL;
+		logger << "onClientSync() aangeroepen, verbinding gemaakt." << ENDL;
 
 		{ // ( Initial message )
 			ServerResponse response(SRC_INIT, server.s_UseESMTP, nullptr);
@@ -109,6 +110,15 @@ namespace FSMTP::Server
 			ClientCommand command(rawData);
 			DEBUG_ONLY(logger << DEBUG << "[pClass: " << command.c_CommandType << ", argC: " << command.c_Arguments.size() << "] -> C: " << rawData << ENDL << CLASSIC);
 
+			// Builds the data struct which we cann pass to the actions
+			BasicActionData actionData {
+				command,
+				sAddr,
+				server.s_UseESMTP,
+				ssl,
+				fd
+			};
+
 			if (command.c_CommandType == ClientCommandType::CCT_QUIT)
 			{
 				std::string message;
@@ -124,12 +134,12 @@ namespace FSMTP::Server
 				{
 					case ClientCommandType::CCT_HELO:
 					{
-						actionHelloInitial(command, fd, sAddr, usesSsl, server.s_UseESMTP);
+						actionHelloInitial(actionData);
 						break;
 					}
 					case ClientCommandType::CCT_START_TLS:
 					{
-						DEBUG_ONLY(logger << DEBUG << "Secure connection requested" << ENDL << CLASSIC);
+						DEBUG_ONLY(logger << DEBUG << "Veilige verbinding wordt aangevraagd." << ENDL << CLASSIC);
 
 						// Sends the message that the client may
 						// - proceed with the STARTTLS stuff
@@ -142,16 +152,17 @@ namespace FSMTP::Server
 						// - after that we print the message to the console
 						try {
 							SMTPSocket::upgradeToSSL(fd, ssl, sslCtx);
-							DEBUG_ONLY(logger << DEBUG << "Connection secured !" << ENDL << CLASSIC);
+							DEBUG_ONLY(logger << DEBUG << "Verbinding is succesvol beveiligd." << ENDL << CLASSIC);
 						} catch (const std::runtime_error &e)
 						{
-							DEBUG_ONLY(logger << ERROR << "Could not secure connection, closing transmission channel ..." << ENDL << CLASSIC);
+							DEBUG_ONLY(logger << ERROR << "Verbinding kan niet worden beveiligd, daarom wordt de verbinding gesloten." << ENDL << CLASSIC);
 							goto smtp_server_close_conn;
 						}
 						break;
 					}
 					case ClientCommandType::CCT_MAIL_FROM:
 					{
+						actionMailFrom(actionData, logger);
 						break;
 					}
 					case ClientCommandType::CCT_RCPT_TO:
@@ -171,12 +182,20 @@ namespace FSMTP::Server
 						break;
 					}
 				}
-			} catch (const std::runtime_error &e)
+			} catch (const SyntaxException &e)
 			{
 				std::string message;
 				ServerResponse resp(SMTPResponseCommand::SRC_SYNTAX_ARG_ERR, e.what());
 				resp.build(message);
 				SMTPSocket::sendString(fd, usesSsl, message);
+			} catch (const FatalException &e)
+			{
+				logger << FATAL << "Fatal exception: " << e.what() << ENDL << CLASSIC;
+				goto smtp_server_close_conn;
+			} catch (const std::runtime_error &e)
+			{
+				logger << FATAL << "Fatal exception ( runtime ): " << e.what() << ENDL << CLASSIC;
+				goto smtp_server_close_conn;
 			}
 		}
 
@@ -185,7 +204,7 @@ namespace FSMTP::Server
 		// Closes the connection with the client, and if
 		// - an message needs to be sent, please do this before
 		shutdown(fd, SHUT_RDWR);
-		logger << WARN << "Connection closed" << ENDL << CLASSIC;
+		logger << WARN << "Verbinding is gesloten." << ENDL << CLASSIC;
 		free(sAddr);
 	}
 
@@ -195,12 +214,12 @@ namespace FSMTP::Server
 		// - after that we will see the duration of the
 		// - closing process since some threads may be open
 		std::size_t start = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-		this->s_Logger << WARN << "Closing threads ..." << ENDL << INFO;
+		this->s_Logger << WARN << "Threads worden gesloten, een moment geduld a.u.b." << ENDL << INFO;
 		this->s_Socket.closeThread(
 			this->s_ShouldBeRunning,
 			this->s_IsRunning
 		);
 		std::size_t now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-		this->s_Logger << WARN << "Threads closed successfully in " << now - start << "ms !" << ENDL << INFO;
+		this->s_Logger << WARN << "Threads gesloten in " << now - start << " milliseconden." << ENDL << INFO;
 	}
 }

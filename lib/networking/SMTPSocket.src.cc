@@ -78,8 +78,8 @@ namespace FSMTP::Networking
 				throw std::runtime_error(error);
 			}
 		} else throw std::runtime_error(
-			"Invalid socket type supplied, must be either"
-			"SMTPSocketType::SST_CLIENT or SMTPSocketType::SST_SERVER !"
+			R"(Invalid socket type supplied, must be either 
+			SMTPSocketType::SST_CLIENT or SMTPSocketType::SST_SERVER !)"
 		);
 	}
 

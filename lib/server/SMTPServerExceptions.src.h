@@ -14,21 +14,22 @@
 	limitations under the License.
 */
 
-#include <iostream>
-#include <memory>
-#include <cstdint>
-#include <bitset>
-
-#include "lib/networking/SMTPSocket.src.h"
-#include "lib/server/SMTPServer.src.h"
-#include "lib/smtp/Response.src.h"
-#include "lib/models/email.src.h"
-
 #pragma once
 
-using namespace FSMTP;
-using Networking::SMTPSocketType;
-using Networking::SMTPSocket;
-using Server::SMTPServer;
+#include <string>
+#include <stdexcept>
 
-int main(const int argc, const char **argv);
+namespace FSMTP::Server
+{
+	class SyntaxException : public std::runtime_error
+	{
+	public:
+		SyntaxException(const std::string &m): std::runtime_error(m) {};
+	};
+
+	class FatalException : public std::runtime_error
+	{
+	public:
+		FatalException(const std::string &m): std::runtime_error(m) {};
+	};
+}

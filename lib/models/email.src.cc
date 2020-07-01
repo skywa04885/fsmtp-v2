@@ -80,4 +80,9 @@ namespace FSMTP::Models
 	{
 		return this->e_Name;
 	}
+
+  // The Email class stuff
+  
+  FullEmail::FullEmail()
+  {}
 }

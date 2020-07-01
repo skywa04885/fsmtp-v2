@@ -128,7 +128,7 @@ namespace FSMTP::SMTP
 		std::string argsRaw = raw.substr(++index);
 		std::string ret;
 		reduceWhitespace(argsRaw, ret);
-		this->c_Arguments.push_back(ret);
+		if (!ret.empty()) this->c_Arguments.push_back(ret);
 	}
 
 	void ClientCommand::build(std::string &ret)
