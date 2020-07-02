@@ -56,13 +56,15 @@ namespace FSMTP::Server::Actions
 		try
 		{
 			EmailAddress addr(data.command.c_Arguments[0]);
-		DEBUG_ONLY(logger << DEBUG << "Email from: " << addr.getName() << '<' << addr.getAddress() << '>' << ENDL << CLASSIC);
+			DEBUG_ONLY(logger << DEBUG << "Email from: " << addr.getName() << '<' << addr.getAddress() << '>' << ENDL << CLASSIC);
+
+			// Checks if this is an receive operation or relay operation
+			// - by reading the local addresses from the database
+			LocalDomain domain;
+			domain.getByDomain(addr.getDomain(), database);
 		} catch (const std::runtime_error &e)
 		{
 			throw SyntaxException(e.what());
 		}
-
-		// Checks if this is an receive operation or relay operation
-		// - by reading the local addresses from the database
 	}
 }

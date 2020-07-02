@@ -33,6 +33,7 @@
 #include "../general/logger.src.h"
 #include "../general/macros.src.h"
 #include "../general/connections.src.h"
+#include "../models/LocalDomain.src.h"
 
 using namespace FSMTP::SMTP;
 using namespace FSMTP::Networking;
