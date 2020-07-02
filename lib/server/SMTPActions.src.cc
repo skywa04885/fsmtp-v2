@@ -61,7 +61,14 @@ namespace FSMTP::Server::Actions
 			// Checks if this is an receive operation or relay operation
 			// - by reading the local addresses from the database
 			LocalDomain domain;
-			domain.getByDomain(addr.getDomain(), database);
+
+			try { domain.getByDomain(addr.getDomain(), database); }
+			catch (const EmptyQuery &e)
+			{
+
+			}
+
+			// Stores the data inside of the SMTP Session
 		} catch (const std::runtime_error &e)
 		{
 			throw SyntaxException(e.what());
