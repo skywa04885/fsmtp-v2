@@ -1,0 +1,10 @@
+[Unit]
+Description=Fannst SMTP Server instance
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/start_fsmtp.sh
+RestartSec=20
+
+[Install]
+WantedBy=multi-user.target

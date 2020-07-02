@@ -90,6 +90,7 @@ namespace FSMTP::Server
 		std::unique_ptr<CassandraConnection> database;
 		try {
 			database = std::make_unique<CassandraConnection>(_CASSANDRA_DATABASE_CONTACT_POINTS);
+			logger << "Verbinding met Apache Cassandra gemaakt." << ENDL;
 		} catch (const std::runtime_error &e)
 		{
 			logger << FATAL << "Kon geen verbinding met Apache Cassandra maken, verbinding wordt gesloten !" << ENDL << CLASSIC;

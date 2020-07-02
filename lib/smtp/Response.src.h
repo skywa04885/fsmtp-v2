@@ -42,14 +42,49 @@ namespace FSMTP::SMTP
 	class ServerResponse
 	{
 	public:
+		/**
+		 * Default constructor which will throw default responses
+		 *
+		 * @Param {SMTPResponseCommand &} r_CType
+		 * @Param {bool &} r_ESMTP
+		 * @Param {std::vector<SMTPServiceFunction> *} services
+		 * @Return void
+		 */
 		ServerResponse(
 			const SMTPResponseCommand &r_CType,
 			const bool &r_ESMTP, 
 			const std::vector<SMTPServiceFunction> *services
 		);
-		ServerResponse(const SMTPResponseCommand &r_CType, const std::string &r_Message);
 
+		/**
+		 * The default constructor for an custom user response
+		 * - but we will still add the status code by default
+		 *
+		 * @Param {SMTPResponseCommand &} r_CType
+		 * @Param {std::string &} r_Message
+		 * @Return void
+		 */
+		ServerResponse(
+			const SMTPResponseCommand &r_CType, 
+			const std::string &r_Message
+		);
+
+		/**
+		 * Builds the response and stores it in the string reference
+		 *
+		 * @Param {std::string &} ret
+		 * @Return void
+		 */
 		void build(std::string &ret);
+
+		/**
+		 * Static method which turns an enum value
+		 * - into an usable code in the string format
+		 *
+		 * @Param {SMTPResponseCommand &} c
+		 * @Return const char *
+		 */
+		static const char *rcToCode(const SMTPResponseCommand &c);
 	private:
 		std::string r_Message;
 		SMTPResponseCommand r_CType;

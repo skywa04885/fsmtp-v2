@@ -42,8 +42,32 @@ namespace FSMTP::SMTP
 	class ClientCommand
 	{
 	public:
-		ClientCommand(const ClientCommandType &c_CommandType, const std::vector<std::string> &c_Arguments);
+		/**
+		 * Default constructor for the ClientCommand
+		 *
+		 * @Param {ClientCommandType &} c_CommandType
+		 * @Param {std::vector<std::string> &} c_Arguments
+		 * @Return void
+		 */
+		ClientCommand(
+			const ClientCommandType &c_CommandType,
+			const std::vector<std::string> &c_Arguments);
+
+		/**
+		 * Default empty constructor for the ClientCommand
+		 *
+		 * @Param void
+		 * @Return void
+		 */
 		ClientCommand();
+
+		/**
+		 * Default constructor which actually
+		 * - parses an existing command
+		 *
+		 * @Param {std::string &} raw
+		 * @Return void
+		 */
 		ClientCommand(const std::string &raw);
 
 		/**
