@@ -16,27 +16,20 @@
 
 #pragma once
 
-#include <cstdint>
+#include <string>
 #include <stdexcept>
 
-#include <cassandra.h>
-
-namespace FSMTP::Connections
+namespace FSMTP
 {
-	class CassandraConnection
+	class EmptyQuery : public std::runtime_error
 	{
 	public:
-		CassandraConnection(const char *hosts);
-		~CassandraConnection();
-
-		CassSession *c_Session;
-		CassCluster *c_Cluster;
-		CassFuture *c_ConnectFuture;
+		EmptyQuery(const std::string &m): std::runtime_error(m) {};
 	};
 
-	class MongoDBConnection
+	class DatabaseException : public std::runtime_error
 	{
 	public:
-	private:
+		DatabaseException(const std::string &m): std::runtime_error(m) {};
 	};
 }

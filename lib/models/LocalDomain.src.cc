@@ -58,6 +58,54 @@ namespace FSMTP::Models
 		std::unique_ptr<CassandraConnection>& database
 	)
 	{
+		CassStatement *queryStatement = nullptr;
+		CassFuture *queryFuture = nullptr;
+		CassError rc;
+
+		// Creates the query and binds the parameters,
+		// - after this we execute the query and wait
+		// - for results
+		const char *query = R"(SELECT e_domain_uuid FROM fannst.local_domain WHERE e_domain = ?)";
 		
+		queryStatement = cass_statement_new(query, 1);
+		cass_statement_bind_string(queryStatement, 0, l_Domain.c_str());
+
+		queryFuture = cass_session_execute(database.get()->c_Session, queryStatement);
+		cass_future_wait(queryFuture);
+
+		// Checks if the query was successfully
+		// - if not throws error
+		rc = cass_future_error_code(queryFuture);
+		if (rc != CASS_OK)
+		{
+			// Gets the error message and combines it
+			// - with our own message, then throws it
+			const char *err = nullptr;
+			std::size_t errLen;
+			cass_future_error_message(queryFuture, &err, &errLen);
+
+			std::string errString(err, errLen);
+			std::string message = "cass_session_execute() failed: ";
+			message += errString;
+			throw DatabaseException(message);
+		}
+
+		// Gets the data from the query, and stores it in
+		// - the current instance
+		const CassResult *result = cass_future_get_result(queryFuture);
+		const CassRow *row = cass_result_first_row(result);
+
+		if (!row)
+		{
+			throw EmptyQuery("No LocalDomain found with this specific domain");
+		}
+
+		cass_value_get_uuid(cass_row_get_column_by_name(row, "u_uuid"), &this->l_UUID);
+
+		// Frees the memory since the query was already
+		// - performed, and we don't want to leak anything
+		cass_statement_free(queryStatement);
+		cass_future_free(queryFuture);
+		cass_result_free(result);
 	}
 }

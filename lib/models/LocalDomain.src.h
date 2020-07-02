@@ -22,6 +22,7 @@
 #include <cassandra.h>
 
 #include "../general/connections.src.h"
+#include "../general/exceptions.src.h"
 
 using namespace FSMTP::Connections;
 

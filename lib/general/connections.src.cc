@@ -39,8 +39,9 @@ namespace FSMTP::Connections
 			std::size_t errLen;
 			cass_future_error_message(this->c_ConnectFuture, &err, &errLen);
 
-			char message[1024];
-			sprintf(message, "cass_session_connect() failed: %.*s", errLen, err);
+			std::string errString(err, errLen);
+			std::string message = "cass_session_connect() failed: ";
+			message += errString;
 			throw std::runtime_error(message);
 		}
 	}
