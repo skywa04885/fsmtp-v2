@@ -14,19 +14,18 @@
 	limitations under the License.
 */
 
+// ==================================
+// [OLD CODE] It sucks !
+// ==================================
+
 #pragma once
 
-#include <string>
 #include <iostream>
-#include "hex.src.h"
+#include <memory.h>
+#include <sstream>
+#include <algorithm>
 
-namespace FSMTP::Encoding
-{
-	/**
-	 * Decodes 7 bit message
-	 *
-	 * @Param {const std::string &} raw
-	 * @Return {std::string}
-	 */
-	std::string decode7Bit(const std::string &raw);
-}
+namespace FSMTP::Base64 {
+  const char *encode(const char *raw);
+  const char *decode(const char *encoded);
+};

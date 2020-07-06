@@ -14,7 +14,53 @@
 	limitations under the License.
 */
 
+#include "encoding.src.h"
+
 namespace FSMTP::Encoding
 {
-	
+	/**
+	 * Decodes 7 bit message
+	 *
+	 * @Param {const std::string &} raw
+	 * @Return {std::string}
+	 */
+	std::string decode7Bit(const std::string &raw)
+	{
+		std::string res;
+
+		bool hexStarted = false;
+		std::string hex;
+		for (const char c : raw)
+		{
+			// Checks if an command started,
+			// - if so set the command started boolean to
+			// - true so we can start parsing
+			if (c == '=')
+			{
+				hexStarted = true;
+				continue;
+			}
+
+			if (hexStarted)
+			{
+				if (hex.size() == 0)
+				{
+					hex += c;
+				} else if (hex.size() == 1)
+				{
+					// Appends the final char, and then performs
+					// - the decode process, which appends it
+					// - back to the result, after this we clear
+					// - the result and set hex started to false
+					hex += c;
+					Encoding::HEX::decode(hex, res);
+					
+					hex.clear();
+					hexStarted = false;
+				}
+			} else res += c;
+		}
+
+		return res;
+	}
 }

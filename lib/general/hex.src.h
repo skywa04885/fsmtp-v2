@@ -16,17 +16,15 @@
 
 #pragma once
 
-#include <string>
+#include <cstdint>
 #include <iostream>
-#include "hex.src.h"
+#include <memory>
+#include <string>
 
-namespace FSMTP::Encoding
+namespace FSMTP::Encoding::HEX
 {
-	/**
-	 * Decodes 7 bit message
-	 *
-	 * @Param {const std::string &} raw
-	 * @Return {std::string}
-	 */
-	std::string decode7Bit(const std::string &raw);
+	char _reverseDict(const char c);
+
+	void decode(const std::string &raw, std::string &ret);
+	void encode(const std::string &raw, std::string &ret);
 }

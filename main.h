@@ -30,6 +30,7 @@
 #include "lib/general/connections.src.h"
 #include "lib/general/macros.src.h"
 #include "lib/general/logger.src.h"
+#include "lib/general/encoding.src.h"
 
 using namespace FSMTP;
 using Networking::SMTPSocketType;

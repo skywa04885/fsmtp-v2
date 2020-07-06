@@ -18,6 +18,12 @@
 
 int main(const int argc, const char **argv)
 {
+	std::string sdsd = "Hello world =3DThis is Luke <h1 test=3D\"asd\">";
+	std::string asd = Encoding::decode7Bit(sdsd);
+	std::cout << asd << std::endl;
+
+	return 0;
+
 	// Parses the arguments into an vector after this
 	// - we define the anonymous function which will compare
 	// - an string and an argument, this will allow all the possible
