@@ -28,6 +28,18 @@ namespace FSMTP::Models
 
 	EmailAddress::EmailAddress(const std::string &raw)
 	{
+		this->parse(raw);
+	}
+
+	EmailAddress::EmailAddress():
+		e_Name(),
+		e_Address()
+	{
+
+	}
+
+	void EmailAddress::parse(const std::string &raw)
+	{
 		// Checks the email format type, since there may
 		// - be multiple formats, and we need to parse it
 		// - in the correct way

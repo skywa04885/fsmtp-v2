@@ -32,6 +32,9 @@ namespace FSMTP::Models
 	public:
 		EmailAddress(const std::string &e_Name, const std::string &e_Address);
 		EmailAddress(const std::string &raw);
+		EmailAddress();
+
+		void parse(const std::string &raw);
 
 		const std::string &getAddress(void);
 		const std::string &getName(void);
@@ -63,11 +66,10 @@ namespace FSMTP::Models
 	{
 	public:
     FullEmail();
-	private:
 
     FullEmailType e_Type;
-    std::string e_TransportFrom;
-		std::string e_TransportTo;
+    EmailAddress e_TransportFrom;
+		EmailAddress e_TransportTo;
 		std::string e_Subject;
 		std::vector<EmailAddress> e_From;
 		std::vector<EmailAddress> e_To;

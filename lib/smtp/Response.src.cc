@@ -77,6 +77,21 @@ namespace FSMTP::SMTP
 				this->r_Message += " Syntax error: invalid command";
 				break;
 			}
+			case SMTPResponseCommand::SRC_BAD_EMAIL_ADDRESS:
+			{
+				this->r_Message += " Bad email address";
+				break;
+			}
+			case SMTPResponseCommand::SRC_DATA_START:
+			{
+				this->r_Message += " Proceed with body, end data with <CR><LF>.<CR><LF>";
+				break;
+			}
+			case SMTPResponseCommand::SRC_DATA_END:
+			{
+				this->r_Message += " Mail queued for delivery";
+				break;
+			}
 			case SMTPResponseCommand::SRC_HELO_RESP:
 			{
 				if (!r_ESMTP)
@@ -91,13 +106,11 @@ namespace FSMTP::SMTP
 					// - nullptr get default message
 					if (services == nullptr)
 					{
-						this->r_Message += ServerResponse::rcToCode(r_CType);
 						this->r_Message += ' ';
 						this->r_Message += _SMTP_SERVICE_DOMAIN;
 						this->r_Message += ", nice to meet you !";
 					} else
 					{
-						this->r_Message += ServerResponse::rcToCode(r_CType);
 						this->r_Message += ' ';
 						this->r_Message += _SMTP_SERVICE_DOMAIN;
 						this->r_Message += ", nice to meet you !\r\n";
@@ -199,6 +212,10 @@ namespace FSMTP::SMTP
 			case SMTPResponseCommand::SRC_PROCEED: return "250";
 			case SMTPResponseCommand::SRC_QUIT_RESP: return "221";
 			case SMTPResponseCommand::SRC_SYNTAX_ERR_INVALID_COMMAND: return "501";
+			case SMTPResponseCommand::SRC_SYNTAX_ARG_ERR: return "501";
+			case SMTPResponseCommand::SRC_BAD_EMAIL_ADDRESS: return "510";
+			case SMTPResponseCommand::SRC_DATA_START: return "354";
+			case SMTPResponseCommand::SRC_DATA_END: return "250";
 			default: throw std::runtime_error("The programmer messed up, and used an not implemented enum value ..");
 		}
 	}

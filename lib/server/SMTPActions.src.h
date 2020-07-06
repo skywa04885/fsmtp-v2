@@ -34,6 +34,7 @@
 #include "../general/macros.src.h"
 #include "../general/connections.src.h"
 #include "../models/LocalDomain.src.h"
+#include "SMTPServerSession.src.h"
 
 using namespace FSMTP::SMTP;
 using namespace FSMTP::Networking;
@@ -51,13 +52,45 @@ namespace FSMTP::Server::Actions
 		int32_t &fd;
 	} BasicActionData;
 
+	/**
+	 * Handles the "HELO" / "EHLO" command of the SMTP Server
+	 *
+	 * @Param {BasicActionData &data} data
+	 * @Return {void}
+	 */
 	void actionHelloInitial(
 		BasicActionData &data
 	);
 
+	/**
+	 * Handles the "MAIL FROM" command of the SMTP Server
+	 *
+	 * @Param {BasicActionData &} data
+	 * @Param {Logger &} logger
+	 * @Param {std::unique_ptr<CassandraConnection> &} database
+	 * @Param {SMTPServerSession &} session
+	 * @Return {void}
+	 */
 	void actionMailFrom(
 		BasicActionData &data,
 		Logger& logger,
-		std::unique_ptr<CassandraConnection> &database
+		std::unique_ptr<CassandraConnection> &database,
+		SMTPServerSession &session
+	);
+
+	/**
+	 * Handles the "RCPT TO" command of the SMTP Server
+	 *
+	 * @Param {BasicActionData &} data
+	 * @Param {Logger&} logger
+	 * @Param {std::unique_ptr<CassandraConnection> &} database
+	 * @Param {SMTPServerSession &} session
+	 * @Return {void}
+	 */
+	void actionRcptTo(
+		BasicActionData &data,
+		Logger& logger,
+		std::unique_ptr<CassandraConnection> &database,
+		SMTPServerSession &session
 	);
 }

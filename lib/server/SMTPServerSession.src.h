@@ -19,9 +19,12 @@
 #include <iostream>
 #include <cstdint>
 
+#include "../models/email.src.h"
+
 #define _SMTP_SERV_SESSION_RELAY_FLAG 1
 #define _SMTP_SERV_SESSION_AUTH_FLAG 2
 #define _SMTP_SERV_SESSION_SSL_FLAG 4
+#define _SMTP_SERV_SESSION_RELAY_TO_LOCAL 8
 
 #define _SMTP_SERV_PA_HELO 1
 #define _SMTP_SERV_PA_START_TLS 2
@@ -31,14 +34,15 @@
 #define _SMTP_SERV_PA_DATA_END 32
 #define _SMTP_SERV_PA_HELO_AFTER_STLS 64
 
+using namespace FSMTP::Models;
+
 namespace FSMTP::Server
 {
 	class SMTPServerSession
 	{
 	public:
-
-	private:
 		int32_t s_Flags;
 		int64_t s_PerformedActions;
+		FullEmail s_TransportMessage;
 	};
 }

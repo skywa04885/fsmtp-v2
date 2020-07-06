@@ -34,6 +34,7 @@
 #include "../networking/SMTPSocket.src.h"
 #include "../general/logger.src.h"
 #include "../general/macros.src.h"
+#include "SMTPServerSession.src.h"
 #include "SMTPActions.src.h"
 #include "SMTPServerExceptions.src.h"
 

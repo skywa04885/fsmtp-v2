@@ -34,6 +34,9 @@ file(GLOB smtp_headers "lib/smtp/*.h")
 file(GLOB models_sources "lib/models/*.cc")
 file(GLOB models_headers "lib/models/*.h")
 
+file(GLOB parsers_sources "lib/parsers/*.cc")
+file(GLOB parsers_headers "lib/parsers/*.h")
+
 set(sources "main.cc")
 set(headers "main.h")
 set(args "-lpthread -lssl -lcrypto -lcassandra -lboost_system -lboost_program_options")
@@ -58,6 +61,9 @@ add_executable(
 
 	${models_sources}
 	${models_headers}
+
+	${parsers_sources}
+	${parsers_headers}
 )
 
 target_link_libraries(${PROJECT_NAME} ${args})

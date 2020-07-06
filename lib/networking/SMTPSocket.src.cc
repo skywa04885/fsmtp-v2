@@ -281,14 +281,23 @@ namespace FSMTP::Networking
 			if (rc < 0) continue;
 			bufferPos += rc;
 
-      if (bufferPos >= 2) if (
-				memcmp(&buffer[bufferPos-2], "\r\n", 2) == 0
-			) break;
+			if (!bigData)
+			{
+	      if (bufferPos >= 2) if (
+					memcmp(&buffer[bufferPos-2], "\r\n", 2) == 0
+				) break;
+			} else
+			{
+				if (bufferPos >= 5) if (
+					memcmp(&buffer[bufferPos-5], "\r\n.\r\n", 5) == 0
+				) break;
+			}
 		}
 
 		// Creates an deep copy of the buffer into an string
 		// - after that we free the buffer which is now trash
-		ret = std::string(reinterpret_cast<char *>(buffer), bufferPos - 2);
+		if (!bigData) ret = std::string(reinterpret_cast<char *>(buffer), bufferPos - 2);
+		else ret = std::string(reinterpret_cast<char *>(buffer), bufferPos - 5);
 		free(buffer);
 	}
 

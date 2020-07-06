@@ -18,5 +18,24 @@
 
 #include <string>
 #include <iostream>
+#include <iterator>
+#include <algorithm>
+#include <stdexcept>
 
+#include "../general/macros.src.h"
+#include "../general/logger.src.h"
 
+namespace FSMTP::Parsers::MIME
+{
+	typedef struct
+	{
+		std::string h_Key;
+		std::string h_Value;
+	} MimeHeader;
+
+	void parseHeaders(
+		std::string raw,
+		std::vector<MimeHeader> &headers, 
+		const bool &removeMsGarbage
+	);
+}

@@ -21,15 +21,34 @@
 
 namespace FSMTP::Server
 {
-	class SyntaxException : public std::runtime_error
+	class SyntaxException : public std::exception
 	{
 	public:
-		SyntaxException(const std::string &m): std::runtime_error(m) {};
+		SyntaxException(const std::string &e_Message):
+			e_Message(e_Message)
+		{}
+
+		const char *what() const throw()
+    {
+    	return this->e_Message.c_str();
+    }
+
+	private:
+		std::string e_Message;
 	};
 
-	class FatalException : public std::runtime_error
+	class FatalException : public std::exception
 	{
 	public:
-		FatalException(const std::string &m): std::runtime_error(m) {};
+		FatalException(const std::string &e_Message):
+			e_Message(e_Message)
+		{}
+
+		const char *what() const throw()
+    {
+    	return this->e_Message.c_str();
+    }
+	private:
+		std::string e_Message;
 	};
 }

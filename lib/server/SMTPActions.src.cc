@@ -20,6 +20,12 @@
 
 namespace FSMTP::Server::Actions
 {
+	/**
+	 * Handles the "HELO" / "EHLO" command of the SMTP Server
+	 * 
+	 * @Param {BasicActionData &data} data
+	 * @Return {void}
+	 */
 	void actionHelloInitial(
 		BasicActionData &data
 	)
@@ -39,10 +45,20 @@ namespace FSMTP::Server::Actions
 		SMTPSocket::sendString(data.fd, false, mess);
 	}
 
+	/**
+	 * Handles the "MAIL FROM" command of the SMTP Server
+	 *
+	 * @Param {BasicActionData &} data
+	 * @Param {Logger &} logger
+	 * @Param {std::unique_ptr<CassandraConnection> &} database
+	 * @Param {SMTPServerSession &} session
+	 * @Return {void}
+	 */
 	void actionMailFrom(
 		BasicActionData &data,
 		Logger& logger,
-		std::unique_ptr<CassandraConnection> &database
+		std::unique_ptr<CassandraConnection> &database,
+		SMTPServerSession &session
 	)
 	{
 		// Performs some check if the arguments are there
@@ -55,23 +71,113 @@ namespace FSMTP::Server::Actions
 		// Parses the email address
 		try
 		{
-			EmailAddress addr(data.command.c_Arguments[0]);
-			DEBUG_ONLY(logger << DEBUG << "Email from: " << addr.getName() << '<' << addr.getAddress() << '>' << ENDL << CLASSIC);
+			// Parses the address and then
+			// - gets the info such as username and domain
+			session.s_TransportMessage.e_TransportFrom.parse(data.command.c_Arguments[0]);
+			std::string tDomain;
+			session.s_TransportMessage.e_TransportFrom.getDomain(tDomain);
+			DEBUG_ONLY(logger << DEBUG << "Email from: " << session.s_TransportMessage.e_TransportFrom.getName() << '<' << session.s_TransportMessage.e_TransportFrom.getAddress() << '>' << ENDL << CLASSIC);
 
 			// Checks if this is an receive operation or relay operation
 			// - by reading the local addresses from the database
 			LocalDomain domain;
-
-			try { domain.getByDomain(addr.getDomain(), database); }
+			try {
+				// Performs the query and if completed
+				// - sets the relay flag, if failed in the catch
+				// - we clear the relay flag
+				domain.getByDomain(tDomain, database);
+				session.s_Flags |= _SMTP_SERV_SESSION_RELAY_FLAG;
+			}
 			catch (const EmptyQuery &e)
 			{
-
+				session.s_Flags &= ~_SMTP_SERV_SESSION_RELAY_FLAG;
 			}
-
-			// Stores the data inside of the SMTP Session
 		} catch (const std::runtime_error &e)
 		{
 			throw SyntaxException(e.what());
 		}
+
+		// Sends the response which states that the client
+		// - may proceed with sending the email
+		ServerResponse resp(SMTPResponseCommand::SRC_PROCEED, data.esmtp, nullptr);
+		std::string mess;
+		resp.build(mess);
+		SMTPSocket::sendString(data.fd, false, mess);
+	}
+
+	/**
+	 * Handles the "RCPT TO" command of the SMTP Server
+	 *
+	 * @Param {BasicActionData &} data
+	 * @Param {Logger&} logger
+	 * @Param {std::unique_ptr<CassandraConnection> &} database
+	 * @Param {SMTPServerSession &} session
+	 * @Return {void}
+	 */
+	void actionRcptTo(
+		BasicActionData &data,
+		Logger& logger,
+		std::unique_ptr<CassandraConnection> &database,
+		SMTPServerSession &session
+	)
+	{
+		// Performs some check if the arguments are there
+		// - if not there we throw an error
+		if (data.command.c_Arguments.size() == 0)
+			throw SyntaxException("Empty RCPT TO is not allowed");
+		else if (data.command.c_Arguments.size() > 1)
+			throw SyntaxException("RCPT TO may only have one single argument");
+
+
+		// Parses the email address
+		try
+		{
+			// Parses the address and then
+			// - gets the info such as username and domain
+			session.s_TransportMessage.e_TransportTo.parse(data.command.c_Arguments[0]);
+			std::string tDomain;
+			session.s_TransportMessage.e_TransportTo.getDomain(tDomain);
+			DEBUG_ONLY(logger << DEBUG << "Email to: " << session.s_TransportMessage.e_TransportTo.getName() << '<' << session.s_TransportMessage.e_TransportTo.getAddress() << '>' << ENDL << CLASSIC);
+
+			// Checks if this is an receive operation or relay operation
+			// - by reading the local addresses from the database
+			LocalDomain domain;
+			try {
+				// Checks if the domain is is in the database
+				domain.getByDomain(tDomain, database);
+
+				// If we're relaying, and the domain is in
+				// - the database, we want to set the relay
+				// - to local flag
+				if ((session.s_Flags &= _SMTP_SERV_SESSION_RELAY_FLAG) == _SMTP_SERV_SESSION_RELAY_FLAG)
+				{
+					session.s_Flags |= _SMTP_SERV_SESSION_RELAY_TO_LOCAL;
+				}
+			}
+			catch (const EmptyQuery &e)
+			{
+				if ((session.s_Flags &= _SMTP_SERV_SESSION_RELAY_FLAG) != _SMTP_SERV_SESSION_RELAY_FLAG)
+				{
+					// Sends the error message
+					ServerResponse resp(SMTPResponseCommand::SRC_BAD_EMAIL_ADDRESS, data.esmtp, nullptr);
+					std::string mess;
+					resp.build(mess);
+					SMTPSocket::sendString(data.fd, false, mess);
+
+					// Throws the fatal exception	
+					throw FatalException("Domain niet gevonden in onze database !");
+				}
+			}
+		} catch (const std::runtime_error &e)
+		{
+			throw SyntaxException(e.what());
+		}
+
+		// Sends the response which states that the client
+		// - may proceed with sending the email
+		ServerResponse resp(SMTPResponseCommand::SRC_PROCEED, data.esmtp, nullptr);
+		std::string mess;
+		resp.build(mess);
+		SMTPSocket::sendString(data.fd, false, mess);
 	}
 }

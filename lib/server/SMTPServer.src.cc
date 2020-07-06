@@ -79,6 +79,7 @@ namespace FSMTP::Server
 		SSL *ssl = nullptr;
 		int32_t executed = 0x0;
 		SMTPServer &server = *reinterpret_cast<SMTPServer *>(u);
+		SMTPServerSession session;
 
 		// Creates the logger with the clients address
 		// - so we can get awesome debug messages
@@ -173,15 +174,37 @@ namespace FSMTP::Server
 					}
 					case ClientCommandType::CCT_MAIL_FROM:
 					{
-						actionMailFrom(actionData, logger, database);
+						actionMailFrom(actionData, logger, database, session);
 						break;
 					}
 					case ClientCommandType::CCT_RCPT_TO:
 					{
+						actionRcptTo(actionData, logger, database, session);
 						break;
 					}
 					case ClientCommandType::CCT_DATA:
 					{
+						// Sends the response that the client
+						// - may start sending the data
+						{
+							std::string message;
+							ServerResponse resp(SMTPResponseCommand::SRC_DATA_START, server.s_UseESMTP, nullptr);
+							resp.build(message);
+							SMTPSocket::sendString(fd, usesSsl, message);
+						}
+
+						// Receives the full message
+						std::string data;
+						SMTPSocket::receiveString(fd, ssl, true, data);
+
+						std::cout << data << std::endl;
+
+						// Sends the data finished command
+						// - to indicate the body was received
+						std::string message;
+						ServerResponse resp(SMTPResponseCommand::SRC_DATA_END, server.s_UseESMTP, nullptr);
+						resp.build(message);
+						SMTPSocket::sendString(fd, usesSsl, message);
 						break;
 					}
 					case ClientCommandType::CCT_UNKNOWN:
