@@ -303,13 +303,14 @@ namespace FSMTP::Parsers::MIME
 
 							// Parses the section temp into valid content
 							// - first starting with the headers
-							std::vector<EmailHeader> headersParsed;
+							EmailBodySection section;
 							std::string headers;
 							std::string body;
 							splitHeadersAndBody(sectionTemp, headers, body);
 
-							// Parses the headers
-							parseHeaders(headers, headersParsed, false);
+							// Parses the headers, and gets the content
+							// - type
+							parseHeaders(headers, section.e_Headers, false);
 
 							// Clears the temp, and finishes the round
 							// - by incrementing the index
