@@ -52,6 +52,9 @@ namespace FSMTP::Connections
 		// - automatically closes the session to the database
 		cass_future_free(this->c_ConnectFuture);
 		cass_cluster_free(this->c_Cluster);
+		CassFuture *future = cass_session_close(this->c_Session);
+		cass_future_wait(future);
+		cass_future_free(future);
 		cass_session_free(this->c_Session);
 	}
 }

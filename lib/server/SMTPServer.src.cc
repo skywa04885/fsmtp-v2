@@ -197,7 +197,7 @@ namespace FSMTP::Server
 						std::string data;
 						SMTPSocket::receiveString(fd, ssl, true, data);
 
-						std::cout << data << std::endl;
+						MIME::parseMessage(data, session.s_TransportMessage, true);
 
 						// Sends the data finished command
 						// - to indicate the body was received

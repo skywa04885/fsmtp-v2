@@ -49,28 +49,47 @@ namespace FSMTP::Models
 		std::string e_Name;
 	};
 
-	class EmailHeader
+	typedef enum : uint8_t
 	{
-	public:
-	private:
+		ECT_TEXT_PLAIN = 0,
+		ECT_TEXT_HTML,
+		ECT_MULTIPART_ALTERNATIVE,
+		ECT_NOT_FUCKING_KNOWN
+	} EmailContentType;
+
+	/**
+	 * Turns an string into an enum value
+	 * - of email content type
+	 *
+	 * @Param {const std::string &} raw
+	 * @Return {EmailContentType}
+	 */
+	EmailContentType stringToEmailContentType(const std::string &raw);
+
+	typedef struct
+	{
 		std::string e_Key;
 		std::string e_Value;
-	};
+	} EmailHeader;
 
-  typedef enum : uint8_t
-  {
-
-  } FullEmailType;
+	typedef struct
+	{
+		std::string e_Content;
+		EmailContentType e_type;
+		std::vector<EmailHeader> e_Headers;
+		int32_t e_Index;
+	} EmailBodySection;
 
 	class FullEmail
 	{
 	public:
     FullEmail();
 
-    FullEmailType e_Type;
+    EmailContentType e_ContentType;
     EmailAddress e_TransportFrom;
 		EmailAddress e_TransportTo;
 		std::string e_Subject;
+		std::vector<EmailBodySection> e_BodySections;
 		std::vector<EmailAddress> e_From;
 		std::vector<EmailAddress> e_To;
 		std::vector<EmailHeader> e_Headers;

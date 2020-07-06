@@ -19,6 +19,10 @@
 
 namespace FSMTP::Models
 {
+	// ======================================================
+	// The email address stuff
+	// ======================================================
+
 	EmailAddress::EmailAddress(
 		const std::string &e_Name,
 		const std::string &e_Address
@@ -93,8 +97,25 @@ namespace FSMTP::Models
 		return this->e_Name;
 	}
 
-  // The Email class stuff
+	// ======================================================
+	// The email stuff, instead of the address stuff
+	// ======================================================
   
   FullEmail::FullEmail()
   {}
+
+  /**
+	 * Turns an string into an enum value
+	 * - of email content type
+	 *
+	 * @Param {const std::string &} raw
+	 * @Return {EmailContentType}
+	 */
+	EmailContentType stringToEmailContentType(const std::string &raw)
+	{
+		if (raw == "multipart/alternative") return EmailContentType::ECT_MULTIPART_ALTERNATIVE;
+		else if (raw == "text/plain") return EmailContentType::ECT_TEXT_PLAIN;
+		else if (raw == "text/html") return EmailContentType::ECT_TEXT_HTML;
+		else return EmailContentType::ECT_NOT_FUCKING_KNOWN;
+	}
 }

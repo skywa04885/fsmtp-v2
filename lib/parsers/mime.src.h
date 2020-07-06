@@ -24,18 +24,87 @@
 
 #include "../general/macros.src.h"
 #include "../general/logger.src.h"
+#include "../general/cleanup.src.h"
+#include "../models/email.src.h"
+
+using namespace FSMTP::Cleanup;
+using namespace FSMTP::Models;
 
 namespace FSMTP::Parsers::MIME
 {
-	typedef struct
-	{
-		std::string h_Key;
-		std::string h_Value;
-	} MimeHeader;
+	/**
+	 * Splits the headers and body
+	 *
+	 * @Param {const std::string &} raw
+	 * @Param {std::string &} headers
+	 * @Param {std::string &} body
+	 * @Return {void}
+	 */
+	void splitHeadersAndBody(
+		const std::string &raw,
+		std::string &headers,
+		std::string &body
+	);
 
+	/**
+	 * Parses the headers
+	 *
+	 * @Param {const std::string &} raw
+	 * @Param {std::vector<MimeHeader> &} headers
+	 * @Param {const bool &} removeMsGarbage
+	 * @Param {void}
+	 */
 	void parseHeaders(
-		std::string raw,
-		std::vector<MimeHeader> &headers, 
+		const std::string &raw,
+		std::vector<EmailHeader> &headers, 
 		const bool &removeMsGarbage
 	);
+
+
+	/**
+	 * Parses the headers
+	 *
+	 * @Param {const std::string &} raw
+	 * @Param {FullEmail &} email
+	 * @Param {const bool &} removeMsGarbage
+	 * @Param {void}
+	 */
+	void parseMessage(
+		std::string raw,
+		FullEmail& email,
+		const bool &removeMsGarbage
+	);
+
+	/**
+	 * Joins separated lines inside of the messae
+	 * these are some or another way required ;(
+	 *
+	 * @Parma {std::string &} raw
+	 */
+	void joinMessageLines(
+		std::string &raw
+	);
+
+	/**
+	 * Parses multipart email body
+	 *
+	 * @Param {const std::string &} raw
+	 * @Param {EmailContentType &} contentType
+	 * @Param {std::vector<EmailBodySection> &} sections
+	 * @Return {void}
+	 */
+	void parseMultipartBody(
+		const std::string &raw,
+		const EmailContentType &contentType,
+		std::vector<EmailBodySection> &sections,
+		const std::string &boundary
+	);
+
+	/**
+	 * Parses header sub arguments
+	 *
+	 * @Param {const std::string &} raw
+	 * @Return {void}
+	 */
+	std::vector<std::string> parseHeaderSubtext(const std::string &raw);
 }

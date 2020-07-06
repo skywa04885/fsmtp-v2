@@ -37,6 +37,7 @@
 #include "SMTPServerSession.src.h"
 #include "SMTPActions.src.h"
 #include "SMTPServerExceptions.src.h"
+#include "../parsers/mime.src.h"
 
 #define _SERVER_OPT_ENABLE_AUTH 0x1
 #define _SERVER_OPT_ENABLE_TLS 0x2
@@ -45,6 +46,7 @@
 
 #define _SERVER_OPT_ENABLE_HELP 0xF
 
+using namespace FSMTP::Parsers;
 using namespace FSMTP;
 using namespace FSMTP::SMTP;
 using namespace FSMTP::Networking;
