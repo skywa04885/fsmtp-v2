@@ -26,9 +26,11 @@
 #include "../general/logger.src.h"
 #include "../general/cleanup.src.h"
 #include "../models/email.src.h"
+#include "../general/encoding.src.h"
 
 using namespace FSMTP::Cleanup;
 using namespace FSMTP::Models;
+using namespace FSMTP::Encoding;
 
 namespace FSMTP::Parsers::MIME
 {

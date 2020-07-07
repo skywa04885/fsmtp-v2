@@ -87,16 +87,6 @@ namespace FSMTP::Models
 		ret = this->e_Address.substr(0, index);
 	}
 
-	const std::string &EmailAddress::getAddress(void)
-	{
-		return this->e_Address;
-	}
-
-	const std::string &EmailAddress::getName(void)
-	{
-		return this->e_Name;
-	}
-
 	// ======================================================
 	// The email stuff, instead of the address stuff
 	// ======================================================
@@ -118,4 +108,38 @@ namespace FSMTP::Models
 		else if (raw == "text/html") return EmailContentType::ECT_TEXT_HTML;
 		else return EmailContentType::ECT_NOT_FUCKING_KNOWN;
 	}
+
+	/**
+	 * Turns an string into an enum value of
+	 * - EmailTransferEncoding type
+	 *
+	 * @Param {const std::string &} raw
+	 * @Return {EmailContentType}
+	 */
+	EmailTransferEncoding stringToEmailTransferEncoding(const std::string &raw)
+	{
+		if (raw == "7bit") return EmailTransferEncoding::ETE_7BIT;
+		else if (raw == "8bit") return EmailTransferEncoding::ETE_8BIT;
+		else return EmailTransferEncoding::ETE_NOT_FUCKING_KNOWN;
+	}
+
+
+  /**
+   * Prints an full email to the console
+   *
+   * @Param {FullEmail &} email
+   * @Param {Logger &logger} logger
+   * @Return {void}
+   */
+  void FullEmail::print(FullEmail &email, Logger &logger)
+  {
+  	logger << DEBUG;
+
+  	// Prints the basic email information
+  	logger << "FullEmail:" << ENDL;
+  	logger << " - From: " << email.e_TransportFrom.e_Name << '<' << email.e_TransportFrom.e_Address << '>' << ENDL;
+  	logger << " - To: " << email.e_TransportTo.e_Name << '<' << email.e_TransportTo.e_Address << '>' << ENDL;
+  	logger << " - Subject: " << email.e_Subject << ENDL;
+  	logger << CLASSIC;
+  }
 }

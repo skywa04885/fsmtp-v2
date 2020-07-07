@@ -112,6 +112,7 @@ namespace FSMTP::Networking
 		struct sockaddr_in clientSockAddr;
 		int32_t clientSockFD;
 		int32_t sockAddrSize = sizeof (struct sockaddr_in);
+		int32_t rc;
 
 		// Sets running to true and performs infinite loop
 		// - if the run variable is set to false, we will
@@ -132,6 +133,25 @@ namespace FSMTP::Networking
 				continue;
 			}
 			std::cout << "Accepted client " << std::endl;
+
+			// Sets the socket timeout so some clients
+			// - will not keep the server blocked
+			struct timeval timeout;
+			timeout.tv_sec = 5;
+			timeout.tv_usec = 0;
+
+			rc = setsockopt(clientSockFD, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char *>(&timeout), sizeof (timeout));
+			if (rc < 0)
+			{
+				std::cerr << "setsockopt() failed: " << strerror(rc) << std::endl;
+				continue;
+			}
+			rc = setsockopt(clientSockFD, SOL_SOCKET, SO_SNDTIMEO, reinterpret_cast<char *>(&timeout), sizeof (timeout));
+			if (rc < 0)
+			{
+				std::cerr << "setsockopt() failed: " << strerror(rc) << std::endl;
+				continue;
+			}
 
 			// Prepares the data, and then creates an new thread for the
 			// - callback which will handle the request stuff ;)
@@ -269,7 +289,7 @@ namespace FSMTP::Networking
 			// Checks if we need to allocate more memory
 			// - since it will otherwise use unallocated memory
 			// - which will just break everything
-			if (bufferPos >= bufferSize)
+			if (bufferPos + _SMTP_RECEIVE_BUFFER_SIZE >= bufferSize)
 			{
 				bufferSize += _SMTP_RECEIVE_BUFFER_SIZE;
 				buffer = reinterpret_cast<uint8_t *>(realloc(buffer, bufferSize));
@@ -278,7 +298,11 @@ namespace FSMTP::Networking
 			// Receives the data and then increments the buffer position
 			// - after that we check if there is a <CR><LF> in the message
 			rc = recv(sfd, reinterpret_cast<char *>(&buffer[bufferPos]), _SMTP_RECEIVE_BUFFER_SIZE, 0x0);
-			if (rc < 0) continue;
+			if (rc <= 0)
+			{
+				free(buffer);
+				throw std::runtime_error("Could not receive data !");
+			}
 			bufferPos += rc;
 
 			if (!bigData)

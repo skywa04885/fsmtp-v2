@@ -76,7 +76,7 @@ namespace FSMTP::Server::Actions
 			session.s_TransportMessage.e_TransportFrom.parse(data.command.c_Arguments[0]);
 			std::string tDomain;
 			session.s_TransportMessage.e_TransportFrom.getDomain(tDomain);
-			DEBUG_ONLY(logger << DEBUG << "Email from: " << session.s_TransportMessage.e_TransportFrom.getName() << '<' << session.s_TransportMessage.e_TransportFrom.getAddress() << '>' << ENDL << CLASSIC);
+			DEBUG_ONLY(logger << DEBUG << "Email from: " << session.s_TransportMessage.e_TransportFrom.e_Name << '<' << session.s_TransportMessage.e_TransportFrom.e_Address << '>' << ENDL << CLASSIC);
 
 			// Checks if this is an receive operation or relay operation
 			// - by reading the local addresses from the database
@@ -137,7 +137,7 @@ namespace FSMTP::Server::Actions
 			session.s_TransportMessage.e_TransportTo.parse(data.command.c_Arguments[0]);
 			std::string tDomain;
 			session.s_TransportMessage.e_TransportTo.getDomain(tDomain);
-			DEBUG_ONLY(logger << DEBUG << "Email to: " << session.s_TransportMessage.e_TransportTo.getName() << '<' << session.s_TransportMessage.e_TransportTo.getAddress() << '>' << ENDL << CLASSIC);
+			DEBUG_ONLY(logger << DEBUG << "Email to: " << session.s_TransportMessage.e_TransportTo.e_Name << '<' << session.s_TransportMessage.e_TransportTo.e_Address << '>' << ENDL << CLASSIC);
 
 			// Checks if this is an receive operation or relay operation
 			// - by reading the local addresses from the database

@@ -19,9 +19,11 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <iostream>
 #include <cstdint>
 
 #include "../general/cleanup.src.h"
+#include "../general/logger.src.h"
 
 using namespace FSMTP::Cleanup;
 
@@ -36,25 +38,32 @@ namespace FSMTP::Models
 
 		void parse(const std::string &raw);
 
-		const std::string &getAddress(void);
-		const std::string &getName(void);
-
 		void setAddress(const std::string &address);
 		void setName(const std::string &name);
 
 		void getDomain(std::string &ret);
 		void getUsername(std::string &ret);
-	private:
+
 		std::string e_Address;
 		std::string e_Name;
 	};
 
 	typedef enum : uint8_t
 	{
+		ETE_8BIT = 0,
+		ETE_7BIT,
+		ETE_QUOTED_PRINTABLE,
+		ETE_NOT_FUCKING_KNOWN,
+		ETE_NOT_FOUND
+	} EmailTransferEncoding;
+
+	typedef enum : uint8_t
+	{
 		ECT_TEXT_PLAIN = 0,
 		ECT_TEXT_HTML,
 		ECT_MULTIPART_ALTERNATIVE,
-		ECT_NOT_FUCKING_KNOWN
+		ECT_NOT_FUCKING_KNOWN,
+		ECT_NOT_FOUND
 	} EmailContentType;
 
 	/**
@@ -66,6 +75,15 @@ namespace FSMTP::Models
 	 */
 	EmailContentType stringToEmailContentType(const std::string &raw);
 
+	/**
+	 * Turns an string into an enum value of
+	 * - EmailTransferEncoding type
+	 *
+	 * @Param {const std::string &} raw
+	 * @Return {EmailContentType}
+	 */
+	EmailTransferEncoding stringToEmailTransferEncoding(const std::string &raw);
+
 	typedef struct
 	{
 		std::string e_Key;
@@ -75,7 +93,7 @@ namespace FSMTP::Models
 	typedef struct
 	{
 		std::string e_Content;
-		EmailContentType e_type;
+		EmailContentType e_Type;
 		std::vector<EmailHeader> e_Headers;
 		int32_t e_Index;
 	} EmailBodySection;
@@ -85,10 +103,20 @@ namespace FSMTP::Models
 	public:
     FullEmail();
 
+    /**
+     * Prints an full email to the console
+     *
+     * @Param {FullEmail &} email
+     * @Param {Logger &logger} logger
+     * @Return {void}
+     */
+    static void print(FullEmail &email, Logger &logger);
+
     EmailContentType e_ContentType;
     EmailAddress e_TransportFrom;
 		EmailAddress e_TransportTo;
 		std::string e_Subject;
+		std::string e_MessageID;
 		std::vector<EmailBodySection> e_BodySections;
 		std::vector<EmailAddress> e_From;
 		std::vector<EmailAddress> e_To;

@@ -160,9 +160,14 @@ namespace FSMTP::Parsers::MIME
 						break;
 					}
 				}
+			} else if (h.e_Key == "subject")
+			{
+				email.e_Subject = h.e_Value;
+			} else if (h.e_Key == 'message-id')
+			{
+				email.e_MessageID = e.e_Value;
 			}
 		}
-
 		// parseMultipartBody(body, )
 	}
 
@@ -273,7 +278,7 @@ namespace FSMTP::Parsers::MIME
 				// Starts 
 				std::stringstream stream(raw);
 				std::string token, sectionTemp;
-				std::size_t contentIndex;
+				std::size_t contentIndex = 0;
 				bool sectionStarted = false;
 				while (std::getline(stream, token))
 				{
@@ -304,6 +309,7 @@ namespace FSMTP::Parsers::MIME
 							// Parses the section temp into valid content
 							// - first starting with the headers
 							EmailBodySection section;
+							section.e_Index = contentIndex;
 							std::string headers;
 							std::string body;
 							splitHeadersAndBody(sectionTemp, headers, body);
@@ -311,6 +317,52 @@ namespace FSMTP::Parsers::MIME
 							// Parses the headers, and gets the content
 							// - type
 							parseHeaders(headers, section.e_Headers, false);
+
+							// Finds header segments we need to perform decoding
+							// - of the data
+							section.e_Type = EmailContentType::ECT_NOT_FOUND;
+							EmailTransferEncoding transferEncoding = EmailTransferEncoding::ETE_NOT_FOUND;
+							for (EmailHeader &h : section.e_Headers)
+							{
+								if (h.e_Key == "content-type")
+								{
+									// Parses the sub values, and checks if the
+									// - subtext is valid
+									std::vector<std::string> vals = parseHeaderSubtext(h.e_Value);
+									if (vals.size() == 0)
+										throw std::runtime_error("Content type not found !");
+
+									section.e_Type = stringToEmailContentType(vals[0]);
+								} else if (h.e_Key == "content-transfer-encoding")
+								{
+									// Parses the transfer encoding
+									transferEncoding = stringToEmailTransferEncoding(h.e_Value);
+								}
+							}
+
+							// Validates the enums so we can check if the
+							// - client has sent valid information
+							if (section.e_Type == EmailContentType::ECT_NOT_FOUND)
+								throw std::runtime_error("Content type not found");
+							if (transferEncoding == EmailTransferEncoding::ETE_NOT_FOUND)
+								throw std::runtime_error("Content transfer encoding not found");
+
+							if (section.e_Type == EmailContentType::ECT_NOT_FUCKING_KNOWN)
+								throw std::runtime_error("Content type not implemented");
+							if (transferEncoding == EmailTransferEncoding::ETE_NOT_FUCKING_KNOWN)
+								throw std::runtime_error("Content transfer encoding not implemented");
+
+							// Starts decoding the body section if required
+							// - for example "7bit" or "quoted-printable"
+							switch (transferEncoding)
+							{
+								case EmailTransferEncoding::ETE_7BIT:
+								{
+									section.e_Content = decode7Bit(body);
+									break;
+								}
+								default: section.e_Content = body;								
+							}
 
 							// Clears the temp, and finishes the round
 							// - by incrementing the index

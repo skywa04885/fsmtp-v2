@@ -115,7 +115,14 @@ namespace FSMTP::Server
 		{
 			// Receives the data from the client
 			std::string rawData;
-			SMTPSocket::receiveString(fd, ssl, false, rawData);
+			try
+			{
+				SMTPSocket::receiveString(fd, ssl, false, rawData);
+			} catch(const std::runtime_error &e)
+			{
+				logger << FATAL << "An exception occured: " << e.what() << ", closing connection !" << ENDL << CLASSIC;
+				break;
+			}
 
 			// Performs the parsing of the command and then checks which
 			// - method we need to call to perform the command
@@ -198,6 +205,7 @@ namespace FSMTP::Server
 						SMTPSocket::receiveString(fd, ssl, true, data);
 
 						MIME::parseMessage(data, session.s_TransportMessage, true);
+						FullEmail::print(session.s_TransportMessage, logger);
 
 						// Sends the data finished command
 						// - to indicate the body was received
