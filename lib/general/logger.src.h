@@ -57,6 +57,8 @@ namespace FSMTP
 		{
 			this->l_Old = this->l_Level;
 			this->l_Level = a;
+
+			return *this;
 		}
 
 		Logger &append(const LoggerOpts &a)
@@ -113,6 +115,8 @@ namespace FSMTP
 					break;
 				}
 			}
+
+			return *this;
 		}
 
 		template<typename T>

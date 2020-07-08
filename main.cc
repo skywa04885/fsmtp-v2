@@ -75,6 +75,16 @@ int main(const int argc, const char **argv)
 	}
 
 	// Runs the server
+	Logger logger("Main", LoggerLevel::INFO);
+
+	// Prints the credits haha
+	for (std::size_t i = 0; i < 80; i++)
+		logger << '=';
+	logger << ENDL;
+	logger << "FSMTP V2 Door Skywa04885 - https://software.fannst.nl/fsmtp-v2" << ENDL;
+	for (std::size_t i = 0; i < 80; i++)
+		logger << '=';
+	logger << ENDL;
 
 	int32_t opts = 0x0;
 

@@ -29,5 +29,5 @@ namespace FSMTP::Encoding
 	 * @Param {const std::string &} raw
 	 * @Return {std::string}
 	 */
-	std::string decode7Bit(const std::string &raw);
+	std::string decodeQuotedPrintable(const std::string &raw);
 }

@@ -104,6 +104,7 @@ namespace FSMTP::Models
 	EmailContentType stringToEmailContentType(const std::string &raw)
 	{
 		if (raw == "multipart/alternative") return EmailContentType::ECT_MULTIPART_ALTERNATIVE;
+		else if (raw == "multipart/mixed") return EmailContentType::ECT_MULTIPART_MIXED;
 		else if (raw == "text/plain") return EmailContentType::ECT_TEXT_PLAIN;
 		else if (raw == "text/html") return EmailContentType::ECT_TEXT_HTML;
 		else return EmailContentType::ECT_NOT_FUCKING_KNOWN;
@@ -137,9 +138,31 @@ namespace FSMTP::Models
 
   	// Prints the basic email information
   	logger << "FullEmail:" << ENDL;
-  	logger << " - From: " << email.e_TransportFrom.e_Name << '<' << email.e_TransportFrom.e_Address << '>' << ENDL;
-  	logger << " - To: " << email.e_TransportTo.e_Name << '<' << email.e_TransportTo.e_Address << '>' << ENDL;
+  	logger << " - Transport From: " << email.e_TransportFrom.e_Name << '<' << email.e_TransportFrom.e_Address << '>' << ENDL;
+  	logger << " - Transport To: " << email.e_TransportTo.e_Name << '<' << email.e_TransportTo.e_Address << '>' << ENDL;
   	logger << " - Subject: " << email.e_Subject << ENDL;
+  	logger << " - Content Type: " << email.e_ContentType << ENDL;
+  	logger << " - Message ID: " << email.e_MessageID << ENDL;
+  	logger << " - Headers (Without Microsoft Bullshit): " << ENDL;
+
+  	std::size_t c = 0;
+  	for (const EmailHeader &h : email.e_Headers)
+  	{
+  		logger << "\t - Header[no: " << c++ << "]: <"
+  			<< h.e_Key << "> - <" << h.e_Value << ">" << ENDL;
+  	}
+
+  	logger << " - Body sections: " << ENDL;
+  	c = 0;
+  	for (const EmailBodySection &s : email.e_BodySections)
+  	{
+  		logger << "\t - Body Section[no: " << c++ << ", cType: "
+  			<< s.e_Type << ", cTransEnc: " 
+  			<< s.e_TransferEncoding << "]: " << ENDL;
+
+  		logger << "\t\t" << s.e_Content << ENDL;
+  	}
+
   	logger << CLASSIC;
   }
 }

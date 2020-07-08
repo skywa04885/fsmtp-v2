@@ -62,6 +62,7 @@ namespace FSMTP::Models
 		ECT_TEXT_PLAIN = 0,
 		ECT_TEXT_HTML,
 		ECT_MULTIPART_ALTERNATIVE,
+		ECT_MULTIPART_MIXED,
 		ECT_NOT_FUCKING_KNOWN,
 		ECT_NOT_FOUND
 	} EmailContentType;
@@ -96,6 +97,7 @@ namespace FSMTP::Models
 		EmailContentType e_Type;
 		std::vector<EmailHeader> e_Headers;
 		int32_t e_Index;
+		EmailTransferEncoding e_TransferEncoding;
 	} EmailBodySection;
 
 	class FullEmail

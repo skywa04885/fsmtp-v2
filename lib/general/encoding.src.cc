@@ -24,7 +24,7 @@ namespace FSMTP::Encoding
 	 * @Param {const std::string &} raw
 	 * @Return {std::string}
 	 */
-	std::string decode7Bit(const std::string &raw)
+	std::string decodeQuotedPrintable(const std::string &raw)
 	{
 		std::string res;
 
@@ -43,16 +43,15 @@ namespace FSMTP::Encoding
 
 			if (hexStarted)
 			{
-				if (hex.size() == 0)
-				{
-					hex += c;
-				} else if (hex.size() == 1)
+				hex += c;
+
+				if (hex.size() == 2)
 				{
 					// Appends the final char, and then performs
 					// - the decode process, which appends it
 					// - back to the result, after this we clear
 					// - the result and set hex started to false
-					hex += c;
+					std::cout << hex << std::endl;
 					Encoding::HEX::decode(hex, res);
 					
 					hex.clear();

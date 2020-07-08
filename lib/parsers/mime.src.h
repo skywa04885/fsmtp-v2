@@ -109,4 +109,10 @@ namespace FSMTP::Parsers::MIME
 	 * @Return {void}
 	 */
 	std::vector<std::string> parseHeaderSubtext(const std::string &raw);
+
+	void parseBodySection(
+		const std::string &raw,
+		EmailBodySection &section,
+		bool plain
+	);
 }
