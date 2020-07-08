@@ -166,93 +166,6 @@ namespace FSMTP::Parsers::MIME
 	}
 
 	/**
-	 * Parses multipart email body
-	 *
-	 * @Param {const std::string &} raw
-	 * @Param {EmailContentType &} contentType
-	 * @Param {std::vector<EmailBodySection> &} sections
-	 * @Return {void}
-	 */
-	void parseMultipartBody(
-		const std::string &raw,
-		const EmailContentType &contentType,
-		std::vector<EmailBodySection> &sections,
-		const std::string &boundary
-	)
-	{
-		// Checks which content type it is,
-		// - and the processes the email accordingly
-		switch (contentType)
-		{
-			case EmailContentType::ECT_MULTIPART_ALTERNATIVE: case EmailContentType::ECT_MULTIPART_MIXED:
-			{
-				// ======================================================
-				// Start multipart/alternative parser
-				// ======================================================
-
-				// Starts 
-				std::stringstream stream(raw);
-				std::string token, sectionTemp;
-				std::size_t contentIndex = 0;
-				bool sectionStarted = false;
-				while (std::getline(stream, token))
-				{
-					// Removes the '\r'
-					if (token[token.size() - 1] == '\r') token.pop_back();	
-
-					// Checks if an section end or start possible occured
-					if (token.substr(0, 2) == "--")
-					{
-						// Checks if it is the end boundary and if not
-						// - we will still check if it is an regular boundary
-						bool end = false;
-						if (token.substr(2, token.size() - 4) == boundary) end = true;
-
-						if (token.substr(2) == boundary || end)
-						{
-							// Checks if it is the first round
-							// - if so we just want to continue nothing to append
-							// - but if it is the end already, we will throw exception
-							// - since there was no content
-							if (contentIndex == 0 && !end)
-							{
-								sectionStarted = true;
-								contentIndex++;
-								continue;
-							} else if (contentIndex == 0 && end) throw std::runtime_error("Empty body is not allowed");
-
-							EmailBodySection section;
-							section.e_Index = contentIndex;
-							sections.push_back(section);
-
-							// Clears the temp, and finishes the round
-							// - by incrementing the index
-							contentIndex++;
-							sectionTemp.clear();
-							
-							if (end) break;
-							else continue;
-						}
-					}
-
-					// Checks if an section has started
-					if (sectionStarted)
-					{
-						sectionTemp += token;
-						sectionTemp += "\r\n";
-					}
-				}
-
-				// ======================================================
-				// End multipart/alternative parser
-				// ======================================================
-				break;
-			}
-			default: throw std::runtime_error("Multipart body type not implemented !");
-		}
-	}
-
-	/**
 	 * Parses header sub arguments
 	 *
 	 * @Param {const std::string &} raw
@@ -353,6 +266,33 @@ namespace FSMTP::Parsers::MIME
 			}
 		}
 
+		// Checks if this is the first recursive round
+		// - so we can store the basic headers
+		if (i == 0)
+		{
+			logger << "Eerste ronde gedetecteerd, opslaan in FullEmail & ..." << ENDL;
+
+			// Gets the required parameters from the headers,
+			// - such as the subject and date
+			for (const EmailHeader &header : parsedHeaders)
+			{
+				if (header.e_Key == "subject")
+				{
+					email.e_Subject = header.e_Value;
+				}
+				else if (header.e_Key == "date")
+				{
+					tm timeP;
+					strptime(header.e_Value.c_str(), "%a, %d %b %Y %T %Z", &timeP);
+					time_t sinceEpoch = timegm(&timeP);
+					email.e_Date = static_cast<std::size_t>(sinceEpoch);
+				} else if (header.e_Key == "message-id")
+				{
+					email.e_MessageID = header.e_Value;
+				}
+			}
+		}
+
 		// Checks how we should process the data further, and if
 		// - any more recursive actions are required
 		switch (parsedContentType)
@@ -369,6 +309,7 @@ namespace FSMTP::Parsers::MIME
 						finalContent = decodeQuotedPrintable(body);
 						break;
 					}
+					default: finalContent = body;
 				}
 
 				break;
@@ -424,37 +365,48 @@ namespace FSMTP::Parsers::MIME
 					parseRecursive(section, email, ++i);
 				break;
 			}
+			default:
+			{
+				// Checks if we need to perform some other
+				// - procedures before ending method
+				switch (parsedTransferEncoding)
+				{
+					case ETE_BASE64:
+					{
+						std::stringstream stream(body);
+						std::string token;
+
+						// Removes the newlines inside of the base64 data
+						// - we want to store
+						while (std::getline(stream, token, '\n'))
+						{
+							if (token[token.size() - 1] == '\r') token.pop_back();
+							finalContent += token;
+						}
+						break;
+					}
+					default: finalContent = body;
+				}
+				break;
+			}
 		}
 
-		// Checks if this is the first recursive round
-		// - which would mean we need to modify the email
-		// - instead of creating an new 
-		if (i == 0)
+		// Checks if we need to save anything,
+		// - we only save if there is valid content, and it's
+		// - not emppty
+		if (
+			parsedContentType != EmailContentType::ECT_MULTIPART_ALTERNATIVE &&
+			parsedContentType != EmailContentType::ECT_MULTIPART_MIXED &&
+			!finalContent.empty()
+		)
 		{
-			logger << "Eerste ronde gedetecteerd, opslaan in FullEmail & ..." << ENDL;
-
-			// Gets the required parameters from the headers,
-			// - such as the subject and date
-			for (const EmailHeader &header : parsedHeaders)
-			{
-				if (header.e_Key == "subject")
-				{
-					email.e_Subject = header.e_Value;
-				}
-				else if (header.e_Key == "date")
-				{
-					tm timeP;
-					strptime(header.e_Value.c_str(), "%a, %d %b %Y %T %Z", &timeP);
-					time_t sinceEpoch = timegm(&timeP);
-					email.e_Date = static_cast<std::size_t>(sinceEpoch);
-				} else if (header.e_Key == "message-id")
-				{
-					email.e_MessageID = header.e_Value;
-				}
-			}
-		} else
-		{
-			logger << "Sub ronde gedetecteerd, invoeging van sectie in vector ..." << ENDL;
+			email.e_BodySections.push_back(EmailBodySection{
+				finalContent,
+				parsedContentType,
+				parsedHeaders,
+				i,
+				parsedTransferEncoding
+			});
 		}
 	}
 }

@@ -121,6 +121,7 @@ namespace FSMTP::Models
 	{
 		if (raw == "7bit") return EmailTransferEncoding::ETE_7BIT;
 		else if (raw == "8bit") return EmailTransferEncoding::ETE_8BIT;
+		else if (raw == "base64") return EmailTransferEncoding::ETE_BASE64;
 		else return EmailTransferEncoding::ETE_NOT_FUCKING_KNOWN;
 	}
 
@@ -141,6 +142,7 @@ namespace FSMTP::Models
   	logger << " - Transport From: " << email.e_TransportFrom.e_Name << '<' << email.e_TransportFrom.e_Address << '>' << ENDL;
   	logger << " - Transport To: " << email.e_TransportTo.e_Name << '<' << email.e_TransportTo.e_Address << '>' << ENDL;
   	logger << " - Subject: " << email.e_Subject << ENDL;
+  	logger << " - Date: " << email.e_Date << ENDL;
   	logger << " - Content Type: " << email.e_ContentType << ENDL;
   	logger << " - Message ID: " << email.e_MessageID << ENDL;
   	logger << " - Headers (Without Microsoft Bullshit): " << ENDL;
