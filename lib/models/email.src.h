@@ -123,6 +123,7 @@ namespace FSMTP::Models
 		std::vector<EmailAddress> e_From;
 		std::vector<EmailAddress> e_To;
 		std::vector<EmailHeader> e_Headers;
+		std::size_t e_Date;
 	};
 
 }

@@ -87,22 +87,6 @@ namespace FSMTP::Parsers::MIME
 	}
 
 	/**
-	 * Parses the headers
-	 *
-	 * @Param {const std::string &} raw
-	 * @Param {FullEmail &} email
-	 * @Param {const bool &} removeMsGarbage
-	 * @Param {void}
-	 */
-	void parseMessage(
-		std::string raw,
-		FullEmail& email,
-		const bool &removeMsGarbage
-	)
-	{
-	}
-
-	/**
 	 * Splits the headers and body
 	 *
 	 * @Param {const std::string &} raw
@@ -239,7 +223,6 @@ namespace FSMTP::Parsers::MIME
 
 							EmailBodySection section;
 							section.e_Index = contentIndex;
-							parseBodySection(sectionTemp, section, false);
 							sections.push_back(section);
 
 							// Clears the temp, and finishes the round
@@ -288,73 +271,13 @@ namespace FSMTP::Parsers::MIME
 		return ret;
 	}
 
-	void parseBodySection(
-		const std::string &raw,
-		EmailBodySection &section,
-		bool plain
-	)
+	std::string parseSubtextValue(const std::string &raw)
 	{
-		std::string body;
-	
-		if (!plain)
-		{
-			std::string headers;
-
-			// Sets the default content types
-			section.e_Type = EmailContentType::ECT_NOT_FOUND;
-			section.e_TransferEncoding = EmailTransferEncoding::ETE_NOT_FOUND;
-
-			// Parses the section temp into valid content
-			// - first starting with the headers
-			splitHeadersAndBody(raw, headers, body);
-
-			// Parses the headers and stores
-			// - them inside of the vector
-			parseHeaders(headers, section.e_Headers, false);
-
-			// Gets some of the header fields we 
-			// - require, such as the content type
-			for (const EmailHeader &h : section.e_Headers)
-			{
-				if (h.e_Key == "content-type")
-				{
-					// Parses the sub values, and checks if the
-					// - subtext is valid
-					std::vector<std::string> vals = parseHeaderSubtext(h.e_Value);
-					if (vals.size() == 0)
-						throw std::runtime_error("Content type not found !");
-
-					section.e_Type = stringToEmailContentType(vals[0]);
-				} else if (h.e_Key == "content-transfer-encoding")
-				{
-					// Parses the transfer encoding
-					section.e_TransferEncoding = stringToEmailTransferEncoding(h.e_Value);
-				}
-			}
-
-			// Checks if the data is there, if not throw error
-			if (section.e_Type == EmailContentType::ECT_NOT_FOUND)
-				throw std::runtime_error("Content type not found");
-			if (section.e_TransferEncoding == EmailTransferEncoding::ETE_NOT_FOUND)
-				throw std::runtime_error("Content transfer encoding not found");
-
-			if (section.e_Type == EmailContentType::ECT_NOT_FUCKING_KNOWN)
-				throw std::runtime_error("Content type not implemented");
-			if (section.e_TransferEncoding == EmailTransferEncoding::ETE_NOT_FUCKING_KNOWN)
-				throw std::runtime_error("Content transfer encoding not implemented");
-		} else body = raw;
-
-		// Starts decoding the body section if required
-		// - for example "7bit" or "quoted-printable"
-		switch (section.e_TransferEncoding)
-		{
-			case EmailTransferEncoding::ETE_QUOTED_PRINTABLE:
-			{
-				section.e_Content = decodeQuotedPrintable(body);
-				break;
-			}
-			default: section.e_Content = body;								
-		}
+		std::size_t index = raw.find_first_of('=');
+		if (index == std::string::npos)
+			throw std::runtime_error("Subtext value could not be splitted");
+		std::string temp = raw.substr(++index);
+		return temp.substr(1, temp.size() - 2);
 	}
 
 	// ================================
@@ -375,6 +298,8 @@ namespace FSMTP::Parsers::MIME
 
 		std::string body;
 		std::string headers;
+		std::string boundary;
+		std::string finalContent;
 		std::vector<EmailHeader> parsedHeaders;
 		EmailContentType parsedContentType = EmailContentType::ECT_NOT_FOUND;
 		EmailTransferEncoding parsedTransferEncoding = EmailTransferEncoding::ETE_NOT_FOUND;
@@ -396,15 +321,108 @@ namespace FSMTP::Parsers::MIME
 			{
 				// Parses the arguments from the header subtext, and then
 				// - gets the content type, and if there the content-transfer-encoding
-				std::vector<string> subtext = parseHeaderSubtext(header.e_Value)
+				std::vector<std::string> subtext = parseHeaderSubtext(header.e_Value);
 
 				if (subtext.size() > 0) parsedContentType = stringToEmailContentType(subtext[0]);
 				else throw std::runtime_error("Empty content-type header is not allowed !");
 
-				if (subtext.size() >= 2)
+				// Checks the content type, and then parses
+				// - the correct parameter
+				switch (parsedContentType)
+				{
+					case EmailContentType::ECT_TEXT_PLAIN:
+					case EmailContentType::ECT_TEXT_HTML:
+					{
+						if (subtext.size() >= 2)
+							parsedTransferEncoding = stringToEmailTransferEncoding(
+								parseSubtextValue(subtext[1]));
+						else throw std::runtime_error("Could not find charset");
+						break;
+					}
+					case EmailContentType::ECT_MULTIPART_ALTERNATIVE:
+					case EmailContentType::ECT_MULTIPART_MIXED:
+					{
+						if (subtext.size() >= 2) boundary = parseSubtextValue(subtext[1]);
+						else throw std::runtime_error("Could not find boundary");
+						break;
+					}
+				}
 			} else if (header.e_Key == "content-transfer-encoding")
 			{
-				parsedContentType = stringToEmailTransferEncoding(header.e_Value);
+				parsedTransferEncoding = stringToEmailTransferEncoding(header.e_Value);
+			}
+		}
+
+		// Checks how we should process the data further, and if
+		// - any more recursive actions are required
+		switch (parsedContentType)
+		{
+			case EmailContentType::ECT_TEXT_PLAIN:
+			case EmailContentType::ECT_TEXT_HTML:
+			{
+				// Checks the encoding, so we can decode
+				// - it if required
+				switch (parsedTransferEncoding)
+				{
+					case EmailTransferEncoding::ETE_QUOTED_PRINTABLE:
+					{
+						finalContent = decodeQuotedPrintable(body);
+						break;
+					}
+				}
+
+				break;
+			}
+			case EmailContentType::ECT_MULTIPART_MIXED:
+			case EmailContentType::ECT_MULTIPART_ALTERNATIVE:
+			{
+				std::vector<std::string> sections = {};
+				std::stringstream stream(body);
+				std::string token;
+				std::string temp;
+
+				logger << "Begonnen met opdelen body in secties, met behulp van boundary: " << boundary << ENDL;
+
+				// Loops over the lines, and separates these ones
+				// - into separate mime sections
+				while (std::getline(stream, token, '\n'))
+				{
+					if (token[token.size() - 1] == '\r') token.pop_back();
+
+					if (token[0] == '-' && token[1] == '-')
+					{
+						bool endBoundary = false;
+
+						// Checks if it is the end boundary,
+						// - and if it is the case, set bool
+						if (token == "--" + boundary + "--") endBoundary = true;
+
+						// Checks if it is the end, or an section start
+						// - boundary has been added
+						if (endBoundary || token == "--" + boundary)
+						{
+							if (temp.size() > 0)
+								logger << "Subsection detected of length: " << temp.size() << ENDL;
+
+							// Clears the temp, and pushes it to the
+							// - result vector
+							if (temp.size() > 0) sections.push_back(temp);
+							temp.clear();
+
+							// Breaks if the end boundary is hit
+							if (endBoundary) break;
+							else continue;
+						}
+					}
+
+					// Appends the token to the subsection
+					temp += token + "\r\n";
+				}
+
+				// Starts parsing the sub sections, just like it's an normal mime body
+				for (const std::string &section : sections)
+					parseRecursive(section, email, ++i);
+				break;
 			}
 		}
 
@@ -414,6 +432,26 @@ namespace FSMTP::Parsers::MIME
 		if (i == 0)
 		{
 			logger << "Eerste ronde gedetecteerd, opslaan in FullEmail & ..." << ENDL;
+
+			// Gets the required parameters from the headers,
+			// - such as the subject and date
+			for (const EmailHeader &header : parsedHeaders)
+			{
+				if (header.e_Key == "subject")
+				{
+					email.e_Subject = header.e_Value;
+				}
+				else if (header.e_Key == "date")
+				{
+					tm timeP;
+					strptime(header.e_Value.c_str(), "%a, %d %b %Y %T %Z", &timeP);
+					time_t sinceEpoch = timegm(&timeP);
+					email.e_Date = static_cast<std::size_t>(sinceEpoch);
+				} else if (header.e_Key == "message-id")
+				{
+					email.e_MessageID = header.e_Value;
+				}
+			}
 		} else
 		{
 			logger << "Sub ronde gedetecteerd, invoeging van sectie in vector ..." << ENDL;

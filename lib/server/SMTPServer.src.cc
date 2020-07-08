@@ -204,6 +204,7 @@ namespace FSMTP::Server
 						std::string data;
 						SMTPSocket::receiveString(fd, ssl, true, data);
 
+						MIME::joinMessageLines(data);
 						MIME::parseRecursive(data, session.s_TransportMessage, 0);
 						FullEmail::print(session.s_TransportMessage, logger);
 

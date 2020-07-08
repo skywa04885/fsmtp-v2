@@ -62,21 +62,6 @@ namespace FSMTP::Parsers::MIME
 		const bool &removeMsGarbage
 	);
 
-
-	/**
-	 * Parses the headers
-	 *
-	 * @Param {const std::string &} raw
-	 * @Param {FullEmail &} email
-	 * @Param {const bool &} removeMsGarbage
-	 * @Param {void}
-	 */
-	void parseMessage(
-		std::string raw,
-		FullEmail& email,
-		const bool &removeMsGarbage
-	);
-
 	/**
 	 * Joins separated lines inside of the messae
 	 * these are some or another way required ;(
@@ -110,11 +95,7 @@ namespace FSMTP::Parsers::MIME
 	 */
 	std::vector<std::string> parseHeaderSubtext(const std::string &raw);
 
-	void parseBodySection(
-		const std::string &raw,
-		EmailBodySection &section,
-		bool plain
-	);
+	std::string parseSubtextValue(const std::string &raw);
 
 	/**
 	 * Parses an mime message in the recursive manner
