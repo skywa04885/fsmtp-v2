@@ -91,7 +91,7 @@ namespace FSMTP::Networking
 		 * @Param {std::string &} data
 		 * @Return void
 		 */
-		static void sendString(int32_t &sfd, const bool& ssl, std::string& data);
+		static void sendString(int32_t &sfd, SSL *ssl, const bool& useSSL, std::string& data);
 		
 		/**
 		 * Static method which receives an string fron an socket
@@ -102,7 +102,7 @@ namespace FSMTP::Networking
 		 * @Param {std::string &} ret
 		 * @Return void
 		 */
-		static void receiveString(int32_t &sfd, const bool& ssl, const bool &bigData, std::string& ret);
+		static void receiveString(int32_t &sfd, SSL *useSSL, const bool& ssl, const bool &bigData, std::string& ret);
 
 		/**
 		 * Static method to upgrade an existing socket to an SSL socket

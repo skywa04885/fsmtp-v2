@@ -37,6 +37,10 @@ namespace FSMTP::Networking
 		{
 			int32_t rc;
 
+			// Initializes OpenSSL stuff
+			SSL_load_error_strings();
+      OpenSSL_add_ssl_algorithms();
+
 			// Zeros the memory inside the socket address
 			// - after that we configure the socket stuff
 			memset(&this->s_SockAddr, 0x0, sizeof (sockaddr_in));
@@ -246,11 +250,12 @@ namespace FSMTP::Networking
 	 * @Param {std::string &} data
 	 * @Return void
 	 */
-	void SMTPSocket::sendString(int32_t &sfd, const bool &ssl, std::string &data)
+	void SMTPSocket::sendString(int32_t &sfd, SSL *ssl, const bool &useSSL, std::string &data)
 	{
 		std::size_t rc;
-		if (ssl)
+		if (useSSL)
 		{
+			SSL_write(ssl, data.c_str(), data.length());
 			return;
 		}
 
@@ -273,14 +278,10 @@ namespace FSMTP::Networking
 	 * @Param {std::string &} ret
 	 * @Return void
 	 */
-	void SMTPSocket::receiveString(int32_t &sfd, const bool &ssl, const bool &bigData, std::string &ret)
+	void SMTPSocket::receiveString(int32_t &sfd, SSL *ssl, const bool &useSSL, const bool &bigData, std::string &ret)
 	{
 		uint8_t *buffer = reinterpret_cast<uint8_t *>(malloc(sizeof (uint8_t) * _SMTP_RECEIVE_BUFFER_SIZE));
 		std::size_t rc, bufferPos = 0, bufferSize = _SMTP_RECEIVE_BUFFER_SIZE;
-		if (ssl)
-		{
-			return;
-		}
 
 		// Creates the read loop and resizes the buffer if
 		// the buffer size is exceeded
@@ -297,7 +298,10 @@ namespace FSMTP::Networking
 
 			// Receives the data and then increments the buffer position
 			// - after that we check if there is a <CR><LF> in the message
-			rc = recv(sfd, reinterpret_cast<char *>(&buffer[bufferPos]), _SMTP_RECEIVE_BUFFER_SIZE, 0x0);
+			if (useSSL)
+				rc = SSL_read(ssl, reinterpret_cast<char *>(&buffer[bufferPos]), _SMTP_RECEIVE_BUFFER_SIZE);
+			else
+				rc = recv(sfd, reinterpret_cast<char *>(&buffer[bufferPos]), _SMTP_RECEIVE_BUFFER_SIZE, 0x0);
 			if (rc <= 0)
 			{
 				free(buffer);
@@ -370,18 +374,18 @@ namespace FSMTP::Networking
 			throw std::runtime_error("Could not create context !");
 
 		// Configures the SSL context, with the keys etcetera
-		SSL_CTX_set_ecdh_auto(sslCtx, 0x1);
+		SSL_CTX_set_ecdh_auto(sslCtx, 1);
 		SSL_CTX_set_default_passwd_cb(sslCtx, &SMTPSocket::readSSLPassphrase);
 		
 		rc = SSL_CTX_use_certificate_file(sslCtx, _SMTP_SSL_CERT_PATH, SSL_FILETYPE_PEM);
-		if (rc < 0)
+		if (rc <= 0)
 		{
 			ERR_print_errors_fp(stderr);
 			throw std::runtime_error("Could not read cert !");
 		}
 
 		rc = SSL_CTX_use_PrivateKey_file(sslCtx, _SMTP_SSL_KEY_PATH, SSL_FILETYPE_PEM);
-		if (rc < 0)
+		if (rc <= 0)
 		{
 			ERR_print_errors_fp(stderr);
 			throw std::runtime_error("Could not read private key !");
@@ -393,7 +397,7 @@ namespace FSMTP::Networking
 		SSL_set_fd(ssl, sfd);
 
 		rc = SSL_accept(ssl);
-		if (rc < 0)
+		if (rc <= 0)
 		{
 			ERR_print_errors_fp(stderr);
 			throw std::runtime_error("Could not accept SSL connection !");

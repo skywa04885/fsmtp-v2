@@ -48,8 +48,8 @@ namespace FSMTP::Server::Actions
 		const ClientCommand &command;
 		struct sockaddr_in *sAddr;
 		const bool &esmtp;
-		const bool &ssl;
 		int32_t &fd;
+		SSL *ssl;
 	} BasicActionData;
 
 	/**

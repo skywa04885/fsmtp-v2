@@ -74,7 +74,6 @@ namespace FSMTP::Server
 
 	void SMTPServer::onClientSync(struct sockaddr_in *sAddr, int32_t fd, void *u)
 	{
-		bool usesSsl = false;
 		SSL_CTX *sslCtx = nullptr;
 		SSL *ssl = nullptr;
 		int32_t executed = 0x0;
@@ -106,7 +105,7 @@ namespace FSMTP::Server
 			ServerResponse response(SRC_INIT, server.s_UseESMTP, nullptr);
 			std::string message;
 			response.build(message);
-			SMTPSocket::sendString(fd, false, message);
+			SMTPSocket::sendString(fd, nullptr, false, message);
 		}
 
 		// Starts the infinite reading and writing loop
@@ -117,7 +116,7 @@ namespace FSMTP::Server
 			std::string rawData;
 			try
 			{
-				SMTPSocket::receiveString(fd, ssl, false, rawData);
+				SMTPSocket::receiveString(fd, ssl, session.getSSLFlag(), false, rawData);
 			} catch(const std::runtime_error &e)
 			{
 				logger << FATAL << "An exception occured: " << e.what() << ", closing connection !" << ENDL << CLASSIC;
@@ -134,8 +133,8 @@ namespace FSMTP::Server
 				command,
 				sAddr,
 				server.s_UseESMTP,
-				ssl,
-				fd
+				fd,
+				ssl
 			};
 
 			if (command.c_CommandType == ClientCommandType::CCT_QUIT)
@@ -143,7 +142,7 @@ namespace FSMTP::Server
 				std::string message;
 				ServerResponse resp(SMTPResponseCommand::SRC_QUIT_RESP, server.s_UseESMTP, nullptr);
 				resp.build(message);
-				SMTPSocket::sendString(fd, usesSsl, message);
+				SMTPSocket::sendString(fd, ssl, session.getSSLFlag(), message);
 				break;
 			}
 
@@ -165,13 +164,16 @@ namespace FSMTP::Server
 						std::string message;
 						ServerResponse resp(SMTPResponseCommand::SRC_READY_START_TLS, server.s_UseESMTP, nullptr);
 						resp.build(message);
-						SMTPSocket::sendString(fd, usesSsl, message);
+						SMTPSocket::sendString(fd, ssl, session.getSSLFlag(), message);
 
 						// Upgrades the socket connection to use TLS,
 						// - after that we print the message to the console
 						try {
 							SMTPSocket::upgradeToSSL(fd, ssl, sslCtx);
 							DEBUG_ONLY(logger << DEBUG << "Verbinding is succesvol beveiligd." << ENDL << CLASSIC);
+
+							// Updates the flags
+							session.setSSLFlag();
 						} catch (const std::runtime_error &e)
 						{
 							DEBUG_ONLY(logger << ERROR << "Verbinding kan niet worden beveiligd, daarom wordt de verbinding gesloten." << ENDL << CLASSIC);
@@ -197,12 +199,12 @@ namespace FSMTP::Server
 							std::string message;
 							ServerResponse resp(SMTPResponseCommand::SRC_DATA_START, server.s_UseESMTP, nullptr);
 							resp.build(message);
-							SMTPSocket::sendString(fd, usesSsl, message);
+							SMTPSocket::sendString(fd, ssl, session.getSSLFlag(), message);
 						}
 
 						// Receives the full message
 						std::string data;
-						SMTPSocket::receiveString(fd, ssl, true, data);
+						SMTPSocket::receiveString(fd, ssl, session.getSSLFlag(), true, data);
 
 						MIME::joinMessageLines(data);
 						MIME::parseRecursive(data, session.s_TransportMessage, 0);
@@ -213,7 +215,7 @@ namespace FSMTP::Server
 						std::string message;
 						ServerResponse resp(SMTPResponseCommand::SRC_DATA_END, server.s_UseESMTP, nullptr);
 						resp.build(message);
-						SMTPSocket::sendString(fd, usesSsl, message);
+						SMTPSocket::sendString(fd, ssl, session.getSSLFlag(), message);
 						break;
 					}
 					case ClientCommandType::CCT_UNKNOWN:
@@ -221,7 +223,7 @@ namespace FSMTP::Server
 						std::string message;
 						ServerResponse resp(SMTPResponseCommand::SRC_SYNTAX_ERR_INVALID_COMMAND, server.s_UseESMTP, nullptr);
 						resp.build(message);
-						SMTPSocket::sendString(fd, usesSsl, message);
+						SMTPSocket::sendString(fd, ssl, session.getSSLFlag(), message);
 						break;
 					}
 				}
@@ -230,7 +232,7 @@ namespace FSMTP::Server
 				std::string message;
 				ServerResponse resp(SMTPResponseCommand::SRC_SYNTAX_ARG_ERR, e.what());
 				resp.build(message);
-				SMTPSocket::sendString(fd, usesSsl, message);
+				SMTPSocket::sendString(fd, ssl, session.getSSLFlag(), message);
 			} catch (const FatalException &e)
 			{
 				logger << FATAL << "Fatal exception: " << e.what() << ENDL << CLASSIC;
@@ -249,6 +251,12 @@ namespace FSMTP::Server
 		shutdown(fd, SHUT_RDWR);
 		logger << WARN << "Verbinding is gesloten." << ENDL << CLASSIC;
 		free(sAddr);
+
+		if (session.getSSLFlag())
+		{
+			SSL_free(ssl);
+			SSL_CTX_free(sslCtx);
+		}
 	}
 
 	void SMTPServer::shutdownServer(void)

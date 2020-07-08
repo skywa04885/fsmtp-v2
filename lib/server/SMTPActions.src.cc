@@ -42,7 +42,7 @@ namespace FSMTP::Server::Actions
 		ServerResponse resp(SMTPResponseCommand::SRC_HELO_RESP, data.esmtp, nullptr);
 		std::string mess;
 		resp.build(mess);
-		SMTPSocket::sendString(data.fd, false, mess);
+		SMTPSocket::sendString(data.fd, nullptr, false, mess);
 	}
 
 	/**
@@ -102,7 +102,7 @@ namespace FSMTP::Server::Actions
 		ServerResponse resp(SMTPResponseCommand::SRC_PROCEED, data.esmtp, nullptr);
 		std::string mess;
 		resp.build(mess);
-		SMTPSocket::sendString(data.fd, false, mess);
+		SMTPSocket::sendString(data.fd, data.ssl, session.getSSLFlag(), mess);
 	}
 
 	/**
@@ -162,7 +162,7 @@ namespace FSMTP::Server::Actions
 					ServerResponse resp(SMTPResponseCommand::SRC_BAD_EMAIL_ADDRESS, data.esmtp, nullptr);
 					std::string mess;
 					resp.build(mess);
-					SMTPSocket::sendString(data.fd, false, mess);
+					SMTPSocket::sendString(data.fd, data.ssl, session.getSSLFlag(), mess);
 
 					// Throws the fatal exception	
 					throw FatalException("Domain niet gevonden in onze database !");
@@ -178,6 +178,6 @@ namespace FSMTP::Server::Actions
 		ServerResponse resp(SMTPResponseCommand::SRC_PROCEED, data.esmtp, nullptr);
 		std::string mess;
 		resp.build(mess);
-		SMTPSocket::sendString(data.fd, false, mess);
+		SMTPSocket::sendString(data.fd, data.ssl, session.getSSLFlag(), mess);
 	}
 }

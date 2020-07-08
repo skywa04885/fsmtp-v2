@@ -20,6 +20,7 @@
 #include <cstdint>
 
 #include "../models/email.src.h"
+#include "../general/macros.src.h"
 
 #define _SMTP_SERV_SESSION_RELAY_FLAG 1
 #define _SMTP_SERV_SESSION_AUTH_FLAG 2
@@ -41,6 +42,9 @@ namespace FSMTP::Server
 	class SMTPServerSession
 	{
 	public:
+		void setSSLFlag(void);
+		bool getSSLFlag(void);
+
 		int32_t s_Flags;
 		int64_t s_PerformedActions;
 		FullEmail s_TransportMessage;
