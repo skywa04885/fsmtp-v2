@@ -115,4 +115,13 @@ namespace FSMTP::Parsers::MIME
 		EmailBodySection &section,
 		bool plain
 	);
+
+	/**
+	 * Parses an mime message in the recursive manner
+	 */
+	void parseRecursive(
+		std::string raw,
+		FullEmail& email,
+		std::size_t i
+	);
 }

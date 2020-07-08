@@ -27,6 +27,7 @@ namespace FSMTP
 	typedef enum : uint8_t
 	{
 		DEBUG = 0,
+		PARSER,
 		INFO,
 		WARN,
 		ERROR,
@@ -82,6 +83,11 @@ namespace FSMTP
 						case LoggerLevel::DEBUG:
 						{
 							std::cout << "\033[36m[debug@" << this->l_Prefix << "]: \033[0m";
+							break;
+						}
+						case LoggerLevel::PARSER:
+						{
+							std::cout << "\033[34m[parser@" << this->l_Prefix << "]: \033[0m";
 							break;
 						}
 						case LoggerLevel::INFO:
