@@ -2,16 +2,55 @@
 <html lang="en">
   <head>
     <%- include('../includes/head.include.ejs') %>
+    <link rel="stylesheet" type="text/css" href="/css/accounts/register.css" />
+    <link rel="stylesheet" type="text/css" href="/css/accounts/about.css" />
   </head>
   <body>
-    <div id="wrapper" class="wrapper">
+    <%- include('../includes/default-body.include.ejs') %>
+    <div id="wrapper">
       <div class="wrapper__center-form">
-        <form id="registerForm">
+        <form class="fullscreen-form" id="registerForm">
+          <div class="fullscreen-form__head">
+            <h1>Fannst Account Service</h1>
+          </div>
           <fieldset>
-            <legend></legend>
+            <legend class="form-title"><%= lang.title %></legend>
+            <p class="form-subtitle"><%= lang.subtitle %></p>
+            <div class="fullscreen-form__field">
+              <label><%= lang.inputs.fullName %> <span>*</span></label>
+              <input type="text" required />
+            </div>
+            <div class="fullscreen-form__field">
+              <label><%= lang.inputs.username %> <span>*</span></label>
+              <input type="text" required />
+            </div>
+            <div class="fullscreen-form__field">
+              <label><%= lang.inputs.domain %></label>
+              <input type="text" placeholder="default: fannst.nl" />
+            </div>
+            <small class="fullscreen-form__field-subtext">
+              <%= lang.domainNotice %>
+            </small>
+            <hr />
+            <div class="fullscreen-form__field">
+              <label><%= lang.inputs.password %> <span>*</span></label>
+              <input type="password" required />
+            </div>
+            <div class="fullscreen-form__field">
+              <label><%= lang.inputs.confirmPassword %> <span>*</span></label>
+              <input type="password" required />
+            </div>
+            <div class="btn__left-right">
+              <a href="/accounts/login" class="btn btn-secondary"><%= lang.loginButton %></a>
+              <button type="submit" class="btn btn-primary"><%= lang.registerButton %></button>
+            </div>
           </fieldset>
         </form>
       </div>
+
+      <%- include('includes/about.include.ejs') %>
     </div>
+
+    <%- include('../includes/footer.include.ejs') %>
   </body>
 </html>

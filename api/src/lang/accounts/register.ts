@@ -11,7 +11,8 @@ export default {
       confirmPassword: 'Confirm',
       domain: 'Domain',
       birthDate: 'Birth date'
-    }
+    },
+    domainNotice: 'Use only a domain you have access to, you cannot modify this later on !'
   },
   dutch: {
     registerButton: 'Registreer',
@@ -25,6 +26,7 @@ export default {
       confirmPassword: 'Bevestig',
       domain: 'Domein',
       birthDate: 'Verjaardag'
-    }
+    },
+    domainNotice: 'Gebruik alleen een domein als jij er over beschikt, je kan dit later niet aanpassen !'
   }
 };

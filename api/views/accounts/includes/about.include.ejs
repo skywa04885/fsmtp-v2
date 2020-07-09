@@ -1,0 +1,77 @@
+<div class="about-arrow">
+  <a href="#about">
+    <p>
+      <small>Why Fannst ?</small>
+    </p>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      height="24"
+      viewBox="0 0 24 24"
+      width="24"
+    >
+      <path d="M0 0h24v24H0z" fill="none"/>
+      <path d="M7 10l5 5 5-5z"/>
+    </svg>
+  </a>
+</div>
+<div class="about" id="about">
+  <div class="about-section about-section-segmented">
+    <div class="about-section__left">
+      <div>
+        <p class="about-section__title">
+          <strong><%= lang.section01.title %></strong>
+          <br />
+          <%= lang.section01.description %>
+        </p>
+        <br />
+        <a
+          href="https://nl.wikipedia.org/wiki/Advanced_Encryption_Standard"
+          target="blank"
+          class="btn btn-primary"
+        ><%= lang.section01.readAboutAesButton %></a>
+      </div>
+    </div>
+    <div class="about-section__right">
+      <div
+        class="about-section__image"
+        style="background-image: url('/images/accounts/about-section01.jpg')"
+      ></div>
+    </div>
+  </div>
+
+  <div class="about-section">
+    <p class="about-section__title">
+      <strong><%= lang.section02.title %></strong>
+
+      <div class="about-section__services">
+        <figure class="about-section__services-service">
+          <div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="24"
+              viewBox="0 0 24 24"
+              width="24"
+            >
+              <path d="M0 0h24v24H0z" fill="none"/>
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10h5v-2h-5c-4.34 0-8-3.66-8-8s3.66-8 8-8 8 3.66 8 8v1.43c0 .79-.71 1.57-1.5 1.57s-1.5-.78-1.5-1.57V12c0-2.76-2.24-5-5-5s-5 2.24-5 5 2.24 5 5 5c1.38 0 2.64-.56 3.54-1.47.65.89 1.77 1.47 2.96 1.47 1.97 0 3.5-1.6 3.5-3.57V12c0-5.52-4.48-10-10-10zm0 13c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/>
+            </svg>
+          </div>
+
+          <p>
+            <strong>FSMTP V2</strong>
+            <br />
+            <small>
+              An private email service, which encrypts emails when
+              received, and allows extra outgoing security, using our
+              own developed ESMTP server.
+            </small>
+          </p>
+          <br />
+          <a href="https://mail.fannst.nl" target="blank" class="btn btn-primary">
+            <%= lang.section02.visitButton %>
+          </a>
+        </figure>
+      </div>
+    </p>
+  </div>
+</div>

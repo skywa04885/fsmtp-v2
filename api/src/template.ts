@@ -9,7 +9,7 @@ export function prepare(meta: {
     title: meta.title ? meta.title : 'No title',
     description: meta.description ? meta.description : 'No description',
     keywords: meta.keywords ? meta.keywords : 'unknown,page',
-    author: meta.author ? meta.author : 'No author',
+    author: meta.author ? meta.author : 'Skywa04885',
     lang: lang
   }, custom);
 }

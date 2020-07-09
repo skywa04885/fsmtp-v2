@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "sassc": "node-sass ./public/src/scss --output-style compressed --watch --recursive --output ./public/dist/css"
   },
   "keywords": [],
   "author": "",
@@ -19,6 +19,7 @@
   "devDependencies": {
     "@types/express": "^4.17.6",
     "@types/node": "^14.0.14",
+    "node-sass": "^4.14.1",
     "tsc": "^1.20150623.0"
   }
 }
