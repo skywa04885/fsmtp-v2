@@ -91,7 +91,7 @@ int main(const int argc, const char **argv)
 	opts |= _SERVER_OPT_ENABLE_AUTH;
 	opts |= _SERVER_OPT_ENABLE_TLS;
 
-	SMTPServer server(8080, true, opts);
+	SMTPServer server(25, true, opts);
 
 	std::cin.get();
 	server.shutdownServer();

@@ -34,6 +34,7 @@
 #include "../general/macros.src.h"
 #include "../general/connections.src.h"
 #include "../models/LocalDomain.src.h"
+#include "../models/Account.src.h"
 #include "SMTPServerSession.src.h"
 
 using namespace FSMTP::SMTP;

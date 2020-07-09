@@ -5,8 +5,8 @@ export default {
     title: 'Login to your Fannst Account',
     subtitle: 'continue your journey, still in private.',
     inputs: {
-      email: 'Email address',
-      password: 'Wachtwoord'
+      email: 'Email',
+      password: 'Password'
     }
   },
   dutch: {

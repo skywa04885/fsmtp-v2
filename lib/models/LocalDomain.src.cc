@@ -70,7 +70,7 @@ namespace FSMTP::Models
 		queryStatement = cass_statement_new(query, 1);
 		cass_statement_bind_string(queryStatement, 0, l_Domain.c_str());
 
-		queryFuture = cass_session_execute(database.get()->c_Session, queryStatement);
+		queryFuture = cass_session_execute(database->c_Session, queryStatement);
 		cass_future_wait(queryFuture);
 
 		// Checks if the query was successfully

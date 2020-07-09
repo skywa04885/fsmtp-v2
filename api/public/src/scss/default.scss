@@ -83,7 +83,9 @@ body, html
 .fullscreen-form
 {
   background-color: #ffffff;
-  border-radius: 0.4rem;
+  border-bottom-right-radius: 200px;
+  border-bottom-left-radius: 200px;
+  padding-bottom: 200px;
   max-width: 400px;
   width: 90vw;
   box-shadow: 2px 2px 9px rgba(#020202, 0.2);
@@ -167,6 +169,18 @@ body, html
       border: 1px solid #1582a3;
     }
   }
+}
+
+.fullscreen-form__error
+{
+  background-color: rgba(#1582a3, 0.3);
+  padding: 0.8rem;
+  border: 1px solid #1582a3;
+  border-radius: 0.2rem;
+  color: #1582a3;
+  font-size: 0.9rem;
+  margin-bottom: 0.7rem;
+  font-family: 'Lato', sans-serif;
 }
 
 .fullscreen-form__field-subtext
@@ -384,4 +398,167 @@ hr
       }
     }
   }
+}
+
+// =====================================
+// The loader
+// =====================================
+
+.default-loader__overlay
+{
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  z-index: 10000;
+  right: 0;
+  left: 0;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  background-color: rgba(#000, 0.5);
+
+  & > .default-loader
+  {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    & > .default-loader__message
+    {
+      text-align: center;
+      margin-left: auto;
+      margin-right: auto;
+      width: fit-content;
+      margin-bottom: 0.4rem;
+
+      & > p
+      {
+        font-weight: 500;
+        color: #ffffff;
+        font-size: 0.9rem;
+        font-family: 'Lato', sans-serif;
+      }
+    }
+  }
+
+  .default-loader__bar
+  {
+    background-color: rgba(#fff, 0.3);
+    height: 0.5rem;
+    position: relative;
+
+    & > div
+    {
+      background-color: #1582a3;
+      position: absolute;
+      height: 100%;
+      top: 0;
+      bottom: 0;
+      animation: loaderBarSmAni .8s infinite;
+
+      @keyframes loaderBarSmAni
+      {
+        0% {
+          width: 40%;
+          left: -40%;
+        }
+
+        30% {
+          width: 30%;
+        }
+
+        40% {
+          width: 50%;
+        }
+
+        100% {
+          width: 100%;
+          left: 100%;
+        }
+      }
+    }
+  }
+}
+
+// =====================================
+// The account menu
+// =====================================
+
+.fannst-account__icon
+{
+  position: fixed;
+  top: 0.4rem;
+  right: 1.2rem;
+  -moz-appearance: none;
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  background-color: #ffffff;
+  box-shadow: 1px 1px 3px rgba(#000, 0.4);
+  border: 1px solid #d4d4d4;  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  & > svg
+  {
+    fill: #222222;
+    display: block;
+    width: 2rem;
+    height: 2rem;
+  }
+}
+
+.fannst-account__menu
+{
+  position: fixed;
+  top: calc(0.4rem + 2.4rem + .5rem);
+  right: 1.2rem;
+  background-color: #fff;
+  border-radius: 0.3rem;
+  padding: 0.8rem;
+  box-shadow: 1px 1px 3px rgba(#000, 0.4);
+  border: 1px solid #1582a3;
+}
+
+.fannst-account__menu-triangle
+{
+  width: 0; 
+  height: 0; 
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  
+  border-bottom: 5px solid #1582a3;
+  position: absolute;
+  top: -5px;
+  right: 0.8rem;
+}
+
+.fannst-account__menu__top
+{
+  font-family: 'Lato', sans-serif;
+
+  & > p
+  {
+    & > strong
+    {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #1582a3;
+      display: block;
+    }
+
+    color: #343434;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+}
+
+.fannst-account__menu__top-buttons
+{
+  text-align: center;
 }

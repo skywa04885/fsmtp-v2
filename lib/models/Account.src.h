@@ -16,6 +16,17 @@
 
 #pragma once
 
+#include <cstdint>
+#include <string>
+#include <memory>
+
+#include <cassandra.h>
+
+#include "../general/connections.src.h"
+#include "../general/exceptions.src.h"
+
+using namespace FSMTP::Connections;
+
 namespace FSMTP::Models
 {
 	class Account
@@ -26,6 +37,33 @@ namespace FSMTP::Models
 		std::string a_Username;
 		std::string a_FullName;
 		std::string a_Password;
-		std::size_t a_Bucket;
+		int64_t a_Bucket;
+	};
+
+	class AccountShortcut
+	{
+	public:
+		AccountShortcut(
+			int64_t a_Bucket,
+			std::string a_Domain,
+			std::string a_Username,
+			CassUuid a_UUID
+		);
+
+		explicit AccountShortcut();
+
+		static void find(
+			std::unique_ptr<CassandraConnection> &conn,
+			AccountShortcut &shortcut,
+			const std::string &domain,
+			const std::string &username
+		);
+
+		void save(std::unique_ptr<CassandraConnection> &conn);
+
+		int64_t a_Bucket;
+		std::string a_Domain;
+		std::string a_Username;
+		CassUuid a_UUID;
 	};
 }

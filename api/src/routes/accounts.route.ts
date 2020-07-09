@@ -4,6 +4,8 @@ import { prepare } from '../template';
 import registerLang from '../lang/accounts/register';
 import loginLang from '../lang/accounts/login';
 import aboutLang from '../lang/accounts/about';
+import { exit } from 'process';
+import { registerAccountPost } from '../controllers/accounts.controller';
 
 let router: express.Router = express.Router();
 
@@ -38,5 +40,7 @@ router.get('/login', (
     keywords: 'login,software,fannst,account,use,email'
   }, lang));
 });
+
+router.post('/register', registerAccountPost);
 
 export default router;

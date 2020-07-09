@@ -82,14 +82,26 @@ namespace FSMTP::Server::Actions
 			// - by reading the local addresses from the database
 			LocalDomain domain;
 			try {
-				// Performs the query and if completed
-				// - sets the relay flag, if failed in the catch
-				// - we clear the relay flag
+				// Performs the query and checks if we're
+				// - in controll of this domain, after that
+				// - we check if the address is here, if they
+				// - both are true, then we set the relay flag
 				domain.getByDomain(tDomain, database);
+
+				std::string username;
+				session.s_TransportMessage.e_TransportFrom.getUsername(username);
+				AccountShortcut::find(
+					database,
+					session.s_SendingAccount,
+					tDomain,
+					username
+				);
+
 				session.s_Flags |= _SMTP_SERV_SESSION_RELAY_FLAG;
 			}
 			catch (const EmptyQuery &e)
 			{
+				std::cout << e.what() << std::endl;
 				session.s_Flags &= ~_SMTP_SERV_SESSION_RELAY_FLAG;
 			}
 		} catch (const std::runtime_error &e)
@@ -146,6 +158,24 @@ namespace FSMTP::Server::Actions
 				// Checks if the domain is is in the database
 				domain.getByDomain(tDomain, database);
 
+				// Checks if the user is in the database,
+				// - if not we cannot send the email, except
+				// - we're relaying
+				std::string username;
+				session.s_TransportMessage.e_TransportTo.getUsername(username);
+				AccountShortcut::find(
+					database,
+					session.s_ReceivingAccount,
+					tDomain,
+					username
+				);
+
+				#ifdef _SMTP_DEBUG
+				char uuidString[64];
+				cass_uuid_string(session.s_ReceivingAccount.a_UUID, uuidString);
+				logger << DEBUG << "Target user found locally: " << uuidString << "@" << session.s_ReceivingAccount.a_Bucket  << ENDL << CLASSIC;
+				#endif
+
 				// If we're relaying, and the domain is in
 				// - the database, we want to set the relay
 				// - to local flag
@@ -165,7 +195,7 @@ namespace FSMTP::Server::Actions
 					SMTPSocket::sendString(data.fd, data.ssl, session.getSSLFlag(), mess);
 
 					// Throws the fatal exception	
-					throw FatalException("Domain niet gevonden in onze database !");
+					throw FatalException("Gebruiker niet gevonden in onze database !");
 				}
 			}
 		} catch (const std::runtime_error &e)
