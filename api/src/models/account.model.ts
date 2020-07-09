@@ -220,6 +220,6 @@ export class Account
 
 	static getBucket(): number
 	{
-		return Math.round(Date.now() / 10 / 1000);
+		return Math.round(Date.now() / 1000 / 1000 / 1000);
 	}
 }

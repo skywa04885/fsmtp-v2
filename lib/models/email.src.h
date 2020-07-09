@@ -22,10 +22,16 @@
 #include <iostream>
 #include <cstdint>
 
+#include <cassandra.h>
+
 #include "../general/cleanup.src.h"
 #include "../general/logger.src.h"
+#include "../general/connections.src.h"
+#include "../general/exceptions.src.h"
 
 using namespace FSMTP::Cleanup;
+
+using namespace FSMTP::Connections;
 
 namespace FSMTP::Models
 {
@@ -47,6 +53,14 @@ namespace FSMTP::Models
 		std::string e_Address;
 		std::string e_Name;
 	};
+
+	typedef enum : uint8_t
+	{
+		ET_INCOMMING = 0,
+		ET_INCOMMING_SPAM,
+		ET_OUTGOING,
+		ET_RELAY_OUTGOING,
+	} EmailType;
 
 	typedef enum : uint8_t
 	{
@@ -120,16 +134,40 @@ namespace FSMTP::Models
      */
     static void print(FullEmail &email, Logger &logger);
 
-    EmailContentType e_ContentType;
+    /**
+     * Gets the current message bucket, basically
+     * - the current time in milliseconds / 1000 / 1000 / 1000
+     *
+     * @Param {void}
+     * @Return {int64_t}
+     */
+    static int64_t getBucket(void);
+
+    /**
+     * Saves an email into the database
+     *
+     * @Param {std::unique_ptr<CassandraConnection> &} conn
+     * @Return {void}
+     */
+    void save(std::unique_ptr<CassandraConnection> &conn);
+
     EmailAddress e_TransportFrom;
 		EmailAddress e_TransportTo;
+		std::string e_Domain;
 		std::string e_Subject;
 		std::string e_MessageID;
 		std::vector<EmailBodySection> e_BodySections;
 		std::vector<EmailAddress> e_From;
 		std::vector<EmailAddress> e_To;
 		std::vector<EmailHeader> e_Headers;
+
+		bool e_Encryped;
 		std::size_t e_Date;
+		int64_t e_Bucket;
+		std::string e_OwnersDomain;
+		CassUuid e_OwnersUUID;
+		CassUuid e_EmailUUID;
+		EmailType e_Type;
 	};
 
 }

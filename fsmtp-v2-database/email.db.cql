@@ -12,30 +12,32 @@ CREATE TYPE IF NOT EXISTS fannst.email_address (
 
 -- Creates the email body section type
 CREATE TYPE IF NOT EXISTS fannst.email_body_section (
-    s_content TEXT,
-    s_type INT,
-    s_index INT,
-    s_header frozen<list<fannst.email_header>>
+    e_content TEXT,
+    e_type INT,
+    e_index INT,
+    e_header FROZEN<LIST<fannst.email_header>>,
+    e_transfer_encoding INT
 );
 
 -- Creates the email table
 CREATE TABLE IF NOT EXISTS fannst.full_emails (
-    e_user_uuid TIMEUUID,
-    e_user_domain VARCHAR,
-    e_uuid TIMEUUID,
-    e_user_bucket BIGINT,
-    e_email_rcv_date BIGINT,
-    e_email_sent_date BIGINT,
+    e_transport_from email_address,
+    e_transport_to email_Address,
+    e_from FROZEN<LIST<email_address>>,
+    e_to FROZEN<LIST<email_address>>,
+    e_domain VARCHAR,
     e_subject VARCHAR,
+    e_message_id VARCHAR,
+    e_body_sections FROZEN<LIST<email_body_section>>,
+    e_headers FROZEN<LIST<email_header>>,
+    e_encrypted BOOLEAN,
+    e_date BIGINT,
+    e_owners_uuid TIMEUUID,
+    e_email_uuid TIMEUUID,
     e_type INT,
-    e_transport_from fannst.email_address,
-    e_transport_to fannst.email_address,
-    e_from frozen<list<fannst.email_address>>,
-    e_to frozen<list<fannst.email_address>>,
-    e_headers frozen<list<fannst.email_header>>,
-    e_body_sects frozen<list<fannst.email_body_section>>,
-    PRIMARY KEY ((e_user_bucket), e_user_domain, e_user_uuid, e_uuid)
-) WITH CLUSTERING ORDER BY (e_user_domain DESC, e_user_uuid DESC, e_uuid DESC);
+    e_bucket BIGINT,
+    PRIMARY KEY ((e_bucket), e_domain, e_owners_uuid, e_email_uuid)
+) WITH CLUSTERING ORDER BY (e_domain DESC, e_owners_uuid DESC, e_email_uuid DESC);
 
 CREATE TABLE IF NOT EXISTS fannst.local_domain (
     e_domain VARCHAR,

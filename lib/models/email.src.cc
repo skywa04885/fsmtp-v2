@@ -137,34 +137,298 @@ namespace FSMTP::Models
   {
   	logger << DEBUG;
 
-  	// Prints the basic email information
+  	// ========================================
+  	// Prints the basic email data
+  	//
+  	// These are just some variables we
+  	// - want to see in debug mode
+  	// ========================================
+
+  	// Prints the already finished variables
   	logger << "FullEmail:" << ENDL;
   	logger << " - Transport From: " << email.e_TransportFrom.e_Name << '<' << email.e_TransportFrom.e_Address << '>' << ENDL;
   	logger << " - Transport To: " << email.e_TransportTo.e_Name << '<' << email.e_TransportTo.e_Address << '>' << ENDL;
   	logger << " - Subject: " << email.e_Subject << ENDL;
   	logger << " - Date: " << email.e_Date << ENDL;
-  	logger << " - Content Type: " << email.e_ContentType << ENDL;
   	logger << " - Message ID: " << email.e_MessageID << ENDL;
+  	logger << " - Bucket: " << email.e_Bucket << ENDL;
+  	logger << " - Type: " << email.e_Type << ENDL;
+  	logger << " - Encrypted: " << (email.e_Encryped ? "Yea" : "Fuck no") << ENDL;
+
+  	// Turns the user uuid into an string
+  	// - and then prints it
+  	char buffer[64];
+  	cass_uuid_string(email.e_OwnersUUID, buffer);
+  	logger << " - Owners UUID: " << buffer << ENDL;
+  	cass_uuid_string(email.e_EmailUUID, buffer);
+  	logger << " - Email UUID: " << buffer << ENDL;
   	logger << " - Headers (Without Microsoft Bullshit): " << ENDL;
 
+  	// ========================================
+  	// Prints the arrays
+  	//
+  	// These print the vector data inside
+  	// - of the email
+  	// ========================================
+  	
   	std::size_t c = 0;
+
+  	// Loops over the headers and displays them
   	for (const EmailHeader &h : email.e_Headers)
   	{
   		logger << "\t - Header[no: " << c++ << "]: <"
   			<< h.e_Key << "> - <" << h.e_Value << ">" << ENDL;
   	}
 
-  	logger << " - Body sections: " << ENDL;
+
   	c = 0;
+  	// Loops over the body sections and displays them
+  	logger << " - Body sections: " << ENDL;
   	for (const EmailBodySection &s : email.e_BodySections)
   	{
   		logger << "\t - Body Section[no: " << c++ << ", cType: "
   			<< s.e_Type << ", cTransEnc: " 
   			<< s.e_TransferEncoding << "]: " << ENDL;
+  		logger << "\t\t" << (s.e_Content.size() < 56 ? s.e_Content : s.e_Content.substr(0, 56) + " ...") << ENDL;
+  	}
+  	logger << CLASSIC;
+  }
 
-  		logger << "\t\t" << s.e_Content << ENDL;
+  /**
+   * Gets the current message bucket, basically
+   * - the current time in milliseconds / 1000 / 1000 / 1000
+   *
+   * @Param {void}
+   * @Return {int64_t}
+   */
+  int64_t FullEmail::getBucket(void)
+  {
+  	int64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(
+  		std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+  	return now / 1000 / 1000 / 1000;
+  }
+
+  /**
+   * Saves an email into the database
+   *
+   * @Param {std::unique_ptr<CassandraConnection> &} conn
+   * @Return {void}
+   */
+  void FullEmail::save(std::unique_ptr<CassandraConnection> &conn)
+  {
+  	const CassDataType *udtEmailAddress = nullptr;
+  	const CassDataType *udtEmailBodySection = nullptr;
+  	const CassDataType *udtEmailHeader = nullptr;
+
+  	CassUserType *transportTo = nullptr;
+  	CassUserType *transportFrom = nullptr;
+  	CassCollection *from = nullptr;
+  	CassCollection *to = nullptr;
+		CassCollection *headers = nullptr;
+  	CassCollection *bodySections = nullptr;
+
+  	// ========================================
+  	// Requests the keyspace meta
+  	//
+  	// This allows us to use custom types
+  	// - because the cassandra client is
+  	// - retarded, we need to do it ourselves
+  	// ========================================
+
+  	const CassSchemaMeta *schemaMeta = cass_session_get_schema_meta(conn->c_Session);
+  	const CassKeyspaceMeta *keyspaceMeta = cass_schema_meta_keyspace_by_name(schemaMeta, "fannst");
+  	if (keyspaceMeta == nullptr)
+  		throw DatabaseException("Could not retreive custom data types");
+
+  	udtEmailAddress = cass_keyspace_meta_user_type_by_name(keyspaceMeta, "email_address");
+  	udtEmailHeader = cass_keyspace_meta_user_type_by_name(keyspaceMeta, "email_header");
+  	udtEmailBodySection = cass_keyspace_meta_user_type_by_name(keyspaceMeta, "email_body_section");
+
+  	// ========================================
+  	// Sets the basic variables
+  	//
+  	// Sets the basic stuff such as transport
+  	// - from / to
+  	// ========================================
+
+  	// Sets the transport to
+		transportTo = cass_user_type_new_from_data_type(udtEmailAddress);
+  	cass_user_type_set_string_by_name(transportTo, "e_address", this->e_TransportTo.e_Address.c_str());
+  	cass_user_type_set_string_by_name(transportTo, "e_name", this->e_TransportTo.e_Name.c_str());
+
+  	// Sets the transport from
+  	transportFrom = cass_user_type_new_from_data_type(udtEmailAddress);
+  	cass_user_type_set_string_by_name(transportFrom, "e_address", this->e_TransportFrom.e_Address.c_str());
+  	cass_user_type_set_string_by_name(transportFrom, "e_name", this->e_TransportFrom.e_Name.c_str());
+
+  	// ========================================
+  	// Sets the basic variables
+  	//
+  	// Sets the advanced address
+  	// - stuff such as transport from / to (full) 
+  	// ========================================
+
+  	// Creates the collections
+  	to = cass_collection_new(CASS_COLLECTION_TYPE_LIST, this->e_To.size());
+  	from = cass_collection_new(CASS_COLLECTION_TYPE_LIST, this->e_From.size());
+
+  	// Loops over the to addresses and adds
+  	// - the custom types to the collection
+  	for (const EmailAddress &address : this->e_To)
+  	{
+  		CassUserType *toAddress = cass_user_type_new_from_data_type(udtEmailAddress);
+  		cass_user_type_set_string_by_name(toAddress, "e_address", address.e_Address.c_str());
+  		cass_user_type_set_string_by_name(toAddress, "e_name", address.e_Name.c_str());
+  		cass_collection_append_user_type(to, toAddress);
+  		cass_user_type_free(toAddress);
   	}
 
-  	logger << CLASSIC;
+		// Loops over the from addresses and adds
+  	// - the custom types to the collection
+  	for (const EmailAddress &address : this->e_From)
+  	{
+  		CassUserType *fromAddress = cass_user_type_new_from_data_type(udtEmailAddress);
+  		cass_user_type_set_string_by_name(fromAddress, "e_address", address.e_Address.c_str());
+  		cass_user_type_set_string_by_name(fromAddress, "e_name", address.e_Name.c_str());
+  		cass_collection_append_user_type(to, fromAddress);
+  		cass_user_type_free(fromAddress);
+  	}
+
+  	// ========================================
+  	// Sets the headers and body
+  	//
+  	// In our case just the headers and body
+  	// - lol, this comment is just to separate
+  	// - the code
+  	// ========================================
+
+  	// Creates the collections
+		headers = cass_collection_new(CASS_COLLECTION_TYPE_LIST, this->e_Headers.size());
+  	bodySections = cass_collection_new(CASS_COLLECTION_TYPE_LIST, this->e_BodySections.size());
+
+  	// Loops over the headers and puts
+  	// - them into the collection
+  	for (const EmailHeader &header : this->e_Headers)
+  	{
+  		CassUserType *emailHeader = cass_user_type_new_from_data_type(udtEmailHeader);
+  		cass_user_type_set_string_by_name(emailHeader, "h_key", header.e_Key.c_str());
+  		cass_user_type_set_string_by_name(emailHeader, "h_value", header.e_Value.c_str());
+  		cass_collection_append_user_type(headers, emailHeader);
+  		cass_user_type_free(emailHeader);
+  	}
+
+  	// Loops over the body sections
+  	// - and puts them into the collection
+  	for (const EmailBodySection &section : this->e_BodySections)
+  	{
+  		CassUserType *emailSection = nullptr;
+  		CassCollection *emailSectionHeaders = nullptr;
+
+  		// Initializes the section and sets 
+  		// - the basic variable
+  		emailSection = cass_user_type_new_from_data_type(udtEmailBodySection);
+  		cass_user_type_set_string_by_name(emailSection, "e_content", section.e_Content.c_str());
+  		cass_user_type_set_int32_by_name(emailSection, "e_index", section.e_Index);
+  		cass_user_type_set_int32_by_name(emailSection, "e_type", section.e_Type);
+  		cass_user_type_set_int32_by_name(emailSection, "e_transfer_encoding", section.e_TransferEncoding);
+
+  		// Loops over the headers and adds them to the
+  		// - collection of the section headers
+  		emailSectionHeaders = cass_collection_new(CASS_COLLECTION_TYPE_LIST, section.e_Headers.size());
+  		for (const EmailHeader &header : section.e_Headers)
+  		{
+  			CassUserType *emailSectionHeader = cass_user_type_new_from_data_type(udtEmailHeader);
+  			cass_user_type_set_string_by_name(emailSectionHeader, "h_key", header.e_Key.c_str());
+  			cass_user_type_set_string_by_name(emailSectionHeader, "h_value", header.e_Value.c_str());
+  			cass_collection_append_user_type(emailSectionHeaders, emailSectionHeader);
+  			cass_user_type_free(emailSectionHeader);
+  		}
+
+  		// Frees the memory
+  		cass_collection_append_user_type(bodySections, emailSection);
+  		cass_user_type_free(emailSection);
+  		cass_collection_free(emailSectionHeaders);
+  	}
+
+  	// ========================================
+  	// Creates the statement and executes
+  	//
+  	// Creates the statement and adds the final
+  	// - variables, then we execute
+  	// ========================================
+
+  	CassError rc;
+  	CassStatement *statement = nullptr;
+  	CassFuture *future = nullptr;
+
+  	const char *query = R"(INSERT INTO fannst.full_emails (
+  		e_transport_from, e_transport_to, e_bucket,
+  		e_from, e_to, e_domain,
+  		e_subject, e_message_id, e_body_sections,
+  		e_headers, e_encrypted, e_date, 
+  		e_owners_uuid, e_email_uuid, e_type
+  	) VALUES (
+  		?, ?, ?,
+  		?, ?, ?,
+  		?, ?, ?,
+  		?, ?, ?,
+  		?, ?, ?
+  	))";
+
+  	// Prepares the statement and then binds
+  	// - the values
+  	statement = cass_statement_new(query, 15);
+  	cass_statement_bind_user_type(statement, 0, transportFrom);
+  	cass_statement_bind_user_type(statement, 1, transportTo);
+  	cass_statement_bind_int64(statement, 2, this->e_Bucket);
+  	cass_statement_bind_collection(statement, 3, from);
+  	cass_statement_bind_collection(statement, 4, to);
+  	cass_statement_bind_string(statement, 5, this->e_Domain.c_str());
+  	cass_statement_bind_string(statement, 6, this->e_Subject.c_str());
+  	cass_statement_bind_string(statement, 7, this->e_MessageID.c_str());
+  	cass_statement_bind_collection(statement, 8, bodySections);
+  	cass_statement_bind_collection(statement, 9, headers);
+  	cass_statement_bind_bool(statement, 10, (this->e_Encryped == true ? cass_true : cass_false));
+  	cass_statement_bind_int64(statement, 11, this->e_Date);
+  	cass_statement_bind_uuid(statement, 12, this->e_OwnersUUID);
+  	cass_statement_bind_uuid(statement, 13, this->e_EmailUUID);
+  	cass_statement_bind_int32(statement, 14, this->e_Type);
+
+  	// Executes the query, and waits for execution to finish
+  	future = cass_session_execute(conn->c_Session, statement);
+  	cass_future_wait(future);
+
+  	// Frees the memory, since we don't want
+  	// - to leak anything if error occurs
+  	cass_statement_free(statement);
+  	cass_collection_free(from);
+  	cass_collection_free(to);
+  	cass_collection_free(headers);
+  	cass_collection_free(bodySections);
+  	cass_user_type_free(transportFrom);
+  	cass_user_type_free(transportTo);
+  	cass_schema_meta_free(schemaMeta);
+
+  	// Checks for errors, and throw
+  	// - error message if so
+  	rc = cass_future_error_code(future);
+  	if (rc != CASS_OK)
+  	{
+  		// Gets the error message, and frees the memory
+  		// - before throwing it
+			const char *err = nullptr;
+			std::size_t errLen;
+
+			cass_future_error_message(future, &err, &errLen);
+			cass_future_free(future);
+
+			std::string errString(err, errLen);
+			std::string message = "cass_session_connect() failed: ";
+			message += errString;
+			throw DatabaseException(message);
+  	}
+
+  	// Frees the memory ( if no error )
+  	cass_future_free(future);
   }
 }

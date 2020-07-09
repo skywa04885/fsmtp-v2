@@ -146,6 +146,18 @@ namespace FSMTP::Server
 				break;
 			}
 
+			// ===============================================
+			// Performs an attempt to respond / handle the
+			// - current command
+			//
+			// We use an switch statement to check the
+			// - command type, and then perform
+			// - an action from the SMTPActions source files
+			// - when something goes wrong we catch it,
+			// - and send an error message / shutdown the
+			// - SMTP Server
+			// ===============================================
+
 			try 
 			{
 				switch (command.c_CommandType)
@@ -157,6 +169,15 @@ namespace FSMTP::Server
 					}
 					case ClientCommandType::CCT_START_TLS:
 					{
+						// ================================================
+						// Upgrades the connection to an SSL socket
+						//
+						// Since many emails contain important information
+						// - we want to allow email clients to use 
+						// - STARTLS, and this will basically allow
+						// - that.
+						// ================================================
+
 						DEBUG_ONLY(logger << DEBUG << "Veilige verbinding wordt aangevraagd." << ENDL << CLASSIC);
 
 						// Sends the message that the client may
@@ -208,7 +229,49 @@ namespace FSMTP::Server
 
 						MIME::joinMessageLines(data);
 						MIME::parseRecursive(data, session.s_TransportMessage, 0);
-						FullEmail::print(session.s_TransportMessage, logger);
+
+						// ================================================
+						// Start storage section !
+						// 
+						// Stores the email in the database, and
+						// - adds it to the sending que if required
+						// ================================================
+
+						// Checks how we will store the message,
+						// - such as storing it in the database, linked
+						// - to the receiving user
+						if ((session.s_Flags &= _SMTP_SERV_SESSION_RELAY_FLAG) != _SMTP_SERV_SESSION_RELAY_FLAG)
+						{ // -> No relay, just store
+
+							// Creates the uuid for the email
+							CassUuidGen *uuidGen = cass_uuid_gen_new();
+							cass_uuid_gen_time(uuidGen, &session.s_TransportMessage.e_EmailUUID);
+							cass_uuid_gen_free(uuidGen);
+
+							// Binds the users uuid to the email
+							session.s_TransportMessage.e_OwnersUUID = session.s_ReceivingAccount.a_UUID;
+							session.s_TransportMessage.e_OwnersDomain = session.s_ReceivingAccount.a_Domain;
+
+							// Sets the other options, such as the email
+							// - type
+							session.s_TransportMessage.e_Type = EmailType::ET_INCOMMING;
+							session.s_TransportMessage.e_Bucket = FullEmail::getBucket();
+							session.s_TransportMessage.e_Encryped = false;
+
+							// Saves the email to the database
+							session.s_TransportMessage.save(database);
+						}
+
+						// Prints the stored message
+						DEBUG_ONLY(FullEmail::print(session.s_TransportMessage, logger));
+
+						// ================================================
+						// Notifies the client of storage / relay success
+						//
+						// Since the client has sent an message, we
+						// - now send an confirming response to the client
+						// - which tells that the message has been received
+						// ================================================
 
 						// Sends the data finished command
 						// - to indicate the body was received
