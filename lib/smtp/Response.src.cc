@@ -111,7 +111,7 @@ namespace FSMTP::SMTP
 						this->r_Message += ", nice to meet you !";
 					} else
 					{
-						this->r_Message += ' ';
+						this->r_Message += '-';
 						this->r_Message += _SMTP_SERVICE_DOMAIN;
 						this->r_Message += ", nice to meet you !\r\n";
 

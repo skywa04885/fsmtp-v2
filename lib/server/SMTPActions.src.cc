@@ -46,6 +46,33 @@ namespace FSMTP::Server::Actions
 	}
 
 	/**
+	 * Handles "HELO" / "EHLO" after StartTLS command
+	 *
+	 * @Param {BasicActionData &} data
+	 * @Return {void}
+	 */
+	void actionHelloAfterStartTLS(
+		BasicActionData &data,
+		std::vector<SMTPServiceFunction> *services,
+		SMTPServerSession &session
+	)
+	{
+		// Performs some checks if the arguments are actually
+		// - valid for usage, if not throw an error
+		if (data.command.c_Arguments.size() == 0)
+			throw SyntaxException("Empty HELO or EHLO is not allowed");
+		if (data.command.c_Arguments.size() > 1)
+			throw SyntaxException("Only one argument is allowed");
+
+		// Sends the response since everything seems fine to
+		// - me, and then we return without any error
+		ServerResponse resp(SMTPResponseCommand::SRC_HELO_RESP, data.esmtp, services);
+		std::string mess;
+		resp.build(mess);
+		SMTPSocket::sendString(data.fd, data.ssl, session.getSSLFlag(), mess);
+	}
+
+	/**
 	 * Handles the "MAIL FROM" command of the SMTP Server
 	 *
 	 * @Param {BasicActionData &} data

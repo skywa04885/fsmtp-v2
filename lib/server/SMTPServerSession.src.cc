@@ -18,6 +18,10 @@
 
 namespace FSMTP::Server
 {
+	SMTPServerSession::SMTPServerSession():
+		s_Flags(0x0), s_PerformedActions(0x0)
+	{}
+
 	void SMTPServerSession::setSSLFlag(void)
 	{
 		this->s_Flags |= _SMTP_SERV_SESSION_SSL_FLAG;
@@ -26,6 +30,18 @@ namespace FSMTP::Server
 	bool SMTPServerSession::getSSLFlag(void)
 	{
 		if (BINARY_COMPARE(this->s_Flags, _SMTP_SERV_SESSION_SSL_FLAG))
+			return true;
+		else return false;
+	}
+
+	void SMTPServerSession::setPerformedAction(int64_t flag)
+	{
+		this->s_PerformedActions |= flag;
+	}
+
+	bool SMTPServerSession::actionPerformed(int64_t flag)
+	{
+		if (BINARY_COMPARE(this->s_PerformedActions, flag))
 			return true;
 		else return false;
 	}

@@ -112,7 +112,7 @@ namespace FSMTP::Networking
 		 * @Param {SSL_CTX *} sslCtx
 		 * @Return void
 		 */
-		static void upgradeToSSL(int32_t &sfd, SSL *ssl, SSL_CTX *sslCtx);
+		static void upgradeToSSL(int32_t &sfd, SSL **ssl, SSL_CTX **sslCtx);
 
 		/**
 		 * Static single-usage method for reading the OpenSSL keys passphrase

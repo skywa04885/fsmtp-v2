@@ -105,6 +105,7 @@ namespace FSMTP::Models
 			cass_row_get_column_by_name(row, "a_uuid"),
 			&shortcut.a_UUID
 		);
+		shortcut.a_Domain = domain;
 
 		// Frees the memory
 		cass_result_free(result);

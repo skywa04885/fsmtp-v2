@@ -37,6 +37,7 @@
 #define _SMTP_SERV_PA_DATA_START 16
 #define _SMTP_SERV_PA_DATA_END 32
 #define _SMTP_SERV_PA_HELO_AFTER_STLS 64
+#define _SMTP_SERV_PA_AUTH_PERF 128
 
 using namespace FSMTP::Models;
 
@@ -45,11 +46,16 @@ namespace FSMTP::Server
 	class SMTPServerSession
 	{
 	public:
+		explicit SMTPServerSession();
+
 		void setSSLFlag(void);
 		bool getSSLFlag(void);
 
+		void setPerformedAction(int64_t flag);
+		bool actionPerformed(int64_t flag);
+
 		int32_t s_Flags;
-		int64_t s_PerformedActions;
+		int32_t s_PerformedActions;
 		FullEmail s_TransportMessage;
 
 		AccountShortcut s_SendingAccount;

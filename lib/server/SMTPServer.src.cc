@@ -164,7 +164,10 @@ namespace FSMTP::Server
 				{
 					case ClientCommandType::CCT_HELO:
 					{
-						actionHelloInitial(actionData);
+						if (session.actionPerformed(_SMTP_SERV_PA_START_TLS))
+							actionHelloAfterStartTLS(actionData, &server.s_Services, session);
+						else 
+							actionHelloInitial(actionData);
 						break;
 					}
 					case ClientCommandType::CCT_START_TLS:
@@ -190,11 +193,12 @@ namespace FSMTP::Server
 						// Upgrades the socket connection to use TLS,
 						// - after that we print the message to the console
 						try {
-							SMTPSocket::upgradeToSSL(fd, ssl, sslCtx);
+							SMTPSocket::upgradeToSSL(fd, &ssl, &sslCtx);
 							DEBUG_ONLY(logger << DEBUG << "Verbinding is succesvol beveiligd." << ENDL << CLASSIC);
 
 							// Updates the flags
 							session.setSSLFlag();
+							session.setPerformedAction(_SMTP_SERV_PA_START_TLS);
 						} catch (const std::runtime_error &e)
 						{
 							DEBUG_ONLY(logger << ERROR << "Verbinding kan niet worden beveiligd, daarom wordt de verbinding gesloten." << ENDL << CLASSIC);

@@ -20,6 +20,8 @@
 #include <stdexcept>
 #include <variant>
 #include <memory>
+#include <iostream>
+#include <bitset>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -61,6 +63,18 @@ namespace FSMTP::Server::Actions
 	 */
 	void actionHelloInitial(
 		BasicActionData &data
+	);
+
+	/**
+	 * Handles "HELO" / "EHLO" after StartTLS command
+	 *
+	 * @Param {BasicActionData &} data
+	 * @Return {void}
+	 */
+	void actionHelloAfterStartTLS(
+		BasicActionData &data,
+		std::vector<SMTPServiceFunction> *services,
+		SMTPServerSession &session
 	);
 
 	/**

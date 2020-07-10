@@ -299,7 +299,7 @@ namespace FSMTP::Networking
 			// Receives the data and then increments the buffer position
 			// - after that we check if there is a <CR><LF> in the message
 			if (useSSL)
-				rc = SSL_read(ssl, reinterpret_cast<char *>(&buffer[bufferPos]), _SMTP_RECEIVE_BUFFER_SIZE);
+				rc = SSL_read(ssl, reinterpret_cast<void *>(&buffer[bufferPos]), _SMTP_RECEIVE_BUFFER_SIZE);
 			else
 				rc = recv(sfd, reinterpret_cast<char *>(&buffer[bufferPos]), _SMTP_RECEIVE_BUFFER_SIZE, 0x0);
 			if (rc <= 0)
@@ -362,29 +362,33 @@ namespace FSMTP::Networking
 	 * @Param {SSL_CTX *} sslCtx
 	 * @Return void
 	 */
-	void SMTPSocket::upgradeToSSL(int32_t &sfd, SSL *ssl, SSL_CTX *sslCtx)
+	void SMTPSocket::upgradeToSSL(
+		int32_t &sfd,
+		SSL **ssl, 
+		SSL_CTX **sslCtx
+	)
 	{
 		int32_t rc;
 
 		// Creates the SSL context and if something goes
 		// - wrong we throw an error
 		const SSL_METHOD *sslMethod = SSLv23_server_method();
-		sslCtx = SSL_CTX_new(sslMethod);
+		*sslCtx = SSL_CTX_new(sslMethod);
 		if (!sslCtx)
 			throw std::runtime_error("Could not create context !");
 
 		// Configures the SSL context, with the keys etcetera
 		SSL_CTX_set_ecdh_auto(sslCtx, 1);
-		SSL_CTX_set_default_passwd_cb(sslCtx, &SMTPSocket::readSSLPassphrase);
+		SSL_CTX_set_default_passwd_cb(*sslCtx, &SMTPSocket::readSSLPassphrase);
 		
-		rc = SSL_CTX_use_certificate_file(sslCtx, _SMTP_SSL_CERT_PATH, SSL_FILETYPE_PEM);
+		rc = SSL_CTX_use_certificate_file(*sslCtx, _SMTP_SSL_CERT_PATH, SSL_FILETYPE_PEM);
 		if (rc <= 0)
 		{
 			ERR_print_errors_fp(stderr);
 			throw std::runtime_error("Could not read cert !");
 		}
 
-		rc = SSL_CTX_use_PrivateKey_file(sslCtx, _SMTP_SSL_KEY_PATH, SSL_FILETYPE_PEM);
+		rc = SSL_CTX_use_PrivateKey_file(*sslCtx, _SMTP_SSL_KEY_PATH, SSL_FILETYPE_PEM);
 		if (rc <= 0)
 		{
 			ERR_print_errors_fp(stderr);
@@ -393,10 +397,10 @@ namespace FSMTP::Networking
 
 		// Creates the ssl element and binds it with the socket,
 		// - after that we accept the connection with the client
-		ssl = SSL_new(sslCtx);
-		SSL_set_fd(ssl, sfd);
+		*ssl = SSL_new(*sslCtx);
+		SSL_set_fd(*ssl, sfd);
 
-		rc = SSL_accept(ssl);
+		rc = SSL_accept(*ssl);
 		if (rc <= 0)
 		{
 			ERR_print_errors_fp(stderr);

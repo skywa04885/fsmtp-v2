@@ -234,7 +234,7 @@ namespace FSMTP::Models
   {
   	int64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(
   		std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-  	return now / 1000 / 1000 / 1000;
+  	return now / 1000 / 1000 / 10;
   }
 
   /**
@@ -282,13 +282,13 @@ namespace FSMTP::Models
 
   	// Sets the transport to
 		transportTo = cass_user_type_new_from_data_type(udtEmailAddress);
-  	cass_user_type_set_string_by_name(transportTo, "e_address", this->e_TransportTo.e_Address.c_str());
-  	cass_user_type_set_string_by_name(transportTo, "e_name", this->e_TransportTo.e_Name.c_str());
+  	cass_user_type_set_string_by_name(transportTo, "a_address", this->e_TransportTo.e_Address.c_str());
+  	cass_user_type_set_string_by_name(transportTo, "a_name", this->e_TransportTo.e_Name.c_str());
 
   	// Sets the transport from
   	transportFrom = cass_user_type_new_from_data_type(udtEmailAddress);
-  	cass_user_type_set_string_by_name(transportFrom, "e_address", this->e_TransportFrom.e_Address.c_str());
-  	cass_user_type_set_string_by_name(transportFrom, "e_name", this->e_TransportFrom.e_Name.c_str());
+  	cass_user_type_set_string_by_name(transportFrom, "a_address", this->e_TransportFrom.e_Address.c_str());
+  	cass_user_type_set_string_by_name(transportFrom, "a_name", this->e_TransportFrom.e_Name.c_str());
 
   	// ========================================
   	// Sets the basic variables
@@ -306,8 +306,8 @@ namespace FSMTP::Models
   	for (const EmailAddress &address : this->e_To)
   	{
   		CassUserType *toAddress = cass_user_type_new_from_data_type(udtEmailAddress);
-  		cass_user_type_set_string_by_name(toAddress, "e_address", address.e_Address.c_str());
-  		cass_user_type_set_string_by_name(toAddress, "e_name", address.e_Name.c_str());
+  		cass_user_type_set_string_by_name(toAddress, "a_address", address.e_Address.c_str());
+  		cass_user_type_set_string_by_name(toAddress, "a_name", address.e_Name.c_str());
   		cass_collection_append_user_type(to, toAddress);
   		cass_user_type_free(toAddress);
   	}
@@ -317,8 +317,8 @@ namespace FSMTP::Models
   	for (const EmailAddress &address : this->e_From)
   	{
   		CassUserType *fromAddress = cass_user_type_new_from_data_type(udtEmailAddress);
-  		cass_user_type_set_string_by_name(fromAddress, "e_address", address.e_Address.c_str());
-  		cass_user_type_set_string_by_name(fromAddress, "e_name", address.e_Name.c_str());
+  		cass_user_type_set_string_by_name(fromAddress, "a_address", address.e_Address.c_str());
+  		cass_user_type_set_string_by_name(fromAddress, "a_name", address.e_Name.c_str());
   		cass_collection_append_user_type(from, fromAddress);
   		cass_user_type_free(fromAddress);
   	}
@@ -408,8 +408,8 @@ namespace FSMTP::Models
   	// Prepares the statement and then binds
   	// - the values
   	statement = cass_statement_new(query, 15);
-  	cass_statement_bind_user_type(statement, 0, transportFrom);
-  	cass_statement_bind_user_type(statement, 1, transportTo);
+    cass_statement_bind_user_type(statement, 0, transportFrom);
+    cass_statement_bind_user_type(statement, 1, transportTo);
     cass_statement_bind_collection(statement, 2, from);
     cass_statement_bind_collection(statement, 3, to);
     cass_statement_bind_string(statement, 4, this->e_OwnersDomain.c_str());

@@ -297,6 +297,10 @@ namespace FSMTP::Parsers::MIME
 					email.e_To = EmailAddress::parseAddressList(header.e_Value);
 				}
 			}
+
+			// Sets the headers, since we're in the first round
+			//- It's not meant as section
+			email.e_Headers = parsedHeaders;
 		}
 
 		// Checks how we should process the data further, and if
