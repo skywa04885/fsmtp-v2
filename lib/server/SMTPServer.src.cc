@@ -317,7 +317,7 @@ namespace FSMTP::Server
 		// - an message needs to be sent, please do this before
 		shutdown(fd, SHUT_RDWR);
 		logger << WARN << "Verbinding is gesloten." << ENDL << CLASSIC;
-		free(sAddr);
+		delete sAddr;
 
 		if (session.getSSLFlag())
 		{
