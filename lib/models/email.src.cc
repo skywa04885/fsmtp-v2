@@ -71,6 +71,21 @@ namespace FSMTP::Models
 		removeFirstAndLastWhite(this->e_Address);
 	}
 
+  std::vector<EmailAddress> EmailAddress::parseAddressList(const std::string &raw)
+  {
+    std::stringstream stream(raw);
+    std::string token;
+    std::vector<EmailAddress> result = {};
+
+    // Loops over the separate email addresses,
+    // - and parses them, and then pushes
+    // - them to the result vector
+    while (std::getline(stream, token, ','))
+      result.push_back(EmailAddress(token));
+
+    return result;
+  }
+
 	void EmailAddress::getDomain(std::string &ret)
 	{
 		std::size_t index = this->e_Address.find_first_of('@');
@@ -181,8 +196,8 @@ namespace FSMTP::Models
   	}
 
 
-  	c = 0;
   	// Loops over the body sections and displays them
+    c = 0;
   	logger << " - Body sections: " << ENDL;
   	for (const EmailBodySection &s : email.e_BodySections)
   	{
@@ -191,6 +206,20 @@ namespace FSMTP::Models
   			<< s.e_TransferEncoding << "]: " << ENDL;
   		logger << "\t\t" << (s.e_Content.size() < 56 ? s.e_Content : s.e_Content.substr(0, 56) + " ...") << ENDL;
   	}
+
+    // Prints the addresses, for example from and
+    // - to, this is also an vector
+    c = 0;
+    logger << " - From: " << ENDL;
+    for (const EmailAddress &address : email.e_From)
+      logger << "\t - Email[no: " << c++ << "]: " 
+        << address.e_Name << " | " << address.e_Address << ENDL;
+
+    c = 0;
+    logger << " - To: " << ENDL;
+    for (const EmailAddress &address : email.e_To)
+      logger << "\t - Email[no: " << c++ << "]: " 
+        << address.e_Name << " | " << address.e_Address << ENDL;
   	logger << CLASSIC;
   }
 
@@ -290,7 +319,7 @@ namespace FSMTP::Models
   		CassUserType *fromAddress = cass_user_type_new_from_data_type(udtEmailAddress);
   		cass_user_type_set_string_by_name(fromAddress, "e_address", address.e_Address.c_str());
   		cass_user_type_set_string_by_name(fromAddress, "e_name", address.e_Name.c_str());
-  		cass_collection_append_user_type(to, fromAddress);
+  		cass_collection_append_user_type(from, fromAddress);
   		cass_user_type_free(fromAddress);
   	}
 
@@ -343,6 +372,7 @@ namespace FSMTP::Models
   			cass_collection_append_user_type(emailSectionHeaders, emailSectionHeader);
   			cass_user_type_free(emailSectionHeader);
   		}
+      cass_user_type_set_collection_by_name(emailSection, "e_header", emailSectionHeaders);
 
   		// Frees the memory
   		cass_collection_append_user_type(bodySections, emailSection);
@@ -362,11 +392,11 @@ namespace FSMTP::Models
   	CassFuture *future = nullptr;
 
   	const char *query = R"(INSERT INTO fannst.full_emails (
-  		e_transport_from, e_transport_to, e_bucket,
-  		e_from, e_to, e_domain,
-  		e_subject, e_message_id, e_body_sections,
-  		e_headers, e_encrypted, e_date, 
-  		e_owners_uuid, e_email_uuid, e_type
+  		e_transport_from, e_transport_to, e_from,
+  		e_to, e_domain, e_subject,
+  		e_message_id, e_body_sections, e_headers,
+  		e_encrypted, e_date, e_owners_uuid, 
+  		e_email_uuid, e_type, e_bucket
   	) VALUES (
   		?, ?, ?,
   		?, ?, ?,
@@ -380,19 +410,19 @@ namespace FSMTP::Models
   	statement = cass_statement_new(query, 15);
   	cass_statement_bind_user_type(statement, 0, transportFrom);
   	cass_statement_bind_user_type(statement, 1, transportTo);
-  	cass_statement_bind_int64(statement, 2, this->e_Bucket);
-  	cass_statement_bind_collection(statement, 3, from);
-  	cass_statement_bind_collection(statement, 4, to);
-  	cass_statement_bind_string(statement, 5, this->e_Domain.c_str());
-  	cass_statement_bind_string(statement, 6, this->e_Subject.c_str());
-  	cass_statement_bind_string(statement, 7, this->e_MessageID.c_str());
-  	cass_statement_bind_collection(statement, 8, bodySections);
-  	cass_statement_bind_collection(statement, 9, headers);
-  	cass_statement_bind_bool(statement, 10, (this->e_Encryped == true ? cass_true : cass_false));
-  	cass_statement_bind_int64(statement, 11, this->e_Date);
-  	cass_statement_bind_uuid(statement, 12, this->e_OwnersUUID);
-  	cass_statement_bind_uuid(statement, 13, this->e_EmailUUID);
-  	cass_statement_bind_int32(statement, 14, this->e_Type);
+    cass_statement_bind_collection(statement, 2, from);
+    cass_statement_bind_collection(statement, 3, to);
+    cass_statement_bind_string(statement, 4, this->e_OwnersDomain.c_str());
+    cass_statement_bind_string(statement, 5, this->e_Subject.c_str());
+    cass_statement_bind_string(statement, 6, this->e_MessageID.c_str());
+    cass_statement_bind_collection(statement, 7, bodySections);
+    cass_statement_bind_collection(statement, 8, headers);
+    cass_statement_bind_bool(statement, 9, (this->e_Encryped == true ? cass_true : cass_false));
+    cass_statement_bind_int64(statement, 10, this->e_Date);
+    cass_statement_bind_uuid(statement, 11, this->e_OwnersUUID);
+    cass_statement_bind_uuid(statement, 12, this->e_EmailUUID);
+    cass_statement_bind_int32(statement, 13, this->e_Type);
+    cass_statement_bind_int64(statement, 14, this->e_Bucket);
 
   	// Executes the query, and waits for execution to finish
   	future = cass_session_execute(conn->c_Session, statement);
@@ -420,11 +450,12 @@ namespace FSMTP::Models
 			std::size_t errLen;
 
 			cass_future_error_message(future, &err, &errLen);
-			cass_future_free(future);
 
 			std::string errString(err, errLen);
 			std::string message = "cass_session_connect() failed: ";
 			message += errString;
+
+      cass_future_free(future);
 			throw DatabaseException(message);
   	}
 

@@ -289,6 +289,12 @@ namespace FSMTP::Parsers::MIME
 				} else if (header.e_Key == "message-id")
 				{
 					email.e_MessageID = header.e_Value;
+				} else if (header.e_Key == "from")
+				{
+					email.e_From = EmailAddress::parseAddressList(header.e_Value);
+				} else if (header.e_Key == "to")
+				{
+					email.e_To = EmailAddress::parseAddressList(header.e_Value);
 				}
 			}
 		}
@@ -404,7 +410,7 @@ namespace FSMTP::Parsers::MIME
 				finalContent,
 				parsedContentType,
 				parsedHeaders,
-				i,
+				static_cast<int32_t>(i),
 				parsedTransferEncoding
 			});
 		}

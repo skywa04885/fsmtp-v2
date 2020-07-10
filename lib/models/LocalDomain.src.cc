@@ -87,6 +87,7 @@ namespace FSMTP::Models
 			std::string errString(err, errLen);
 			std::string message = "cass_session_execute() failed: ";
 			message += errString;
+
 			throw DatabaseException(message);
 		}
 

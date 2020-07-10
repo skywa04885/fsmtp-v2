@@ -50,6 +50,8 @@ namespace FSMTP::Models
 		void getDomain(std::string &ret);
 		void getUsername(std::string &ret);
 
+		static std::vector<EmailAddress> parseAddressList(const std::string &raw);
+
 		std::string e_Address;
 		std::string e_Name;
 	};
@@ -153,7 +155,6 @@ namespace FSMTP::Models
 
     EmailAddress e_TransportFrom;
 		EmailAddress e_TransportTo;
-		std::string e_Domain;
 		std::string e_Subject;
 		std::string e_MessageID;
 		std::vector<EmailBodySection> e_BodySections;

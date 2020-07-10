@@ -70,16 +70,17 @@ namespace FSMTP::Models
 		rc = cass_future_error_code(future);
 		if (rc != CASS_OK)
 		{
-			// Gets the erropr message and throws
-			// - the error
+			// Gets the error message and combines it
+			// - with our own message, then throws it
 			const char *err = nullptr;
 			std::size_t errLen;
-			
 			cass_future_error_message(future, &err, &errLen);
-			cass_future_free(future);
-			cass_statement_free(statement);
 
-			throw DatabaseException("cass_session_execute() failed: " + std::string(err, errLen));
+			std::string errString(err, errLen);
+			std::string message = "cass_session_execute() failed: ";
+			message += errString;
+
+			throw DatabaseException(message);
 		}
 
 		// Checks if there is any data, and
