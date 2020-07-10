@@ -255,7 +255,18 @@ namespace FSMTP::Networking
 		std::size_t rc;
 		if (useSSL)
 		{
-			SSL_write(ssl, data.c_str(), data.length());
+			rc = SSL_write(ssl, data.c_str(), data.length());
+
+			if (rc <= 0)
+			{
+				BIO *bio = BIO_new(BIO_s_mem());
+				ERR_print_errors(bio);
+				char *err = nullptr;
+				std::size_t errLen = BIO_get_mem_data(bio, err);
+				std::string error(err, errLen);
+				BIO_free(bio);
+				throw std::runtime_error("SSL_write() failed: " + error);
+			}
 			return;
 		}
 
@@ -278,7 +289,13 @@ namespace FSMTP::Networking
 	 * @Param {std::string &} ret
 	 * @Return void
 	 */
-	void SMTPSocket::receiveString(int32_t &sfd, SSL *ssl, const bool &useSSL, const bool &bigData, std::string &ret)
+	void SMTPSocket::receiveString(
+		int32_t &sfd,
+		SSL *ssl,
+		const bool &useSSL,
+		const bool &bigData,
+		std::string &ret
+	)
 	{
 		uint8_t *buffer = reinterpret_cast<uint8_t *>(malloc(sizeof (uint8_t) * _SMTP_RECEIVE_BUFFER_SIZE));
 		std::size_t rc, bufferPos = 0, bufferSize = _SMTP_RECEIVE_BUFFER_SIZE;
@@ -305,7 +322,20 @@ namespace FSMTP::Networking
 			if (rc <= 0)
 			{
 				free(buffer);
-				throw std::runtime_error("Could not receive data !");
+
+				if (useSSL)
+				{
+					BIO *bio = BIO_new(BIO_s_mem());
+					ERR_print_errors(bio);
+					char *err = nullptr;
+					std::size_t errLen = BIO_get_mem_data(bio, err);
+					std::string error(err, errLen);
+					BIO_free(bio);
+					throw std::runtime_error("SSL_write() failed: " + error);
+				} else
+				{
+					throw std::runtime_error("Could not receive data !");
+				}
 			}
 			bufferPos += rc;
 
@@ -363,7 +393,7 @@ namespace FSMTP::Networking
 	 * @Return void
 	 */
 	void SMTPSocket::upgradeToSSL(
-		int32_t &sfd,
+		int32_t *sfd,
 		SSL **ssl, 
 		SSL_CTX **sslCtx
 	)
@@ -398,7 +428,7 @@ namespace FSMTP::Networking
 		// Creates the ssl element and binds it with the socket,
 		// - after that we accept the connection with the client
 		*ssl = SSL_new(*sslCtx);
-		SSL_set_fd(*ssl, sfd);
+		SSL_set_fd(*ssl, *sfd);
 
 		rc = SSL_accept(*ssl);
 		if (rc <= 0)

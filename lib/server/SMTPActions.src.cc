@@ -206,14 +206,14 @@ namespace FSMTP::Server::Actions
 				// If we're relaying, and the domain is in
 				// - the database, we want to set the relay
 				// - to local flag
-				if ((session.s_Flags &= _SMTP_SERV_SESSION_RELAY_FLAG) == _SMTP_SERV_SESSION_RELAY_FLAG)
+				if ((session.s_Flags & _SMTP_SERV_SESSION_RELAY_FLAG) == _SMTP_SERV_SESSION_RELAY_FLAG)
 				{
 					session.s_Flags |= _SMTP_SERV_SESSION_RELAY_TO_LOCAL;
 				}
 			}
 			catch (const EmptyQuery &e)
 			{
-				if ((session.s_Flags &= _SMTP_SERV_SESSION_RELAY_FLAG) != _SMTP_SERV_SESSION_RELAY_FLAG)
+				if ((session.s_Flags & _SMTP_SERV_SESSION_RELAY_FLAG) != _SMTP_SERV_SESSION_RELAY_FLAG)
 				{
 					// Sends the error message
 					ServerResponse resp(SMTPResponseCommand::SRC_BAD_EMAIL_ADDRESS, data.esmtp, nullptr);

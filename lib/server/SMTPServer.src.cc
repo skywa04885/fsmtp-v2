@@ -193,7 +193,7 @@ namespace FSMTP::Server
 						// Upgrades the socket connection to use TLS,
 						// - after that we print the message to the console
 						try {
-							SMTPSocket::upgradeToSSL(fd, &ssl, &sslCtx);
+							SMTPSocket::upgradeToSSL(&fd, &ssl, &sslCtx);
 							DEBUG_ONLY(logger << DEBUG << "Verbinding is succesvol beveiligd." << ENDL << CLASSIC);
 
 							// Updates the flags
