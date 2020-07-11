@@ -31,6 +31,12 @@ namespace FSMTP
 
 	static std::mutex cursedMutex;
 
+	/**
+	 * Initializes NCurses
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
 	void NCursesDisplay::init(void)
 	{
 		// Inits the screen and gets the
@@ -113,6 +119,12 @@ namespace FSMTP
 		NCursesDisplay::setEmailsSent(0);
 	}
 
+	/**
+	 * Sets the thread count
+	 *
+	 * @Param {const std::size_t} n
+	 * @Return {void}
+	 */
 	void NCursesDisplay::setThreads(const std::size_t n)
 	{
 		cursedMutex.lock();
@@ -124,6 +136,12 @@ namespace FSMTP
 		cursedMutex.unlock();
 	}
 
+	/**
+	 * Sets the emails handled count
+	 *
+	 * @Param {const std::size_t} n
+	 * @Return {void}
+	 */
 	void NCursesDisplay::setEmailsHandled(const std::size_t n)
 	{
 		cursedMutex.lock();
@@ -135,6 +153,12 @@ namespace FSMTP
 		cursedMutex.unlock();
 	}
 
+	/**
+	 * Sets the email sent count
+	 *
+	 * @Param {const std::size_t} n
+	 * @Return {void}
+	 */
 	void NCursesDisplay::setEmailsSent(const std::size_t n)
 	{
 		cursedMutex.lock();
@@ -146,12 +170,24 @@ namespace FSMTP
 		cursedMutex.unlock();
 	}
 
+	/**
+	 * Closes NCurses
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
 	void NCursesDisplay::die(void)
 	{
 		// Stops ncurses and deallocates memory
 		endwin();
 	}
 
+	/**
+	 * Sets the status of the application
+	 *
+	 * @Param {const NCursesDisplayStatus} status
+	 * @Return {void}
+	 */
 	void NCursesDisplay::setStatus(const NCursesDisplayStatus status)
 	{
 		cursedMutex.lock();
@@ -189,6 +225,14 @@ namespace FSMTP
 		cursedMutex.unlock();
 	}
 
+	/**
+	 * Prints something to an display
+	 *
+	 * @Param {const std::string &} raw
+	 * @Param {const NCursesDisplayPos} pos
+	 * @Param {const NCursesLevel} level
+	 * @Param {const char *} prefix
+	 */
 	void NCursesDisplay::print(
 		const std::string &raw,
 		const NCursesDisplayPos pos,
@@ -286,6 +330,12 @@ namespace FSMTP
 		cursedMutex.unlock();
 	}
 
+	/**
+	 * Waits for the 'Q' quit press
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
 	void NCursesDisplay::listenForQuit(void)
 	{
 		while (mvwgetch(_generalWin, 0, 0) != 'q') continue;

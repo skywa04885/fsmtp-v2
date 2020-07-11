@@ -18,6 +18,13 @@
 
 namespace FSMTP::Cleanup
 {
+	/**
+	 * Reduces all white space patters to an single one
+	 *
+	 * @Param {const std::string &} raw
+	 * @Param {std::string &} ret
+	 * @Return {void}
+	 */
 	void reduceWhitespace(const std::string &raw, std::string &ret)
 	{
 		bool lww = false;
@@ -38,6 +45,11 @@ namespace FSMTP::Cleanup
 		removeFirstAndLastWhite(ret);
 	}
 
+	/**
+	 * Removes the first and last whitespace char from str
+	 *
+	 * @Param {std::string &} str
+	 */
 	void removeFirstAndLastWhite(std::string &str)
 	{
 		if (str.size() < 2) return;

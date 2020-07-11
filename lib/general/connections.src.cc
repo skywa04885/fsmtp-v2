@@ -18,6 +18,12 @@
 
 namespace FSMTP::Connections
 {
+	/**
+	 * Default constructor for the connection
+	 *
+	 * @Param {const char *} hosts
+	 * @Return {void}
+	 */
 	CassandraConnection::CassandraConnection(const char *hosts)
 	{
 		this->c_Cluster = cass_cluster_new();
@@ -39,6 +45,12 @@ namespace FSMTP::Connections
 		}
 	}
 
+	/**
+	 * Default destructor which closes the connection
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
 	CassandraConnection::~CassandraConnection()
 	{
 		// Frees the cassandra used memory and probally
@@ -51,6 +63,13 @@ namespace FSMTP::Connections
 		cass_session_free(this->c_Session);
 	}
 
+	/**
+	 * Creates the redis connection, so default constructor
+	 *
+	 * @Param {const char *} ip
+	 * @Param {int32_t} port
+	 * @Return {void}
+	 */
 	RedisConnection::RedisConnection(const char *ip, const int32_t port)
 	{
 		// Connects to redis and throws an error
@@ -69,12 +88,23 @@ namespace FSMTP::Connections
 		}
 	}
 
+	/**
+	 * Default destructor, closes the connection
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
 	RedisConnection::~RedisConnection()
 	{
 		redisFree(this->r_Session);
 	}
 
-
+	/**
+	 * Gets an cassandra error message
+	 *
+	 * @Param {CassFuture *} future
+	 * @Return {std::string}
+	 */
 	std::string CassandraConnection::getError(CassFuture *future)
 	{
 		const char *err = nullptr;

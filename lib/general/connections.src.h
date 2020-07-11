@@ -27,9 +27,28 @@ namespace FSMTP::Connections
 	class CassandraConnection
 	{
 	public:
+		/**
+		 * Gets an cassandra error message
+		 *
+		 * @Param {CassFuture *} future
+		 * @Return {std::string}
+		 */
 		static std::string getError(CassFuture *future);
 
-		CassandraConnection(const char *hosts);
+		/**
+		 * Default constructor for the connection
+		 *
+		 * @Param {const char *} hosts
+		 * @Return {void}
+		 */
+		explicit CassandraConnection(const char *hosts);
+
+		/**
+		 * Default destructor which closes the connection
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
 		~CassandraConnection();
 
 		CassSession *c_Session;
@@ -40,7 +59,21 @@ namespace FSMTP::Connections
 	class RedisConnection
 	{
 	public:
-		RedisConnection(const char *ip, const int32_t port);
+		/**
+		 * Creates the redis connection, so default constructor
+		 *
+		 * @Param {const char *} ip
+		 * @Param {int32_t} port
+		 * @Return {void}
+		 */
+		explicit RedisConnection(const char *ip, const int32_t port);
+
+		/**
+		 * Default destructor, closes the connection
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
 		~RedisConnection();
 	
 		redisContext *r_Session;

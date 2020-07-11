@@ -66,17 +66,70 @@ namespace FSMTP
 	class NCursesDisplay
 	{
 	public:
+		/**
+		 * Initializes NCurses
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
 		static void init(void);
+		
+		/**
+		 * Closes NCurses
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
 		static void die(void);
 
+		/**
+		 * Sets the status of the application
+		 *
+		 * @Param {const NCursesDisplayStatus} status
+		 * @Return {void}
+		 */
 		static void setStatus(const NCursesDisplayStatus status);
 
+		/**
+		 * Sets the thread count
+		 *
+		 * @Param {const std::size_t} n
+		 * @Return {void}
+		 */
 		static void setThreads(const std::size_t n);
+
+		/**
+		 * Sets the emails handled count
+		 *
+		 * @Param {const std::size_t} n
+		 * @Return {void}
+		 */
 		static void setEmailsHandled(const std::size_t n);
+
+		/**
+		 * Sets the email sent count
+		 *
+		 * @Param {const std::size_t} n
+		 * @Return {void}
+		 */
 		static void setEmailsSent(const std::size_t n);
 
+		/**
+		 * Waits for the 'Q' quit press
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
 		static void listenForQuit(void);
 
+		/**
+		 * Prints something to an display
+		 *
+		 * @Param {const std::string &} raw
+		 * @Param {const NCursesDisplayPos} pos
+		 * @Param {const NCursesLevel} level
+		 * @Param {const char *} prefix
+		 */
 		static void print(
 			const std::string &raw,
 			const NCursesDisplayPos pos,

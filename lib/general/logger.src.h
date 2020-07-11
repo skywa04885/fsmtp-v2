@@ -48,10 +48,23 @@ namespace FSMTP
 	class Logger
 	{
 	public:
+		/**
+		 * Default constructor for the logger
+		 *
+		 * @Param {const std::string &} l_Prefix
+		 * @Param {const LoggerLevel &} l_Level
+		 * @Return {void}
+		 */
 		Logger(const std::string &l_Prefix, const LoggerLevel &l_Level):
 			l_Prefix(l_Prefix), l_Level(l_Level)
 		{}
 
+		/**
+		 * Appends something to the stream
+		 *
+		 * @Param {T &} a
+		 * @Return {Logger &}
+		 */
 		template<typename T>
 		Logger &append(const T &a)
 		{
@@ -59,6 +72,12 @@ namespace FSMTP
 			return *this;
 		}
 
+		/**
+		 * Changes the logger level
+		 *
+		 * @Param {const LoggerLevel &} a
+		 * @Return {Logger &}
+		 */
 		Logger &append(const LoggerLevel& a)
 		{
 			this->l_Old = this->l_Level;
@@ -67,6 +86,12 @@ namespace FSMTP
 			return *this;
 		}
 
+		/**
+		 * Performs an operation such as print out
+		 *
+		 * @Param {const LoggerOpts &} a
+		 * @Return {Logger &}
+		 */
 		Logger &append(const LoggerOpts &a)
 		{
 			// Checks which option it is
@@ -143,6 +168,12 @@ namespace FSMTP
 			return *this;
 		}
 
+		/**
+		 * Performs the operator overloading
+		 *
+		 * @Param {const T &} a
+		 * @Return {Logger &}
+		 */
 		template<typename T>
 		Logger &operator << (const T &a)
 		{

@@ -18,6 +18,12 @@
 
 namespace FSMTP::Encoding::HEX
 {
+	/**
+	 * Turns an hex char to valid number
+	 *
+	 * @Param {const char} c
+	 * @Return {char}
+	 */
 	char _reverseDict(const char c)
 	{
 	 switch (c)
@@ -42,6 +48,13 @@ namespace FSMTP::Encoding::HEX
     }
 	}
 
+	/**
+	 * Decodes an string of hexadecimal characters
+	 *
+	 * @Param {const std::string &} raw
+	 * @Param {std::string &} ret
+	 * @Return {void}
+	 */
 	void decode(const std::string &raw, std::string &ret)
 	{
 		// Starts the decoding in pairs of one,
@@ -64,6 +77,13 @@ namespace FSMTP::Encoding::HEX
 		}
 	}
 
+	/**
+	 * Encodes an raw string into an hexadecimal string\
+	 *
+	 * @Param {const std::string &} raw
+	 * @Param {std::string &} ret
+	 * @Return {void}
+	 */
 	void encode(const std::string &raw, std::string &ret)
 	{
 

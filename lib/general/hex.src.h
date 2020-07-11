@@ -23,8 +23,29 @@
 
 namespace FSMTP::Encoding::HEX
 {
+	/**
+	 * Turns an hex char to valid number
+	 *
+	 * @Param {const char} c
+	 * @Return {char}
+	 */
 	char _reverseDict(const char c);
 
+	/**
+	 * Decodes an string of hexadecimal characters
+	 *
+	 * @Param {const std::string &} raw
+	 * @Param {std::string &} ret
+	 * @Return {void}
+	 */
 	void decode(const std::string &raw, std::string &ret);
+
+	/**
+	 * Encodes an raw string into an hexadecimal string\
+	 *
+	 * @Param {const std::string &} raw
+	 * @Param {std::string &} ret
+	 * @Return {void}
+	 */
 	void encode(const std::string &raw, std::string &ret);
 }
