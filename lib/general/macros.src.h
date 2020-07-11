@@ -21,7 +21,7 @@
 // Uncomment in production since it will make you 
 // - crazy when the console is being spammed with
 // - all kinds of debug crap
-// #define _SMTP_DEBUG
+#define _SMTP_DEBUG
 
 #ifdef _SMTP_DEBUG
 #define DEBUG_ONLY(A) A

@@ -273,7 +273,7 @@ namespace FSMTP::Server
 						// Checks how we will store the message,
 						// - such as storing it in the database, linked
 						// - to the receiving user
-						if ((session.s_Flags &= _SMTP_SERV_SESSION_RELAY_FLAG) != _SMTP_SERV_SESSION_RELAY_FLAG)
+						if ((session.s_Flags & _SMTP_SERV_SESSION_RELAY_FLAG) != _SMTP_SERV_SESSION_RELAY_FLAG)
 						{ // -> No relay, just store
 
 							// Creates the uuid for the email
