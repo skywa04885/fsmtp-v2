@@ -16,6 +16,11 @@
 
 #include "SMTPServer.src.h"
 
+extern bool _forceLoggerNCurses;
+
+static std::atomic<int> _serverThreadCount = 0;
+static std::atomic<int> _emailsHandled = 0;
+
 namespace FSMTP::Server
 {
 	SMTPServer::SMTPServer(
@@ -85,6 +90,9 @@ namespace FSMTP::Server
 
 	void SMTPServer::onClientSync(struct sockaddr_in *sAddr, int32_t fd, void *u)
 	{
+		_serverThreadCount++;
+		if (_forceLoggerNCurses) NCursesDisplay::setThreads(_serverThreadCount);
+
 		SSL_CTX *sslCtx = nullptr;
 		SSL *ssl = nullptr;
 		int32_t executed = 0x0;
@@ -120,7 +128,7 @@ namespace FSMTP::Server
 
 		// Prints the initial client information and then
 		// - we sent the initial hello message to the SMTP client
-		logger << "onClientSync() aangeroepen, verbinding gemaakt." << ENDL;
+		DEBUG_ONLY(logger << "onClientSync() aangeroepen, verbinding gemaakt." << ENDL);
 
 		{ // ( Initial message )
 			ServerResponse response(SRC_INIT, server.s_UseESMTP, nullptr);
@@ -140,7 +148,7 @@ namespace FSMTP::Server
 				SMTPSocket::receiveString(fd, ssl, session.getSSLFlag(), false, rawData);
 			} catch(const std::runtime_error &e)
 			{
-				logger << FATAL << "An exception occured: " << e.what() << ", closing connection !" << ENDL << CLASSIC;
+				DEBUG_ONLY(logger << FATAL << "An exception occured: " << e.what() << ", closing connection !" << ENDL << CLASSIC);
 				break;
 			}
 
@@ -346,6 +354,15 @@ namespace FSMTP::Server
 		{
 			SSL_free(ssl);
 			SSL_CTX_free(sslCtx);
+		}
+
+		// Updates the thread count, and emails handled
+		_serverThreadCount--;
+		if (_forceLoggerNCurses) NCursesDisplay::setThreads(_serverThreadCount);
+		if (_forceLoggerNCurses)
+		{
+			_emailsHandled++;
+			NCursesDisplay::setEmailsHandled(_emailsHandled);
 		}
 	}
 

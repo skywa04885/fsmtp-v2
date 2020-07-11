@@ -22,8 +22,13 @@
 #include <thread>
 #include <cstdint>
 
+#include "./NCursesDisplay.src.h"
+
+extern bool _forceLoggerNCurses;
+
 namespace FSMTP
 {
+
 	typedef enum : uint8_t
 	{
 		DEBUG = 0,
@@ -74,51 +79,64 @@ namespace FSMTP
 				}
 				case LoggerOpts::ENDL:
 				{
-					std::cout << 'T' << std::this_thread::get_id() << "->";
-
-					// Adds the loggerlevel prefix,
-					// and the thread id etcetera
-					switch (this->l_Level)
+					if (_forceLoggerNCurses)
 					{
-						case LoggerLevel::DEBUG:
+						NCursesDisplay::print(
+							this->l_Stream.str(),
+							NCursesDisplayPos::NDP_BULLSHIT,
+							static_cast<NCursesLevel>(this->l_Level),
+							this->l_Prefix.c_str()
+						);
+						this->l_Stream.clear();
+						this->l_Stream.str("");
+					} else
+					{
+						std::cout << 'T' << std::this_thread::get_id() << "->";
+
+						// Adds the loggerlevel prefix,
+						// and the thread id etcetera
+						switch (this->l_Level)
 						{
-							std::cout << "\033[36m[debug@" << this->l_Prefix << "]: \033[0m";
-							break;
+							case LoggerLevel::DEBUG:
+							{
+								std::cout << "\033[36m[debug@" << this->l_Prefix << "]: \033[0m";
+								break;
+							}
+							case LoggerLevel::PARSER:
+							{
+								std::cout << "\033[34m[parser@" << this->l_Prefix << "]: \033[0m";
+								break;
+							}
+							case LoggerLevel::INFO:
+							{
+								std::cout << "\033[32m[informatie@" << this->l_Prefix << "]: \033[0m";
+								break;
+							}
+							case LoggerLevel::WARN:
+							{
+								std::cout << "\033[33m[waarschuwing@" << this->l_Prefix << "]: \033[0m";
+								break;
+							}
+							case LoggerLevel::ERROR:
+							{
+								std::cout << "\033[31m[fout@" << this->l_Prefix << "]: \033[0m";
+								break;
+							}
+							case LoggerLevel::FATAL:
+							{
+								std::cout << "\033[31m[super-fout@" << this->l_Prefix << "]: \033[0m";
+								break;
+							}
 						}
-						case LoggerLevel::PARSER:
-						{
-							std::cout << "\033[34m[parser@" << this->l_Prefix << "]: \033[0m";
-							break;
-						}
-						case LoggerLevel::INFO:
-						{
-							std::cout << "\033[32m[informatie@" << this->l_Prefix << "]: \033[0m";
-							break;
-						}
-						case LoggerLevel::WARN:
-						{
-							std::cout << "\033[33m[waarschuwing@" << this->l_Prefix << "]: \033[0m";
-							break;
-						}
-						case LoggerLevel::ERROR:
-						{
-							std::cout << "\033[31m[fout@" << this->l_Prefix << "]: \033[0m";
-							break;
-						}
-						case LoggerLevel::FATAL:
-						{
-							std::cout << "\033[31m[super-fout@" << this->l_Prefix << "]: \033[0m";
-							break;
-						}
+
+
+						// Prints the message to the console
+						// and clears the buffers
+						std::cout << this->l_Stream.str() << std::endl;
+						this->l_Stream.str("");
+						this->l_Stream.clear();
+						break;
 					}
-
-
-					// Prints the message to the console
-					// and clears the buffers
-					std::cout << this->l_Stream.str() << std::endl;
-					this->l_Stream.str("");
-					this->l_Stream.clear();
-					break;
 				}
 			}
 

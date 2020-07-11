@@ -31,6 +31,7 @@
 #include "lib/general/macros.src.h"
 #include "lib/general/logger.src.h"
 #include "lib/general/encoding.src.h"
+#include "lib/general/NCursesDisplay.src.h"
 #include "lib/workers/DatabaseWorker.src.h"
 
 using namespace FSMTP;

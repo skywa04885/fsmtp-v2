@@ -16,10 +16,7 @@
 
 #include "main.h"
 
-static int32_t _redisPort = 6379;
-static int32_t _serverPort = 25;
-static const char *_CassHost = "192.168.188.130";
-static const char *_redisHost = "192.168.188.130";
+bool _forceLoggerNCurses = false;
 
 int main(const int argc, const char **argv)
 {
@@ -45,6 +42,7 @@ int main(const int argc, const char **argv)
 			std::cout << "-h, --help: " << "\tPrint de lijst met beschikbare opdrachten." << std::endl;
 			std::cout << "-t, --test: " << "\tVoer tests uit op de vitale functies van de server, zoals database verbinding." << std::endl;
 			std::cout << "-s, --sync: " << "\tSynchroniseerd de redis database met die van cassandra" << std::endl;
+			std::cout << "-n, --ncurses: " << "\tGebruik NCurses in plaats van klassieke terminal." << std::endl;
 			return 0;
 		}
 
@@ -69,7 +67,7 @@ int main(const int argc, const char **argv)
 			logger << _BASH_UNKNOWN_MARK << "Start van de Redis verbindings test ..." << ENDL;
 			std::unique_ptr<RedisConnection> redis;
 			try {
-				redis = std::make_unique<RedisConnection>(_redisHost, _redisPort);
+				redis = std::make_unique<RedisConnection>(_REDIS_CONTACT_POINTS, _REDIS_PORT);
 			} catch (const std::runtime_error &e)
 			{
 				logger << _BASH_FAIL_MARK << "Verbinding met Redis is niet gelukt" << ENDL;
@@ -79,7 +77,7 @@ int main(const int argc, const char **argv)
 			// Performs the check if we may create an socket
 			// - this will throw an error if we're not allowed to do it
 			logger << _BASH_UNKNOWN_MARK << "Start van server socket test ..." << ENDL;
-			try { SMTPSocket socket(SMTPSocketType::SST_SERVER, _serverPort); }
+			try { SMTPSocket socket(SMTPSocketType::SST_SERVER, 25); }
 			catch (const std::runtime_error &e)
 			{
 				logger << _BASH_FAIL_MARK << "Het starten en stoppen van een server socket is fout gegaan, probeer de server met 'sudo' te starten." << ENDL;
@@ -110,7 +108,7 @@ int main(const int argc, const char **argv)
 			
 			logger << "Verbinding maken met Redis ..." << ENDL;
 			try {
-				redis = std::make_unique<RedisConnection>(_redisHost, _redisPort);
+				redis = std::make_unique<RedisConnection>(_REDIS_CONTACT_POINTS, _REDIS_PORT);
 			} catch (const std::runtime_error &e)
 			{
 				logger << FATAL << "Kon geen verbinding met Redis maken: " << e.what() << ENDL;
@@ -124,7 +122,7 @@ int main(const int argc, const char **argv)
 			
 			std::unique_ptr<CassandraConnection> cassandra;
 			try {
-				cassandra = std::make_unique<CassandraConnection>(_CassHost);
+				cassandra = std::make_unique<CassandraConnection>(_CASSANDRA_DATABASE_CONTACT_POINTS);
 			} catch (const std::runtime_error &e)
 			{
 				logger << FATAL << "Kon geen verbinding met Cassandra maken: " << e.what() << ENDL;
@@ -290,19 +288,25 @@ int main(const int argc, const char **argv)
 
 			return 0;
 		}
+
+		if (compareArg(arg, "ncurses"))
+		{
+			_forceLoggerNCurses = true;
+		}
 	}
 
-	// Runs the server
-	Logger logger("Main", LoggerLevel::INFO);
+	// =====================================
+	// Initializes NCursesDisplay
+	//
+	// This is an pretty replacement for the
+	// - default console
+	// =====================================
 
-	// Prints the credits haha
-	for (std::size_t i = 0; i < 80; i++)
-		logger << '=';
-	logger << ENDL;
-	logger << "FSMTP V2 Door Skywa04885 - https://software.fannst.nl/fsmtp-v2" << ENDL;
-	for (std::size_t i = 0; i < 80; i++)
-		logger << '=';
-	logger << ENDL;
+	if (_forceLoggerNCurses)
+	{
+		NCursesDisplay::init();
+		NCursesDisplay::setStatus(NCursesDisplayStatus::NDS_STARTING);
+	}
 
 	// =====================================
 	// Starts the workers
@@ -313,7 +317,7 @@ int main(const int argc, const char **argv)
 	// =====================================
 
 	// Creates and starts the database worker
-	std::unique_ptr<DatabaseWorker> dbWorker = std::make_unique<DatabaseWorker>(_CassHost);
+	std::unique_ptr<DatabaseWorker> dbWorker = std::make_unique<DatabaseWorker>(_REDIS_CONTACT_POINTS);
 	if (!dbWorker->start(nullptr))
 		std::exit(-1);
 
@@ -324,16 +328,27 @@ int main(const int argc, const char **argv)
 	// - the smtp server
 	// =====================================
 
+	// Runs the server
+	Logger logger("Main", LoggerLevel::INFO);
+
 	int32_t opts = 0x0;
 
 	opts |= _SERVER_OPT_ENABLE_AUTH;
 	opts |= _SERVER_OPT_ENABLE_TLS;
 
-	SMTPServer server(_serverPort, true, opts, _redisPort, _redisHost);
+	SMTPServer server(25, true, opts, _REDIS_PORT, _REDIS_CONTACT_POINTS);
 
-	std::cin.get();
+	if (_forceLoggerNCurses)
+	{
+		NCursesDisplay::setStatus(NCursesDisplayStatus::NDS_RUNNING);
+		NCursesDisplay::listenForQuit();
+		NCursesDisplay::setStatus(NCursesDisplayStatus::NDS_SHUTDOWN);
+	}
+	else std::cin.get();
+
 	server.shutdownServer();
 	dbWorker->stop();
+	NCursesDisplay::die();
 
 	return 0;
 }

@@ -136,7 +136,6 @@ namespace FSMTP::Networking
 					std::cout << "accept() failed: " << strerror(clientSockFD) << std::endl;					
 				continue;
 			}
-			std::cout << "accept() succeeded: " << "Accepted client " << std::endl;
 
 			// Sets the socket timeout so some clients
 			// - will not keep the server blocked

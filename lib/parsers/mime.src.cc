@@ -203,11 +203,11 @@ namespace FSMTP::Parsers::MIME
 		std::size_t i
 	)
 	{
-		Logger logger(
+		DEBUG_ONLY(Logger logger(
 			"RecursiveParserRound:" + std::to_string(i),
 			LoggerLevel::PARSER
-		);
-		logger << "Nieuwe ronde gestart ..." << ENDL;
+		));
+		DEBUG_ONLY(logger << "Nieuwe ronde gestart ..." << ENDL);
 
 		std::string body;
 		std::string headers;
@@ -219,7 +219,7 @@ namespace FSMTP::Parsers::MIME
 
 		// Splits the headers and body, so we can parse
 		// - them separate
-		logger << "Begonnen met splitsen van headers en body" << ENDL;
+		DEBUG_ONLY(logger << "Begonnen met splitsen van headers en body" << ENDL);
 		splitHeadersAndBody(raw, headers, body);
 
 		// Parses the headers, and then processes the body
@@ -270,7 +270,7 @@ namespace FSMTP::Parsers::MIME
 		// - so we can store the basic headers
 		if (i == 0)
 		{
-			logger << "Eerste ronde gedetecteerd, opslaan in FullEmail & ..." << ENDL;
+			DEBUG_ONLY(logger << "Eerste ronde gedetecteerd, opslaan in FullEmail & ..." << ENDL);
 
 			// Gets the required parameters from the headers,
 			// - such as the subject and date
@@ -332,7 +332,7 @@ namespace FSMTP::Parsers::MIME
 				std::string token;
 				std::string temp;
 
-				logger << "Begonnen met opdelen body in secties, met behulp van boundary: " << boundary << ENDL;
+				DEBUG_ONLY(logger << "Begonnen met opdelen body in secties, met behulp van boundary: " << boundary << ENDL);
 
 				// Loops over the lines, and separates these ones
 				// - into separate mime sections
@@ -353,7 +353,7 @@ namespace FSMTP::Parsers::MIME
 						if (endBoundary || token == "--" + boundary)
 						{
 							if (temp.size() > 0)
-								logger << "Subsection detected of length: " << temp.size() << ENDL;
+								DEBUG_ONLY(logger << "Subsection detected of length: " << temp.size() << ENDL);
 
 							// Clears the temp, and pushes it to the
 							// - result vector

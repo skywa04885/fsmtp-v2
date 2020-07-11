@@ -21,7 +21,7 @@
 // Uncomment in production since it will make you 
 // - crazy when the console is being spammed with
 // - all kinds of debug crap
-#define _SMTP_DEBUG
+// #define _SMTP_DEBUG
 
 #ifdef _SMTP_DEBUG
 #define DEBUG_ONLY(A) A
@@ -66,6 +66,17 @@
 #ifndef _CASSANDRA_DATABASE_CONTACT_POINTS
 #define _CASSANDRA_DATABASE_CONTACT_POINTS "192.168.188.130"
 #endif
+
+#ifndef _REDIS_CONTACT_POINTS
+#define _REDIS_CONTACT_POINTS "192.168.188.130"
+#endif
+
+#ifndef _REDIS_PORT
+#define _REDIS_PORT 6379
+#endif
+
+#define _PREP_TO_STRING(A) #A
+#define PREP_TO_STRING(A) _PREP_TO_STRING(A)
 
 #define _BASH_CHECKMARK "\u2713"
 #define _BASH_CROSS "\u2717"

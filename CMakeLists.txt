@@ -42,7 +42,7 @@ file(GLOB workers_headers "lib/workers/*.h")
 
 set(sources "main.cc")
 set(headers "main.h")
-set(args "-lpthread -lssl -lcrypto -lcassandra -lboost_system -lhiredis -lboost_program_options")
+set(args "-lpthread -lssl -lcrypto -lcassandra -lboost_system -lcurses -lhiredis -lboost_program_options")
 
 add_executable(
 	${PROJECT_NAME}

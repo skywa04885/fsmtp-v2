@@ -127,7 +127,6 @@ namespace FSMTP::Server::Actions
 			}
 			catch (const EmptyQuery &e)
 			{
-				std::cout << e.what() << std::endl;
 				session.s_Flags &= ~_SMTP_SERV_SESSION_RELAY_FLAG;
 			}
 		} catch (const std::runtime_error &e)
