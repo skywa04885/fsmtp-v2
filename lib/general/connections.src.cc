@@ -33,15 +33,8 @@ namespace FSMTP::Connections
 		// - could not connect to the cluster
 		if (cass_future_error_code(this->c_ConnectFuture) != CASS_OK)
 		{
-			// Gets the error message and combines it
-			// - with our own message, then throws it
-			const char *err = nullptr;
-			std::size_t errLen;
-			cass_future_error_message(this->c_ConnectFuture, &err, &errLen);
-
-			std::string errString(err, errLen);
 			std::string message = "cass_session_connect() failed: ";
-			message += errString;
+			message += CassandraConnection::getError(this->c_ConnectFuture);
 			throw std::runtime_error(message);
 		}
 	}
@@ -56,5 +49,40 @@ namespace FSMTP::Connections
 		cass_future_wait(future);
 		cass_future_free(future);
 		cass_session_free(this->c_Session);
+	}
+
+	RedisConnection::RedisConnection(const char *ip, const int32_t port)
+	{
+		// Connects to redis and throws an error
+		// - if something goes wrong
+		this->r_Session = redisConnect(ip, port);
+
+		if (this->r_Session == nullptr || this->r_Session->err)
+		{
+			if (this->r_Session)
+			{
+				// Gets the error string and throws it
+				std::string message = "redisConnect() failed: ";
+				message += this->r_Session->errstr;
+				throw std::runtime_error(message);
+			} else throw std::runtime_error("Could not allocate memory for redis");
+		}
+	}
+
+	RedisConnection::~RedisConnection()
+	{
+		redisFree(this->r_Session);
+	}
+
+
+	std::string CassandraConnection::getError(CassFuture *future)
+	{
+		const char *err = nullptr;
+		std::size_t errLen;
+
+		cass_future_error_message(future, &err, &errLen);
+		std::string error(err, errLen);
+		
+		return error;
 	}
 }

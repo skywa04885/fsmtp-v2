@@ -84,7 +84,7 @@ namespace FSMTP::Server::Actions
 	void actionMailFrom(
 		BasicActionData &data,
 		Logger& logger,
-		std::unique_ptr<CassandraConnection> &database,
+		RedisConnection *redis,
 		SMTPServerSession &session
 	)
 	{
@@ -113,13 +113,12 @@ namespace FSMTP::Server::Actions
 				// - in controll of this domain, after that
 				// - we check if the address is here, if they
 				// - both are true, then we set the relay flag
-				domain.getByDomain(tDomain, database);
+				domain.findRedis(tDomain, redis);
 
 				std::string username;
 				session.s_TransportMessage.e_TransportFrom.getUsername(username);
-				AccountShortcut::find(
-					database,
-					session.s_SendingAccount,
+				session.s_SendingAccount = AccountShortcut::findRedis(
+					redis,
 					tDomain,
 					username
 				);
@@ -156,7 +155,7 @@ namespace FSMTP::Server::Actions
 	void actionRcptTo(
 		BasicActionData &data,
 		Logger& logger,
-		std::unique_ptr<CassandraConnection> &database,
+		RedisConnection *redis,
 		SMTPServerSession &session
 	)
 	{
@@ -183,16 +182,15 @@ namespace FSMTP::Server::Actions
 			LocalDomain domain;
 			try {
 				// Checks if the domain is is in the database
-				domain.getByDomain(tDomain, database);
+				domain.findRedis(tDomain, redis);
 
 				// Checks if the user is in the database,
 				// - if not we cannot send the email, except
 				// - we're relaying
 				std::string username;
 				session.s_TransportMessage.e_TransportTo.getUsername(username);
-				AccountShortcut::find(
-					database,
-					session.s_ReceivingAccount,
+				session.s_ReceivingAccount = AccountShortcut::findRedis(
+					redis,
 					tDomain,
 					username
 				);
@@ -221,8 +219,10 @@ namespace FSMTP::Server::Actions
 					resp.build(mess);
 					SMTPSocket::sendString(data.fd, data.ssl, session.getSSLFlag(), mess);
 
-					// Throws the fatal exception	
-					throw FatalException("Gebruiker niet gevonden in onze database !");
+					// Throws the fatal exception
+					std::string message = "Gebruiker of domain niet gevonden in onze database: ";
+					message += e.what();
+					throw FatalException(message);
 				}
 			}
 		} catch (const std::runtime_error &e)

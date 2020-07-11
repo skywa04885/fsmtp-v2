@@ -22,6 +22,7 @@
 #include <vector>
 #include <stdexcept>
 #include <bitset>
+#include <mutex>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -54,13 +55,20 @@ using namespace FSMTP::Networking;
 using namespace FSMTP::Server::Actions;
 
 extern std::vector<FullEmail> _emailStorageQueue;
+extern std::mutex _emailStorageMutex;
 
 namespace FSMTP::Server
 {
 	class SMTPServer
 	{
 	public:
-		SMTPServer(const int32_t &port, const bool& s_UseESMTP, const int32_t &s_Opts);
+		SMTPServer(
+			const int32_t &port,
+			const bool& s_UseESMTP,
+			const int32_t &s_Opts,
+			int32_t s_RedisPort,
+			const std::string s_RedisHost
+		);
 
 		SMTPSocket &getSocket(void);
 
@@ -76,5 +84,7 @@ namespace FSMTP::Server
 		std::atomic<bool> s_ShouldBeRunning;
 		Logger s_Logger;
 		int32_t s_Opts;
+		int32_t s_RedisPort;
+		std::string s_RedisHost;
 	};
 }

@@ -16,6 +16,11 @@
 
 #include "main.h"
 
+static int32_t _redisPort = 6379;
+static int32_t _serverPort = 25;
+static const char *_CassHost = "192.168.188.130";
+static const char *_redisHost = "192.168.188.130";
+
 int main(const int argc, const char **argv)
 {
 	// Parses the arguments into an vector after this
@@ -39,6 +44,7 @@ int main(const int argc, const char **argv)
 			std::cout << std::endl << "Opdrachten: " << std::endl;
 			std::cout << "-h, --help: " << "\tPrint de lijst met beschikbare opdrachten." << std::endl;
 			std::cout << "-t, --test: " << "\tVoer tests uit op de vitale functies van de server, zoals database verbinding." << std::endl;
+			std::cout << "-s, --sync: " << "\tSynchroniseerd de redis database met die van cassandra" << std::endl;
 			return 0;
 		}
 
@@ -59,10 +65,21 @@ int main(const int argc, const char **argv)
 			}
 			logger << _BASH_SUCCESS_MARK << "Verbinding met Apache Cassandra || Datastax Enterprise is geslaagd !" << ENDL;
 
+			// Creates the redis client
+			logger << _BASH_UNKNOWN_MARK << "Start van de Redis verbindings test ..." << ENDL;
+			std::unique_ptr<RedisConnection> redis;
+			try {
+				redis = std::make_unique<RedisConnection>(_redisHost, _redisPort);
+			} catch (const std::runtime_error &e)
+			{
+				logger << _BASH_FAIL_MARK << "Verbinding met Redis is niet gelukt" << ENDL;
+			}
+			logger << _BASH_SUCCESS_MARK << "Verbonden met Redis" << ENDL;
+
 			// Performs the check if we may create an socket
 			// - this will throw an error if we're not allowed to do it
 			logger << _BASH_UNKNOWN_MARK << "Start van server socket test ..." << ENDL;
-			try { SMTPSocket socket(SMTPSocketType::SST_SERVER, 25); }
+			try { SMTPSocket socket(SMTPSocketType::SST_SERVER, _serverPort); }
 			catch (const std::runtime_error &e)
 			{
 				logger << _BASH_FAIL_MARK << "Het starten en stoppen van een server socket is fout gegaan, probeer de server met 'sudo' te starten." << ENDL;
@@ -70,6 +87,207 @@ int main(const int argc, const char **argv)
 			logger << _BASH_SUCCESS_MARK << "Het starten en stoppen van een server socket is geslaagd !" << ENDL;
 
 			// Closes the application since the tests are finished
+			return 0;
+		}
+
+		if (compareArg(arg, "sync"))
+		{
+			char uuidBuffer[64];
+
+			// ====================================
+			// Connects to database
+			//
+			// Just connects to redis and Cassandra
+			// - so our stuff will be synced
+			// ====================================
+
+			// Creates the logger and starts
+			Logger logger("DBSync", LoggerLevel::INFO);
+			logger << "FSMTP Gaat nu Redis en Cassandra synchroniseren" << ENDL;
+
+			// Creates the redis client
+			std::unique_ptr<RedisConnection> redis;
+			
+			logger << "Verbinding maken met Redis ..." << ENDL;
+			try {
+				redis = std::make_unique<RedisConnection>(_redisHost, _redisPort);
+			} catch (const std::runtime_error &e)
+			{
+				logger << FATAL << "Kon geen verbinding met Redis maken: " << e.what() << ENDL;
+				return -1;
+			}
+			
+			logger << "Verbinding met Redis gemaakt !" << ENDL;
+
+			// Connects to apache cassandra
+			logger << "Verbinding maken met Apache Cassandra || Datastax Cassandra ..." << ENDL;
+			
+			std::unique_ptr<CassandraConnection> cassandra;
+			try {
+				cassandra = std::make_unique<CassandraConnection>(_CassHost);
+			} catch (const std::runtime_error &e)
+			{
+				logger << FATAL << "Kon geen verbinding met Cassandra maken: " << e.what() << ENDL;
+				return -1;
+			}
+			
+			logger << "Verbinding met Apache Cassandra || Datastax Cassandra gemaakt !" << ENDL;
+
+			// ====================================
+			// Starts synchronizing the domains
+			//
+			// These are quick checks if user
+			// - is on our server
+			// ====================================
+
+			// Gets all the domains, loops over them and adds them
+			// - to the redis database
+			std::vector<LocalDomain> domains = LocalDomain::findAllCassandra(cassandra.get());
+			for (LocalDomain &domain : domains)
+			{
+				// Performs the command and idk why but
+				// - we need to reinterpret the reply, since
+				// - it is an void pointer
+				std::string command = "SET domain:";
+				command += domain.l_Domain;
+				command += ' ';
+
+				cass_uuid_string(domain.l_UUID, uuidBuffer);
+				command += uuidBuffer;
+
+				DEBUG_ONLY(logger << DEBUG 
+					<< "Uitvoeren van: '" << command << '\'' << ENDL << CLASSIC);
+
+				redisReply *reply = reinterpret_cast<redisReply *>(
+					redisCommand(redis->r_Session, command.c_str())
+				);
+				if (reply->type == REDIS_REPLY_ERROR)
+				{
+					// Gets the error message and throws it
+					std::string message = "redisCommand() failed: ";
+					message += std::string(reply->str, reply->len);
+					throw std::runtime_error(message);
+				}
+
+				// Frees the reply object and continues
+				freeReplyObject(reply);
+			}
+
+			// ====================================
+			// Starts synchronizing the users
+			//
+			// Allows the server to check if
+			// - and user is on our server or not
+			// - and what is uuid is
+			// ====================================
+
+			{
+				CassStatement *statement = nullptr;
+				cass_bool_t hasMorePages = cass_false;
+				const char *query = "SELECT * FROM fannst.account_shortcuts";
+
+				// Prepares the statement, and sets the paging size
+				statement = cass_statement_new(query, 0);
+				cass_statement_set_paging_size(statement, 50);
+
+				// Starts performing the query, and inserting them
+				// - into redis
+				do
+				{
+					CassError rc;
+					CassIterator *iterator = nullptr;
+					CassFuture *future = nullptr;
+
+					// Executes the query, and checks for any errors
+					future = cass_session_execute(cassandra->c_Session, statement);
+					cass_future_wait(future);
+
+					rc = cass_future_error_code(future);
+					if (rc != CASS_OK)
+					{
+						std::string message = "cass_session_execute() failed: ";
+						message += CassandraConnection::getError(future);
+
+						cass_future_free(future);
+						cass_statement_free(statement);
+						throw DatabaseException(message);
+					}
+
+					// Gets the result and creates the iterator,
+					// - after that we start looping over the users
+					const CassResult *result = cass_future_get_result(future);
+					iterator = cass_iterator_from_result(result);
+
+					while (cass_iterator_next(iterator))
+					{
+						const char *username = nullptr;
+						std::size_t usernameLen;
+						const char *domain = nullptr;
+						std::size_t domainLen;
+						CassUuid uuid;
+						int64_t bucket;
+
+						// Gets the row, and then gets the values
+						// - that we store in the memory
+						const CassRow *row = cass_iterator_get_row(iterator);
+						cass_value_get_string(
+							cass_row_get_column_by_name(row, "a_username"),
+							&username,
+							&usernameLen
+						);
+						cass_value_get_string(
+							cass_row_get_column_by_name(row, "a_domain"),
+							&domain,
+							&domainLen
+						);
+						cass_value_get_uuid(
+							cass_row_get_column_by_name(row, "a_uuid"),
+							&uuid
+						);
+						cass_value_get_int64(
+							cass_row_get_column_by_name(row, "a_bucket"),
+							&bucket
+						);
+
+						// Gets the UUID string
+						cass_uuid_string(uuid, uuidBuffer);
+
+						// Prepares the redis command 
+						std::string command = "HMSET acc:";
+						command += std::string(username, usernameLen);
+						command += '@';
+						command += std::string(domain, domainLen);
+						command += " v1 ";
+						command += std::to_string(bucket);
+						command += " v2 ";
+						command += uuidBuffer;
+
+						DEBUG_ONLY(logger << DEBUG << "Uitvoeren van: '" << command 
+							<< "' op Redis Server" << ENDL << CLASSIC);
+
+						// Performs the command on the redis server,
+						// - and throws error if not working idk
+						redisReply *reply = reinterpret_cast<redisReply *>(
+							redisCommand(redis->r_Session, command.c_str())
+						);
+						if (reply->type == REDIS_REPLY_ERROR)
+						{
+							// Gets the error message and throws it
+							std::string message = "redisCommand() failed: ";
+							message += std::string(reply->str, reply->len);
+							throw std::runtime_error(message);
+						}
+					}
+
+					// Frees the round memory
+					cass_future_free(future);
+					cass_statement_free(statement);
+					cass_result_free(result);
+					cass_iterator_free(iterator);
+				} while(hasMorePages);
+			}
+
+
 			return 0;
 		}
 	}
@@ -95,7 +313,7 @@ int main(const int argc, const char **argv)
 	// =====================================
 
 	// Creates and starts the database worker
-	std::unique_ptr<DatabaseWorker> dbWorker = std::make_unique<DatabaseWorker>("192.168.188.130");
+	std::unique_ptr<DatabaseWorker> dbWorker = std::make_unique<DatabaseWorker>(_CassHost);
 	if (!dbWorker->start(nullptr))
 		std::exit(-1);
 
@@ -111,7 +329,7 @@ int main(const int argc, const char **argv)
 	opts |= _SERVER_OPT_ENABLE_AUTH;
 	opts |= _SERVER_OPT_ENABLE_TLS;
 
-	SMTPServer server(25, true, opts);
+	SMTPServer server(_serverPort, true, opts, _redisPort, _redisHost);
 
 	std::cin.get();
 	server.shutdownServer();

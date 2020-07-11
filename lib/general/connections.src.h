@@ -18,6 +18,7 @@
 
 #include <cstdint>
 #include <stdexcept>
+#include <hiredis/hiredis.h>
 
 #include <cassandra.h>
 
@@ -26,6 +27,8 @@ namespace FSMTP::Connections
 	class CassandraConnection
 	{
 	public:
+		static std::string getError(CassFuture *future);
+
 		CassandraConnection(const char *hosts);
 		~CassandraConnection();
 
@@ -34,9 +37,12 @@ namespace FSMTP::Connections
 		CassFuture *c_ConnectFuture;
 	};
 
-	class MongoDBConnection
+	class RedisConnection
 	{
 	public:
-	private:
+		RedisConnection(const char *ip, const int32_t port);
+		~RedisConnection();
+	
+		redisContext *r_Session;
 	};
 }

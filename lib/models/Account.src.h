@@ -18,9 +18,12 @@
 
 #include <cstdint>
 #include <string>
+#include <cstring>
 #include <memory>
+#include <iostream>
 
 #include <cassandra.h>
+#include <hiredis/hiredis.h>
 
 #include "../general/connections.src.h"
 #include "../general/exceptions.src.h"
@@ -55,6 +58,20 @@ namespace FSMTP::Models
 		static void find(
 			std::unique_ptr<CassandraConnection> &conn,
 			AccountShortcut &shortcut,
+			const std::string &domain,
+			const std::string &username
+		);
+
+		/**
+		 * Finds an user in the redis server
+		 *
+		 * @Param {RedisConnection *} redis
+		 * @Param {std::string &} domain
+		 * @Param {std::string &} username
+		 * @Return {AccountShortcut}
+		 */
+		static AccountShortcut findRedis(
+			RedisConnection *redis,
 			const std::string &domain,
 			const std::string &username
 		);

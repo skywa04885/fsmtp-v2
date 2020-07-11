@@ -9,8 +9,8 @@ het Nederlands te schijven, zover het uitkomt.
 
 ## Wat heb ik nodig ?
 
-1. Datastax C++ Cassandra Client
-1. Linux, namelijk: 'Windows is bagger'
+1. HiRedis [Github](https://github.com/redis/hiredis)
+1. DataStax CQL Client [Github](https://github.com/datastax/cpp-driver)
 
 ## Hoe installeer ik het ?
 

@@ -18,8 +18,19 @@
 
 namespace FSMTP::Server
 {
-	SMTPServer::SMTPServer(const int32_t &port, const bool& s_UseESMTP, const int32_t &s_Opts):
-		s_Socket(SMTPSocketType::SST_SERVER, port), s_UseESMTP(s_UseESMTP), s_Logger("SMTPServer", LoggerLevel::INFO), s_Opts(s_Opts)
+	SMTPServer::SMTPServer(
+		const int32_t &port,
+		const bool& s_UseESMTP,
+		const int32_t &s_Opts,
+		int32_t s_RedisPort,
+		const std::string s_RedisHost
+	):
+		s_Socket(SMTPSocketType::SST_SERVER, port),
+		s_UseESMTP(s_UseESMTP),
+		s_Logger("SMTPServer", LoggerLevel::INFO),
+		s_Opts(s_Opts),
+		s_RedisPort(s_RedisPort),
+		s_RedisHost(s_RedisHost)
 	{
 		// Sets some default values and after that 
 		// - we start the socket server, and create
@@ -86,14 +97,24 @@ namespace FSMTP::Server
 		prefix += inet_ntoa(sAddr->sin_addr);
 		Logger logger(prefix, LoggerLevel::DEBUG);
 
-		// Creates the database connection
-		std::unique_ptr<CassandraConnection> database;
-		try {
-			database = std::make_unique<CassandraConnection>(_CASSANDRA_DATABASE_CONTACT_POINTS);
-			logger << "Verbinding met Apache Cassandra gemaakt." << ENDL;
+		// =================================
+		// Connects to redis
+		//
+		// Creates the connection to the
+		// - redis server, which we will
+		// - later use to get users and
+		// - the domains
+		// =================================
+		std::unique_ptr<RedisConnection> redis;
+		try
+		{
+			redis = std::make_unique<RedisConnection>(
+				server.s_RedisHost.c_str(),
+				server.s_RedisPort
+			);
 		} catch (const std::runtime_error &e)
 		{
-			logger << FATAL << "Kon geen verbinding met Apache Cassandra maken, verbinding wordt gesloten !" << ENDL << CLASSIC;
+			logger << FATAL << "Kon geen verbinding met Redis maken, verbinding wordt gesloten !" << ENDL << CLASSIC;
 			goto smtp_server_close_conn;
 		}
 
@@ -208,12 +229,12 @@ namespace FSMTP::Server
 					}
 					case ClientCommandType::CCT_MAIL_FROM:
 					{
-						actionMailFrom(actionData, logger, database, session);
+						actionMailFrom(actionData, logger, redis.get(), session);
 						break;
 					}
 					case ClientCommandType::CCT_RCPT_TO:
 					{
-						actionRcptTo(actionData, logger, database, session);
+						actionRcptTo(actionData, logger, redis.get(), session);
 						break;
 					}
 					case ClientCommandType::CCT_DATA:
@@ -263,7 +284,9 @@ namespace FSMTP::Server
 							session.s_TransportMessage.e_Encryped = false;
 
 							// Adds the email to the database storage queue
+							_emailStorageMutex.lock();
 							_emailStorageQueue.push_back(session.s_TransportMessage);
+							_emailStorageMutex.unlock();
 						}
 
 						// Prints the stored message

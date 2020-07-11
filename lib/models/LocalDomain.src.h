@@ -18,7 +18,10 @@
 
 #include <memory>
 #include <iostream>
+#include <vector>
+#include <string>
 
+#include <hiredis/hiredis.h>
 #include <cassandra.h>
 
 #include "../general/connections.src.h"
@@ -57,7 +60,29 @@ namespace FSMTP::Models
 		 * @Return void
 		 */
 		void getByDomain(const std::string &l_Domain, std::unique_ptr<CassandraConnection>& database);
-	private:
+
+		/**
+		 * Finds an domain and its uuid in the redis db
+		 *
+		 * @Param {const std::string &} l_Domain
+		 * @Param {RedisConnection *} redis
+		 * @Return {LocalDomain}
+		 */
+		static LocalDomain findRedis(
+			const std::string &l_Domain,
+			RedisConnection *redis
+		);
+
+		/**
+		 * Gets all the domains from the cassandra database
+		 *
+		 * @Param {CassandraConnection *} cass
+		 * @Return {std::vector<LocalDomain>}
+		 */
+		static std::vector<LocalDomain> findAllCassandra(
+			CassandraConnection *cass
+		);
+
 		std::string l_Domain;
 		CassUuid l_UUID;
 	};

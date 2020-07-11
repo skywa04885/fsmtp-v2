@@ -89,7 +89,7 @@ namespace FSMTP::Server::Actions
 	void actionMailFrom(
 		BasicActionData &data,
 		Logger& logger,
-		std::unique_ptr<CassandraConnection> &database,
+		RedisConnection *redis,
 		SMTPServerSession &session
 	);
 
@@ -105,7 +105,7 @@ namespace FSMTP::Server::Actions
 	void actionRcptTo(
 		BasicActionData &data,
 		Logger& logger,
-		std::unique_ptr<CassandraConnection> &database,
+		RedisConnection *redis,
 		SMTPServerSession &session
 	);
 }

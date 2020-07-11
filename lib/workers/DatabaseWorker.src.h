@@ -17,6 +17,8 @@
 #pragma once
 
 #include <vector>
+#include <thread>
+#include <mutex>
 
 #include "../models/email.src.h"
 #include "./Worker.src.h"
@@ -32,9 +34,28 @@ namespace FSMTP::Workers
 	class DatabaseWorker : public Worker
 	{
 	public:
+		/**
+		 * Default constructor for the database worker
+		 *
+		 * @Param {const std::string &} d_ContactPoints
+		 * @Return {void}
+		 */
 		DatabaseWorker(const std::string &d_ContactPoints);
 
+		/**
+		 * The startup action of the worker
+		 *
+		 * @Param {void}
+		 * @Return {void *} u
+		 */
 		virtual void startupTask(void);
+
+		/**
+		 * The action that gets performed at interval
+		 *
+		 * @Param {void *} u
+		 */
+		virtual void action(void *u);
 	private:
 		std::string d_ContactPoints;
 		std::unique_ptr<CassandraConnection> d_Connection;

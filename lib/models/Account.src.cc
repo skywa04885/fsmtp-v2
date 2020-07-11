@@ -70,15 +70,8 @@ namespace FSMTP::Models
 		rc = cass_future_error_code(future);
 		if (rc != CASS_OK)
 		{
-			// Gets the error message and combines it
-			// - with our own message, then throws it
-			const char *err = nullptr;
-			std::size_t errLen;
-			cass_future_error_message(future, &err, &errLen);
-
-			std::string errString(err, errLen);
 			std::string message = "cass_session_execute() failed: ";
-			message += errString;
+			message += CassandraConnection::getError(future);
 
 			throw DatabaseException(message);
 		}
@@ -111,5 +104,58 @@ namespace FSMTP::Models
 		cass_result_free(result);
 		cass_future_free(future);
 		cass_statement_free(statement);
+	}
+
+	/**
+	 * Finds an user in the redis server
+	 *
+	 * @Param {RedisConnection *} redis
+	 * @Param {std::string &} domain
+	 * @Param {std::string &} username
+	 * @Return {AccountShortcut}
+	 */
+	AccountShortcut AccountShortcut::findRedis(
+		RedisConnection *redis,
+		const std::string &domain,
+		const std::string &username
+	)
+	{
+		AccountShortcut res;
+
+		// Prepares the command
+		std::string command = "HGETALL acc:";
+		command += username;
+		command += '@';
+		command += domain;
+
+		// Performs the command
+		redisReply *reply = reinterpret_cast<redisReply *>(redisCommand(
+			redis->r_Session, command.c_str()
+		));
+
+		if (reply->type == REDIS_REPLY_NIL || reply->elements <= 0)
+		{
+			freeReplyObject(reply);
+			throw EmptyQuery("Could not find user in Redis");
+		} else if (reply->type != REDIS_REPLY_ARRAY)
+		{
+			freeReplyObject(reply);
+			throw DatabaseException("Expected type map, got something else");
+		}
+
+		if (reply->element[1]->type != REDIS_REPLY_STRING)
+		{
+			freeReplyObject(reply);
+			throw DatabaseException("Invalid value at position 1, expected number");
+		} else res.a_Bucket = std::stoi(reply->element[1]->str);
+
+		if (reply->element[3]->type != REDIS_REPLY_STRING)
+		{
+			freeReplyObject(reply);
+			throw DatabaseException("Invalid value at position 3: expected string");
+		} cass_uuid_from_string(reply->element[3]->str, &res.a_UUID);
+
+		freeReplyObject(reply);
+		return res;
 	}
 }
