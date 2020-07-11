@@ -46,18 +46,41 @@ namespace FSMTP::Models
 	class AccountShortcut
 	{
 	public:
+		/**
+		 * Default constructor for the AccountShortcut
+		 *
+		 * @Param {int64_t} a_Bucket
+		 * @Param {std::string &} a_Domain
+		 * @Param {std::strin &} a_Username
+		 * @Param {const CassUuid &} a_Uuid 
+		 * @Return {void}
+		 */
 		AccountShortcut(
 			int64_t a_Bucket,
-			std::string a_Domain,
-			std::string a_Username,
-			CassUuid a_UUID
+			const std::string &a_Domain,
+			const std::string &a_Username,
+			const CassUuid &a_UUID
 		);
 
+		/**
+		 * Empty constructor for the account shortcut
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
 		explicit AccountShortcut();
 
-		static void find(
+		/**
+		 * Finds an account shortcut in the cassandra
+		 * - database
+		 *
+		 * @Param {std::unique_ptr<CassandraConnection> &} conn
+		 * @Param {const std::string &} domain
+		 * @Param {const std::string &} username
+		 * @Return {AccountShortuct}
+		 */
+		static AccountShortcut find(
 			std::unique_ptr<CassandraConnection> &conn,
-			AccountShortcut &shortcut,
 			const std::string &domain,
 			const std::string &username
 		);

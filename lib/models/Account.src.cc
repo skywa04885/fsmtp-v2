@@ -18,11 +18,20 @@
 
 namespace FSMTP::Models
 {
+	/**
+	 * Default constructor for the AccountShortcut
+	 *
+	 * @Param {int64_t} a_Bucket
+	 * @Param {std::string &} a_Domain
+	 * @Param {std::strin &} a_Username
+	 * @Param {const CassUuid &} a_Uuid 
+	 * @Return {void}
+	 */
 	AccountShortcut::AccountShortcut(
 		int64_t a_Bucket,
-		std::string a_Domain,
-		std::string a_Username,
-		CassUuid a_UUID
+		const std::string &a_Domain,
+		const std::string &a_Username,
+		const CassUuid &a_UUID
 	):
 		a_Bucket(a_Bucket),
 		a_Domain(a_Domain),
@@ -30,16 +39,31 @@ namespace FSMTP::Models
 		a_UUID(a_UUID)
 	{}
 
+	/**
+	 * Empty constructor for the account shortcut
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
 	AccountShortcut::AccountShortcut()
 	{}
 
-	void AccountShortcut::find(
+	/**
+	 * Finds an account shortcut in the cassandra
+	 * - database
+	 *
+	 * @Param {std::unique_ptr<CassandraConnection> &} conn
+	 * @Param {const std::string &} domain
+	 * @Param {const std::string &} username
+	 * @Return {AccountShortuct}
+	 */
+	AccountShortcut AccountShortcut::find(
 		std::unique_ptr<CassandraConnection> &conn,
-		AccountShortcut &shortcut,
 		const std::string &domain,
 		const std::string &username
 	)
 	{
+		AccountShortcut res;
 		CassError rc;
 		CassStatement *statement = nullptr;
 		CassFuture *future = nullptr;
@@ -92,18 +116,20 @@ namespace FSMTP::Models
 
 		cass_value_get_int64(
 			cass_row_get_column_by_name(row, "a_bucket"),
-			&shortcut.a_Bucket
+			&res.a_Bucket
 		);
 		cass_value_get_uuid(
 			cass_row_get_column_by_name(row, "a_uuid"),
-			&shortcut.a_UUID
+			&res.a_UUID
 		);
-		shortcut.a_Domain = domain;
+		res.a_Domain = domain;
 
-		// Frees the memory
+		// Frees the memory, and returns
+		// - the result
 		cass_result_free(result);
 		cass_future_free(future);
 		cass_statement_free(statement);
+		return res;
 	}
 
 	/**

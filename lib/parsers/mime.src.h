@@ -95,10 +95,20 @@ namespace FSMTP::Parsers::MIME
 	 */
 	std::vector<std::string> parseHeaderSubtext(const std::string &raw);
 
+	/**
+	 * Parses the value of an argument like a="asd"
+	 *
+	 * @Param {const std::string &} raw
+	 * @Return {std::string}
+	 */
 	std::string parseSubtextValue(const std::string &raw);
 
 	/**
 	 * Parses an mime message in the recursive manner
+	 *
+	 * @Param {std::string} raw
+	 * @Param {FullEmail &} email
+	 * @Param {std::size_t} i
 	 */
 	void parseRecursive(
 		std::string raw,

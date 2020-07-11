@@ -23,12 +23,21 @@ static std::atomic<int> _emailsHandled = 0;
 
 namespace FSMTP::Server
 {
+	/**
+	 * Default constructor for the SMTPServer
+	 *
+	 * @Param {const int32_t} port
+	 * @Param {const bool} s_UseESMTP
+	 * @Param {const int32_t} s_Opts
+	 * @Param {const int32_t} s_RedisPort
+	 * @Param {ocnst std::string &} s_RedisHost
+	 */
 	SMTPServer::SMTPServer(
-		const int32_t &port,
-		const bool& s_UseESMTP,
-		const int32_t &s_Opts,
-		int32_t s_RedisPort,
-		const std::string s_RedisHost
+		const int32_t port,
+		const bool s_UseESMTP,
+		const int32_t s_Opts,
+		const int32_t s_RedisPort,
+		const std::string &s_RedisHost
 	):
 		s_Socket(SMTPSocketType::SST_SERVER, port),
 		s_UseESMTP(s_UseESMTP),
@@ -83,11 +92,26 @@ namespace FSMTP::Server
 		this->s_Logger << "Fannst ESMTP Server luistert nu op port " << port << '.' << ENDL;
 	}
 
+	/**
+	 * Gets the socket
+	 *
+	 * @Param {void}
+	 * @Return {SMTPSocket &} socket
+	 */
 	SMTPSocket &SMTPServer::getSocket(void)
 	{
 		return this->s_Socket;
 	}
 
+	/**
+	 * The method which gets called when an client
+	 * - has connected
+	 *
+	 * @Param {struct sockaddr_in *} sockaddr
+	 * @Param {int32_t} fd
+	 * @Param {void *} u
+	 * @Return {void}
+	 */
 	void SMTPServer::onClientSync(struct sockaddr_in *sAddr, int32_t fd, void *u)
 	{
 		_serverThreadCount++;
@@ -366,6 +390,12 @@ namespace FSMTP::Server
 		}
 	}
 
+	/**
+	 * Closes the SMTP Server
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
 	void SMTPServer::shutdownServer(void)
 	{
 		// Stores the start time and closes the threads

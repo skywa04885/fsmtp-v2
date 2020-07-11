@@ -38,18 +38,62 @@ namespace FSMTP::Models
 	class EmailAddress
 	{
 	public:
+		/**
+		 * Variable constructor for the EmailAddres
+		 *
+		 * @Param {const std::string &} e_Name
+		 * @Param {const std::string &} e_Address
+		 * @Return {void}
+		 */
 		EmailAddress(const std::string &e_Name, const std::string &e_Address);
-		EmailAddress(const std::string &raw);
-		EmailAddress();
+		
+		/**
+		 * Parse constructor for the email address
+		 * - basically calls EmailAddress::parse()
+		 *
+		 * @Param {const std::string &} raw
+		 * @Return {void}
+		 */
+		explicit EmailAddress(const std::string &raw);
 
+		/**
+		 * The empty constructor for the EmailAddress
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		explicit EmailAddress();
+
+		/**
+		 * Parses an raw string into an EmailAddress
+		 *
+		 * @Param {const std::string &} raw
+		 * @Return {void}
+		 */
 		void parse(const std::string &raw);
 
-		void setAddress(const std::string &address);
-		void setName(const std::string &name);
-
+		/**
+		 * Parses the domain name from the address
+		 *
+		 * @Param {std::string &} ret
+		 * @Return {void}
+		 */
 		void getDomain(std::string &ret);
+
+		/**
+		 * parses the username from the address
+		 *
+		 * @Param {std::string &} ret
+		 * @Return {void}
+		 */
 		void getUsername(std::string &ret);
 
+		/**
+		 * Parses an raw string into multiple addresses
+		 *
+		 * @Param {const std::string &} raw
+		 * @Return {std::vector<EmailAddress>}
+		 */
 		static std::vector<EmailAddress> parseAddressList(const std::string &raw);
 
 		std::string e_Address;

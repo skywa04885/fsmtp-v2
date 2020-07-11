@@ -13,22 +13,3 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
 */
-
-#pragma once
-
-#include <boost/asio.hpp>
-#include <iostream>
-#include <string>
-#include <vector>
-#include <sstream>
-
-namespace FSMTP::Server::SpamDetection
-{
-	/**
-	 * Checks spamhaus with the specified ip
-	 *
-	 * @Param {std::string} ip
-	 * @Return {bool}
-	 */
-	bool checkSpamhaus(std::string ip);
-}

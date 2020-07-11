@@ -18,15 +18,34 @@
 
 namespace FSMTP::Server
 {
+	/**
+	 * Default constructor for the SMTPServerSession
+	 * - basically zeros the flags
+	 * 
+	 * @Param {void}
+	 * @Return {void}
+	 */
 	SMTPServerSession::SMTPServerSession():
 		s_Flags(0x0), s_PerformedActions(0x0)
 	{}
 
+	/**
+	 * Sets the SSL flag
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
 	void SMTPServerSession::setSSLFlag(void)
 	{
 		this->s_Flags |= _SMTP_SERV_SESSION_SSL_FLAG;
 	}
 
+	/**
+	 * Gets the SSL flag as bool
+	 *
+	 * @Param {void}
+	 * @Return {bool}
+	 */
 	bool SMTPServerSession::getSSLFlag(void)
 	{
 		if (BINARY_COMPARE(this->s_Flags, _SMTP_SERV_SESSION_SSL_FLAG))
@@ -34,11 +53,23 @@ namespace FSMTP::Server
 		else return false;
 	}
 
+	/**
+	 * Sets an action as performed in the register
+	 *
+	 * @Param {int64_t} flag
+	 * @Return {void}
+	 */
 	void SMTPServerSession::setPerformedAction(int64_t flag)
 	{
 		this->s_PerformedActions |= flag;
 	}
 
+	/**
+	 * Checks if an action is performed and returns bool
+	 *
+	 * @Param {int64_t} flag
+	 * @Return {void}
+	 */
 	bool SMTPServerSession::actionPerformed(int64_t flag)
 	{
 		if (BINARY_COMPARE(this->s_PerformedActions, flag))

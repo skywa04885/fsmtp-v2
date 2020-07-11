@@ -184,6 +184,12 @@ namespace FSMTP::Parsers::MIME
 		return ret;
 	}
 
+	/**
+	 * Parses the value of an argument like a="asd"
+	 *
+	 * @Param {const std::string &} raw
+	 * @Return {std::string}
+	 */
 	std::string parseSubtextValue(const std::string &raw)
 	{
 		std::size_t index = raw.find_first_of('=');
@@ -193,10 +199,13 @@ namespace FSMTP::Parsers::MIME
 		return temp.substr(1, temp.size() - 2);
 	}
 
-	// ================================
-	// New parser ( better )
-	// ================================
-
+	/**
+	 * Parses an mime message in the recursive manner
+	 *
+	 * @Param {std::string} raw
+	 * @Param {FullEmail &} email
+	 * @Param {std::size_t} i
+	 */
 	void parseRecursive(
 		std::string raw,
 		FullEmail& email,

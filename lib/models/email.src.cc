@@ -19,10 +19,13 @@
 
 namespace FSMTP::Models
 {
-	// ======================================================
-	// The email address stuff
-	// ======================================================
-
+  /**
+   * Variable constructor for the EmailAddres
+   *
+   * @Param {const std::string &} e_Name
+   * @Param {const std::string &} e_Address
+   * @Return {void}
+   */
 	EmailAddress::EmailAddress(
 		const std::string &e_Name,
 		const std::string &e_Address
@@ -30,18 +33,35 @@ namespace FSMTP::Models
 		e_Name(e_Name), e_Address(e_Address)
 	{}
 
+  /**
+   * Parse constructor for the email address
+   * - basically calls EmailAddress::parse()
+   *
+   * @Param {const std::string &} raw
+   * @Return {void}
+   */
 	EmailAddress::EmailAddress(const std::string &raw)
 	{
 		this->parse(raw);
 	}
 
-	EmailAddress::EmailAddress():
-		e_Name(),
-		e_Address()
+  /**
+   * The empty constructor for the EmailAddress
+   *
+   * @Param {void}
+   * @Return {void}
+   */
+	EmailAddress::EmailAddress()
 	{
 
 	}
 
+  /**
+   * Parses an raw string into an EmailAddress
+   *
+   * @Param {const std::string &} raw
+   * @Return {void}
+   */
 	void EmailAddress::parse(const std::string &raw)
 	{
 		// Checks the email format type, since there may
@@ -71,6 +91,13 @@ namespace FSMTP::Models
 		removeFirstAndLastWhite(this->e_Address);
 	}
 
+
+  /**
+   * Parses an raw string into multiple addresses
+   *
+   * @Param {const std::string &} raw
+   * @Return {std::vector<EmailAddress>}
+   */
   std::vector<EmailAddress> EmailAddress::parseAddressList(const std::string &raw)
   {
     std::stringstream stream(raw);
@@ -86,6 +113,12 @@ namespace FSMTP::Models
     return result;
   }
 
+  /**
+   * Parses the domain name from the address
+   *
+   * @Param {std::string &} ret
+   * @Return {void}
+   */
 	void EmailAddress::getDomain(std::string &ret)
 	{
 		std::size_t index = this->e_Address.find_first_of('@');
@@ -94,6 +127,12 @@ namespace FSMTP::Models
 		ret = this->e_Address.substr(index + 1);
 	}
 
+  /**
+   * parses the username from the address
+   *
+   * @Param {std::string &} ret
+   * @Return {void}
+   */
 	void EmailAddress::getUsername(std::string &ret)
 	{
 		std::size_t index = this->e_Address.find_first_of('@');

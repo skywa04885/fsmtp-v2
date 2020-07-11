@@ -46,16 +46,49 @@ namespace FSMTP::Server
 	class SMTPServerSession
 	{
 	public:
+		/**
+		 * Default constructor for the SMTPServerSession
+		 * - basically zeros the flags
+		 * 
+		 * @Param {void}
+		 * @Return {void}
+		 */
 		explicit SMTPServerSession();
 
+		/**
+		 * Sets the SSL flag
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
 		void setSSLFlag(void);
+
+		/**
+		 * Gets the SSL flag as bool
+		 *
+		 * @Param {void}
+		 * @Return {bool}
+		 */
 		bool getSSLFlag(void);
 
+		/**
+		 * Sets an action as performed in the register
+		 *
+		 * @Param {int64_t} flag
+		 * @Return {void}
+		 */
 		void setPerformedAction(int64_t flag);
+
+		/**
+		 * Checks if an action is performed and returns bool
+		 *
+		 * @Param {int64_t} flag
+		 * @Return {void}
+		 */
 		bool actionPerformed(int64_t flag);
 
 		int32_t s_Flags;
-		int32_t s_PerformedActions;
+		int64_t s_PerformedActions;
 		FullEmail s_TransportMessage;
 
 		AccountShortcut s_SendingAccount;

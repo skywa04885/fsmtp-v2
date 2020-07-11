@@ -62,21 +62,51 @@ namespace FSMTP::Server
 	class SMTPServer
 	{
 	public:
+		/**
+		 * Default constructor for the SMTPServer
+		 *
+		 * @Param {const int32_t} port
+		 * @Param {const bool} s_UseESMTP
+		 * @Param {const int32_t} s_Opts
+		 * @Param {const int32_t} s_RedisPort
+		 * @Param {ocnst std::string &} s_RedisHost
+		 */
 		SMTPServer(
-			const int32_t &port,
-			const bool& s_UseESMTP,
-			const int32_t &s_Opts,
-			int32_t s_RedisPort,
-			const std::string s_RedisHost
+			const int32_t port,
+			const bool s_UseESMTP,
+			const int32_t s_Opts,
+			const int32_t s_RedisPort,
+			const std::string &s_RedisHost
 		);
 
+		/**
+		 * Gets the socket
+		 *
+		 * @Param {void}
+		 * @Return {SMTPSocket &} socket
+		 */
 		SMTPSocket &getSocket(void);
 
+		/**
+		 * The method which gets called when an client
+		 * - has connected
+		 *
+		 * @Param {struct sockaddr_in *} sockaddr
+		 * @Param {int32_t} fd
+		 * @Param {void *} u
+		 * @Return {void}
+		 */
 		static void onClientSync(struct sockaddr_in *sockaddr, int32_t fd, void *u);
+		
+		/**
+		 * Closes the SMTP Server
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
 		void shutdownServer(void);
 
 		std::vector<SMTPServiceFunction> s_Services;
-
 		bool s_UseESMTP;
 	private:
 		SMTPSocket s_Socket;
