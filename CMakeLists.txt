@@ -37,6 +37,9 @@ file(GLOB models_headers "lib/models/*.h")
 file(GLOB parsers_sources "lib/parsers/*.cc")
 file(GLOB parsers_headers "lib/parsers/*.h")
 
+file(GLOB workers_sources "lib/workers/*.cc")
+file(GLOB workers_headers "lib/workers/*.h")
+
 set(sources "main.cc")
 set(headers "main.h")
 set(args "-lpthread -lssl -lcrypto -lcassandra -lboost_system -lboost_program_options")
@@ -46,6 +49,9 @@ add_executable(
 
 	${headers}
 	${sources}
+
+	${workers_sources}
+	${workers_headers}
 
 	${general_headers}
 	${general_sources}

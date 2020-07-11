@@ -86,6 +86,26 @@ int main(const int argc, const char **argv)
 		logger << '=';
 	logger << ENDL;
 
+	// =====================================
+	// Starts the workers
+	//
+	// Due to memory leaks, certain
+	// - tasks will be performed in workers
+	// - such as Cassamdra access
+	// =====================================
+
+	// Creates and starts the database worker
+	std::unique_ptr<DatabaseWorker> dbWorker = std::make_unique<DatabaseWorker>("192.168.188.130");
+	if (!dbWorker->start(nullptr))
+		std::exit(-1);
+
+	// =====================================
+	// Creates the SMTP Server itself
+	//
+	// Sets the config and starts
+	// - the smtp server
+	// =====================================
+
 	int32_t opts = 0x0;
 
 	opts |= _SERVER_OPT_ENABLE_AUTH;
@@ -95,6 +115,7 @@ int main(const int argc, const char **argv)
 
 	std::cin.get();
 	server.shutdownServer();
+	dbWorker->stop();
 
 	return 0;
 }

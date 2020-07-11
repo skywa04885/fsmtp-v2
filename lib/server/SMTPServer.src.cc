@@ -262,8 +262,8 @@ namespace FSMTP::Server
 							session.s_TransportMessage.e_Bucket = FullEmail::getBucket();
 							session.s_TransportMessage.e_Encryped = false;
 
-							// Saves the email to the database
-							session.s_TransportMessage.save(database);
+							// Adds the email to the database storage queue
+							_emailStorageQueue.push_back(session.s_TransportMessage);
 						}
 
 						// Prints the stored message

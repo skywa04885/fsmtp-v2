@@ -53,6 +53,8 @@ using namespace FSMTP::Networking;
 using namespace FSMTP::Networking;
 using namespace FSMTP::Server::Actions;
 
+extern std::vector<FullEmail> _emailStorageQueue;
+
 namespace FSMTP::Server
 {
 	class SMTPServer

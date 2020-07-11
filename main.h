@@ -31,10 +31,12 @@
 #include "lib/general/macros.src.h"
 #include "lib/general/logger.src.h"
 #include "lib/general/encoding.src.h"
+#include "lib/workers/DatabaseWorker.src.h"
 
 using namespace FSMTP;
 using Networking::SMTPSocketType;
 using Networking::SMTPSocket;
 using Server::SMTPServer;
+using namespace FSMTP::Workers;
 
 int main(const int argc, const char **argv);
