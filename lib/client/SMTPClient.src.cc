@@ -61,7 +61,7 @@ namespace FSMTP::Mailer::Client
 				{
 					std::string server = DNS::resolveHostname(record.r_Value.c_str());
 					target.t_Servers.push_back(server);
-					if (!s_Silent) this->s_Logger << "Added target server: " << server << ENDL;
+					if (!s_Silent) this->s_Logger << "Server toegevoegd: " << server << ENDL;
 				}
 				this->s_Targets.push_back(target);
 			} catch(const std::runtime_error &e)
@@ -127,7 +127,7 @@ namespace FSMTP::Mailer::Client
 					<< target.t_Servers[0] << ":25" << ENDL;
 			} catch (const SMTPConnectError &e)
 			{
-				this->s_Logger << ERROR << "Could not connect to server: " << e.what() << ENDL;
+				this->s_Logger << ERROR << "KOn niet verbinden met server: " << e.what() << ENDL;
 				this->addError(SMTPClientPhase::SCP_CONNECT, e.what());
 				continue;
 			}
@@ -139,22 +139,103 @@ namespace FSMTP::Mailer::Client
 			// - the socket
 			// ===============================
 
+			SMTPClientSession session;
+
 			// Infinite read loop
 			while (true)
 			{
+				std::string responseArgs;
+				int32_t responseCode;
+
 				// Receives the string from the client, and if debug enables
-				// - we print it to the console
-				std::string receivedString;
+				// - we print it to the console, next to that we will also
+				// - parse the command into an code and argument
 				try
 				{
-					receivedString = client->receive();
-					DEBUG_ONLY(this->s_Logger << DEBUG << "S (RAW): " << receivedString << ENDL << CLASSIC);
+					std::string buffer = client->receive();
+					std::tie(responseCode, responseArgs) = ServerResponse::parseResponse(buffer);
+					DEBUG_ONLY(this->printReceived(responseCode, responseArgs));
 				} catch (const SMTPTransmissionError &e)
 				{
 					this->s_Logger << "SMTPClientSocket::receive() failed: " << e.what() << ENDL;
 					break;
 				}
+
+				// Performs the action based on code
+				switch (responseCode)
+				{
+					case 220:
+					{
+						if (!session.getAction(_SMTP_CLIENT_SESSION_ACTION_HELO))
+						{
+							// Builds the arg, and builds the command
+							std::string arg = "[";
+							arg += _SMTP_SERVICE_DOMAIN;
+							arg += ']';
+							
+							ClientCommand command(ClientCommandType::CCT_HELO, {
+								arg
+							});
+							std::string response = command.build();
+
+							// Checks if we're using ESMTP, and sets the flag
+							// - if so
+							if (responseArgs.find("ESMTP") != std::string::npos)
+							{
+								DEBUG_ONLY(this->s_Logger << DEBUG << "Server meldt zichzelf als" 
+									"ESMTP, inschakelen extra functies .." << ENDL << CLASSIC);
+								session.setFlag(_SMTP_CLIENT_SESSION_FLAG_ESMTP);
+							}
+
+							// Sends the command to the client
+							client->sendMessage(response);
+							DEBUG_ONLY(this->printSent(response));
+						}
+
+						break;
+					}			
+					case 250:
+					{
+						// Checks if we may switch to an TLS socket, this may only happen
+						// - if the server is an ESMTP server
+						if (
+							!session.getAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS) &&
+							session.getFlag(_SMTP_CLIENT_SESSION_FLAG_ESMTP)
+						)
+						{
+							DEBUG_ONLY(
+								this->s_Logger << DEBUG << "ESMTP is actief, beginnen met aanvraag"
+								"van veilige verbinding ..." << ENDL << CLASSIC;
+							);
+						}
+						break;	
+					}
+				}
 			}
 		}
+	}
+
+	/**
+	 * Prints something we recieved from the client
+	 *
+	 * @Param {const int32_t} code
+	 * @Param {const std::string &} args\
+	 * @Return {void}
+	 */
+	void SMTPClient::printReceived(const int32_t code, const std::string &args)
+	{
+		this->s_Logger << DEBUG << "S->[code:" 
+			<< code << "]: " << args << ENDL << CLASSIC;
+	}
+
+	/**
+	 * Prints something we sent to the console
+	 *
+	 * @Param {const std::string &} mess
+	 * @Return {void}
+	 */
+	void SMTPClient::printSent(const std::string &mess)
+	{
+		this->s_Logger << DEBUG << "C->RESP: " << mess.substr(0, mess.size() - 2) << ENDL << CLASSIC;
 	}
 }

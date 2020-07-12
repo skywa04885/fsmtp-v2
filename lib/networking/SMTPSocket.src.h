@@ -108,13 +108,21 @@ namespace FSMTP::Networking
 		 * @Return {std::string}
 		 */
 		std::string receive(void);
+
+		/**
+		 * Sends an string
+		 * 
+		 * @Param {const std::string &} message
+		 * @Return {void}
+		 */
+		void sendMessage(const std::string &message);
 	private:
 		int32_t s_SocketFD;
 		int32_t s_SocketPort;
 		struct sockaddr_in s_SockAddr;
-		bool s_SSL;
-		SSL *ssl;
-		SSL_CTX *sslCtx;
+		bool s_UseSSL;
+		SSL *s_SSL;
+		SSL_CTX *s_SSLCtx;
 	};
 
 	class SMTPSocket

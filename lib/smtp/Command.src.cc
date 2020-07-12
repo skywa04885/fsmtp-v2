@@ -155,51 +155,55 @@ namespace FSMTP::SMTP
 	/**
 	 * Builds the client command
 	 *
-	 * @Param {std::string &} ret
-	 * @Return void
+	 * @Param {void}
+	 * @Return {std::string}
 	 */
-	void ClientCommand::build(std::string &ret)
+	std::string ClientCommand::build(void)
 	{
+		std::string res;
+
 		// Adds the command name and later the parameters
 		switch (this->c_CommandType)
 		{
 			case ClientCommandType::CCT_HELO:
 			{
-				ret += "HELO";
+				res += "HELO";
 				break;
 			}
 			case ClientCommandType::CCT_START_TLS:
 			{
-				ret += "STARTTLS";
+				res += "STARTTLS";
 				break;
 			}
 			case ClientCommandType::CCT_MAIL_FROM:
 			{
-				ret += "MAIL FROM";
+				res += "MAIL FROM";
 				break;
 			}
 			case ClientCommandType::CCT_RCPT_TO:
 			{
-				ret += "RCPT TO";
+				res += "RCPT TO";
 				break;
 			}
 			case ClientCommandType::CCT_DATA:
 			{
-				ret += "DATA";
+				res += "DATA";
 				break;
 			}
 			case ClientCommandType::CCT_QUIT:
 			{
-				ret += "QUIT";
+				res += "QUIT";
 				break;
 			}
 		}
 
 		for (const std::string &s : this->c_Arguments)
 		{
-			ret += ' ';
-			ret += s;
+			res += ' ';
+			res += s;
 		}
-		ret += "\r\n";
+		res += "\r\n";
+
+		return res;
 	}
 }

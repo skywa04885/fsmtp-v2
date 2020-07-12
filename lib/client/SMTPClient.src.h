@@ -27,9 +27,12 @@
 #include "../networking/DNS.src.h"
 #include "SMTPMessageComposer.src.h"
 #include "../smtp/Response.src.h"
+#include "../smtp/Command.src.h"
+#include "SMTPClientSession.src.h"
 
 using namespace FSMTP::Networking;
 using namespace FSMTP::Models;
+using namespace FSMTP::SMTP;
 using namespace FSMTP::Mailer::Composer;
 
 namespace FSMTP::Mailer::Client
@@ -98,6 +101,23 @@ namespace FSMTP::Mailer::Client
 			const SMTPClientPhase phase,
 			const std::string &message
 		);
+
+		/**
+		 * Prints something we recieved from the client
+		 *
+		 * @Param {const int32_t} code
+		 * @Param {const std::string &} args\
+		 * @Return {void}
+		 */
+		void printReceived(const int32_t code, const std::string &args);
+
+		/**
+		 * Prints something we sent to the console
+		 *
+		 * @Param {const std::string &} mess
+		 * @Return {void}
+		 */
+		void printSent(const std::string &mess);
 	private:
 		bool s_Silent;
 		Logger s_Logger;

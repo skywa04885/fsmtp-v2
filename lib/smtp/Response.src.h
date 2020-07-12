@@ -19,8 +19,12 @@
 #include <vector>
 #include <string>
 #include <cstdint>
+#include <tuple>
 
 #include "../general/macros.src.h"
+#include "../general/cleanup.src.h"
+
+using namespace FSMTP::Cleanup;
 
 namespace FSMTP::SMTP
 {
@@ -88,6 +92,15 @@ namespace FSMTP::SMTP
 		 * @Return const char *
 		 */
 		static const char *rcToCode(const SMTPResponseCommand &c);
+
+		/**
+		 * Parses an server response into an string and code
+		 *
+		 * @Param {const std::string &} raw
+		 * @Return {int32_t}
+		 * @Return {std::string}
+		 */
+		static std::tuple<int32_t, std::string> parseResponse(const std::string &raw);
 	private:
 		std::string r_Message;
 		SMTPResponseCommand r_CType;

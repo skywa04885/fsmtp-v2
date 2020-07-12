@@ -73,10 +73,10 @@ namespace FSMTP::SMTP
 		/**
 		 * Builds the client command
 		 *
-		 * @Param {std::string &} ret
-		 * @Return void
+		 * @Param {void}
+		 * @Return {std::string}
 		 */
-		void build(std::string &ret);
+		std::string build(void);
 		
 		ClientCommandType c_CommandType;
 		std::vector<std::string> c_Arguments;

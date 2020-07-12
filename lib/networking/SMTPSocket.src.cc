@@ -22,7 +22,7 @@ namespace FSMTP::Networking
 		const char *hostname,
 		const int32_t s_SocketPort
 	):
-		s_SocketPort(s_SocketPort)
+		s_SocketPort(s_SocketPort), s_UseSSL(false)
 	{
 		// Creates the socket and throws error if anything goes wrong
 		this->s_SocketFD = socket(AF_INET, SOCK_STREAM, 0);
@@ -94,6 +94,33 @@ namespace FSMTP::Networking
 
 		delete[] buffer;
 		return res.substr(0, res.size() - 2);
+	}
+
+	/**
+	 * Sends an string
+	 * 
+	 * @Param {const std::string &} message
+	 * @Return {void}
+	 */
+	void SMTPClientSocket::sendMessage(const std::string &message)
+	{
+		int32_t rc;
+
+		// Checks if we need to use ssl or not,
+		// - then we send the message and check for errors
+		if (this->s_UseSSL)
+		{
+
+		} else
+		{
+			rc = send(this->s_SocketFD, message.c_str(), message.size(), 0);
+			if (rc < 0)
+			{
+				std::string error = "send() failed: ";
+				error += strerror(errno);
+				throw SMTPTransmissionError(error);
+			}
+		}
 	}
 
 	/**

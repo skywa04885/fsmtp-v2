@@ -51,7 +51,7 @@ namespace FSMTP::DNS
 	{
 		#ifdef _SMTP_DEBUG
 		Logger logger("DNS Resolver", LoggerLevel::DEBUG);
-		logger << "Resolving records for: " << hostname << ENDL;
+		logger << "Vinden van records voor: " << hostname << ENDL;
 		#endif
 
 		uint8_t resultBuffer[2048];
@@ -101,7 +101,7 @@ namespace FSMTP::DNS
 			throw std::runtime_error("Could not find domain");
 		}
 
-		DEBUG_ONLY(logger << "Response length: " << responseSize << "/2048 octets" << ENDL);
+		DEBUG_ONLY(logger << "Antwoord lengte: " << responseSize << "/2048 octets" << ENDL);
 
 		// =================================
 		// Gets the data
@@ -122,7 +122,7 @@ namespace FSMTP::DNS
 			throw std::runtime_error("No records found");
 		}
 
-		DEBUG_ONLY(logger << "Record count: " << responseCount << ENDL);
+		DEBUG_ONLY(logger << "DNS Record aantal: " << responseCount << ENDL);
 
 		// Loops over the records and parses them
 		ns_rr record;

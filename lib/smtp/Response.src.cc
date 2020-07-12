@@ -219,4 +219,25 @@ namespace FSMTP::SMTP
 			default: throw std::runtime_error("The programmer messed up, and used an not implemented enum value ..");
 		}
 	}
+
+	/**
+	 * Parses an server response into an string and code
+	 *
+	 * @Param {const std::string &} raw
+	 * @Return {int32_t}
+	 * @Return {std::string}
+	 */
+	std::tuple<int32_t, std::string> ServerResponse::parseResponse(const std::string &raw)
+	{
+		std::string clean;
+		reduceWhitespace(raw, clean);
+
+		std::size_t index = clean.find_first_of(' ');
+		if (index == std::string::npos)
+			return std::make_pair(std::stoi(clean), "");
+		else return std::make_pair(
+			std::stoi(clean.substr(0, index)),
+			clean.substr(++index)
+		);
+	}
 }
