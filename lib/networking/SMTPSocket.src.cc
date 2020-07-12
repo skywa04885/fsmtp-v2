@@ -90,7 +90,7 @@ namespace FSMTP::Networking
 					std::size_t errLen = BIO_get_mem_data(bio, err);
 					std::string error(err, errLen);
 					BIO_free(bio);
-					throw std::runtime_error("SSL_write() failed: " + error);
+					throw SMTPTransmissionError("SSL_Read() failed: " + error);
 				}
 			}
 			else
@@ -193,7 +193,6 @@ namespace FSMTP::Networking
 		shutdown(this->s_SocketFD, SHUT_RDWR);
 		if (this->s_UseSSL)
 		{
-			SSL_shutdown(this->s_SSL);
 			SSL_free(this->s_SSL);
 			SSL_CTX_free(this->s_SSLCtx);
 		}

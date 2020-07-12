@@ -36,7 +36,8 @@ namespace FSMTP::SMTP
 		CCT_RCPT_TO,
 		CCT_DATA,
 		CCT_QUIT,
-		CCT_UNKNOWN
+		CCT_UNKNOWN,
+		CCT_EHLO
 	} ClientCommandType;
 
 	class ClientCommand

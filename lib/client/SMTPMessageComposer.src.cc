@@ -25,7 +25,7 @@ namespace FSMTP::Mailer::Composer
 		'E','F','G','H','I','J','K','L','M','N',
 		'O','P','Q','R','S','T','U','V','W','X',
 		'Y','Z','1','2','3','4','5','6','7','8',
-		'9','0','_','+','-'
+		'9','0'
 	};
 
 	static char _boundaryDict[] = {
@@ -51,7 +51,7 @@ namespace FSMTP::Mailer::Composer
 		// Prepares the random engine and then generates the random strings
 		std::random_device rd;
 		std::mt19937 re(rd());
-		std::uniform_int_distribution<int> dict(0, sizeof (_boundaryDict));
+		std::uniform_int_distribution<int> dict(0, sizeof (_boundaryDict) - 1);
 
 		// Generates the MessageID random part
 		for (std::size_t i = 0; i < 38; i++)
@@ -76,7 +76,7 @@ namespace FSMTP::Mailer::Composer
 		// - which will be appended with the domain
 		std::random_device rd;
 		std::mt19937 re(rd());
-		std::uniform_int_distribution<int> dict(0, sizeof (_randomDict));
+		std::uniform_int_distribution<int> dict(0, sizeof (_randomDict) - 1);
 
 		// Generates the MessageID random part
 		for (std::size_t i = 0; i < 64; i++)

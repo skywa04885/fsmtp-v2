@@ -106,6 +106,9 @@ namespace FSMTP::Mailer::Client
 	 */
 	void SMTPClient::beSocial(void)
 	{
+		if (!this->s_Silent) this->s_Logger << "Versturen naar "
+			<< this->s_Targets.size() << " clients .." << ENDL;
+
 		// Loops over the targets and creates the transmission
 		// - sockets
 		for (SMTPClientTarget &target : this->s_Targets)
@@ -131,7 +134,7 @@ namespace FSMTP::Mailer::Client
 					<< target.t_Servers[0] << ":25" << ENDL;
 			} catch (const SMTPConnectError &e)
 			{
-				this->s_Logger << ERROR << "KOn niet verbinden met server: " << e.what() << ENDL;
+				this->s_Logger << ERROR << "Kon niet verbinden met server: " << e.what() << ENDL;
 				this->addError(SMTPClientPhase::SCP_CONNECT, e.what());
 				continue;
 			}
@@ -146,7 +149,8 @@ namespace FSMTP::Mailer::Client
 			SMTPClientSession session;
 
 			// Infinite read loop
-			while (true)
+			bool _run = true;
+			while (_run)
 			{
 				std::string responseArgs;
 				int32_t responseCode;
@@ -172,7 +176,7 @@ namespace FSMTP::Mailer::Client
 					arg += _SMTP_SERVICE_DOMAIN;
 					arg += ']';
 					
-					ClientCommand command(ClientCommandType::CCT_HELO, {
+					ClientCommand command(ClientCommandType::CCT_EHLO, {
 						arg
 					});
 					std::string response = command.build();
@@ -202,7 +206,8 @@ namespace FSMTP::Mailer::Client
 				} catch (const SMTPTransmissionError &e)
 				{
 					this->s_Logger << "SMTPClientSocket::receive() failed: " << e.what() << ENDL;
-					break;
+					_run = false;
+					continue;
 				}
 
 				// ================================
@@ -222,12 +227,8 @@ namespace FSMTP::Mailer::Client
 							session.setAction(_SMTP_CLIENT_SESSION_ACTION_HELO);
 
 							// Builds the arg, and builds the command
-							std::string arg = "[";
-							arg += _SMTP_SERVICE_DOMAIN;
-							arg += ']';
-							
-							ClientCommand command(ClientCommandType::CCT_HELO, {
-								arg
+							ClientCommand command(ClientCommandType::CCT_EHLO, {
+								_SMTP_SERVICE_DOMAIN
 							});
 							std::string response = command.build();
 
@@ -235,7 +236,7 @@ namespace FSMTP::Mailer::Client
 							// - if so
 							if (responseArgs.find("ESMTP") != std::string::npos)
 							{
-								DEBUG_ONLY(this->s_Logger << DEBUG << "Server meldt zichzelf als" 
+								DEBUG_ONLY(this->s_Logger << DEBUG << "Server meldt zichzelf als " 
 									"ESMTP, inschakelen extra functies .." << ENDL << CLASSIC);
 								session.setFlag(_SMTP_CLIENT_SESSION_FLAG_ESMTP);
 							}
@@ -243,7 +244,10 @@ namespace FSMTP::Mailer::Client
 							// Sends the command to the client
 							client->sendMessage(response);
 							DEBUG_ONLY(this->printSent(response));
-						} else if (
+							continue;
+						}
+
+						if (
 							session.getAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS) &&
 							!session.getAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS_FINISHED)
 						)
@@ -269,7 +273,7 @@ namespace FSMTP::Mailer::Client
 						)
 						{
 							DEBUG_ONLY(
-								this->s_Logger << DEBUG << "ESMTP is actief, beginnen met aanvraag"
+								this->s_Logger << DEBUG << "ESMTP is actief, beginnen met aanvraag "
 								"van veilige verbinding ..." << ENDL << CLASSIC;
 							);
 
@@ -282,11 +286,7 @@ namespace FSMTP::Mailer::Client
 							continue;
 						}
 
-						if (
-							(session.getAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS_HELO) ||
-							session.getAction(_SMTP_CLIENT_SESSION_ACTION_HELO)) &&
-							!session.getAction(_SMTP_CLIENT_SESSION_ACTION_MAIL_FROM)
-						)
+						if (!session.getAction(_SMTP_CLIENT_SESSION_ACTION_MAIL_FROM))
 						{
 							session.setAction(_SMTP_CLIENT_SESSION_ACTION_MAIL_FROM);
 							ClientCommand command(ClientCommandType::CCT_MAIL_FROM, {
@@ -299,11 +299,7 @@ namespace FSMTP::Mailer::Client
 							continue;
 						}
 
-						if (
-							(session.getAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS_HELO) ||
-							session.getAction(_SMTP_CLIENT_SESSION_ACTION_HELO)) &&
-							!session.getAction(_SMTP_CLIENT_SESSION_ACTION_RCPT_TO)
-						)
+						if (!session.getAction(_SMTP_CLIENT_SESSION_ACTION_RCPT_TO))
 						{
 
 							session.setAction(_SMTP_CLIENT_SESSION_ACTION_RCPT_TO);
@@ -317,11 +313,65 @@ namespace FSMTP::Mailer::Client
 							continue;
 						}
 
+						if (!session.getAction(_SMTP_CLIENT_SESSION_ACTION_DATA_START))
+						{
+							session.setAction(_SMTP_CLIENT_SESSION_ACTION_DATA_START);
+							ClientCommand command(ClientCommandType::CCT_DATA, {});
+							std::string response = command.build();
+
+							client->sendMessage(response);
+							DEBUG_ONLY(this->printSent(response));
+							continue;
+						}
+
+						if (
+							session.getAction(_SMTP_CLIENT_SESSION_ACTION_DATA_BUSSY) &&
+							!session.getAction(_SMTP_CLIENT_SESSION_ACTION_DATA_END)
+						)
+						{
+							session.setAction(_SMTP_CLIENT_SESSION_ACTION_DATA_END);
+
+							ClientCommand command(ClientCommandType::CCT_QUIT, {});
+							std::string response = command.build();
+
+							client->sendMessage(response);
+							DEBUG_ONLY(this->printSent(response));
+
+							_run = false;
+							continue;
+						}
+
 						break;
+					}
+
+					case 354:
+					{
+						if (
+							session.getAction(_SMTP_CLIENT_SESSION_ACTION_DATA_START) &&
+							!session.getAction(_SMTP_CLIENT_SESSION_ACTION_DATA_BUSSY)
+						)
+						{
+							session.setAction(_SMTP_CLIENT_SESSION_ACTION_DATA_BUSSY);
+
+							client->sendMessage(this->s_TransportMessage);
+							DEBUG_ONLY(this->printSent("[-> Body <-]\r\n"));
+							client->sendMessage("\r\n.\r\n");
+							continue;
+						}
+					}
+
+					default:
+					{
+						this->addError(
+							SMTPClientPhase::SCP_OTHER, 
+							std::to_string(responseCode) + ": " + responseArgs
+						);
 					}
 				}
 			}
 		}
+
+		if (!this->s_Silent) this->s_Logger << "Handles" << this->s_Targets.size() << " emails" << ENDL;
 	}
 
 	/**

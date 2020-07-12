@@ -170,6 +170,11 @@ namespace FSMTP::SMTP
 				res += "HELO";
 				break;
 			}
+			case ClientCommandType::CCT_EHLO:
+			{
+				res += "EHLO";
+				break;
+			}
 			case ClientCommandType::CCT_START_TLS:
 			{
 				res += "STARTTLS";
@@ -201,7 +206,7 @@ namespace FSMTP::SMTP
 			this->c_CommandType == ClientCommandType::CCT_MAIL_FROM ||
 			this->c_CommandType == ClientCommandType::CCT_RCPT_TO
 		) res += ':';
-		
+
 		for (const std::string &s : this->c_Arguments)
 		{
 			res += ' ';
