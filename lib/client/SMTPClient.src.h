@@ -26,6 +26,7 @@
 #include "../general/logger.src.h"
 #include "../networking/DNS.src.h"
 #include "SMTPMessageComposer.src.h"
+#include "../smtp/Response.src.h"
 
 using namespace FSMTP::Networking;
 using namespace FSMTP::Models;

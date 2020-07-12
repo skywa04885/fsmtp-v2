@@ -34,6 +34,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <netinet/tcp.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <arpa/inet.h>
@@ -50,6 +51,37 @@
 
 namespace FSMTP::Networking
 {
+	class SMTPTransmissionError : public std::exception
+	{
+	public:
+		SMTPTransmissionError(const std::string &e_Message):
+			e_Message(e_Message)
+		{}
+
+		const char *what() const throw()
+    {
+    	return this->e_Message.c_str();
+    }
+	private:
+		std::string e_Message;
+	};
+
+	class SMTPConnectError : public std::exception
+	{
+	public:
+		SMTPConnectError(const std::string &e_Message):
+			e_Message(e_Message)
+		{}
+
+		const char *what() const throw()
+    {
+    	return this->e_Message.c_str();
+    }
+	private:
+		std::string e_Message;
+	};
+
+
 	class SMTPClientSocket
 	{
 	public:
@@ -68,10 +100,21 @@ namespace FSMTP::Networking
 		 * @Return void
 		 */
 		void startConnecting(void);
+
+		/**
+		 * Receives an string from the socket
+		 *
+		 * @Param {void}
+		 * @Return {std::string}
+		 */
+		std::string receive(void);
 	private:
 		int32_t s_SocketFD;
 		int32_t s_SocketPort;
 		struct sockaddr_in s_SockAddr;
+		bool s_SSL;
+		SSL *ssl;
+		SSL_CTX *sslCtx;
 	};
 
 	class SMTPSocket

@@ -34,6 +34,10 @@ namespace FSMTP::Networking
 		this->s_SockAddr.sin_port = htons(this->s_SocketPort);
 		inet_aton(hostname, &this->s_SockAddr.sin_addr);
 		this->s_SockAddr.sin_family = AF_INET;
+
+		// Sets the connect timeout
+		int synRetries = 1;
+		setsockopt(this->s_SocketFD, IPPROTO_TCP, TCP_SYNCNT, &synRetries, sizeof (synRetries));
 	}
 
 	/**
@@ -51,7 +55,45 @@ namespace FSMTP::Networking
 			sizeof (this->s_SockAddr)
 		);
 		if (rc < 0)
-			throw std::runtime_error("Could not connect to the server");
+			throw SMTPConnectError("Could not connect to the server");
+	}
+
+	/**
+	 * Receives an string from the socket
+	 *
+	 * @Param {void}
+	 * @Return {std::string}
+	 */
+	std::string SMTPClientSocket::receive(void)
+	{
+		std::string res;
+		char *buffer = new char[_SMTP_RECEIVE_BUFFER_SIZE];
+		int32_t rc;
+
+		// Creates the read loop and reads untill we reach
+		// - an CRLF, then we return, or when error occures
+		// - we throw one, and delete the buffer
+		while (true)
+		{
+			// Checks if we need to close
+			if (res[res.size() - 2] == '\r' && res[res.size() - 1] == '\n') break;
+
+			// Receives the string
+			rc = recv(this->s_SocketFD, buffer, _SMTP_RECEIVE_BUFFER_SIZE, 0);
+			if (rc < 0)
+			{
+				delete[] buffer;
+				throw SMTPTransmissionError("Could not receive data");
+			}
+
+			// Appends the string to the result 
+			// - and clears the buffer
+			res += buffer;
+			memset(buffer, 0x0, _SMTP_RECEIVE_BUFFER_SIZE);
+		}
+
+		delete[] buffer;
+		return res.substr(0, res.size() - 2);
 	}
 
 	/**

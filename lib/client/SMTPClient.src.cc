@@ -25,7 +25,7 @@ namespace FSMTP::Mailer::Client
 	 * @Return {void}
 	 */
 	SMTPClient::SMTPClient(bool s_Silent):
-		s_Logger("", LoggerLevel::INFO)
+		s_Logger("SMTPClient", LoggerLevel::INFO)
 	{
 		if (!s_Silent) this->s_Logger << "SMTPClient initialized !" << ENDL;
 	}
@@ -125,7 +125,7 @@ namespace FSMTP::Mailer::Client
 				client->startConnecting();
 				if (!this->s_Silent) this->s_Logger << "Connected to: " 
 					<< target.t_Servers[0] << ":25" << ENDL;
-			} catch (const std::runtime_error &e)
+			} catch (const SMTPConnectError &e)
 			{
 				this->s_Logger << ERROR << "Could not connect to server: " << e.what() << ENDL;
 				this->addError(SMTPClientPhase::SCP_CONNECT, e.what());
@@ -140,10 +140,21 @@ namespace FSMTP::Mailer::Client
 			// ===============================
 
 			// Infinite read loop
-			// while (true)
-			// {
-
-			// }
+			while (true)
+			{
+				// Receives the string from the client, and if debug enables
+				// - we print it to the console
+				std::string receivedString;
+				try
+				{
+					receivedString = client->receive();
+					DEBUG_ONLY(this->s_Logger << DEBUG << "S (RAW): " << receivedString << ENDL << CLASSIC);
+				} catch (const SMTPTransmissionError &e)
+				{
+					this->s_Logger << "SMTPClientSocket::receive() failed: " << e.what() << ENDL;
+					break;
+				}
+			}
 		}
 	}
 }
