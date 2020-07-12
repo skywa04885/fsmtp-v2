@@ -33,11 +33,13 @@
 #include "lib/general/encoding.src.h"
 #include "lib/general/NCursesDisplay.src.h"
 #include "lib/workers/DatabaseWorker.src.h"
+#include "lib/client/SMTPMessageComposer.src.h"
 
 using namespace FSMTP;
 using Networking::SMTPSocketType;
 using Networking::SMTPSocket;
 using Server::SMTPServer;
 using namespace FSMTP::Workers;
+using namespace FSMTP::Mailer::Composer;
 
 int main(const int argc, const char **argv);

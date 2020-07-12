@@ -40,7 +40,7 @@
 #define FATAL_ERROR(A) std::cerr << "\033[32m" << __LINE__ << '@' << __FILE__ << "\033[31m" << ": " << A << "\033[0m" << std::endl
 
 #ifndef _SMTP_SERVICE_DOMAIN
-#define _SMTP_SERVICE_DOMAIN "smtp.fannst.nl"
+#define _SMTP_SERVICE_DOMAIN "mail.fannst.nl"
 #endif
 
 #ifndef _SMTP_SERVICE_NODE_NAME

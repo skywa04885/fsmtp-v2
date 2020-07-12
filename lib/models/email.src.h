@@ -96,6 +96,14 @@ namespace FSMTP::Models
 		 */
 		static std::vector<EmailAddress> parseAddressList(const std::string &raw);
 
+		/**
+		 * Turns an vector of addresses into an string
+		 *
+		 * @Param {const std::vector<EmailAddress> &} addresses
+		 * @Return {std::string}
+		 */
+		static std::string addressListToString(const std::vector<EmailAddress> &addresses);
+
 		std::string e_Address;
 		std::string e_Name;
 	};
@@ -141,6 +149,14 @@ namespace FSMTP::Models
 	 * @Return {EmailContentType}
 	 */
 	EmailContentType stringToEmailContentType(const std::string &raw);
+
+	/**
+	 * Turns an enum value into an string
+	 *
+	 * @Param {const EmailContentType} type
+	 * @Return {const char *}
+	 */
+	const char *contentTypeToString(const EmailContentType type);
 
 	/**
 	 * Turns an string into an enum value of

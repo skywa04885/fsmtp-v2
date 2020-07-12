@@ -114,6 +114,28 @@ namespace FSMTP::Models
   }
 
   /**
+   * Turns an vector of addresses into an string
+   *
+   * @Param {const std::vector<EmailAddress> &} addresses
+   * @Return {std::string}
+   */
+  std::string EmailAddress::addressListToString(const std::vector<EmailAddress> &addresses)
+  {
+    std::string res;
+
+    // Loops over the addresses and appends them to the result
+    std::size_t i = 0;
+    for (const EmailAddress &a : addresses)
+    {
+      if (!a.e_Name.empty()) res += '"' + a.e_Name + "\" ";
+      res += '<' + a.e_Address + '>';
+      if (++i < addresses.size()) res += ", ";
+    }
+
+    return res;
+  }
+
+  /**
    * Parses the domain name from the address
    *
    * @Param {std::string &} ret
@@ -163,6 +185,37 @@ namespace FSMTP::Models
 		else if (raw == "text/html") return EmailContentType::ECT_TEXT_HTML;
 		else return EmailContentType::ECT_NOT_FUCKING_KNOWN;
 	}
+
+
+  /**
+   * Turns an enum value into an string
+   *
+   * @Param {const EmailContentType} type
+   * @Return {const char *}
+   */
+  const char *contentTypeToString(const EmailContentType type)
+  {
+    switch (type)
+    {
+      case EmailContentType::ECT_TEXT_PLAIN:
+      {
+        return "text/plain";
+      }
+      case EmailContentType::ECT_TEXT_HTML:
+      {
+        return "text/html";
+      }
+      case EmailContentType::ECT_MULTIPART_ALTERNATIVE:
+      {
+        return "multipart/alternative";
+      }
+      case EmailContentType::ECT_MULTIPART_MIXED:
+      {
+       return "multipart/mixed";
+      }
+      default: return "application/octet-stream";
+    }
+  }
 
 	/**
 	 * Turns an string into an enum value of

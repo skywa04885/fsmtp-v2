@@ -20,6 +20,25 @@ bool _forceLoggerNCurses = false;
 
 int main(const int argc, const char **argv)
 {
+	MailComposerConfig config;
+	config.m_Subject = "Hello World";
+	config.m_To.emplace_back("Luke Rieff", "luke.rieff@gmail.com");
+	config.m_To.emplace_back("Sem Rieff", "sem.rieff@gmail.com");
+	config.m_From.emplace_back("Luke Rieff", "lr@fannst.nl");
+	config.m_BodySections.push_back(EmailBodySection{
+		"Hello World",
+		EmailContentType::ECT_TEXT_PLAIN,
+		{},
+		0,
+		EmailTransferEncoding::ETE_QUOTED_PRINTABLE
+	});
+
+	std::string res = compose(config);
+
+	std::cout << std::endl << std::endl << '-' << std::endl << res << '-' << std::endl;
+
+	return 0;
+
 	// Parses the arguments into an vector after this
 	// - we define the anonymous function which will compare
 	// - an string and an argument, this will allow all the possible

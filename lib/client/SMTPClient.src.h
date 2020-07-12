@@ -16,12 +16,8 @@
 
 #pragma once
 
-namespace FSMTP::Client
+namespace FSMTP::Mailer::Client
 {
-	typedef struct
-	{
-	} SMTPComposerConfig;
-
 	class SMTPClient
 	{
 	public:

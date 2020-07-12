@@ -233,7 +233,7 @@ namespace FSMTP::Parsers::MIME
 
 		// Parses the headers, and then processes the body
 		// - first the headers so we can check how to treat the body
-		parseHeaders(headers, parsedHeaders, true);
+		parseHeaders(headers, parsedHeaders, false);
 
 		// Gets the required parameters from the headers, so
 		// - we can treat the body, and store the data correctly

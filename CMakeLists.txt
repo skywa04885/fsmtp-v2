@@ -40,6 +40,9 @@ file(GLOB parsers_headers "lib/parsers/*.h")
 file(GLOB workers_sources "lib/workers/*.cc")
 file(GLOB workers_headers "lib/workers/*.h")
 
+file(GLOB client_sources "lib/client/*.cc")
+file(GLOB client_headers "lib/client/*.h")
+
 set(sources "main.cc")
 set(headers "main.h")
 set(args "-lpthread -lssl -lcrypto -lcassandra -lboost_system -lcurses -lhiredis -lboost_program_options")
@@ -70,6 +73,9 @@ add_executable(
 
 	${parsers_sources}
 	${parsers_headers}
+
+	${client_sources}
+	${client_headers}
 )
 
 target_link_libraries(${PROJECT_NAME} ${args})
