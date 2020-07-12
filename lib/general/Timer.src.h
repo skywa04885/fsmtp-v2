@@ -16,14 +16,36 @@
 
 #pragma once
 
-#include "../networking/SMTPSocket.src.h"
+#include <iostream>
+#include <chrono>
+#include <string>
 
-namespace FSMTP::Mailer::Client
+#include "logger.src.h"
+
+namespace FSMTP
 {
-	class SMTPClient
+	class Timer
 	{
 	public:
-	private:
+		/**
+		 * Initializes the timer with an specific name
+		 *
+		 * @Param {const std::string &} t_Prefix
+		 * @Param {Logger &} t_Logger
+		 * @Return {void}
+		 */
+		Timer(const std::string &t_Prefix, Logger &t_Logger);
 
+		/**
+		 * Default destructor which calls the timer print
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		~Timer();
+	private:
+		std::string t_Prefix;
+		Logger &t_Logger;
+		int64_t t_StartTime;
 	};
 }

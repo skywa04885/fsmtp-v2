@@ -159,6 +159,14 @@ namespace FSMTP::Models
 	const char *contentTypeToString(const EmailContentType type);
 
 	/**
+	 * Turns an enum into an string
+	 *
+	 * @Param {const EmailTransferEncoding} enc
+	 * @Return {const char *}
+	 */
+	const char *contentTransferEncodingToString(const EmailTransferEncoding enc);
+
+	/**
 	 * Turns an string into an enum value of
 	 * - EmailTransferEncoding type
 	 *

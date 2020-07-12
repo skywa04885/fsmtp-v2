@@ -24,6 +24,7 @@ namespace FSMTP::Encoding
 	 * @Param {const std::string &} raw
 	 * @Return {std::string}
 	 */
+	// TODO: Improve Quoted-Printable decoder
 	std::string decodeQuotedPrintable(const std::string &raw)
 	{
 		std::string res;
@@ -86,8 +87,9 @@ namespace FSMTP::Encoding
 			}
 
 			// Checks if we must encode the line
-			if (c >= 33 && c <= 126 && c != 61)
+			if (c >= 33 && c <= 126 && c != 61 || c == '\n')
 			{
+				if (c == '\n') lineLength = 0;
 				res += c;
 			} else if (c >= 9 && c <= 32 && raw[i+1] != '\n')
 			{

@@ -28,6 +28,40 @@ namespace FSMTP::Mailer::Composer
 		'9','0','_','+','-'
 	};
 
+	static char _boundaryDict[] = {
+		'a','b','c','d','e','f','g','h','i','j',
+		'k','l','m','n','o','p','q','r','s','t',
+		'u','v','w','x','y','z','A','B','C','D',
+		'E','F','G','H','I','J','K','L','M','N',
+		'O','P','Q','R','S','T','U','V','W','X',
+		'Y','Z','1','2','3','4','5','6','7','8',
+		'9','0'
+	};
+
+	/**
+	 * Generates an random boundary
+	 *
+	 * @Param {void}
+	 * @Return {std::string}
+	 */
+	std::string generateBoundary(void)
+	{
+		std::string res = "--";
+		
+		// Prepares the random engine and then generates the random strings
+		std::random_device rd;
+		std::mt19937 re(rd());
+		std::uniform_int_distribution<int> dict(0, sizeof (_boundaryDict));
+
+		// Generates the MessageID random part
+		for (std::size_t i = 0; i < 38; i++)
+		{
+			res += _boundaryDict[dict(re)];
+		}
+
+		return res;
+	}
+
 	/**
 	 * Generates an MessageID
 	 *
@@ -66,8 +100,12 @@ namespace FSMTP::Mailer::Composer
 	 */
 	std::string compose(MailComposerConfig &config)
 	{
-		DEBUG_ONLY(Logger logger("MailComposer", LoggerLevel::DEBUG));
-		DEBUG_ONLY(logger << "Begonnen met opbouw van MIME Message" << ENDL);
+		#ifdef _SMTP_DEBUG
+		Logger logger("MailComposer", LoggerLevel::DEBUG);
+		Timer t("MessageComposer", logger);
+		logger << "Begonnen met opbouw van MIME Message" << ENDL;
+		#endif
+
 		std::string res;
 
 		// ======================================
@@ -99,12 +137,16 @@ namespace FSMTP::Mailer::Composer
 		DEBUG_ONLY(logger << "Van: " << messageFrom << ENDL);
 		DEBUG_ONLY(logger << "Naar: " << messageTo << ENDL);
 
+		// Reduces the whitespace
+		std::string subject;
+		reduceWhitespace(config.m_Subject, subject);
+
 		// Prepares the default headers
 		config.m_Headers.push_back(EmailHeader{"X-Mailer", "FSMTP-V2"});
-		config.m_Headers.push_back(EmailHeader{"Subject", config.m_Subject});
+		config.m_Headers.push_back(EmailHeader{"Subject", subject});
 		config.m_Headers.push_back(EmailHeader{"Date",  dateValue});
 		config.m_Headers.push_back(EmailHeader{"MIME-Version",  "1.0"});
-		config.m_Headers.push_back(EmailHeader{"Message-ID",  messageID});
+		config.m_Headers.push_back(EmailHeader{"Message-ID", messageID});
 		config.m_Headers.push_back(EmailHeader{"To",  messageTo});
 		config.m_Headers.push_back(EmailHeader{"From",  messageFrom});
 
@@ -125,7 +167,7 @@ namespace FSMTP::Mailer::Composer
 				"<p>\n"
 				"<strong>Roses are red.</strong><br />\n"
 				"<small>Violets are blue.</small><br />\n"
-				"<em>Someone did NOT specify an message body.</em>\n"
+				"<em>Someone did NOT specify an message body.</em>"
 				"</p>",
 				EmailContentType::ECT_TEXT_HTML,
 				{},
@@ -160,11 +202,6 @@ namespace FSMTP::Mailer::Composer
 		// - specified, we will use multipart body
 		// ======================================
 
-		// Loops over the body sections and adds the final CRLF if not there
-		for (EmailBodySection &section : config.m_BodySections)
-			if (section.e_Content[section.e_Content.size() - 1] != '\n')
-				section.e_Content += "\n";
-
 		// Checks if we just want to generate text only
 		if (
 			config.m_BodySections.size() == 1 &&
@@ -172,22 +209,65 @@ namespace FSMTP::Mailer::Composer
 		{
 			DEBUG_ONLY(logger << "Text only detected, generating headers ..." << ENDL);
 
-			// Generates the headers and appends them to the result,
-			// - nex to that we also add the content type first
+			// Generates the content type, and appends the body
 			config.m_Headers.emplace_back(EmailHeader{
 				"Content-Type",
 				contentTypeToString(config.m_BodySections[0].e_Type)
 			});
+			res += generateBodySection(
+				config.m_BodySections[0].e_Content,
+				config.m_BodySections[0].e_TransferEncoding,
+				config.m_Headers
+			);
+		} else
+		{
+			// Generates the boundary and sets the content type
+			std::string boundary = generateBoundary();
+			std::string contentType = contentTypeToString(EmailContentType::ECT_MULTIPART_ALTERNATIVE);
+			contentType += "; boundary=\"" + boundary + '\"';
+
+			config.m_Headers.emplace_back(EmailHeader{
+				"Content-Type",
+				contentType
+			});
+			
+			// Generates the basic headers
 			res += generateHeaders(config.m_Headers);
 			res += "\r\n";
 
-			// Encodes the body if required, and appends the body
-			res += encodeMessageBody(
-				config.m_BodySections[0].e_Content, 
-				config.m_BodySections[0].e_TransferEncoding
-			);
+			// Starts looping over the sections and appends them
+			// - the result, with the top boundary
+			for (EmailBodySection &section : config.m_BodySections)
+			{
+				// Generates the headers, if they're not there yet
+				if (section.e_Headers.size() == 0)
+				{
+					std::string contentType = contentTypeToString(section.e_Type);
+					contentType += "; charset=\"utf-8\"";
+					section.e_Headers.push_back(EmailHeader{
+						"Content-Type",
+						contentType
+					});
+
+					section.e_Headers.push_back(EmailHeader{
+						"Content-Transfer-Encoding",
+						contentTransferEncodingToString(section.e_TransferEncoding)
+					});
+				}
+
+				// Adds the boundary and content section
+				res += "--" + boundary + "\r\n";
+				res += generateBodySection(section.e_Content, 
+					section.e_TransferEncoding, section.e_Headers);
+				res += "\r\n";
+			}
+
+			// Adds the end boundary
+			res += "--" + boundary + "--\r\n";
+
 		}
 
+		DEBUG_ONLY(logger << "Result: '\n" << res << '\'' << ENDL);
 		return res;
 	}
 
@@ -201,7 +281,11 @@ namespace FSMTP::Mailer::Composer
 	{
 		std::regex htmlRegex("<[^<]*>");
 		std::string res;
+		res.reserve(raw.size());
+
+		// Replaces the stuff
 		std::regex_replace(std::back_inserter(res), raw.begin(), raw.end(), htmlRegex, "");
+
 		return res;
 	}
 
@@ -211,6 +295,7 @@ namespace FSMTP::Mailer::Composer
 	 * @Param {const std::vector<EmailHeader> &} headers
 	 * @Return {std::string}
 	 */
+	// TODO: Add header length limit and then newline shit
 	std::string generateHeaders(const std::vector<EmailHeader> &headers)
 	{
 		std::string res;
@@ -231,6 +316,15 @@ namespace FSMTP::Mailer::Composer
 		const EmailTransferEncoding encoding
 	)
 	{
+		std::string clean;
+		clean.reserve(raw.size());
+
+		// Removes non required whitespace
+		reduceWhitespace(raw, clean);
+
+		std::string encoded;
+		encoded.reserve(clean.size());
+
 		// Checks which encoding to use
 		switch (encoding)
 		{
@@ -238,9 +332,75 @@ namespace FSMTP::Mailer::Composer
 			{
 				// Starts encoding the message, and the specific chars
 				// - to hex
-				return encodeQuotedPrintable(raw);
+				encoded = encodeQuotedPrintable(clean);
+				break;
 			}
-			default: return raw;
+			default: encoded = clean;
 		}
+
+		std::string withEndls;
+		withEndls.reserve(encoded.size());
+
+		// Replaces all '\n' with '\r\n', and adds an newline
+		// - to the end of the body
+		for (const char c : encoded)
+		{
+			if (c == '\n') withEndls += "\r\n";
+			else withEndls += c;
+		}
+		if (
+			withEndls[withEndls.size() - 2] != '\r' &&
+			withEndls[withEndls.size() - 1] != '\r'
+		)
+			withEndls += "\r\n";
+
+		// Removes the empty lines
+		std::string res;
+		std::string token;
+		std::stringstream stream(withEndls);
+		while (std::getline(stream, token))
+		{
+			// Removes the '\r' so we can check for empty line
+			if (token[token.size() - 1] == '\r')
+				token.pop_back();
+			// If the line is empty, we ignore it
+			if (token.empty()) continue;
+			// Checks if we need to remove the first space
+			if (token[0] == ' ')
+				res += token.substr(1) + '\n';
+			else
+				res += token + '\n';
+		}
+
+		return res;
+	}
+
+	/**
+	 * Generates an body section
+	 *
+	 * @Param {const std::string &} body
+	 * @Param {const EmailTransferEncoding} encoding
+	 * @Param {const std::vector<EmailHeader> &} headers
+	 * @Return {std::string}
+	 */
+	std::string generateBodySection(
+		const std::string &body,
+		const EmailTransferEncoding encoding,
+		const std::vector<EmailHeader> &headers
+	)
+	{
+		std::string res;
+
+		// Generates the headers
+		res += generateHeaders(headers);
+		res += "\r\n";
+
+		// Encodes the body
+		res += encodeMessageBody(
+			body, 
+			encoding
+		);
+
+		return res;
 	}
 }

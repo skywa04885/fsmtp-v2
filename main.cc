@@ -21,21 +21,27 @@ bool _forceLoggerNCurses = false;
 int main(const int argc, const char **argv)
 {
 	MailComposerConfig config;
-	config.m_Subject = "Hello World";
+	config.m_Subject = "Hello  World";
 	config.m_To.emplace_back("Luke Rieff", "luke.rieff@gmail.com");
 	config.m_To.emplace_back("Sem Rieff", "sem.rieff@gmail.com");
 	config.m_From.emplace_back("Luke Rieff", "lr@fannst.nl");
 	config.m_BodySections.push_back(EmailBodySection{
-		"<h1 asd=\"ads\">Hello World</h1>",
+		"\n\n\n      <h1 asd=\"ads\">Hello \n\n\n  World</h1>\n\n\n\n",
 		EmailContentType::ECT_TEXT_PLAIN,
 		{},
 		0,
 		EmailTransferEncoding::ETE_QUOTED_PRINTABLE
 	});
 
-	std::string res = compose(config);
+	config.m_BodySections.push_back(EmailBodySection{
+		"\n\n\n     asd as djsaiu ayisad gusadguygsa  <h1 asd=\"ads\">Hello \n\n\n        World</h1>\n\n\n\n",
+		EmailContentType::ECT_TEXT_HTML,
+		{},
+		0,
+		EmailTransferEncoding::ETE_QUOTED_PRINTABLE
+	});
 
-	std::cout << std::endl << std::endl << '-' << std::endl << res << '-' << std::endl;
+	std::string res = compose(config);
 
 	return 0;
 

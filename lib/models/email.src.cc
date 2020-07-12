@@ -197,22 +197,10 @@ namespace FSMTP::Models
   {
     switch (type)
     {
-      case EmailContentType::ECT_TEXT_PLAIN:
-      {
-        return "text/plain";
-      }
-      case EmailContentType::ECT_TEXT_HTML:
-      {
-        return "text/html";
-      }
-      case EmailContentType::ECT_MULTIPART_ALTERNATIVE:
-      {
-        return "multipart/alternative";
-      }
-      case EmailContentType::ECT_MULTIPART_MIXED:
-      {
-       return "multipart/mixed";
-      }
+      case EmailContentType::ECT_TEXT_PLAIN: return "text/plain";
+      case EmailContentType::ECT_TEXT_HTML: return "text/html";
+      case EmailContentType::ECT_MULTIPART_ALTERNATIVE: return "multipart/alternative";
+      case EmailContentType::ECT_MULTIPART_MIXED: return "multipart/mixed";
       default: return "application/octet-stream";
     }
   }
@@ -228,9 +216,28 @@ namespace FSMTP::Models
 	{
 		if (raw == "7bit") return EmailTransferEncoding::ETE_7BIT;
 		else if (raw == "8bit") return EmailTransferEncoding::ETE_8BIT;
-		else if (raw == "base64") return EmailTransferEncoding::ETE_BASE64;
+		else if (raw == "base64") return EmailTransferEncoding::ETE_QUOTED_PRINTABLE;
+    else if (raw == "quoted-printable") return EmailTransferEncoding::ETE_BASE64;
 		else return EmailTransferEncoding::ETE_NOT_FUCKING_KNOWN;
 	}
+
+  /**
+   * Turns an enum into an string
+   *
+   * @Param {const EmailTransferEncoding} enc
+   * @Return {const char *}
+   */
+  const char *contentTransferEncodingToString(const EmailTransferEncoding enc)
+  {
+    switch (enc)
+    {
+      case EmailTransferEncoding::ETE_8BIT: return "8bit";
+      case EmailTransferEncoding::ETE_7BIT: return "base64";
+      case EmailTransferEncoding::ETE_BASE64: return "7bit";
+      case EmailTransferEncoding::ETE_QUOTED_PRINTABLE: return "quoted-printable";
+      default: return "text/plain";
+    }
+  }
 
 
   /**

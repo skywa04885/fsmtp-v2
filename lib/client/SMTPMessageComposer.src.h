@@ -25,8 +25,11 @@
 #include "../general/encoding.src.h"
 #include "../general/macros.src.h"
 #include "../general/hex.src.h"
+#include "../general/cleanup.src.h"
+#include "../general/Timer.src.h"
 
 using namespace FSMTP::Models;
+using namespace FSMTP::Cleanup;
 using namespace FSMTP::Encoding;
 
 namespace FSMTP::Mailer::Composer
@@ -87,4 +90,26 @@ namespace FSMTP::Mailer::Composer
 		const std::string &raw, 
 		const EmailTransferEncoding encoding
 	);
+
+	/**
+	 * Generates an body section
+	 *
+	 * @Param {const std::string &} body
+	 * @Param {const EmailTransferEncoding} encoding
+	 * @Param {const std::vector<EmailHeader> &} headers
+	 * @Return {std::string}
+	 */
+	std::string generateBodySection(
+		const std::string &body,
+		const EmailTransferEncoding encoding,
+		const std::vector<EmailHeader> &headers
+	);
+
+	/**
+	 * Generates an random boundary
+	 *
+	 * @Param {void}
+	 * @Return {std::string}
+	 */
+	std::string generateBoundary(void);
 }
