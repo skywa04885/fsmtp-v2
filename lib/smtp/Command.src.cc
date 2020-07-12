@@ -197,6 +197,11 @@ namespace FSMTP::SMTP
 			}
 		}
 
+		if (
+			this->c_CommandType == ClientCommandType::CCT_MAIL_FROM ||
+			this->c_CommandType == ClientCommandType::CCT_RCPT_TO
+		) res += ':';
+		
 		for (const std::string &s : this->c_Arguments)
 		{
 			res += ' ';

@@ -79,11 +79,28 @@ namespace FSMTP::Networking
 			if (res[res.size() - 2] == '\r' && res[res.size() - 1] == '\n') break;
 
 			// Receives the string
-			rc = recv(this->s_SocketFD, buffer, _SMTP_RECEIVE_BUFFER_SIZE, 0);
-			if (rc < 0)
+			if (this->s_UseSSL)
 			{
-				delete[] buffer;
-				throw SMTPTransmissionError("Could not receive data");
+				rc = SSL_read(this->s_SSL, buffer, _SMTP_RECEIVE_BUFFER_SIZE);
+				if (rc <= 0)
+				{
+					BIO *bio = BIO_new(BIO_s_mem());
+					ERR_print_errors(bio);
+					char *err = nullptr;
+					std::size_t errLen = BIO_get_mem_data(bio, err);
+					std::string error(err, errLen);
+					BIO_free(bio);
+					throw std::runtime_error("SSL_write() failed: " + error);
+				}
+			}
+			else
+			{
+				rc = recv(this->s_SocketFD, buffer, _SMTP_RECEIVE_BUFFER_SIZE, 0);
+				if (rc < 0)
+				{
+					delete[] buffer;
+					throw SMTPTransmissionError("Could not receive data");
+				}
 			}
 
 			// Appends the string to the result 
@@ -110,7 +127,17 @@ namespace FSMTP::Networking
 		// - then we send the message and check for errors
 		if (this->s_UseSSL)
 		{
-
+			rc = SSL_write(this->s_SSL, message.c_str(), message.size());
+			if (rc <= 0)
+			{
+				BIO *bio = BIO_new(BIO_s_mem());
+				ERR_print_errors(bio);
+				char *err = nullptr;
+				std::size_t errLen = BIO_get_mem_data(bio, err);
+				std::string error(err, errLen);
+				BIO_free(bio);
+				throw std::runtime_error("SSL_write() failed: " + error);
+			}
 		} else
 		{
 			rc = send(this->s_SocketFD, message.c_str(), message.size(), 0);
@@ -120,6 +147,55 @@ namespace FSMTP::Networking
 				error += strerror(errno);
 				throw SMTPTransmissionError(error);
 			}
+		}
+	}
+
+	/**
+	 * Upgrades the socket to an SSL socket
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
+	void SMTPClientSocket::upgradeToSSL(void)
+	{
+		int32_t rc;
+
+		// Creates the SSL context, and throws error
+		// - if something goes wrong
+		const SSL_METHOD *method = SSLv23_client_method();
+		this->s_SSLCtx = SSL_CTX_new(method);
+		if (!this->s_SSLCtx)
+			throw SMTPSSLError("Could not initialize the SSL context");
+
+		// Creates the SSL struct, and accepts the SSL connection
+		// - with the server, if error just throw it
+		this->s_SSL = SSL_new(this->s_SSLCtx);
+		SSL_set_fd(this->s_SSL, this->s_SocketFD);
+
+		rc = SSL_connect(this->s_SSL);
+		if (rc <= 0)
+			throw SMTPSSLError("Could not accept the SSL client");
+
+		this->s_UseSSL = true;
+	}
+
+	/**
+	 * Destructor override, frees the memory and closes
+	 * - open connections
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
+	SMTPClientSocket::~SMTPClientSocket()
+	{
+		// Closes the socket, and frees ssl memory
+		// - if we're using ssl
+		shutdown(this->s_SocketFD, SHUT_RDWR);
+		if (this->s_UseSSL)
+		{
+			SSL_shutdown(this->s_SSL);
+			SSL_free(this->s_SSL);
+			SSL_CTX_free(this->s_SSLCtx);
 		}
 	}
 
@@ -135,10 +211,6 @@ namespace FSMTP::Networking
 	): s_SocketPort(s_SocketPort)
 	{
 		int32_t rc;
-
-		// Initializes OpenSSL stuff
-		SSL_load_error_strings();
-    OpenSSL_add_ssl_algorithms();
 
 		// Zeros the memory inside the socket address
 		// - after that we configure the socket stuff
@@ -425,7 +497,7 @@ namespace FSMTP::Networking
 					std::size_t errLen = BIO_get_mem_data(bio, err);
 					std::string error(err, errLen);
 					BIO_free(bio);
-					throw std::runtime_error("SSL_write() failed: " + error);
+					throw std::runtime_error("SSL_read() failed: " + error);
 				} else
 				{
 					throw std::runtime_error("Could not receive data !");

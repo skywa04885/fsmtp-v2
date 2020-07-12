@@ -104,6 +104,14 @@ namespace FSMTP::Models
 		 */
 		static std::string addressListToString(const std::vector<EmailAddress> &addresses);
 
+		/**
+		 * Returns the string version of the email address
+		 *
+		 * @Param {void}
+		 * @Return {std::string}
+		 */
+		std::string toString(void);
+
 		std::string e_Address;
 		std::string e_Name;
 	};

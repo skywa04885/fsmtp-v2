@@ -23,6 +23,8 @@
 #include <vector>
 #include <string>
 
+#include <openssl/ssl.h>
+
 #include "lib/networking/SMTPSocket.src.h"
 #include "lib/server/SMTPServer.src.h"
 #include "lib/smtp/Response.src.h"

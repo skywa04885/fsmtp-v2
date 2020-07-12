@@ -58,7 +58,7 @@ namespace FSMTP::Mailer::Client
 	typedef struct
 	{
 		std::vector<std::string> t_Servers;
-		std::string t_Address;
+		EmailAddress t_Address;
 	} SMTPClientTarget;
 
 	class SMTPClient
@@ -124,5 +124,6 @@ namespace FSMTP::Mailer::Client
 		std::string s_TransportMessage;
 		std::vector<SMTPClientTarget> s_Targets;
 		std::vector<SMTPClientError> s_ErrorLog;
+		EmailAddress s_MailFrom;
 	};
 }

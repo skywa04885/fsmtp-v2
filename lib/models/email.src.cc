@@ -57,6 +57,20 @@ namespace FSMTP::Models
 	}
 
   /**
+   * Returns the string version of the email address
+   *
+   * @Param {void}
+   * @Return {std::string}
+   */
+  std::string EmailAddress::toString(void)
+  {
+    std::string res = "\"";
+    res += this->e_Name + "\" <";
+    res += this->e_Address + ">";
+    return res;
+  }
+
+  /**
    * Parses an raw string into an EmailAddress
    *
    * @Param {const std::string &} raw

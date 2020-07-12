@@ -20,6 +20,10 @@ bool _forceLoggerNCurses = false;
 
 int main(const int argc, const char **argv)
 {
+	// Initializes OpenSSL stuff
+	SSL_load_error_strings();
+  OpenSSL_add_ssl_algorithms();
+
 	// Parses the arguments into an vector after this
 	// - we define the anonymous function which will compare
 	// - an string and an argument, this will allow all the possible

@@ -376,6 +376,7 @@ namespace FSMTP::Server
 
 		if (session.getSSLFlag())
 		{
+			SSL_shutdown(ssl);
 			SSL_free(ssl);
 			SSL_CTX_free(sslCtx);
 		}

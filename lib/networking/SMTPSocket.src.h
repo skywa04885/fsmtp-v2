@@ -81,6 +81,20 @@ namespace FSMTP::Networking
 		std::string e_Message;
 	};
 
+	class SMTPSSLError : public std::exception
+	{
+	public:
+		SMTPSSLError(const std::string &e_Message):
+			e_Message(e_Message)
+		{}
+
+		const char *what() const throw()
+    {
+    	return this->e_Message.c_str();
+    }
+	private:
+		std::string e_Message;
+	};
 
 	class SMTPClientSocket
 	{
@@ -116,6 +130,23 @@ namespace FSMTP::Networking
 		 * @Return {void}
 		 */
 		void sendMessage(const std::string &message);
+
+		/**
+		 * Upgrades the socket to an SSL socket
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		void upgradeToSSL(void);
+
+		/**
+		 * Destructor override, frees the memory and closes
+		 * - open connections
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		~SMTPClientSocket();
 	private:
 		int32_t s_SocketFD;
 		int32_t s_SocketPort;

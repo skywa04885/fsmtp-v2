@@ -42,6 +42,7 @@ namespace FSMTP::Mailer::Client
 
 		// Sets the targets, and composes the message
 		this->s_TransportMessage = compose(config);
+		this->s_MailFrom = config.m_From[0];
 
 		// Resolves the hostnames and sets the status if it
 		// - could not be found
@@ -55,14 +56,17 @@ namespace FSMTP::Mailer::Client
 				// Creates the target, resolves the addresses and pushes them to the
 				// - result vector
 				SMTPClientTarget target;
+				target.t_Address = address;
 				std::vector<DNS::Record> records = DNS::resolveDNSRecords(domain, 
 					DNS::RT_MX); 
+				
 				for (DNS::Record &record : records)
 				{
 					std::string server = DNS::resolveHostname(record.r_Value.c_str());
 					target.t_Servers.push_back(server);
 					if (!s_Silent) this->s_Logger << "Server toegevoegd: " << server << ENDL;
 				}
+				
 				this->s_Targets.push_back(target);
 			} catch(const std::runtime_error &e)
 			{
@@ -147,6 +151,46 @@ namespace FSMTP::Mailer::Client
 				std::string responseArgs;
 				int32_t responseCode;
 
+				// ================================
+				// Performs StartTLS
+				//
+				// If this is so, we need to send
+				// - helo again
+				// ================================
+
+				// Since STARTTLS may require an early hello, we will
+				// - always check if this needs to be performed
+				if (
+					session.getAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS_FINISHED) &&
+					!session.getAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS_HELO)
+				)
+				{
+					session.setAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS_HELO);
+
+					// Builds the arg, and builds the command
+					std::string arg = "[";
+					arg += _SMTP_SERVICE_DOMAIN;
+					arg += ']';
+					
+					ClientCommand command(ClientCommandType::CCT_HELO, {
+						arg
+					});
+					std::string response = command.build();
+
+					// Sends the command to the client
+					client->sendMessage(response);
+					DEBUG_ONLY(this->printSent(response));
+				}
+
+
+				// ================================
+				// Parses the response
+				//
+				// Lets us know what the server
+				// - responded
+				// ================================
+
+
 				// Receives the string from the client, and if debug enables
 				// - we print it to the console, next to that we will also
 				// - parse the command into an code and argument
@@ -161,13 +205,22 @@ namespace FSMTP::Mailer::Client
 					break;
 				}
 
-				// Performs the action based on code
+				// ================================
+				// Performs operation
+				//
+				// Checks the code, and current
+				// - actions and decides what to
+				// - do next
+				// ================================
+
 				switch (responseCode)
 				{
 					case 220:
 					{
 						if (!session.getAction(_SMTP_CLIENT_SESSION_ACTION_HELO))
 						{
+							session.setAction(_SMTP_CLIENT_SESSION_ACTION_HELO);
+
 							// Builds the arg, and builds the command
 							std::string arg = "[";
 							arg += _SMTP_SERVICE_DOMAIN;
@@ -190,6 +243,18 @@ namespace FSMTP::Mailer::Client
 							// Sends the command to the client
 							client->sendMessage(response);
 							DEBUG_ONLY(this->printSent(response));
+						} else if (
+							session.getAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS) &&
+							!session.getAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS_FINISHED)
+						)
+						{
+							session.setAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS_FINISHED);
+							DEBUG_ONLY(
+								this->s_Logger << DEBUG 
+									<< "Aanvraag geacepteerd, verbind wordt beveiligd !" 
+									<< ENDL << CLASSIC;
+							);
+							client->upgradeToSSL();
 						}
 
 						break;
@@ -207,8 +272,52 @@ namespace FSMTP::Mailer::Client
 								this->s_Logger << DEBUG << "ESMTP is actief, beginnen met aanvraag"
 								"van veilige verbinding ..." << ENDL << CLASSIC;
 							);
+
+							session.setAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS);
+							ClientCommand command(ClientCommandType::CCT_START_TLS, {});
+							std::string response = command.build();
+
+							client->sendMessage(response);
+							DEBUG_ONLY(this->printSent(response));
+							continue;
 						}
-						break;	
+
+						if (
+							(session.getAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS_HELO) ||
+							session.getAction(_SMTP_CLIENT_SESSION_ACTION_HELO)) &&
+							!session.getAction(_SMTP_CLIENT_SESSION_ACTION_MAIL_FROM)
+						)
+						{
+							session.setAction(_SMTP_CLIENT_SESSION_ACTION_MAIL_FROM);
+							ClientCommand command(ClientCommandType::CCT_MAIL_FROM, {
+								"<" + this->s_MailFrom.e_Address + ">"
+							});
+							std::string response = command.build();
+
+							client->sendMessage(response);
+							DEBUG_ONLY(this->printSent(response));
+							continue;
+						}
+
+						if (
+							(session.getAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS_HELO) ||
+							session.getAction(_SMTP_CLIENT_SESSION_ACTION_HELO)) &&
+							!session.getAction(_SMTP_CLIENT_SESSION_ACTION_RCPT_TO)
+						)
+						{
+
+							session.setAction(_SMTP_CLIENT_SESSION_ACTION_RCPT_TO);
+							ClientCommand command(ClientCommandType::CCT_RCPT_TO, {
+								"<" + target.t_Address.e_Address + ">"
+							});
+							std::string response = command.build();
+
+							client->sendMessage(response);
+							DEBUG_ONLY(this->printSent(response));
+							continue;
+						}
+
+						break;
 					}
 				}
 			}
