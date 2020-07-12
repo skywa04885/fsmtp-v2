@@ -18,6 +18,22 @@
 
 namespace FSMTP::Networking
 {
+	SMTPSocket::SMTPSocket(
+		const SMTPSocketType &s_SocketType,
+		const char *hostname,
+		const int32_t s_SocketPort
+	):
+		s_SocketPort(s_SocketPort), s_SocketType(s_SocketType)
+	{
+		// ==============================
+		// Prepares for future connection
+		//
+		// Resolves the ip and builds the
+		// - struct
+		// ==============================
+
+
+	}
 	/**
 	 * The constructor for the SMTPSocket class
 	 *
@@ -31,9 +47,8 @@ namespace FSMTP::Networking
 	): s_SocketType(s_SocketType), s_SocketPort(s_SocketPort)
 	{
 		if (s_SocketType == SMTPSocketType::SST_CLIENT)
-		{
-
-		} else if (s_SocketType == SMTPSocketType::SST_SERVER)
+			throw std::runtime_error("Usage of wrong constructor for SMTPSocket type Client");
+		else if (s_SocketType == SMTPSocketType::SST_SERVER)
 		{
 			int32_t rc;
 

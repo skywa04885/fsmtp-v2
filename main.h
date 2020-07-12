@@ -34,6 +34,8 @@
 #include "lib/general/NCursesDisplay.src.h"
 #include "lib/workers/DatabaseWorker.src.h"
 #include "lib/client/SMTPMessageComposer.src.h"
+#include "lib/client/SMTPClient.src.h"
+#include "lib/networking/DNS.src.h"
 
 using namespace FSMTP;
 using Networking::SMTPSocketType;
@@ -41,5 +43,6 @@ using Networking::SMTPSocket;
 using Server::SMTPServer;
 using namespace FSMTP::Workers;
 using namespace FSMTP::Mailer::Composer;
+using namespace FSMTP::Mailer::Client;
 
 int main(const int argc, const char **argv);

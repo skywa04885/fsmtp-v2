@@ -20,6 +20,10 @@ bool _forceLoggerNCurses = false;
 
 int main(const int argc, const char **argv)
 {
+	std::vector<DNS::Record> records = DNS::resolveDNSRecords("google.com", DNS::RT_MX); 
+
+	return 0;
+
 	MailComposerConfig config;
 	config.m_Subject = "Hello  World";
 	config.m_To.emplace_back("Luke Rieff", "luke.rieff@gmail.com");
@@ -41,7 +45,8 @@ int main(const int argc, const char **argv)
 		EmailTransferEncoding::ETE_QUOTED_PRINTABLE
 	});
 
-	std::string res = compose(config);
+	SMTPClient client(false);
+	client.prepare(config);
 
 	return 0;
 

@@ -45,7 +45,7 @@ file(GLOB client_headers "lib/client/*.h")
 
 set(sources "main.cc")
 set(headers "main.h")
-set(args "-lpthread -lssl -lcrypto -lcassandra -lboost_system -lcurses -lhiredis -lboost_program_options")
+set(args "-lpthread -lssl -lresolv -lcrypto -lcassandra -lboost_system -lcurses -lhiredis -lboost_program_options")
 
 add_executable(
 	${PROJECT_NAME}

@@ -13,3 +13,39 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
 */
+
+#include "SMTPClient.src.h"
+
+namespace FSMTP::Mailer::Client
+{
+	/**
+	 * Default constructor for the SMTPClient
+	 *
+	 * @Param {bool} s_Silent
+	 * @Return {void}
+	 */
+	SMTPClient::SMTPClient(bool s_Silent):
+		s_Logger("", LoggerLevel::INFO)
+	{
+		if (!s_Silent) this->s_Logger << "SMTPClient initialized !" << ENDL;
+	}
+
+	/**
+	 * Composes the email message, and sets some options
+	 * - inside of the class, such as the message and targets
+	 * 
+	 * @Param {MailComposerConfig &config}
+	 */
+	void SMTPClient::prepare(MailComposerConfig &config)
+	{
+		if (!s_Silent) this->s_Logger << "Preparing ..." << ENDL;
+
+		// Resolves the hostnames and sets the status if it
+		// - could not be found
+		
+
+		// Sets the targets, and composes the message
+		this->s_Targets = config.m_To;
+		this->s_TransportMessage = compose(config);
+	}
+}

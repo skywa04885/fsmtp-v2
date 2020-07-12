@@ -58,6 +58,15 @@ namespace FSMTP::Networking
 	{
 	public:
 		/**
+		 * Default constructor for the client socket type
+		 */
+		SMTPSocket(
+			const SMTPSocketType &s_SocketType,
+			const char *hostname,
+			const int32_t s_SocketPort
+		);
+
+		/**
 		 * The constructor for the SMTPSocket class
 		 *
 		 * @Param {SMTPSocketType &} s_SocketType
@@ -205,5 +214,6 @@ namespace FSMTP::Networking
 		int32_t s_SocketPort;
 		struct sockaddr_in s_SockAddr;
 		SMTPSocketType s_SocketType;
+		const char *s_ClientIP;
 	};
 }
