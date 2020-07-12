@@ -28,6 +28,7 @@
 
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <memory.h>
 #include <stdio.h>
@@ -35,6 +36,7 @@
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+#include <arpa/inet.h>
 
 #include "../general/macros.src.h"
 
@@ -48,24 +50,33 @@
 
 namespace FSMTP::Networking
 {
-	typedef enum : uint8_t
-	{
-		SST_CLIENT = 0,
-		SST_SERVER
-	} SMTPSocketType;
-
-	class SMTPSocket
+	class SMTPClientSocket
 	{
 	public:
 		/**
 		 * Default constructor for the client socket type
 		 */
-		SMTPSocket(
-			const SMTPSocketType &s_SocketType,
+		SMTPClientSocket(
 			const char *hostname,
 			const int32_t s_SocketPort
 		);
 
+		/**
+		 * Starts connecting to the server
+		 *
+		 * @Param void
+		 * @Return void
+		 */
+		void startConnecting(void);
+	private:
+		int32_t s_SocketFD;
+		int32_t s_SocketPort;
+		struct sockaddr_in s_SockAddr;
+	};
+
+	class SMTPSocket
+	{
+	public:
 		/**
 		 * The constructor for the SMTPSocket class
 		 *
@@ -73,8 +84,7 @@ namespace FSMTP::Networking
 		 * @Param {int32_t &} s_SocketPort
 		 * @Return void
 		 */
-		SMTPSocket(const SMTPSocketType &s_SocketType,
-			const int32_t &s_SocketPort);
+		SMTPSocket(const int32_t &s_SocketPort);
 
 		/**
 		 * Starts listening the socket ( server only )
@@ -83,14 +93,6 @@ namespace FSMTP::Networking
 		 * @Return void
 		 */
 		void startListening(void);
-
-		/**
-		 * Starts connecting to the server ( client only )
-		 *
-		 * @Param void
-		 * @Return void
-		 */
-		void startConnecting(void);
 
 		/**
 		 * Static method which sends an string to an client
@@ -213,7 +215,5 @@ namespace FSMTP::Networking
 		int32_t s_SocketFD;
 		int32_t s_SocketPort;
 		struct sockaddr_in s_SockAddr;
-		SMTPSocketType s_SocketType;
-		const char *s_ClientIP;
 	};
 }

@@ -20,36 +20,6 @@ bool _forceLoggerNCurses = false;
 
 int main(const int argc, const char **argv)
 {
-	std::vector<DNS::Record> records = DNS::resolveDNSRecords("google.com", DNS::RT_MX); 
-
-	return 0;
-
-	MailComposerConfig config;
-	config.m_Subject = "Hello  World";
-	config.m_To.emplace_back("Luke Rieff", "luke.rieff@gmail.com");
-	config.m_To.emplace_back("Sem Rieff", "sem.rieff@gmail.com");
-	config.m_From.emplace_back("Luke Rieff", "lr@fannst.nl");
-	config.m_BodySections.push_back(EmailBodySection{
-		"\n\n\n      <h1 asd=\"ads\">Hello \n\n\n  World</h1>\n\n\n\n",
-		EmailContentType::ECT_TEXT_PLAIN,
-		{},
-		0,
-		EmailTransferEncoding::ETE_QUOTED_PRINTABLE
-	});
-
-	config.m_BodySections.push_back(EmailBodySection{
-		"\n\n\n     asd as djsaiu ayisad gusadguygsa  <h1 asd=\"ads\">Hello \n\n\n        World</h1>\n\n\n\n",
-		EmailContentType::ECT_TEXT_HTML,
-		{},
-		0,
-		EmailTransferEncoding::ETE_QUOTED_PRINTABLE
-	});
-
-	SMTPClient client(false);
-	client.prepare(config);
-
-	return 0;
-
 	// Parses the arguments into an vector after this
 	// - we define the anonymous function which will compare
 	// - an string and an argument, this will allow all the possible
@@ -73,6 +43,7 @@ int main(const int argc, const char **argv)
 			std::cout << "-t, --test: " << "\tVoer tests uit op de vitale functies van de server, zoals database verbinding." << std::endl;
 			std::cout << "-s, --sync: " << "\tSynchroniseerd de redis database met die van cassandra" << std::endl;
 			std::cout << "-n, --ncurses: " << "\tGebruik NCurses in plaats van klassieke terminal." << std::endl;
+			std::cout << "-m, --mailtest: " << "\tVerstuurd een test email." << std::endl; 
 			return 0;
 		}
 
@@ -107,7 +78,7 @@ int main(const int argc, const char **argv)
 			// Performs the check if we may create an socket
 			// - this will throw an error if we're not allowed to do it
 			logger << _BASH_UNKNOWN_MARK << "Start van server socket test ..." << ENDL;
-			try { SMTPSocket socket(SMTPSocketType::SST_SERVER, 25); }
+			try { SMTPSocket socket(25); }
 			catch (const std::runtime_error &e)
 			{
 				logger << _BASH_FAIL_MARK << "Het starten en stoppen van een server socket is fout gegaan, probeer de server met 'sudo' te starten." << ENDL;
@@ -322,6 +293,22 @@ int main(const int argc, const char **argv)
 		if (compareArg(arg, "ncurses"))
 		{
 			_forceLoggerNCurses = true;
+		}
+
+		if (compareArg(arg, "mailtest"))
+		{
+			MailComposerConfig config;
+			config.m_Subject = "Hello  World";
+			config.m_To.emplace_back("Luke Rieff", "luke.rieff@gmail.com");
+			config.m_To.emplace_back("Sem Rieff", "jrieff@notariskantoorbergen.nl");
+			config.m_From.emplace_back("Luke Rieff", "lr@fannst.nl");
+
+			SMTPClient client(false);
+			client.prepare(config);
+
+			client.beSocial();
+
+			return 0;
 		}
 	}
 

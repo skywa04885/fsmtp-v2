@@ -38,7 +38,6 @@
 #include "lib/networking/DNS.src.h"
 
 using namespace FSMTP;
-using Networking::SMTPSocketType;
 using Networking::SMTPSocket;
 using Server::SMTPServer;
 using namespace FSMTP::Workers;

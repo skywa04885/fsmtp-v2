@@ -18,22 +18,42 @@
 
 namespace FSMTP::Networking
 {
-	SMTPSocket::SMTPSocket(
-		const SMTPSocketType &s_SocketType,
+	SMTPClientSocket::SMTPClientSocket(
 		const char *hostname,
 		const int32_t s_SocketPort
 	):
-		s_SocketPort(s_SocketPort), s_SocketType(s_SocketType)
+		s_SocketPort(s_SocketPort)
 	{
-		// ==============================
-		// Prepares for future connection
-		//
-		// Resolves the ip and builds the
-		// - struct
-		// ==============================
+		// Creates the socket and throws error if anything goes wrong
+		this->s_SocketFD = socket(AF_INET, SOCK_STREAM, 0);
+		if (this->s_SocketFD < 0)
+			throw std::runtime_error("Could not create socket !");
 
-
+		// Configures the address, so we can connect
+		// - to the host when wanted
+		this->s_SockAddr.sin_port = htons(this->s_SocketPort);
+		inet_aton(hostname, &this->s_SockAddr.sin_addr);
+		this->s_SockAddr.sin_family = AF_INET;
 	}
+
+	/**
+	 * Starts connecting to the server ( client only )
+	 *
+	 * @Param void
+	 * @Return void
+	 */
+	void SMTPClientSocket::startConnecting(void)
+	{
+		// Tries to connect and throws error if something went wrong
+		int32_t rc = connect(
+			this->s_SocketFD,
+			reinterpret_cast<struct sockaddr *>(&this->s_SockAddr),
+			sizeof (this->s_SockAddr)
+		);
+		if (rc < 0)
+			throw std::runtime_error("Could not connect to the server");
+	}
+
 	/**
 	 * The constructor for the SMTPSocket class
 	 *
@@ -42,71 +62,62 @@ namespace FSMTP::Networking
 	 * @Return void
 	 */
 	SMTPSocket::SMTPSocket(
-		const SMTPSocketType &s_SocketType,
 		const int32_t &s_SocketPort
-	): s_SocketType(s_SocketType), s_SocketPort(s_SocketPort)
+	): s_SocketPort(s_SocketPort)
 	{
-		if (s_SocketType == SMTPSocketType::SST_CLIENT)
-			throw std::runtime_error("Usage of wrong constructor for SMTPSocket type Client");
-		else if (s_SocketType == SMTPSocketType::SST_SERVER)
+		int32_t rc;
+
+		// Initializes OpenSSL stuff
+		SSL_load_error_strings();
+    OpenSSL_add_ssl_algorithms();
+
+		// Zeros the memory inside the socket address
+		// - after that we configure the socket stuff
+		memset(&this->s_SockAddr, 0x0, sizeof (sockaddr_in));
+		this->s_SockAddr.sin_addr.s_addr = INADDR_ANY;
+		this->s_SockAddr.sin_family = AF_INET;
+		this->s_SockAddr.sin_port = htons(s_SocketPort);
+
+		// Creates the socket and checks if any error
+		// - occured, if so we throw an runtime error
+		this->s_SocketFD = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		if (this->s_SocketFD < 0)
 		{
-			int32_t rc;
+			std::string error = "socket() failed: ";
+			error += strerror(errno);
+			throw std::runtime_error(error);
+		}
 
-			// Initializes OpenSSL stuff
-			SSL_load_error_strings();
-      OpenSSL_add_ssl_algorithms();
+		// Sets some socket options, one of them is to reuse the address
+		// - to prevent some stupid errors
+		int32_t opt = 0x1;
+		rc = setsockopt(this->s_SocketFD, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<char *>(&opt), sizeof (opt));
+		if (rc < 0)
+		{
+			std::string error = "setsockopt() failed: ";
+			error += strerror(rc);
+			throw std::runtime_error(error);
+		}
 
-			// Zeros the memory inside the socket address
-			// - after that we configure the socket stuff
-			memset(&this->s_SockAddr, 0x0, sizeof (sockaddr_in));
-			this->s_SockAddr.sin_addr.s_addr = INADDR_ANY;
-			this->s_SockAddr.sin_family = AF_INET;
-			this->s_SockAddr.sin_port = htons(s_SocketPort);
+		// Sets the socket into non-blocking mode, so we can handle stuff more
+		// - fast and make the loop killable at any time
+		opt = 0x1;
+		rc = ioctl(this->s_SocketFD, FIONBIO, reinterpret_cast<char *>(&opt));
+		if (rc < 0)
+		{
+			std::string error = "ioctl() failed: ";
+			error += strerror(rc);
+			throw std::runtime_error(error);
+		}
 
-			// Creates the socket and checks if any error
-			// - occured, if so we throw an runtime error
-			this->s_SocketFD = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-			if (this->s_SocketFD < 0)
-			{
-				std::string error = "socket() failed: ";
-				error += strerror(errno);
-				throw std::runtime_error(error);
-			}
-
-			// Sets some socket options, one of them is to reuse the address
-			// - to prevent some stupid errors
-			int32_t opt = 0x1;
-			rc = setsockopt(this->s_SocketFD, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<char *>(&opt), sizeof (opt));
-			if (rc < 0)
-			{
-				std::string error = "setsockopt() failed: ";
-				error += strerror(rc);
-				throw std::runtime_error(error);
-			}
-
-			// Sets the socket into non-blocking mode, so we can handle stuff more
-			// - fast and make the loop killable at any time
-			opt = 0x1;
-			rc = ioctl(this->s_SocketFD, FIONBIO, reinterpret_cast<char *>(&opt));
-			if (rc < 0)
-			{
-				std::string error = "ioctl() failed: ";
-				error += strerror(rc);
-				throw std::runtime_error(error);
-			}
-
-			// Binds the socket
-			rc = bind(this->s_SocketFD, reinterpret_cast<struct sockaddr *>(&this->s_SockAddr), sizeof (struct sockaddr));
-			if (rc < 0)
-			{
-				std::string error = "bind() failed: ";
-				error += strerror(rc);
-				throw std::runtime_error(error);
-			}
-		} else throw std::runtime_error(
-			R"(Invalid socket type supplied, must be either 
-			SMTPSocketType::SST_CLIENT or SMTPSocketType::SST_SERVER !)"
-		);
+		// Binds the socket
+		rc = bind(this->s_SocketFD, reinterpret_cast<struct sockaddr *>(&this->s_SockAddr), sizeof (struct sockaddr));
+		if (rc < 0)
+		{
+			std::string error = "bind() failed: ";
+			error += strerror(rc);
+			throw std::runtime_error(error);
+		}
 	}
 
 	/**

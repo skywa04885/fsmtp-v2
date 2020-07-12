@@ -19,10 +19,12 @@
 #include <cstdint>
 #include <string>
 #include <iostream>
+#include <chrono>
 
 #include "../networking/SMTPSocket.src.h"
 #include "../models/email.src.h"
 #include "../general/logger.src.h"
+#include "../networking/DNS.src.h"
 #include "SMTPMessageComposer.src.h"
 
 using namespace FSMTP::Networking;
@@ -34,17 +36,26 @@ namespace FSMTP::Mailer::Client
 	typedef enum : uint8_t
 	{
 		SCP_RESOLVE = 0,
-		SCP_TRANSMISION_START,
-		SCP_TRANSMISION_DATA,
-		SCP_TRANSMISION_OTHER
+		SCP_CONNECT,
+		SCP_MAIL_FROM,
+		SCP_RCPT_TO,
+		SCP_START_TLS,
+		SCP_DATA,
+		SCP_OTHER
 	} SMTPClientPhase;
 
 	typedef struct
 	{
 		SMTPClientPhase s_Phase;
-		std::size_t s_Timestamp;
+		int64_t s_Timestamp;
 		std::string s_Message;
 	} SMTPClientError;
+
+	typedef struct
+	{
+		std::vector<std::string> t_Servers;
+		std::string t_Address;
+	} SMTPClientTarget;
 
 	class SMTPClient
 	{
@@ -64,11 +75,33 @@ namespace FSMTP::Mailer::Client
 		 * @Param {MailComposerConfig &config}
 		 */
 		void prepare(MailComposerConfig &config);
+
+		/**
+		 * ( May take a while )
+		 * Orders the computer to talk with the other
+		 * - servers and transmit the message
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		void beSocial(void);
+
+		/**
+		 * Adds an error to the error log
+		 *
+		 * @Param {const SMTPClientPhase} phase
+		 * @Param {const std::string &} message
+		 * @Return {void}
+		 */
+		void addError(
+			const SMTPClientPhase phase,
+			const std::string &message
+		);
 	private:
 		bool s_Silent;
 		Logger s_Logger;
 		std::string s_TransportMessage;
-		std::vector<EmailAddress> s_Targets;
+		std::vector<SMTPClientTarget> s_Targets;
 		std::vector<SMTPClientError> s_ErrorLog;
 	};
 }

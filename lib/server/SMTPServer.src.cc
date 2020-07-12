@@ -39,7 +39,7 @@ namespace FSMTP::Server
 		const int32_t s_RedisPort,
 		const std::string &s_RedisHost
 	):
-		s_Socket(SMTPSocketType::SST_SERVER, port),
+		s_Socket(port),
 		s_UseESMTP(s_UseESMTP),
 		s_Logger("SMTPServer", LoggerLevel::INFO),
 		s_Opts(s_Opts),
