@@ -18,6 +18,7 @@
 
 #include <string>
 #include <iostream>
+#include <regex>
 
 #include "hex.src.h"
 
@@ -30,4 +31,12 @@ namespace FSMTP::Encoding
 	 * @Return {std::string}
 	 */
 	std::string decodeQuotedPrintable(const std::string &raw);
+
+	/**
+	 * Encodes message to quoted printable
+	 *
+	 * @Param {const std::string &} raw
+	 * @Return {std::string}
+	 */
+	std::string encodeQuotedPrintable(const std::string &raw);
 }

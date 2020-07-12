@@ -32,6 +32,14 @@ namespace FSMTP::Encoding::HEX
 	char _reverseDict(const char c);
 
 	/**
+	 * Turns an half char into hex char
+	 *
+	 * @Param {const char c}
+	 * @Return {char}
+	 */
+	char _dict(const char c);
+
+	/**
 	 * Decodes an string of hexadecimal characters
 	 *
 	 * @Param {const std::string &} raw
@@ -48,4 +56,13 @@ namespace FSMTP::Encoding::HEX
 	 * @Return {void}
 	 */
 	void encode(const std::string &raw, std::string &ret);
+
+	/**
+	 * Encodes an octet into an hexadecimal string
+	 *
+	 * @Param {const char} raw
+	 * @Param {std::string &} ret
+	 * @Return {void}
+	 */
+	void encode(const char c, std::string &ret);
 }

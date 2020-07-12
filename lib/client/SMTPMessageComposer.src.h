@@ -22,9 +22,12 @@
 #include <random>
 
 #include "../models/email.src.h"
+#include "../general/encoding.src.h"
 #include "../general/macros.src.h"
+#include "../general/hex.src.h"
 
 using namespace FSMTP::Models;
+using namespace FSMTP::Encoding;
 
 namespace FSMTP::Mailer::Composer
 {

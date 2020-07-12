@@ -26,7 +26,7 @@ int main(const int argc, const char **argv)
 	config.m_To.emplace_back("Sem Rieff", "sem.rieff@gmail.com");
 	config.m_From.emplace_back("Luke Rieff", "lr@fannst.nl");
 	config.m_BodySections.push_back(EmailBodySection{
-		"Hello World",
+		"<h1 asd=\"ads\">Hello World</h1>",
 		EmailContentType::ECT_TEXT_PLAIN,
 		{},
 		0,

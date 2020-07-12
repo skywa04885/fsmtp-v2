@@ -151,6 +151,8 @@ namespace FSMTP::Mailer::Composer
 			}
 		}
 
+
+
 		// ======================================
 		// Generates the MIME message
 		//
@@ -160,11 +162,8 @@ namespace FSMTP::Mailer::Composer
 
 		// Loops over the body sections and adds the final CRLF if not there
 		for (EmailBodySection &section : config.m_BodySections)
-			if (
-				section.e_Content[section.e_Content.size() - 2] != '\r' && 
-				section.e_Content[section.e_Content.size() - 1] != '\n'
-			)
-				section.e_Content += "\r\n";
+			if (section.e_Content[section.e_Content.size() - 1] != '\n')
+				section.e_Content += "\n";
 
 		// Checks if we just want to generate text only
 		if (
@@ -239,6 +238,7 @@ namespace FSMTP::Mailer::Composer
 			{
 				// Starts encoding the message, and the specific chars
 				// - to hex
+				return encodeQuotedPrintable(raw);
 			}
 			default: return raw;
 		}

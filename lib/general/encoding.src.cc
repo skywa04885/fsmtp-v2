@@ -62,4 +62,48 @@ namespace FSMTP::Encoding
 
 		return res;
 	}
+
+	/**
+	 * Encodes message to quoted printable
+	 *
+	 * @Param {const std::string &} raw
+	 * @Return {std::string}
+	 */
+	std::string encodeQuotedPrintable(const std::string &raw)
+	{
+		std::string res;
+
+		// Loops over the chars and checks if they need to be
+		// - encoded
+		std::size_t i = 0;
+		std::size_t lineLength = 0;
+		for (const char c : raw)
+		{
+			if ((++lineLength) + 1 >= 76)
+			{
+				res += "=\n";
+				lineLength = 0;
+			}
+
+			// Checks if we must encode the line
+			if (c >= 33 && c <= 126 && c != 61)
+			{
+				res += c;
+			} else if (c >= 9 && c <= 32 && raw[i+1] != '\n')
+			{
+				res += c;
+			}
+			else
+			{
+				res += '=';
+				HEX::encode(c, res);
+				lineLength += 3;
+			}
+
+			// Increments the index
+			i++;
+		}
+
+		return res;
+	}
 }
