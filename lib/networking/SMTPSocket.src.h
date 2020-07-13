@@ -313,4 +313,27 @@ namespace FSMTP::Networking
 		int32_t s_SocketPort;
 		struct sockaddr_in s_SockAddr;
 	};
+
+	class SMTPServerClientSocket
+	{
+	public:
+		/**
+		 * Default empty constructor for the SMTPServerClientSocket
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		explicit SMTPServerClientSocket(void);
+	
+		SMTPServerClientSocket(
+			const int32_t s_SocketFD,
+			struct sockaddr_in s_SockAddr
+		);
+	private:
+		SSL_CTX *s_SSLCtx;
+		SSL *s_SSL;
+		bool s_UseSSL;
+		int32_t s_SocketFD;
+		struct sockaddr_in s_SockAddr;
+	};
 }

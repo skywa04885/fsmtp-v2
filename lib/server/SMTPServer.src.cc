@@ -53,7 +53,7 @@ namespace FSMTP::Server
 		this->s_ShouldBeRunning = true;
 
 		std::bitset<32> optsCheck(s_Opts);
-		this->s_Logger << DEBUG << "Ontvangen configuratie: 0b" << optsCheck << ENDL << CLASSIC;
+		this->s_Logger << "Ontvangen configuratie: 0b" << optsCheck << ENDL;
 		if (BINARY_COMPARE(this->s_Opts, _SERVER_OPT_ENABLE_AUTH))
 		{
 			this->s_Logger << INFO << "SMTP Authenticatie is toegestaan." << ENDL << CLASSIC;

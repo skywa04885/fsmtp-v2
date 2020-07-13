@@ -38,7 +38,7 @@ namespace FSMTP::Mailer::Client
 	 */
 	void SMTPClient::prepare(MailComposerConfig &config)
 	{
-		if (!s_Silent) this->s_Logger << "Preparing ..." << ENDL;
+		if (!s_Silent) this->s_Logger << "Voorbereiden ..." << ENDL;
 
 		// Sets the targets, and composes the message
 		std::string plain = compose(config);
@@ -145,7 +145,7 @@ namespace FSMTP::Mailer::Client
 					<< target.t_Servers[0] << ":25" << ENDL;
 			} catch (const SMTPConnectError &e)
 			{
-				this->s_Logger << ERROR << "Kon niet verbinden met server: " << e.what() << ENDL;
+				if (!this->s_Silent) this->s_Logger << ERROR << "Kon niet verbinden met server: " << e.what() << ENDL;
 				
 				std::string message = "Connection error: ";
 				message += e.what();
@@ -184,7 +184,7 @@ namespace FSMTP::Mailer::Client
 					{
 						std::string line = client->readUntillNewline();
 						std::tie(code, args) = ServerResponse::parseResponse(line);
-						this->printReceived(code, args);
+						DEBUG_ONLY(this->printReceived(code, args));
 					} catch(const SMTPTransmissionError &e)
 					{
 						_run = false;
@@ -229,7 +229,7 @@ namespace FSMTP::Mailer::Client
 
 							// Sends the STARTTLS command
 							client->writeCommand(ClientCommandType::CCT_START_TLS, {});
-							this->printSent("STARTTLS");
+							DEBUG_ONLY(this->printSent("STARTTLS"));
 							break;
 						}
 
@@ -253,7 +253,7 @@ namespace FSMTP::Mailer::Client
 							client->writeCommand(ClientCommandType::CCT_MAIL_FROM, {
 								"<" + this->s_MailFrom.e_Address + ">"
 							});
-							this->printSent("MAIL FROM: [sender]");
+							DEBUG_ONLY(this->printSent("MAIL FROM: [sender]"));
 							break;
 						}
 
@@ -272,7 +272,7 @@ namespace FSMTP::Mailer::Client
 							client->writeCommand(ClientCommandType::CCT_RCPT_TO, {
 								"<" + target.t_Address.e_Address + ">"
 							});
-							this->printSent("RCPT TO: [target]");
+							DEBUG_ONLY(this->printSent("RCPT TO: [target]"));
 							break;
 						}
 
@@ -388,7 +388,7 @@ namespace FSMTP::Mailer::Client
 								ClientCommandType::CCT_EHLO,
 								{_SMTP_SERVICE_DOMAIN}
 							);
-							this->printSent("EHLO [domain]");
+							DEBUG_ONLY(this->printSent("EHLO [domain]"));
 
 							// Receives the multiline response and checks for
 							// - any transmission errors
@@ -417,7 +417,7 @@ namespace FSMTP::Mailer::Client
 
 								for (const std::string &option : options)
 								{
-									this->printReceived(250, option);
+									DEBUG_ONLY(this->printReceived(250, option));
 
 									// Checks which flag we need to set, these will
 									// - tell the algorithm what actions to perform at what
@@ -460,14 +460,16 @@ namespace FSMTP::Mailer::Client
 								ClientCommandType::CCT_HELO,
 								{_SMTP_SERVICE_DOMAIN}
 							);
-							this->printSent("HELO [domain]");
+							DEBUG_ONLY(this->printSent("HELO [domain]"));
 						}
 					}
 					default:
 					{
+
 						std::string message = "Transmission error: ";
 						message += std::to_string(code) + ": " + args;
 						this->addError(target.t_Address.toString(), message);
+						if (!this->s_Silent) this->s_Logger << ERROR << message << ENDL << CLASSIC;
 
 						_run = false;
 						continue;

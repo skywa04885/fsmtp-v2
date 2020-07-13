@@ -18,6 +18,14 @@
 
 namespace FSMTP::Networking
 {
+	// ================================================
+	//
+	// =>
+	//		SMTPClientSocket methods
+	// =>
+	//
+	// ================================================
+
 	SMTPClientSocket::SMTPClientSocket(
 		const char *hostname,
 		const int32_t s_SocketPort
@@ -223,6 +231,14 @@ namespace FSMTP::Networking
 			SSL_CTX_free(this->s_SSLCtx);
 		}
 	}
+
+	// ================================================
+	//
+	// =>
+	//		SMTPSocket methods
+	// =>
+	//
+	// ================================================
 
 	/**
 	 * The constructor for the SMTPSocket class
@@ -628,4 +644,12 @@ namespace FSMTP::Networking
 			throw std::runtime_error("Could not accept SSL connection !");
 		}
 	}
+
+	// ================================================
+	//
+	// =>
+	//		SMTPServerClientSocket methods
+	// =>
+	//
+	// ================================================
 }

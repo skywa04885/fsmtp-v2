@@ -35,6 +35,7 @@
 #include "lib/general/encoding.src.h"
 #include "lib/general/NCursesDisplay.src.h"
 #include "lib/workers/DatabaseWorker.src.h"
+#include "lib/workers/TransmissionWorker.src.h"
 #include "lib/client/SMTPMessageComposer.src.h"
 #include "lib/client/SMTPClient.src.h"
 #include "lib/networking/DNS.src.h"

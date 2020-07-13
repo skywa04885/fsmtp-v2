@@ -302,11 +302,9 @@ int main(const int argc, const char **argv)
 		if (compareArg(arg, "mailtest"))
 		{
 			MailComposerConfig config;
-			config.m_Subject = "Hello  World";
-			config.m_To.emplace_back("Luke Rieff", "01");
-			// config.m_To.emplace_back("Luke Rieff", "luke.rieff@yahoo.com");
-			// config.m_To.emplace_back("Spaghetti", "spaghetticode123@kaasdasss.com");
-			config.m_From.emplace_back("Luke Rieff", "lr@fannst.nl");
+			config.m_Subject = "Hello";
+			config.m_To.emplace_back("Example", "test@gmail.com");
+			config.m_From.emplace_back("Test", "test@fannst.nl");
 			SMTPClient client(false);
 			client.prepare(config);
 			client.beSocial();
@@ -337,8 +335,12 @@ int main(const int argc, const char **argv)
 	// =====================================
 
 	// Creates and starts the database worker
-	std::unique_ptr<DatabaseWorker> dbWorker = std::make_unique<DatabaseWorker>(_REDIS_CONTACT_POINTS);
+	std::unique_ptr<DatabaseWorker> dbWorker = std::make_unique<DatabaseWorker>(_CASSANDRA_DATABASE_CONTACT_POINTS);
 	if (!dbWorker->start(nullptr))
+		std::exit(-1);
+
+	std::unique_ptr<TransmissionWorker> transWorker = std::make_unique<TransmissionWorker>(_CASSANDRA_DATABASE_CONTACT_POINTS);
+	if (!transWorker->start(nullptr))
 		std::exit(-1);
 
 	// =====================================

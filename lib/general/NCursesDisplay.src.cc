@@ -196,6 +196,7 @@ namespace FSMTP
 		box(_statusWin, 0, 0);
 		wprintw(_statusWin, "Status: ");
 		wattron(_statusWin, A_REVERSE);
+		wattron(_statusWin, A_BLINK);
 		switch (status)
 		{
 			case NCursesDisplayStatus::NDS_STARTING:
@@ -219,6 +220,7 @@ namespace FSMTP
 				break;
 			}
 		}
+		wattroff(_statusWin, A_BLINK);
 		wattroff(_statusWin, A_REVERSE);
 		wmove(_statusWin, 0, 0);
 		wrefresh(_statusWin);

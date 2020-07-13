@@ -1,0 +1,1 @@
+SPF: v=spf1 93.104.211.125 ip4:86.89.30.158 include:fannst.nl -all
