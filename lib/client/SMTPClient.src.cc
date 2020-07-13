@@ -190,6 +190,16 @@ namespace FSMTP::Mailer::Client
 
 				switch (code)
 				{
+					case 221:
+					{
+						if (session.getAction(_SCS_ACTION_QUIT))
+						{
+							_run = false;
+							DEBUG_ONLY(this->s_Logger << DEBUG << "Closing transmission channel ..." << ENDL << CLASSIC);
+							continue;
+						}
+					}
+
 					case 250:
 					{
 						// Checks if we need to perform start tls, this
