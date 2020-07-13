@@ -28,6 +28,7 @@
 #include <vector>
 #include <cstring>
 #include <sstream>
+#include <map>
 #include <cstdint>
 
 #include <openssl/err.h>
@@ -38,6 +39,7 @@
 #include "../general/logger.src.h"
 #include "../general/Timer.src.h"
 #include "../general/cleanup.src.h"
+#include "DKIMHashes.src.h"
 
 using namespace FSMTP::Parsers;
 using namespace FSMTP::Cleanup;
@@ -52,6 +54,18 @@ namespace FSMTP::DKIM
 		DAP_SIMPLE_RELAXED,
 		DAP_SIMPLE_SIMPLE
 	} DKIMAlgorithmPair;
+
+	typedef struct
+	{
+		const char *s_Version;
+		const char *s_Algo;
+		const char *s_CanonAlgo;
+		const char *s_Domain;
+		const char *s_KeySelector;
+		std::string s_BodyHash;
+		std::string s_Signature;
+		std::vector<std::string> s_Headers;
+	} DKIMHeaderSegments;
 
 	typedef struct
 	{
@@ -93,4 +107,23 @@ namespace FSMTP::DKIM
 	 * @Return {std::string}
 	 */
 	std::string _canonicalizeHeadersRelaxed(const std::string &raw);
+
+	/**
+	 * Checks if we should use an specified header
+	 *
+	 * @Param {const std::string &} key
+	 * @Return {bool}
+	 */
+	bool shouldUseHeader(const std::string &key);
+
+	/**
+	 * Buids the DKIM header based on the segments, auto format
+	 * - tells the function if we need to break the lines and format
+	 * - it transport compatable
+	 *
+	 * @Param {const DKIMHeaderSegments &} segments
+	 * @Param {bool} autoFormat
+	 * @Return {std::string}
+	 */
+	std::string buildDKIMHeader(const DKIMHeaderSegments &segments, bool autoFormat);
 }

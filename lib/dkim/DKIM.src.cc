@@ -32,8 +32,14 @@ namespace FSMTP::DKIM
 		Timer timer("Signer", logger);
 		#endif
 
+		DKIMHeaderSegments segments;
 		std::string headers, body;
-		std::vector<EmailHeader> finalHeaders = {};
+
+		// Adds the known variables to the target signature
+		segments.s_Version = "1";
+		segments.s_Domain = config.c_Domain;
+		segments.s_KeySelector = config.c_KeySelector;
+		segments.s_Algo = "rsa-sha256";
 
 		// ========================================
 		// Parses the message
@@ -46,23 +52,14 @@ namespace FSMTP::DKIM
 		// - it inside the strings
 		MIME::splitHeadersAndBody(email, headers, body);
 
-		// Parses the headers and gets the keys
+		// Parses the headers and gets the keys, then
+		// - we push the keys to the segment headers
 		std::vector<EmailHeader> parsedHeaders = {};
 		MIME::parseHeaders(headers, parsedHeaders, true);
 		for (const EmailHeader &h : parsedHeaders)
 		{
-			if (h.e_Key == "subject")
-				finalHeaders.push_back(h);
-			if (h.e_Key == "message-id")
-				finalHeaders.push_back(h);
-			if (h.e_Key == "date")
-				finalHeaders.push_back(h);
-			if (h.e_Key == "from")
-				finalHeaders.push_back(h);
-			if (h.e_Key == "to")
-				finalHeaders.push_back(h);
-			if (h.e_Key == "mime-version")
-				finalHeaders.push_back(h);
+			if (shouldUseHeader(h.e_Key))
+				segments.s_Headers.push_back(h.e_Key);
 		}
 
 		// ========================================
@@ -70,7 +67,8 @@ namespace FSMTP::DKIM
 		//
 		// Canonicalizes the headers and body
 		// ========================================
-		std::string relaxedBody, relaxedHeaders;
+
+		std::string cannedBody, cannedHeaders;
 
 		DEBUG_ONLY(logger << "Started canonicalization of headers and body" << ENDL);
 
@@ -78,10 +76,56 @@ namespace FSMTP::DKIM
 		{
 			case DKIMAlgorithmPair::DAP_RELAXED_RELAXED:
 			{
-				relaxedBody = _canonicalizeBodyRelaxed(body);
+				// Canonicalizes
+				cannedBody = _canonicalizeBodyRelaxed(body);
+				cannedHeaders = _canonicalizeHeadersRelaxed(headers);
+
+				// Sets the segment canon algorithm
+				segments.s_CanonAlgo = "relaxed/relaxed";
+				break;
 			}
 			default: throw std::runtime_error("Algorithm pair not implemented");
 		}
+
+		DEBUG_ONLY(logger << "Canonicalized headers: \r\n" << cannedHeaders.substr(0, cannedHeaders.size() - 2) << "\033[0m" << ENDL);
+		DEBUG_ONLY(logger << "Canonicalized body: \r\n" << cannedBody.substr(0, cannedBody.size() - 2) << "\033[0m" << ENDL);
+
+		// ========================================
+		// Prepares headers
+		//
+		// Prepares the headers for the final sign
+		// - ing process 
+		// ========================================
+
+		// Hashes the body, ands puts the body hash inside of the
+		// - segments, so we can generate the body
+		segments.s_BodyHash = Hashes::sha256base64(cannedBody);
+		DEBUG_ONLY(logger << "Generated body hash: " << segments.s_BodyHash << ENDL);
+
+		// Generates the first signature without line breaks
+		// - and without the final hash, then we append them
+		// - to the headers and create the signature
+		std::string preSignatureheader = buildDKIMHeader(segments, false);
+		cannedHeaders += "dkim-signature:" + preSignatureheader;
+
+		// ========================================
+		// Prepares headers
+		//
+		// Generates the signature and creates the
+		// - final set of headers
+		// ========================================
+
+		// Creates the signature
+		segments.s_Signature = Hashes::RSASha256generateSignature(
+			cannedHeaders, 
+			config.c_PrivateKeyPath
+		);
+		DEBUG_ONLY(logger << "Generated signature: " << segments.s_Signature << ENDL);
+
+		// Generates the new set of header key values, and
+		// - appends it to the final email
+		std::string dkimSignature = buildDKIMHeader(segments, true);
+		DEBUG_ONLY(logger << "Final DKIM Signature: \r\n\033[41mDKIM-Signature: " << dkimSignature << "\033[0m" << ENDL);
 	}
 
 	/**
@@ -135,7 +179,120 @@ namespace FSMTP::DKIM
 		std::string token;
 		while (std::getline(stream, token, '\n'))
 		{
-			
+			std::string key, value;
+
+			// Removes the '\r' if it is there, after that
+			// - we check if the line is empty, and if so ignore
+			// - it
+			if (!token.empty() && token[token.size() - 1] == '\r') token.pop_back();
+			if (token.empty()) continue;
+
+			// Finds the key and value and processes them,
+			// - first we find the separator
+			std::size_t sepIndex = token.find_first_of(':');
+			if (sepIndex == std::string::npos)
+				throw std::runtime_error("Invalid headers, missing ':'");
+
+			// Separates the key and value, after that
+			// - we remove all non required whitespace
+			reduceWhitespace(token.substr(0, sepIndex), key);
+			reduceWhitespace(token.substr(sepIndex + 1), value);
+			removeFirstAndLastWhite(key);
+			removeFirstAndLastWhite(value);
+
+			// Makes the key lowercase
+			std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c){
+				return std::tolower(c);
+			});
+
+			// Checks if we should use the header
+			if (!shouldUseHeader(key)) continue;
+
+			// Constructs the header, and pushes it back to
+			// - the res
+			res += key + ':' + value + "\r\n";
+		}
+
+		return res;
+	}
+
+	/**
+	 * Checks if we should use an specified header
+	 *
+	 * @Param {const std::string &} key
+	 * @Return {bool}
+	 */
+	bool shouldUseHeader(const std::string &key)
+	{
+		if (key == "subject")
+			return true;
+		if (key == "message-id")
+			return true;
+		if (key == "date")
+			return true;
+		if (key == "from")
+			return true;
+		if (key == "to")
+			return true;
+		if (key == "mime-version")
+			return true;
+		return false;
+	}
+
+	/**
+	 * Buids the DKIM header based on the segments, auto format
+	 * - tells the function if we need to break the lines and format
+	 * - it transport compatable
+	 *
+	 * @Param {const DKIMHeaderSegments &} segments
+	 * @Param {bool} autoFormat
+	 * @Return {std::string}
+	 */
+	std::string buildDKIMHeader(const DKIMHeaderSegments &segments, bool autoFormat)
+	{
+		std::string res;
+
+		// Merges all the headers into one stringstream
+		std::ostringstream headersImploded;
+		std::copy(
+			segments.s_Headers.begin(),
+			segments.s_Headers.end(),
+			std::ostream_iterator<std::string>(headersImploded, ":")
+		);
+		std::string headers = headersImploded.str();
+		headers.pop_back();
+
+		// Creates the key-value pairmap
+		std::map<const char *, std::string> pairs = {
+			std::make_pair("v", segments.s_Version),
+			std::make_pair("a", segments.s_Algo),
+			std::make_pair("c", segments.s_CanonAlgo),
+			std::make_pair("d", segments.s_Domain),
+			std::make_pair("s", segments.s_KeySelector),
+			std::make_pair("h", headers),
+			std::make_pair("bh", segments.s_BodyHash),
+			std::make_pair("b", segments.s_Signature)
+		};
+
+		if (autoFormat)
+		{
+
+		} else
+		{
+			for (
+				std::map<const char *, std::string>::iterator it = pairs.begin();
+				it != pairs.end(); it++
+			)
+			{
+				res += it->first;
+				res += "=";
+				res += it->second;
+				res += "; ";
+			}
+
+			// Removes the last two chars, ( the space and semicolon )
+			res.pop_back();
+			res.pop_back();
 		}
 
 		return res;

@@ -39,8 +39,14 @@ sudo ./fsmtp
 
 ## Hoe gebruik ik het ?
 
+1. Maak een map genaamd env/keys
+1. Doe uw SSL certificaat erin met de naam 'cert.pem'
+1. Doe uw SSL sleutel erin met de naam 'key.pem'
+1. Plaats uw DKIM RSA-Keypair erin met de namen: 'dkim-private.pem', 'dkim-public.pem'
+1. Vergeet niet de publieke sleuten van uw DKIM keypair the plaatsen in uw DNS server onder de naam 'default.\_keyselector'
+
 ```bash
-sudo ./fsmtp
+sudo ./fsmtp -n
 ```
 
 Bij het gebruiken van de FSMTP server kunt u ook opdrachten meegeven, als u ```-h``` als argument toevoegd, kunt u het help menu zien, deze zal ik hieronder voor het gemak zetten:
@@ -54,6 +60,7 @@ Opdrachten:
 -t, --test: 	Voer tests uit op de vitale functies van de server, zoals database verbinding.
 -s, --sync: 	Synchroniseerd de redis database met die van cassandra
 -n, --ncurses: 	Gebruik NCurses in plaats van klassieke terminal.
+-m, --mailtest: 	Verstuurd een test email.
 ```
 
 ## Welke systemen werkt FSMTP-V2 mee ?

@@ -47,7 +47,7 @@ namespace FSMTP::Mailer::Client
 		DKIM::DKIMConfig dkimConfig;
 		dkimConfig.c_KeySelector = "default";
 		dkimConfig.c_Domain = _SMTP_SERVICE_DKIM_DOMAIN;
-		dkimConfig.c_PrivateKeyPath = "../env/dkim-private.pem";
+		dkimConfig.c_PrivateKeyPath = "../env/keys/dkim-private.pem";
 		DKIM::sign(this->s_TransportMessage, dkimConfig);
 
 		// Sets the from
