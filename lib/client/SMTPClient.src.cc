@@ -201,17 +201,108 @@ namespace FSMTP::Mailer::Client
 							session.getFlag(_SCS_FLAG_ESMTP)
 						)
 						{
-							session.setAction(_SCS_FLAG_STARTTLS);
+							session.setAction(_SCS_ACTION_START_TLS);
 
 							// Sends the STARTTLS command
 							client->writeCommand(ClientCommandType::CCT_START_TLS, {});
 							this->printSent("STARTTLS");
 							break;
 						}
+
+						// Checks if we need to perform mail form, this can be when
+						// - we upgraded the ESMTP connection or when we just
+						// - send hello, and the server was not ESMTP
+						if (
+							(
+								session.getAction(_SCS_ACTION_HELO) &&
+								!session.getFlag(_SCS_FLAG_ESMTP)
+							) ||
+							(
+								session.getAction(_SCS_ACTION_START_TLS_FINISHED) &&
+								session.getFlag(_SCS_FLAG_ESMTP) &&
+								!session.getAction(_SCS_ACTION_MAIL_FROM)
+							)
+						)
+						{
+							session.setAction(_SCS_ACTION_MAIL_FROM);
+
+							client->writeCommand(ClientCommandType::CCT_MAIL_FROM, {
+								"<" + this->s_MailFrom.e_Address + ">"
+							});
+							this->printSent("MAIL FROM: [sender]");
+							break;
+						}
+
+						// Checks if we need to perform the rcpt to, this can only
+						// - be when we already sent the mail from, we do not need
+						// - to perform esmtp check, since the mail from flag already
+						// - has some checks, so we only have to check if it was not 
+						// - performed
+						if (
+							session.getAction(_SCS_ACTION_MAIL_FROM) &&
+							!session.getAction(_SCS_ACTION_RCPT_TO)
+						)
+						{
+							session.setAction(_SCS_ACTION_RCPT_TO);
+
+							client->writeCommand(ClientCommandType::CCT_RCPT_TO, {
+								"<" + target.t_Address.e_Address + ">"
+							});
+							this->printSent("RCPT TO: [target]");
+							break;
+						}
+
+						// Checks if we need to send the data segment, this is only
+						// - possible if the rcpt to is already sent
+						if (
+							session.getAction(_SCS_ACTION_RCPT_TO) &&
+							!session.getAction(_SCS_ACTION_DATA_START) &&
+							!session.getAction(_SCS_ACTION_DATA_END)
+						)
+						{
+							session.setAction(_SCS_ACTION_DATA_START);
+
+							// Sends the command
+							client->writeCommand(ClientCommandType::CCT_DATA, {});
+							continue;
+						}
+					}
+
+					case 354:
+					{
+						// Checks if we need to send the data body, this is only possible
+						// - if the data start was sent
+						if (
+							session.getAction(_SCS_ACTION_DATA_START) &&
+							!session.getAction(_SCS_ACTION_DATA_END)
+						)
+						{
+							session.setAction(_SCS_ACTION_DATA_END);
+
+							// Writes the body and the "\r\n.\r\n" after that
+							client->sendMessage(this->s_TransportMessage);
+							client->sendMessage("\r\n.\r\n");
+							continue;
+						}
 					}
 
 					case 220:
 					{
+						// Checks if we need to send quit, this is only possible if the
+						// - message body was sent
+						if (
+							session.getAction(_SCS_ACTION_DATA_END) &&
+							!session.getAction(_SCS_ACTION_QUIT)
+						)
+						{
+							session.setAction(_SCS_ACTION_QUIT);
+
+							// Writes the command
+							client->writeCommand(ClientCommandType::CCT_QUIT, {});
+							continue;
+						}
+
+
 						// Checks if we need to upgrade the socket
 						// - this is only possible if start tls command is sent
 						// - and the server allwos esmtp, and if we have not done

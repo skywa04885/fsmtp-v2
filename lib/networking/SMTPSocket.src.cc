@@ -75,9 +75,17 @@ namespace FSMTP::Networking
 		// - so we can later get the exact message
 		for (;;)
 		{
-			rc = recv(this->s_SocketFD, buffer, 1024, MSG_PEEK);
-			if (rc < 0)
-				throw SMTPTransmissionError("Could not peek data");
+			if (this->s_UseSSL)
+			{
+				rc = SSL_peek(this->s_SSL, buffer, 1024);
+				if (rc <= 0)
+					throw SMTPTransmissionError("Could not peek data (TLS)");
+			} else
+			{
+				rc = recv(this->s_SocketFD, buffer, 1024, MSG_PEEK);
+				if (rc < 0)
+					throw SMTPTransmissionError("Could not peek data");
+			}
 
 			bool newlineFound = false;
 			for (index = 0; index < rc; index++)
@@ -95,9 +103,17 @@ namespace FSMTP::Networking
 		// Reads data from the socket into the buffer
 		// - then we clear the buffer and append it to
 		// - the result
-		rc = recv(this->s_SocketFD, buffer, ++index, 0);
-		if (rc < 0)
-			throw SMTPTransmissionError("Could not receive data");
+		if (this->s_UseSSL)
+		{
+			rc = SSL_read(this->s_SSL, buffer, ++index);
+			if (rc <= 0)
+				throw SMTPTransmissionError("Could not receive data (TLS)");
+		} else
+		{
+			rc = recv(this->s_SocketFD, buffer, ++index, 0);
+			if (rc < 0)
+				throw SMTPTransmissionError("Could not receive data");
+		}
 		res += std::string(buffer, rc);
 
 		// Clears the buffer
