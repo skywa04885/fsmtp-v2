@@ -23,18 +23,22 @@
 
 #include "../general/macros.src.h"
 
-#define _SMTP_CLIENT_SESSION_ACTION_HELO 1
-#define _SMTP_CLIENT_SESSION_ACTION_START_TLS 2
-#define _SMTP_CLIENT_SESSION_ACTION_MAIL_FROM 4
-#define _SMTP_CLIENT_SESSION_ACTION_RCPT_TO 8
-#define _SMTP_CLIENT_SESSION_ACTION_DATA_START 16
-#define _SMTP_CLIENT_SESSION_ACTION_DATA_END 32
-#define _SMTP_CLIENT_SESSION_ACTION_QUIT 64
-#define _SMTP_CLIENT_SESSION_ACTION_START_TLS_FINISHED 128
-#define _SMTP_CLIENT_SESSION_ACTION_START_TLS_HELO 256
-#define _SMTP_CLIENT_SESSION_ACTION_DATA_BUSSY 512
+#define _SCS_ACTION_HELO 1
+#define _SCS_ACTION_START_TLS 2
+#define _SCS_ACTION_MAIL_FROM 4
+#define _SCS_ACTION_RCPT_TO 8
+#define _SCS_ACTION_DATA_START 16
+#define _SCS_ACTION_DATA_END 32
+#define _SCS_ACTION_QUIT 64
+#define _SCS_ACTION_START_TLS_FINISHED 128
+#define _SCS_ACTION_DATA_BUSSY 512
 
-#define _SMTP_CLIENT_SESSION_FLAG_ESMTP 1
+#define _SCS_FLAG_ESMTP 1
+#define _SCS_FLAG_STARTTLS 2
+#define _SCS_FLAG_CHUNKING 4
+#define _SCS_FLAG_PIPELINGING 8
+#define _SCS_FLAG_8BITMIME 16
+#define _SCS_FLAG_ENCHANCHED_STATUS_CODES 32
 
 namespace FSMTP::Mailer::Client
 {
@@ -80,6 +84,23 @@ namespace FSMTP::Mailer::Client
 		 * @Return {bool}
 		 */
 		bool getAction(int64_t mask);
+
+		/**
+		 * Clears an action
+		 *
+		 * @Param {int64_t} mask
+		 * @Return {void}
+		 */
+		void clearAction(int64_t mask);
+
+		/**
+		 * Gets an action and returns the
+		 * - bool value, and sets it
+		 *
+		 * @Param {int64_t mask}
+		 * @Return {void}
+		 */
+		bool getActionSet(int64_t mask);
 	private:
 		int64_t s_PerformedActions;
 		int64_t s_SessionFlags;

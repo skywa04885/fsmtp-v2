@@ -77,4 +77,33 @@ namespace FSMTP::Mailer::Client
 		else
 			return false;
 	}
+
+	/**
+	 * Gets an action and returns the
+	 * - bool value, and sets it
+	 *
+	 * @Param {int64_t mask}
+	 * @Return {void}
+	 */
+	bool SMTPClientSession::getActionSet(int64_t mask)
+	{
+		if (BINARY_COMPARE(this->s_PerformedActions, mask))
+			return true;
+		else
+		{
+			this->setAction(mask);
+			return false;
+		}
+	}
+
+	/**
+	 * Clears an action
+	 *
+	 * @Param {int64_t} mask
+	 * @Return {void}
+	 */
+	void SMTPClientSession::clearAction(int64_t mask)
+	{
+		this->s_PerformedActions &= ~mask;
+	}
 }

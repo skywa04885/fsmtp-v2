@@ -40,6 +40,7 @@
 #include <arpa/inet.h>
 
 #include "../general/macros.src.h"
+#include "../smtp/Command.src.h"
 
 #ifndef _SOCKET_MAX_IN_QUEUE
 #define _SOCKET_MAX_IN_QUEUE 40
@@ -48,6 +49,8 @@
 #ifndef _SOCKET_THREAD_SHUTDOWN_DELAY
 #define _SOCKET_THREAD_SHUTDOWN_DELAY 120
 #endif
+
+using namespace FSMTP::SMTP;
 
 namespace FSMTP::Networking
 {
@@ -116,12 +119,12 @@ namespace FSMTP::Networking
 		void startConnecting(void);
 
 		/**
-		 * Receives an string from the socket
+		 * Receives data until an newline occurs
 		 *
 		 * @Param {void}
-		 * @Return {std::string}
+		 * @Return {void}
 		 */
-		std::string receive(void);
+		std::string readUntillNewline(void);
 
 		/**
 		 * Sends an string
@@ -138,6 +141,18 @@ namespace FSMTP::Networking
 		 * @Return {void}
 		 */
 		void upgradeToSSL(void);
+
+		/**
+		 * Writes an command to the client
+		 *
+		 * @Param {ClientCommandType} type
+		 * @Param {const std::vector<std::string> &} args
+		 * @Return {void}
+		 */
+		void writeCommand(
+			ClientCommandType type, 
+			const std::vector<std::string> &args
+		);
 
 		/**
 		 * Destructor override, frees the memory and closes

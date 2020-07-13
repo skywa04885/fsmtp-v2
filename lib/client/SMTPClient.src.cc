@@ -148,230 +148,199 @@ namespace FSMTP::Mailer::Client
 
 			SMTPClientSession session;
 
-			// Infinite read loop
 			bool _run = true;
+			bool _performParse = true;
+
+
+			int32_t code;
+			std::string args;
+
 			while (_run)
 			{
-				std::string responseArgs;
-				int32_t responseCode;
-
-				// ================================
-				// Performs StartTLS
+				// ===================================
+				// Receives the default command
 				//
-				// If this is so, we need to send
-				// - helo again
-				// ================================
+				// Receives the data from the server
+				// - and stores the code and args
+				// ===================================
 
-				// Since STARTTLS may require an early hello, we will
-				// - always check if this needs to be performed
-				if (
-					session.getAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS_FINISHED) &&
-					!session.getAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS_HELO)
-				)
+				if (_performParse)
 				{
-					session.setAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS_HELO);
-
-					// Builds the arg, and builds the command
-					std::string arg = "[";
-					arg += _SMTP_SERVICE_DOMAIN;
-					arg += ']';
-					
-					ClientCommand command(ClientCommandType::CCT_EHLO, {
-						arg
-					});
-					std::string response = command.build();
-
-					// Sends the command to the client
-					client->sendMessage(response);
-					DEBUG_ONLY(this->printSent(response));
-				}
-
-
-				// ================================
-				// Parses the response
-				//
-				// Lets us know what the server
-				// - responded
-				// ================================
-
-
-				// Receives the string from the client, and if debug enables
-				// - we print it to the console, next to that we will also
-				// - parse the command into an code and argument
-				try
-				{
-					std::string buffer = client->receive();
-					std::tie(responseCode, responseArgs) = ServerResponse::parseResponse(buffer);
-					DEBUG_ONLY(this->printReceived(responseCode, responseArgs));
-				} catch (const SMTPTransmissionError &e)
-				{
-					this->s_Logger << "SMTPClientSocket::receive() failed: " << e.what() << ENDL;
-					_run = false;
-					continue;
-				}
-
-				// ================================
-				// Performs operation
-				//
-				// Checks the code, and current
-				// - actions and decides what to
-				// - do next
-				// ================================
-
-				switch (responseCode)
-				{
-					case 220:
+					try
 					{
-						if (!session.getAction(_SMTP_CLIENT_SESSION_ACTION_HELO))
-						{
-							session.setAction(_SMTP_CLIENT_SESSION_ACTION_HELO);
+						std::string line = client->readUntillNewline();
+						std::tie(code, args) = ServerResponse::parseResponse(line);
+						this->printReceived(code, args);
+					} catch(const SMTPTransmissionError &e)
+					{
+						_run = false;
+					} catch (const std::invalid_argument &e)
+					{
+						this->s_Logger << ERROR << "Invalid response received" << ENDL << CLASSIC;
+						_run = false;
+					}
+				} else _performParse = true;
 
-							// Builds the arg, and builds the command
-							ClientCommand command(ClientCommandType::CCT_EHLO, {
-								_SMTP_SERVICE_DOMAIN
-							});
-							std::string response = command.build();
+				// ===================================
+				// Acts based on the code
+				//
+				// Checks the code and acts based
+				// - upon it
+				// ===================================
 
-							// Checks if we're using ESMTP, and sets the flag
-							// - if so
-							if (responseArgs.find("ESMTP") != std::string::npos)
-							{
-								DEBUG_ONLY(this->s_Logger << DEBUG << "Server meldt zichzelf als " 
-									"ESMTP, inschakelen extra functies .." << ENDL << CLASSIC);
-								session.setFlag(_SMTP_CLIENT_SESSION_FLAG_ESMTP);
-							}
-
-							// Sends the command to the client
-							client->sendMessage(response);
-							DEBUG_ONLY(this->printSent(response));
-							continue;
-						}
-
-						if (
-							session.getAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS) &&
-							!session.getAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS_FINISHED)
-						)
-						{
-							session.setAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS_FINISHED);
-							DEBUG_ONLY(
-								this->s_Logger << DEBUG 
-									<< "Aanvraag geacepteerd, verbind wordt beveiligd !" 
-									<< ENDL << CLASSIC;
-							);
-							client->upgradeToSSL();
-						}
-
-						break;
-					}			
+				switch (code)
+				{
 					case 250:
 					{
-						// Checks if we may switch to an TLS socket, this may only happen
-						// - if the server is an ESMTP server
+						// Checks if we need to perform start tls, this
+						// - is only possible if hello is send and esmtp is
+						// - enabled
 						if (
-							!session.getAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS) &&
-							session.getFlag(_SMTP_CLIENT_SESSION_FLAG_ESMTP)
+							session.getAction(_SCS_ACTION_HELO) &&
+							!session.getAction(_SCS_ACTION_START_TLS) &&
+							session.getFlag(_SCS_FLAG_ESMTP)
 						)
 						{
-							DEBUG_ONLY(
-								this->s_Logger << DEBUG << "ESMTP is actief, beginnen met aanvraag "
-								"van veilige verbinding ..." << ENDL << CLASSIC;
+							session.setAction(_SCS_FLAG_STARTTLS);
+
+							// Sends the STARTTLS command
+							client->writeCommand(ClientCommandType::CCT_START_TLS, {});
+							this->printSent("STARTTLS");
+							break;
+						}
+					}
+
+					case 220:
+					{
+						// Checks if we need to upgrade the socket
+						// - this is only possible if start tls command is sent
+						// - and the server allwos esmtp, and if we have not done
+						// - this already
+						if (
+							session.getAction(_SCS_ACTION_START_TLS) &&
+							!session.getAction(_SCS_ACTION_START_TLS_FINISHED) &&
+							session.getFlag(_SCS_FLAG_ESMTP)
+						)
+						{
+							session.setAction(_SCS_ACTION_START_TLS_FINISHED);
+
+							// Upgrades the socket
+							DEBUG_ONLY(this->s_Logger << DEBUG << "Omzetten naar TLS verbinding ..." << ENDL << CLASSIC);
+							client->upgradeToSSL();
+							DEBUG_ONLY(this->s_Logger << DEBUG << "Verbinding omgezet !" << ENDL << CLASSIC);
+
+							// Sets the HELO flag to false, so that the code will fall throug
+							// - and performs the operations again, like EMSPT check and opti
+							// - ions initialization
+							session.clearAction(_SCS_ACTION_HELO);
+						}
+
+						// Checks if it is the initial hello, and performs
+						// - the ESMTP check, this will allow later functions
+						// - to adapt their commands to the server
+						if (
+							!session.getAction(_SCS_ACTION_HELO) &&
+							!session.getFlag(_SCS_FLAG_ESMTP)
+						)
+						{
+							if (args.find("ESMTP") != std::string::npos)
+								session.setFlag(_SCS_FLAG_ESMTP);
+						}
+
+						// Checks if we need to send the initial hello message
+						// - using the ESMTP protocol
+						if (
+							!session.getAction(_SCS_ACTION_HELO) &&
+							session.getFlag(_SCS_FLAG_ESMTP)
+						)
+						{ // -> Initial HELO command
+							session.setAction(_SCS_ACTION_HELO);
+
+							// Sends the ehlo command
+							client->writeCommand(
+								ClientCommandType::CCT_EHLO,
+								{_SMTP_SERVICE_DOMAIN}
 							);
+							this->printSent("EHLO [domain]");
 
-							session.setAction(_SMTP_CLIENT_SESSION_ACTION_START_TLS);
-							ClientCommand command(ClientCommandType::CCT_START_TLS, {});
-							std::string response = command.build();
+							// Receives the multiline response and checks for
+							// - any transmission errors
+							try
+							{
+								std::vector<std::string> options = {};
 
-							client->sendMessage(response);
-							DEBUG_ONLY(this->printSent(response));
-							continue;
-						}
+								// Reads all the command
+								for (;;)
+								{
+									// Cuts the code of the line and then puts
+									// - the option inside of the vector, after that
+									// - we check if we need to do another round
+									std::string line = client->readUntillNewline();
+									
+									std::string command;
+									reduceWhitespace(line.substr(4), command);
+									removeFirstAndLastWhite(command);
+									options.push_back(command);
+									
+									if (line[3] == '-')
+										continue;
+									else
+										break;
+								}
 
-						if (!session.getAction(_SMTP_CLIENT_SESSION_ACTION_MAIL_FROM))
-						{
-							session.setAction(_SMTP_CLIENT_SESSION_ACTION_MAIL_FROM);
-							ClientCommand command(ClientCommandType::CCT_MAIL_FROM, {
-								"<" + this->s_MailFrom.e_Address + ">"
-							});
-							std::string response = command.build();
+								for (const std::string &option : options)
+								{
+									this->printReceived(250, option);
 
-							client->sendMessage(response);
-							DEBUG_ONLY(this->printSent(response));
-							continue;
-						}
+									// Checks which flag we need to set, these will
+									// - tell the algorithm what actions to perform at what
+									// - moment
+									if (option == "STARTTLS")
+										session.setFlag(_SCS_FLAG_STARTTLS);
+									else if (option == "8BITMIME")
+										session.setFlag(_SCS_FLAG_8BITMIME);
+									else if (option == "ENHANCEDSTATUSCODES")
+										session.setFlag(_SCS_FLAG_ENCHANCHED_STATUS_CODES);
+									else if (option == "PIPELINING")
+										session.setFlag(_SCS_FLAG_PIPELINGING);
+									else if (option == "CHUNKING")
+										session.setFlag(_SCS_FLAG_CHUNKING);
+								}
 
-						if (!session.getAction(_SMTP_CLIENT_SESSION_ACTION_RCPT_TO))
-						{
-
-							session.setAction(_SMTP_CLIENT_SESSION_ACTION_RCPT_TO);
-							ClientCommand command(ClientCommandType::CCT_RCPT_TO, {
-								"<" + target.t_Address.e_Address + ">"
-							});
-							std::string response = command.build();
-
-							client->sendMessage(response);
-							DEBUG_ONLY(this->printSent(response));
-							continue;
-						}
-
-						if (!session.getAction(_SMTP_CLIENT_SESSION_ACTION_DATA_START))
-						{
-							session.setAction(_SMTP_CLIENT_SESSION_ACTION_DATA_START);
-							ClientCommand command(ClientCommandType::CCT_DATA, {});
-							std::string response = command.build();
-
-							client->sendMessage(response);
-							DEBUG_ONLY(this->printSent(response));
-							continue;
-						}
-
-						if (
-							session.getAction(_SMTP_CLIENT_SESSION_ACTION_DATA_BUSSY) &&
-							!session.getAction(_SMTP_CLIENT_SESSION_ACTION_DATA_END)
-						)
-						{
-							session.setAction(_SMTP_CLIENT_SESSION_ACTION_DATA_END);
-
-							ClientCommand command(ClientCommandType::CCT_QUIT, {});
-							std::string response = command.build();
-
-							client->sendMessage(response);
-							DEBUG_ONLY(this->printSent(response));
-
-							_run = false;
-							continue;
-						}
-
-						break;
-					}
-
-					case 354:
-					{
-						if (
-							session.getAction(_SMTP_CLIENT_SESSION_ACTION_DATA_START) &&
-							!session.getAction(_SMTP_CLIENT_SESSION_ACTION_DATA_BUSSY)
-						)
-						{
-							session.setAction(_SMTP_CLIENT_SESSION_ACTION_DATA_BUSSY);
-
-							client->sendMessage(this->s_TransportMessage);
-							DEBUG_ONLY(this->printSent("[-> Body <-]\r\n"));
-							client->sendMessage("\r\n.\r\n");
+								// Disables the parser for one round, and sets
+								// - the args and code
+								_performParse = false;
+								code = 250;
+								args = options[0];
+							} catch (const SMTPTransmissionError &e)
+							{
+								_run = false;
+							}
 							continue;
 						}
 					}
 
-					default:
+					// Checks if we need to perform the hello command without
+					// - the ESMTP manner
+					if (
+						!session.getAction(_SCS_ACTION_HELO) &&
+						!session.getFlag(_SCS_FLAG_ESMTP)
+					)
 					{
-						this->addError(
-							SMTPClientPhase::SCP_OTHER, 
-							std::to_string(responseCode) + ": " + responseArgs
+						session.setAction(_SCS_ACTION_HELO);
+
+						// Sends the helo command
+						client->writeCommand(
+							ClientCommandType::CCT_HELO,
+							{_SMTP_SERVICE_DOMAIN}
 						);
+						this->printSent("HELO [domain]");
 					}
 				}
 			}
 		}
 
-		if (!this->s_Silent) this->s_Logger << "Handles" << this->s_Targets.size() << " emails" << ENDL;
+		if (!this->s_Silent) this->s_Logger << "Handled " << this->s_Targets.size() << " emails" << ENDL;
 	}
 
 	/**
@@ -395,6 +364,6 @@ namespace FSMTP::Mailer::Client
 	 */
 	void SMTPClient::printSent(const std::string &mess)
 	{
-		this->s_Logger << DEBUG << "C->RESP: " << mess.substr(0, mess.size() - 2) << ENDL << CLASSIC;
+		this->s_Logger << DEBUG << "C->RESP: " << mess << ENDL << CLASSIC;
 	}
 }

@@ -20,14 +20,15 @@
 #include <string>
 #include <iostream>
 #include <chrono>
+#include <functional>
 
 #include "../networking/SMTPSocket.src.h"
 #include "../models/email.src.h"
 #include "../general/logger.src.h"
 #include "../networking/DNS.src.h"
-#include "SMTPMessageComposer.src.h"
 #include "../smtp/Response.src.h"
 #include "../smtp/Command.src.h"
+#include "SMTPMessageComposer.src.h"
 #include "SMTPClientSession.src.h"
 
 using namespace FSMTP::Networking;
@@ -47,6 +48,16 @@ namespace FSMTP::Mailer::Client
 		SCP_DATA,
 		SCP_OTHER
 	} SMTPClientPhase;
+
+	typedef enum : uint32_t
+	{
+		SAT_HELO,
+		SAT_START_TLS,
+		SAT_EHLO,
+		SAT_MAIL_FROM,
+		SAT_RCPT_TO,
+		SAT_DATA
+	} SMTPClientActionType;
 
 	typedef struct
 	{
@@ -118,7 +129,7 @@ namespace FSMTP::Mailer::Client
 		 * @Return {void}
 		 */
 		void printSent(const std::string &mess);
-	private:
+
 		bool s_Silent;
 		Logger s_Logger;
 		std::string s_TransportMessage;

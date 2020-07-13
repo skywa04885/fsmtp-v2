@@ -59,60 +59,70 @@ namespace FSMTP::Networking
 	}
 
 	/**
-	 * Receives an string from the socket
+	 * Receives data until an newline occurs
 	 *
 	 * @Param {void}
-	 * @Return {std::string}
+	 * @Return {void}
 	 */
-	std::string SMTPClientSocket::receive(void)
+	std::string SMTPClientSocket::readUntillNewline(void)
 	{
-		std::string res;
-		char *buffer = new char[_SMTP_RECEIVE_BUFFER_SIZE];
+		char buffer[1024];
 		int32_t rc;
+		std::size_t index;
+		std::string res;
 
-		// Creates the read loop and reads untill we reach
-		// - an CRLF, then we return, or when error occures
-		// - we throw one, and delete the buffer
-		while (true)
+		// Searches for the newline inside of the buffer
+		// - so we can later get the exact message
+		for (;;)
 		{
-			// Checks if we need to close
-			if (res[res.size() - 2] == '\r' && res[res.size() - 1] == '\n') break;
+			rc = recv(this->s_SocketFD, buffer, 1024, MSG_PEEK);
+			if (rc < 0)
+				throw SMTPTransmissionError("Could not peek data");
 
-			// Receives the string
-			if (this->s_UseSSL)
+			bool newlineFound = false;
+			for (index = 0; index < rc; index++)
 			{
-				rc = SSL_read(this->s_SSL, buffer, _SMTP_RECEIVE_BUFFER_SIZE);
-				if (rc <= 0)
+				if (buffer[index] == '\n')
 				{
-					BIO *bio = BIO_new(BIO_s_mem());
-					ERR_print_errors(bio);
-					char *err = nullptr;
-					std::size_t errLen = BIO_get_mem_data(bio, err);
-					std::string error(err, errLen);
-					BIO_free(bio);
-					throw SMTPTransmissionError("SSL_Read() failed: " + error);
+					newlineFound = true;
+					break;
 				}
 			}
-			else
-			{
-				rc = recv(this->s_SocketFD, buffer, _SMTP_RECEIVE_BUFFER_SIZE, 0);
-				if (rc < 0)
-				{
-					delete[] buffer;
-					throw SMTPTransmissionError("Could not receive data");
-				}
-			}
-
-			// Appends the string to the result 
-			// - and clears the buffer
-			res += buffer;
-			memset(buffer, 0x0, _SMTP_RECEIVE_BUFFER_SIZE);
+			if (newlineFound) break;
 		}
 
-		delete[] buffer;
+
+		// Reads data from the socket into the buffer
+		// - then we clear the buffer and append it to
+		// - the result
+		rc = recv(this->s_SocketFD, buffer, ++index, 0);
+		if (rc < 0)
+			throw SMTPTransmissionError("Could not receive data");
+		res += std::string(buffer, rc);
+
+		// Clears the buffer
+		memset(buffer, 0, 1024);
+
 		return res.substr(0, res.size() - 2);
 	}
 
+	/**
+	 * Writes an command to the client
+	 *
+	 * @Param {ClientCommandType} type
+	 * @Param {const std::vector<std::string> &} args
+	 * @Return {void}
+	 */
+	void SMTPClientSocket::writeCommand(
+		ClientCommandType type, 
+		const std::vector<std::string> &args
+	)
+	{
+		ClientCommand command(type, args);
+		std::string message = command.build();
+		this->sendMessage(message);
+	}
+	
 	/**
 	 * Sends an string
 	 * 
@@ -193,6 +203,7 @@ namespace FSMTP::Networking
 		shutdown(this->s_SocketFD, SHUT_RDWR);
 		if (this->s_UseSSL)
 		{
+			SSL_shutdown(this->s_SSL);
 			SSL_free(this->s_SSL);
 			SSL_CTX_free(this->s_SSLCtx);
 		}
