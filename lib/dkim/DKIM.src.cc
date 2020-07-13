@@ -87,8 +87,8 @@ namespace FSMTP::DKIM
 			default: throw std::runtime_error("Algorithm pair not implemented");
 		}
 
-		DEBUG_ONLY(logger << "Canonicalized headers: \r\n" << cannedHeaders.substr(0, cannedHeaders.size() - 2) << "\033[0m" << ENDL);
-		DEBUG_ONLY(logger << "Canonicalized body: \r\n" << cannedBody.substr(0, cannedBody.size() - 2) << "\033[0m" << ENDL);
+		DEBUG_ONLY(logger << "Canonicalized headers: \r\n\033[41m" << cannedHeaders.substr(0, cannedHeaders.size() - 2) << "\033[0m" << ENDL);
+		DEBUG_ONLY(logger << "Canonicalized body: \r\n\033[41m" << cannedBody.substr(0, cannedBody.size() - 2) << "\033[0m" << ENDL);
 
 		// ========================================
 		// Prepares headers
@@ -116,6 +116,7 @@ namespace FSMTP::DKIM
 		// ========================================
 
 		// Creates the signature
+		DEBUG_ONLY(logger << "Raw signature: \r\n\033[41m'" << cannedHeaders << "'\033[0m" << ENDL);
 		segments.s_Signature = Hashes::RSASha256generateSignature(
 			cannedHeaders, 
 			config.c_PrivateKeyPath
@@ -143,28 +144,46 @@ namespace FSMTP::DKIM
 	 */
 	std::string _canonicalizeBodyRelaxed(const std::string &raw)
 	{
-		std::string temp;
 		std::string res;
+		std::string temp;
 
 		// Reduces the whitespace occurences
-		reduceWhitespace(raw, temp);
+		reduceWhitespace(raw, res);
 
 		// Removes the whitespace at start and end of lines
 		// - using an string stream
-		std::stringstream stream(raw);
+		std::stringstream stream(res);
 		std::string token;
+		std::size_t lastNotEmptyIndex = 0, i = 0;
 		while (std::getline(stream, token, '\n'))
 		{
 			// Removes the '\r' if it is there
 			if (!token.empty() && token[token.size() - 1] == '\r') token.pop_back();
 
 			// Checks if it is an empty line, if so ignore it
-			if (token.empty()) continue;
+			if (!token.empty()) lastNotEmptyIndex = i;
 
 			// Removes the whitespace at start and end, and pushes it to
 			// - the result
-			removeFirstAndLastWhite(token);
-			res += token + "\r\n";
+			if (token[token.size() - 1] == ' ') token.pop_back();
+			temp += token + "\r\n";
+
+			// Increments the index
+			i++;
+		}
+
+		// Clears the result and removes the last empty
+		// - lines from the body
+		res.clear();
+		std::stringstream secondStream(temp);
+		std::size_t j = 0;
+		while (std::getline(secondStream, token, '\n'))
+		{
+			if (j++ > lastNotEmptyIndex) break;
+			// Removes the '\r' if it is there, and adds the token
+			// - to the result
+			if (!token.empty() && token[token.size() - 1] == '\r') token.pop_back();
+			res += token += "\r\n";
 		}
 
 		return res;
@@ -203,9 +222,10 @@ namespace FSMTP::DKIM
 			// Separates the key and value, after that
 			// - we remove all non required whitespace
 			reduceWhitespace(token.substr(0, sepIndex), key);
-			reduceWhitespace(token.substr(sepIndex + 1), value);
+			reduceWhitespace(token.substr(sepIndex), value);
 			removeFirstAndLastWhite(key);
-			removeFirstAndLastWhite(value);
+			if (value[0] == ':') value.erase(0, 1);
+			if (value[0] == ' ') value.erase(0, 1);
 
 			// Makes the key lowercase
 			std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c){
@@ -306,9 +326,9 @@ namespace FSMTP::DKIM
 					if (shouldAppend.size() < 98)
 					{
 						firstLine = false;
-						res += "\r\n        "; // ( 8 spaces )
+						res += "\r\n       "; // ( 7 spaces )
 						res += shouldAppend;
-						lineLength = shouldAppend.size() + 8;
+						lineLength = shouldAppend.size() + 7;
 					} else
 					{
 						// Starts adding them over multiple lines
@@ -316,8 +336,8 @@ namespace FSMTP::DKIM
 						{
 							if (++lineLength >= 98)
 							{
-								res += "\r\n         "; // ( 9 spaces )
-								lineLength = 9;
+								res += "\r\n        "; // ( 8 spaces )
+								lineLength = 8;
 							}
 
 							res += c;

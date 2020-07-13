@@ -303,7 +303,7 @@ int main(const int argc, const char **argv)
 		{
 			MailComposerConfig config;
 			config.m_Subject = "Hello  World";
-			config.m_To.emplace_back("Luke Rieff", "luke.rieff@gmail.com");
+			config.m_To.emplace_back("Luke Rieff", "01");
 			// config.m_To.emplace_back("Luke Rieff", "luke.rieff@yahoo.com");
 			// config.m_To.emplace_back("Spaghetti", "spaghetticode123@kaasdasss.com");
 			config.m_From.emplace_back("Luke Rieff", "lr@fannst.nl");
