@@ -80,30 +80,51 @@ namespace FSMTP::Encoding
 		std::size_t lineLength = 0;
 		for (const char c : raw)
 		{
-			if ((++lineLength) + 1 >= 76)
+			i++;
+
+			// Checks if it is the end of an line
+			// - if so set the line length to zero,
+			// - else we just increment it
+			if (c == '\n')
 			{
-				res += "=\n";
 				lineLength = 0;
 			}
-
-			// Checks if we must encode the line
-			if (c >= 33 && c <= 126 && c != 61 || c == '\n')
-			{
-				if (c == '\n') lineLength = 0;
-				res += c;
-			} else if (c >= 9 && c <= 32 && raw[i+1] != '\n')
-			{
-				res += c;
-			}
 			else
+				lineLength++;
+
+			// Checks if we need to start an new line, remove one because
+			// - the ending will be an soft line break
+			if (lineLength >= 74)
 			{
-				res += '=';
-				HEX::encode(c, res);
-				lineLength += 3;
+				lineLength = 0;
+				res += "=\n";
 			}
 
-			// Increments the index
-			i++;
+			// Checks if we should not encode the current
+			// - char
+			if (c >= 33 && c <= 126 && c != '=')
+			{
+				res += c;
+				continue;
+			}
+
+			// Checks if we need to encode the current
+			// - character due to an line ending thats
+			// - nearby
+			if (c >= 9 && c <= 32)
+			{
+				if (raw[i] != '\n')
+				{
+					res += c;
+					continue;
+				}
+			}
+
+			// Everything else will be encoded, since
+			// - it was not specified it may be raw
+			res += '=';
+			HEX::encode(c, res);
+			lineLength += 3;
 		}
 
 		return res;

@@ -44,7 +44,7 @@
 #endif
 
 #ifndef _SMTP_SERVICE_NODE_NAME
-#define _SMTP_SERVICE_NODE_NAME "fclust-node01"
+#define _SMTP_SERVICE_NODE_NAME "FC_EU_N0001"
 #endif
 
 #ifndef _SMTP_RECEIVE_BUFFER_SIZE

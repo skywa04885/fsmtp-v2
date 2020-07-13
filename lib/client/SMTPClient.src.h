@@ -38,17 +38,6 @@ using namespace FSMTP::Mailer::Composer;
 
 namespace FSMTP::Mailer::Client
 {
-	typedef enum : uint8_t
-	{
-		SCP_RESOLVE = 0,
-		SCP_CONNECT,
-		SCP_MAIL_FROM,
-		SCP_RCPT_TO,
-		SCP_START_TLS,
-		SCP_DATA,
-		SCP_OTHER
-	} SMTPClientPhase;
-
 	typedef enum : uint32_t
 	{
 		SAT_HELO,
@@ -61,8 +50,7 @@ namespace FSMTP::Mailer::Client
 
 	typedef struct
 	{
-		SMTPClientPhase s_Phase;
-		int64_t s_Timestamp;
+		std::string s_Address;
 		std::string s_Message;
 	} SMTPClientError;
 
@@ -104,12 +92,12 @@ namespace FSMTP::Mailer::Client
 		/**
 		 * Adds an error to the error log
 		 *
-		 * @Param {const SMTPClientPhase} phase
+		 * @Param {const std::string &} address
 		 * @Param {const std::string &} message
 		 * @Return {void}
 		 */
 		void addError(
-			const SMTPClientPhase phase,
+			const std::string &address,
 			const std::string &message
 		);
 
@@ -136,5 +124,6 @@ namespace FSMTP::Mailer::Client
 		std::vector<SMTPClientTarget> s_Targets;
 		std::vector<SMTPClientError> s_ErrorLog;
 		EmailAddress s_MailFrom;
+		std::size_t s_ErrorCount;
 	};
 }

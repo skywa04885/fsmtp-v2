@@ -143,6 +143,8 @@ namespace FSMTP::Mailer::Composer
 
 		// Prepares the default headers
 		config.m_Headers.push_back(EmailHeader{"X-Mailer", "FSMTP-V2"});
+		config.m_Headers.push_back(EmailHeader{"X-Fannst-NodeID", _SMTP_SERVICE_NODE_NAME});
+		config.m_Headers.push_back(EmailHeader{"X-Made-By", "Luke A.C.A. Rieff"});
 		config.m_Headers.push_back(EmailHeader{"Subject", subject});
 		config.m_Headers.push_back(EmailHeader{"Date",  dateValue});
 		config.m_Headers.push_back(EmailHeader{"MIME-Version",  "1.0"});
@@ -188,7 +190,7 @@ namespace FSMTP::Mailer::Composer
 					EmailContentType::ECT_TEXT_PLAIN,
 					{},
 					1,
-					EmailTransferEncoding::ETE_7BIT
+					EmailTransferEncoding::ETE_QUOTED_PRINTABLE
 				});
 			}
 		}
@@ -316,14 +318,8 @@ namespace FSMTP::Mailer::Composer
 		const EmailTransferEncoding encoding
 	)
 	{
-		std::string clean;
-		clean.reserve(raw.size());
-
-		// Removes non required whitespace
-		reduceWhitespace(raw, clean);
-
-		std::string encoded;
-		encoded.reserve(clean.size());
+		std::string normalized = normalizeMessageBody(raw);
+		std::string res;
 
 		// Checks which encoding to use
 		switch (encoding)
@@ -332,45 +328,16 @@ namespace FSMTP::Mailer::Composer
 			{
 				// Starts encoding the message, and the specific chars
 				// - to hex
-				encoded = encodeQuotedPrintable(clean);
+				res = encodeQuotedPrintable(normalized);
 				break;
 			}
-			default: encoded = clean;
+			default:
+			{
+				res = normalized;
+			}
 		}
 
-		std::string withEndls;
-		withEndls.reserve(encoded.size());
-
-		// Replaces all '\n' with '\r\n', and adds an newline
-		// - to the end of the body
-		for (const char c : encoded)
-		{
-			if (c == '\n') withEndls += "\r\n";
-			else withEndls += c;
-		}
-		if (
-			withEndls[withEndls.size() - 2] != '\r' &&
-			withEndls[withEndls.size() - 1] != '\r'
-		)
-			withEndls += "\r\n";
-
-		// Removes the empty lines
-		std::string res;
-		std::string token;
-		std::stringstream stream(withEndls);
-		while (std::getline(stream, token))
-		{
-			// Removes the '\r' so we can check for empty line
-			if (token[token.size() - 1] == '\r')
-				token.pop_back();
-			// If the line is empty, we ignore it
-			if (token.empty()) continue;
-			// Checks if we need to remove the first space
-			if (token[0] == ' ')
-				res += token.substr(1) + '\n';
-			else
-				res += token + '\n';
-		}
+		// Replaces the '\n' with '\r\n'
 
 		return res;
 	}
@@ -400,6 +367,54 @@ namespace FSMTP::Mailer::Composer
 			body, 
 			encoding
 		);
+
+		return res;
+	}
+
+
+	/**
+	 * Normalizes an message body, feature set:
+	 * 1. Remove duplicated whitespace
+	 * 2. Remove whitespace at the start and end of lines
+	 *
+	 * @Param {const std::string &} raw
+	 * @return {std::string}
+	 */
+	std::string normalizeMessageBody(const std::string &raw)
+	{
+		std::string res;
+		std::string temp;
+		temp.reserve(raw.size());
+
+		// Removes duplicated whitespace
+		reduceWhitespace(raw, temp);
+
+		// Loops over the lines, and removes the prefix
+		// - and suffix whitespace
+		std::stringstream stream(temp);
+		std::string token;
+		bool previousLineWasEmpty = false;
+		while (std::getline(stream, token, '\n'))
+		{
+			// Removes the '\r' if there
+			if (!token.empty() && token[token.size() - 1] == '\r') token.pop_back();
+
+			// Checks if there are two empty lines, if so
+			// - remove the second one
+			if (token.empty())
+			{
+				if (previousLineWasEmpty)
+					continue;
+				previousLineWasEmpty = true;
+				res += '\n';
+				continue;
+			} else previousLineWasEmpty = false;
+
+			// Removes the prefix and suffix whitespace, and pushes
+			// - the data to the result
+			removeFirstAndLastWhite(token);
+			res += token + '\n';
+		}
 
 		return res;
 	}

@@ -246,8 +246,8 @@ namespace FSMTP::Models
     switch (enc)
     {
       case EmailTransferEncoding::ETE_8BIT: return "8bit";
-      case EmailTransferEncoding::ETE_7BIT: return "base64";
-      case EmailTransferEncoding::ETE_BASE64: return "7bit";
+      case EmailTransferEncoding::ETE_BASE64: return "base64";
+      case EmailTransferEncoding::ETE_7BIT: return "7bit";
       case EmailTransferEncoding::ETE_QUOTED_PRINTABLE: return "quoted-printable";
       default: return "text/plain";
     }

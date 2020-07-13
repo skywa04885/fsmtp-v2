@@ -25,7 +25,7 @@ namespace FSMTP::Mailer::Client
 	 * @Return {void}
 	 */
 	SMTPClient::SMTPClient(bool s_Silent):
-		s_Logger("SMTPClient", LoggerLevel::INFO)
+		s_Logger("SMTPClient", LoggerLevel::INFO), s_ErrorCount(0)
 	{
 		if (!s_Silent) this->s_Logger << "SMTPClient initialized !" << ENDL;
 	}
@@ -70,7 +70,9 @@ namespace FSMTP::Mailer::Client
 				this->s_Targets.push_back(target);
 			} catch(const std::runtime_error &e)
 			{
-				this->addError(SMTPClientPhase::SCP_RESOLVE, e.what());	
+				std::string message = "Resolver error: ";
+				message += e.what();
+				this->addError(address.toString(), message);	
 			}
 		}
 	}
@@ -78,20 +80,18 @@ namespace FSMTP::Mailer::Client
 	/**
 	 * Adds an error to the error log
 	 *
-	 * @Param {const SMTPClientPhase} phase
+	 * @Param {const std::string &} address
 	 * @Param {const std::string &} message
 	 * @Return {void}
 	 */
 	void SMTPClient::addError(
-		const SMTPClientPhase phase,
+		const std::string &address,
 		const std::string &message
 	)
 	{
+		s_ErrorCount++;
 		this->s_ErrorLog.push_back(SMTPClientError{
-			phase,
-			std::chrono::duration_cast<std::chrono::milliseconds>(
-				std::chrono::high_resolution_clock::now().time_since_epoch()
-			).count(),
+			address,
 			message
 		});
 	}
@@ -135,7 +135,10 @@ namespace FSMTP::Mailer::Client
 			} catch (const SMTPConnectError &e)
 			{
 				this->s_Logger << ERROR << "Kon niet verbinden met server: " << e.what() << ENDL;
-				this->addError(SMTPClientPhase::SCP_CONNECT, e.what());
+				
+				std::string message = "Connection error: ";
+				message += e.what();
+				this->addError(target.t_Address.toString(), message);	
 				continue;
 			}
 
@@ -327,8 +330,20 @@ namespace FSMTP::Mailer::Client
 
 							// Upgrades the socket
 							DEBUG_ONLY(this->s_Logger << DEBUG << "Omzetten naar TLS verbinding ..." << ENDL << CLASSIC);
-							client->upgradeToSSL();
-							DEBUG_ONLY(this->s_Logger << DEBUG << "Verbinding omgezet !" << ENDL << CLASSIC);
+							try
+							{
+								client->upgradeToSSL();
+								DEBUG_ONLY(this->s_Logger << DEBUG << "Verbinding omgezet !" << ENDL << CLASSIC);								
+							} catch (const SMTPSSLError &e)
+							{
+								std::string message = "SSL Initialization error: ";
+								message += e.what();
+								this->addError(target.t_Address.toString(), message);
+								
+								_run = false;
+								continue;
+							}
+
 
 							// Sets the HELO flag to false, so that the code will fall throug
 							// - and performs the operations again, like EMSPT check and opti
@@ -419,23 +434,32 @@ namespace FSMTP::Mailer::Client
 							}
 							continue;
 						}
+
+						// Checks if we need to perform the hello command without
+						// - the ESMTP manner
+						if (
+							!session.getAction(_SCS_ACTION_HELO) &&
+							!session.getFlag(_SCS_FLAG_ESMTP)
+						)
+						{
+							session.setAction(_SCS_ACTION_HELO);
+
+							// Sends the helo command
+							client->writeCommand(
+								ClientCommandType::CCT_HELO,
+								{_SMTP_SERVICE_DOMAIN}
+							);
+							this->printSent("HELO [domain]");
+						}
 					}
-
-					// Checks if we need to perform the hello command without
-					// - the ESMTP manner
-					if (
-						!session.getAction(_SCS_ACTION_HELO) &&
-						!session.getFlag(_SCS_FLAG_ESMTP)
-					)
+					default:
 					{
-						session.setAction(_SCS_ACTION_HELO);
+						std::string message = "Transmission error: ";
+						message += std::to_string(code) + ": " + args;
+						this->addError(target.t_Address.toString(), message);
 
-						// Sends the helo command
-						client->writeCommand(
-							ClientCommandType::CCT_HELO,
-							{_SMTP_SERVICE_DOMAIN}
-						);
-						this->printSent("HELO [domain]");
+						_run = false;
+						continue;
 					}
 				}
 			}

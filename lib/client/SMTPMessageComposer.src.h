@@ -114,4 +114,15 @@ namespace FSMTP::Mailer::Composer
 	 * @Return {std::string}
 	 */
 	std::string generateBoundary(void);
+
+	/**
+	 * Normalizes an message body, feature set:
+	 * 1. Remove duplicated whitespace
+	 * 2. Remove whitespace at the start and end of lines
+	 * 3. Turn "\n" into "\r\n" ( required after encoding quoted-printable )
+	 *
+	 * @Param {const std::string &} raw
+	 * @return {std::string}
+	 */
+	std::string normalizeMessageBody(const std::string &raw);
 }

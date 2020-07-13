@@ -216,10 +216,9 @@ namespace FSMTP::Networking
 	{
 		// Closes the socket, and frees ssl memory
 		// - if we're using ssl
-		shutdown(this->s_SocketFD, SHUT_RDWR);
 		if (this->s_UseSSL)
 		{
-			SSL_shutdown(this->s_SSL);
+			// SSL_shutdown(this->s_SSL);
 			SSL_free(this->s_SSL);
 			SSL_CTX_free(this->s_SSLCtx);
 		}
