@@ -393,7 +393,7 @@ namespace FSMTP::Mailer::Composer
 		// - and suffix whitespace
 		std::stringstream stream(temp);
 		std::string token;
-		bool previousLineWasEmpty = false;
+		bool previousLineWasEmpty = true;
 		while (std::getline(stream, token, '\n'))
 		{
 			// Removes the '\r' if there

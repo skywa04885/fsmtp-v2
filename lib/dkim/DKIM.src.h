@@ -1,0 +1,96 @@
+/*
+	Copyright [2020] [Luke A.C.A. Rieff]
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+*/
+
+/*
+=>
+	All options and decisions for the building of this file is available
+	in [RFC6476](https://tools.ietf.org/html/rfc6376)
+=>
+*/
+
+#pragma once
+
+#include <iostream>
+#include <string>
+#include <vector>
+#include <cstring>
+#include <sstream>
+#include <cstdint>
+
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+
+#include "../parsers/mime.src.h"
+#include "../general/macros.src.h"
+#include "../general/logger.src.h"
+#include "../general/Timer.src.h"
+#include "../general/cleanup.src.h"
+
+using namespace FSMTP::Parsers;
+using namespace FSMTP::Cleanup;
+
+namespace FSMTP::DKIM
+{
+	// Order: body, headers
+	typedef enum : uint8_t
+	{
+		DAP_RELAXED_RELAXED = 0,
+		DAP_RELAXED_SIMPLE,
+		DAP_SIMPLE_RELAXED,
+		DAP_SIMPLE_SIMPLE
+	} DKIMAlgorithmPair;
+
+	typedef struct
+	{
+		const char *c_PrivateKeyPath;
+		const char *c_Domain;
+		const char *c_KeySelector;
+		DKIMAlgorithmPair c_Algo = DKIMAlgorithmPair::DAP_RELAXED_RELAXED;
+	} DKIMConfig;
+
+	/**
+	 * Signs an raw email using the DKIM algorithm
+	 *
+	 * @Param {const std::string&} email
+	 * @Param {const DKIMConfig &} config
+	 * @Return {void}
+	 */
+	void sign(const std::string &email, const DKIMConfig &config);
+
+	/**
+	 * Verifies an email with possible DKIM headers
+	 *
+	 * @Param {const std::string &email}
+	 * @Return {void}
+	 */
+	bool verify(const std::string &email);
+
+	/**
+	 * canonicalizes the body using the relaxed algorithm
+	 *
+	 * @Param {const std::string &} raw
+	 * @Return {std::string}
+	 */
+	std::string _canonicalizeBodyRelaxed(const std::string &raw);
+
+	/**
+	 * Canonicalizes the headers using the relaxed algorithm
+	 *
+	 * @Param {const std::string &} raw
+	 * @Return {std::string}
+	 */
+	std::string _canonicalizeHeadersRelaxed(const std::string &raw);
+}

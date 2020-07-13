@@ -43,6 +43,9 @@ file(GLOB workers_headers "lib/workers/*.h")
 file(GLOB client_sources "lib/client/*.cc")
 file(GLOB client_headers "lib/client/*.h")
 
+file(GLOB dkim_sources "lib/dkim/*.cc")
+file(GLOB dkim_headers "lib/dkim/*.h")
+
 set(sources "main.cc")
 set(headers "main.h")
 set(args "-lpthread -lssl -lresolv -lcrypto -lcassandra -lboost_system -lcurses -lhiredis -lboost_program_options")
@@ -76,6 +79,9 @@ add_executable(
 
 	${client_sources}
 	${client_headers}
+
+	${dkim_sources}
+	${dkim_headers}
 )
 
 target_link_libraries(${PROJECT_NAME} ${args})

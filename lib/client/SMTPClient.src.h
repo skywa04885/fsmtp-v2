@@ -28,6 +28,7 @@
 #include "../networking/DNS.src.h"
 #include "../smtp/Response.src.h"
 #include "../smtp/Command.src.h"
+#include "../dkim/DKIM.src.h"
 #include "SMTPMessageComposer.src.h"
 #include "SMTPClientSession.src.h"
 

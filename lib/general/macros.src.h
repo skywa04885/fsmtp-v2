@@ -43,6 +43,10 @@
 #define _SMTP_SERVICE_DOMAIN "mail.fannst.nl"
 #endif
 
+#ifndef _SMTP_SERVICE_DKIM_DOMAIN
+#define _SMTP_SERVICE_DKIM_DOMAIN "fannst.nl"
+#endif
+
 #ifndef _SMTP_SERVICE_NODE_NAME
 #define _SMTP_SERVICE_NODE_NAME "FC_EU_N0001"
 #endif

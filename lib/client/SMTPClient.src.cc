@@ -42,6 +42,15 @@ namespace FSMTP::Mailer::Client
 
 		// Sets the targets, and composes the message
 		this->s_TransportMessage = compose(config);
+
+		// Signs the email
+		DKIM::DKIMConfig dkimConfig;
+		dkimConfig.c_KeySelector = "default";
+		dkimConfig.c_Domain = _SMTP_SERVICE_DKIM_DOMAIN;
+		dkimConfig.c_PrivateKeyPath = "../env/dkim-private.pem";
+		DKIM::sign(this->s_TransportMessage, dkimConfig);
+
+		// Sets the from
 		this->s_MailFrom = config.m_From[0];
 
 		// Resolves the hostnames and sets the status if it
@@ -70,6 +79,8 @@ namespace FSMTP::Mailer::Client
 				this->s_Targets.push_back(target);
 			} catch(const std::runtime_error &e)
 			{
+				this->s_Logger << ERROR << "Could not resolve records: " << e.what() << ENDL << CLASSIC;
+
 				std::string message = "Resolver error: ";
 				message += e.what();
 				this->addError(address.toString(), message);	
