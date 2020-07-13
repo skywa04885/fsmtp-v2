@@ -137,6 +137,7 @@ namespace FSMTP::Server
 		// - later use to get users and
 		// - the domains
 		// =================================
+		
 		std::unique_ptr<RedisConnection> redis;
 		try
 		{

@@ -652,4 +652,48 @@ namespace FSMTP::Networking
 	// =>
 	//
 	// ================================================
+
+	/**
+	 * Default empty constructor for the SMTPServerClientSocket
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
+	SMTPServerClientSocket::SMTPServerClientSocket(void)
+	{
+
+	}
+
+	/**
+	 * The constructor which adapts existing socket
+	 *
+	 * @Param {const int32_t} s_SocketFD
+	 * @Param {struct sockaddr_in} s_SockAddr
+	 * @Return {void}
+	 */
+	SMTPServerClientSocket::SMTPServerClientSocket(
+		const int32_t s_SocketFD,
+		struct sockaddr_in s_SockAddr
+	):
+		s_SocketFD(s_SocketFD), s_SockAddr(s_SockAddr)
+	{}
+
+	/**
+	 * Constructor override, frees the memory and closes
+	 * - the ongoing connection
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
+	SMTPServerClientSocket::~SMTPServerClientSocket(void)
+	{
+		// Closes the socket, and checks if we should free
+		// - the openssl context
+		shutdown(this->s_SocketFD, SHUT_RDWR);
+		if (this->s_UseSSL)
+		{
+			SSL_free(this->s_SSL);
+			SSL_CTX_free(this->s_SSLCtx);
+		}
+	}
 }

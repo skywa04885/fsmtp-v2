@@ -324,11 +324,27 @@ namespace FSMTP::Networking
 		 * @Return {void}
 		 */
 		explicit SMTPServerClientSocket(void);
-	
+
+		/**
+		 * The constructor which adapts existing socket
+		 *
+		 * @Param {const int32_t} s_SocketFD
+		 * @Param {struct sockaddr_in} s_SockAddr
+		 * @Return {void}
+		 */
 		SMTPServerClientSocket(
 			const int32_t s_SocketFD,
 			struct sockaddr_in s_SockAddr
 		);
+
+		/**
+		 * Constructor override, frees the memory and closes
+		 * - the ongoing connection
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		~SMTPServerClientSocket(void);
 	private:
 		SSL_CTX *s_SSLCtx;
 		SSL *s_SSL;
