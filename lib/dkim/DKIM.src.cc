@@ -23,9 +23,9 @@ namespace FSMTP::DKIM
 	 *
 	 * @Param {const std::string&} email
 	 * @Param {const DKIMConfig &} config
-	 * @Return {void}
+	 * @Return {std::string}
 	 */
-	void sign(const std::string &email, const DKIMConfig &config)
+	std::string sign(const std::string &email, const DKIMConfig &config)
 	{
 		#ifdef _SMTP_DEBUG
 		Logger logger("DKIMSigner", LoggerLevel::DEBUG);
@@ -126,6 +126,13 @@ namespace FSMTP::DKIM
 		// - appends it to the final email
 		std::string dkimSignature = buildDKIMHeader(segments, true);
 		DEBUG_ONLY(logger << "Final DKIM Signature: \r\n\033[41mDKIM-Signature: " << dkimSignature << "\033[0m" << ENDL);
+
+		// Generates the signed message
+		std::string res = headers;
+		res += "DKIM-Signature: " + dkimSignature + "\r\n\r\n";
+		res += body;
+
+		return res;
 	}
 
 	/**
@@ -276,7 +283,55 @@ namespace FSMTP::DKIM
 
 		if (autoFormat)
 		{
+			std::size_t lineLength = 0;
+			bool firstLine = true;
+			for (
+				std::map<const char *, std::string>::iterator it = pairs.begin();
+				it != pairs.end(); it++
+			)
+			{
+				// Creates the key value pair we should append, and
+				// - checks if it will fit, if not we will do something
+				// - about it
+				std::string shouldAppend = it->first;
+				shouldAppend += "=";
+				shouldAppend += it->second;
+				shouldAppend += "; ";
 
+				if (lineLength + shouldAppend.size() >= 98)
+				{
+					// Checks if it would fit if we added an new
+					// - line, else we will separate it over multiple
+					// - lines
+					if (shouldAppend.size() < 98)
+					{
+						firstLine = false;
+						res += "\r\n        "; // ( 8 spaces )
+						res += shouldAppend;
+						lineLength = shouldAppend.size() + 8;
+					} else
+					{
+						// Starts adding them over multiple lines
+						for (const char c : shouldAppend)
+						{
+							if (++lineLength >= 98)
+							{
+								res += "\r\n         "; // ( 9 spaces )
+								lineLength = 9;
+							}
+
+							res += c;
+						}
+					}
+				} else
+				{
+					res += shouldAppend;
+					lineLength += shouldAppend.size();
+				}
+			}
+
+			res.pop_back();
+			res.pop_back();
 		} else
 		{
 			for (

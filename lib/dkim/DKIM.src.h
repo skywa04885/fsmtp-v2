@@ -80,9 +80,9 @@ namespace FSMTP::DKIM
 	 *
 	 * @Param {const std::string&} email
 	 * @Param {const DKIMConfig &} config
-	 * @Return {void}
+	 * @Return {std::string}
 	 */
-	void sign(const std::string &email, const DKIMConfig &config);
+	std::string sign(const std::string &email, const DKIMConfig &config);
 
 	/**
 	 * Verifies an email with possible DKIM headers

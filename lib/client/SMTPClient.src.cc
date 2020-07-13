@@ -41,14 +41,14 @@ namespace FSMTP::Mailer::Client
 		if (!s_Silent) this->s_Logger << "Preparing ..." << ENDL;
 
 		// Sets the targets, and composes the message
-		this->s_TransportMessage = compose(config);
+		std::string plain = compose(config);
 
 		// Signs the email
 		DKIM::DKIMConfig dkimConfig;
 		dkimConfig.c_KeySelector = "default";
 		dkimConfig.c_Domain = _SMTP_SERVICE_DKIM_DOMAIN;
 		dkimConfig.c_PrivateKeyPath = "../env/keys/dkim-private.pem";
-		DKIM::sign(this->s_TransportMessage, dkimConfig);
+		this->s_TransportMessage = DKIM::sign(plain, dkimConfig);
 
 		// Sets the from
 		this->s_MailFrom = config.m_From[0];
