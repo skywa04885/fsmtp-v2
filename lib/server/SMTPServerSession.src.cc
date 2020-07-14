@@ -29,26 +29,27 @@ namespace FSMTP::Server
 		s_Flags(0x0), s_PerformedActions(0x0)
 	{}
 
+
 	/**
-	 * Sets the SSL flag
+	 * Sets an session flag
 	 *
-	 * @Param {void}
+	 * @Param {int64_t} mask
 	 * @Return {void}
 	 */
-	void SMTPServerSession::setSSLFlag(void)
+	void SMTPServerSession::setFlag(int64_t mask)
 	{
-		this->s_Flags |= _SMTP_SERV_SESSION_SSL_FLAG;
+		this->s_Flags |= mask;
 	}
 
 	/**
-	 * Gets the SSL flag as bool
+	 * Gets an flag
 	 *
-	 * @Param {void}
+	 * @Param {int64_t} mask
 	 * @Return {bool}
 	 */
-	bool SMTPServerSession::getSSLFlag(void)
+	bool SMTPServerSession::getFlag(int64_t mask)
 	{
-		if (BINARY_COMPARE(this->s_Flags, _SMTP_SERV_SESSION_SSL_FLAG))
+		if (BINARY_COMPARE(this->s_Flags, mask))
 			return true;
 		else return false;
 	}
@@ -56,23 +57,23 @@ namespace FSMTP::Server
 	/**
 	 * Sets an action as performed in the register
 	 *
-	 * @Param {int64_t} flag
+	 * @Param {int64_t} mask
 	 * @Return {void}
 	 */
-	void SMTPServerSession::setPerformedAction(int64_t flag)
+	void SMTPServerSession::setAction(int64_t mask)
 	{
-		this->s_PerformedActions |= flag;
+		this->s_PerformedActions |= mask;
 	}
 
 	/**
 	 * Checks if an action is performed and returns bool
 	 *
-	 * @Param {int64_t} flag
+	 * @Param {int64_t} mask
 	 * @Return {void}
 	 */
-	bool SMTPServerSession::actionPerformed(int64_t flag)
+	bool SMTPServerSession::getAction(int64_t mask)
 	{
-		if (BINARY_COMPARE(this->s_PerformedActions, flag))
+		if (BINARY_COMPARE(this->s_PerformedActions, mask))
 			return true;
 		else return false;
 	}

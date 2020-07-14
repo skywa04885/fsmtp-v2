@@ -41,6 +41,7 @@
 
 #include "../general/macros.src.h"
 #include "../smtp/Command.src.h"
+#include "../smtp/Response.src.h"
 
 #ifndef _SOCKET_MAX_IN_QUEUE
 #define _SOCKET_MAX_IN_QUEUE 40
@@ -345,6 +346,22 @@ namespace FSMTP::Networking
 		 * @Return {void}
 		 */
 		~SMTPServerClientSocket(void);
+
+		/**
+		 * Sends an message to the client
+		 *
+		 * @Param {const std::string &} raw
+		 * @Return {void}
+		 */
+		void sendMessage(const std::string &raw);
+
+		/**
+		 * Reads data untill an newline is received
+		 *
+		 * @Param {const bool} big
+		 * @Return {std::string}
+		 */
+		std::string readUntillNewline(const bool big);
 	private:
 		SSL_CTX *s_SSLCtx;
 		SSL *s_SSL;

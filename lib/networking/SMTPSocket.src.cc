@@ -91,7 +91,7 @@ namespace FSMTP::Networking
 			} else
 			{
 				rc = recv(this->s_SocketFD, buffer, 1024, MSG_PEEK);
-				if (rc < 0)
+				if (rc <= 0)
 					throw SMTPTransmissionError("Could not peek data");
 			}
 
@@ -675,7 +675,7 @@ namespace FSMTP::Networking
 		const int32_t s_SocketFD,
 		struct sockaddr_in s_SockAddr
 	):
-		s_SocketFD(s_SocketFD), s_SockAddr(s_SockAddr)
+		s_SocketFD(s_SocketFD), s_SockAddr(s_SockAddr), s_UseSSL(false)
 	{}
 
 	/**
@@ -695,5 +695,58 @@ namespace FSMTP::Networking
 			SSL_free(this->s_SSL);
 			SSL_CTX_free(this->s_SSLCtx);
 		}
+	}
+
+	/**
+	 * Sends an message to the client
+	 *
+	 * @Param {const std::string &} raw
+	 * @Return {void}
+	 */
+	void SMTPServerClientSocket::sendMessage(const std::string &raw)
+	{
+
+	}
+
+	/**
+	 * Reads data untill an newline is received
+	 *
+	 * @Param {const bool} big
+	 * @Return {std::string}
+	 */
+	std::string SMTPServerClientSocket::readUntillNewline(const bool big)
+	{
+		int32_t rc;
+		char *buffer = new char[128];
+		std::string res;
+
+		for (;;)
+		{
+			rc = recv(this->s_SocketFD, buffer, 128, 0);
+			if (rc < 0)
+			{
+				delete[] buffer;
+				throw std::runtime_error("Could not read data");
+			}
+
+			res += std::string(buffer, rc);
+			memset(buffer, 0, 128);
+
+			if (big) 
+			{
+				if (res.size() > 5 && res.substr(res.size() - 5) == "\r\n.\r\n")
+				{
+					break;
+				}
+			}
+			else if (res.size() >= 2 && res.substr(res.size() - 2) == "\r\n")
+			{
+				break;
+			}
+		}
+
+		delete[] buffer;
+		if (big) return res.substr(0, res.size() - 5);
+		else return res.substr(0, res.size() - 2);
 	}
 }

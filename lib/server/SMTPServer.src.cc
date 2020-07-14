@@ -117,9 +117,7 @@ namespace FSMTP::Server
 		_serverThreadCount++;
 		if (_forceLoggerNCurses) NCursesDisplay::setThreads(_serverThreadCount);
 
-		SSL_CTX *sslCtx = nullptr;
-		SSL *ssl = nullptr;
-		int32_t executed = 0x0;
+		SMTPServerClientSocket client(fd, *sAddr);
 		SMTPServer &server = *reinterpret_cast<SMTPServer *>(u);
 		SMTPServerSession session;
 
@@ -151,219 +149,73 @@ namespace FSMTP::Server
 			goto smtp_server_close_conn;
 		}
 
-		// Prints the initial client information and then
-		// - we sent the initial hello message to the SMTP client
-		DEBUG_ONLY(logger << "onClientSync() aangeroepen, verbinding gemaakt." << ENDL);
-
-		{ // ( Initial message )
-			ServerResponse response(SRC_INIT, server.s_UseESMTP, nullptr);
-			std::string message;
-			response.build(message);
-			SMTPSocket::sendString(fd, nullptr, false, message);
-		}
-
 		// Starts the infinite reading and writing loop
 		// - in here we will handle commands and send responses
 		while (true)
 		{
-			// Receives the data from the client
-			std::string rawData;
-			try
-			{
-				SMTPSocket::receiveString(fd, ssl, session.getSSLFlag(), false, rawData);
-			} catch(const std::runtime_error &e)
-			{
-				DEBUG_ONLY(logger << FATAL << "An exception occured: " << e.what() << ", closing connection !" << ENDL << CLASSIC);
-				break;
-			}
-
-			// Performs the parsing of the command and then checks which
-			// - method we need to call to perform the command
-			ClientCommand command(rawData);
-			DEBUG_ONLY(logger << DEBUG << "[pClass: " << command.c_CommandType << ", argC: " << command.c_Arguments.size() << "] -> C: " << rawData << ENDL << CLASSIC);
-
-			// Builds the data struct which we cann pass to the actions
-			BasicActionData actionData {
-				command,
-				sAddr,
-				server.s_UseESMTP,
-				fd,
-				ssl
-			};
-
-			if (command.c_CommandType == ClientCommandType::CCT_QUIT)
-			{
-				std::string message;
-				ServerResponse resp(SMTPResponseCommand::SRC_QUIT_RESP, server.s_UseESMTP, nullptr);
-				resp.build(message);
-				SMTPSocket::sendString(fd, ssl, session.getSSLFlag(), message);
-				break;
-			}
-
-			// ===============================================
-			// Performs an attempt to respond / handle the
-			// - current command
-			//
-			// We use an switch statement to check the
-			// - command type, and then perform
-			// - an action from the SMTPActions source files
-			// - when something goes wrong we catch it,
-			// - and send an error message / shutdown the
-			// - SMTP Server
-			// ===============================================
-
 			try 
 			{
+				// Reads the command, parses it
+				// - and quits when an error is thrown
+				ClientCommand command = ClientCommand(client.readUntillNewline(true));
+
+				// Checks how we should respond to the command
 				switch (command.c_CommandType)
 				{
 					case ClientCommandType::CCT_HELO:
-					{
-						if (session.actionPerformed(_SMTP_SERV_PA_START_TLS))
-							actionHelloAfterStartTLS(actionData, &server.s_Services, session);
-						else 
-							actionHelloInitial(actionData);
-						break;
+					{ // ( Simple hello command )
+						// Checks we should handle the hello command
+						// - this is always possible, except when the 
+						// - hello command was already transmitted
+						if (!session.getAction(_SMTP_SERV_PA_HELO))
+						{
+							session.setAction(_SMTP_SERV_PA_HELO);
+
+							// Checks if there are arguments, else throw syntax
+							// - error because the server domain is required
+							if (command.c_Arguments.size() < 1)
+								throw SyntaxException("Empty HELO command not allowed !");
+
+							// Continues to the next round
+							continue;
+						}
 					}
 					case ClientCommandType::CCT_START_TLS:
-					{
-						// ================================================
-						// Upgrades the connection to an SSL socket
-						//
-						// Since many emails contain important information
-						// - we want to allow email clients to use 
-						// - STARTLS, and this will basically allow
-						// - that.
-						// ================================================
-
-						DEBUG_ONLY(logger << DEBUG << "Veilige verbinding wordt aangevraagd." << ENDL << CLASSIC);
-
-						// Sends the message that the client may
-						// - proceed with the STARTTLS stuff
-						std::string message;
-						ServerResponse resp(SMTPResponseCommand::SRC_READY_START_TLS, server.s_UseESMTP, nullptr);
-						resp.build(message);
-						SMTPSocket::sendString(fd, ssl, session.getSSLFlag(), message);
-
-						// Upgrades the socket connection to use TLS,
-						// - after that we print the message to the console
-						try {
-							SMTPSocket::upgradeToSSL(&fd, &ssl, &sslCtx);
-							DEBUG_ONLY(logger << DEBUG << "Verbinding is succesvol beveiligd." << ENDL << CLASSIC);
-
-							// Updates the flags
-							session.setSSLFlag();
-							session.setPerformedAction(_SMTP_SERV_PA_START_TLS);
-						} catch (const std::runtime_error &e)
-						{
-							DEBUG_ONLY(logger << ERROR << "Verbinding kan niet worden beveiligd, daarom wordt de verbinding gesloten." << ENDL << CLASSIC);
-							goto smtp_server_close_conn;
-						}
+					{ // ( Advenced hello command )
 						break;
 					}
 					case ClientCommandType::CCT_MAIL_FROM:
 					{
-						actionMailFrom(actionData, logger, redis.get(), session);
 						break;
 					}
 					case ClientCommandType::CCT_RCPT_TO:
 					{
-						actionRcptTo(actionData, logger, redis.get(), session);
 						break;
 					}
 					case ClientCommandType::CCT_DATA:
 					{
-						// Sends the response that the client
-						// - may start sending the data
-						{
-							std::string message;
-							ServerResponse resp(SMTPResponseCommand::SRC_DATA_START, server.s_UseESMTP, nullptr);
-							resp.build(message);
-							SMTPSocket::sendString(fd, ssl, session.getSSLFlag(), message);
-						}
-
-						// Receives the full message
-						std::string data;
-						SMTPSocket::receiveString(fd, ssl, session.getSSLFlag(), true, data);
-
-						MIME::joinMessageLines(data);
-						MIME::parseRecursive(data, session.s_TransportMessage, 0);
-
-						// ================================================
-						// Start storage section !
-						// 
-						// Stores the email in the database, and
-						// - adds it to the sending que if required
-						// ================================================
-
-						// Checks how we will store the message,
-						// - such as storing it in the database, linked
-						// - to the receiving user
-						if ((session.s_Flags & _SMTP_SERV_SESSION_RELAY_FLAG) != _SMTP_SERV_SESSION_RELAY_FLAG)
-						{ // -> No relay, just store
-
-							// Creates the uuid for the email
-							CassUuidGen *uuidGen = cass_uuid_gen_new();
-							cass_uuid_gen_time(uuidGen, &session.s_TransportMessage.e_EmailUUID);
-							cass_uuid_gen_free(uuidGen);
-
-							// Binds the users uuid to the email
-							session.s_TransportMessage.e_OwnersUUID = session.s_ReceivingAccount.a_UUID;
-							session.s_TransportMessage.e_OwnersDomain = session.s_ReceivingAccount.a_Domain;
-
-							// Sets the other options, such as the email
-							// - type
-							session.s_TransportMessage.e_Type = EmailType::ET_INCOMMING;
-							session.s_TransportMessage.e_Bucket = FullEmail::getBucket();
-							session.s_TransportMessage.e_Encryped = false;
-
-							// Adds the email to the database storage queue
-							_emailStorageMutex.lock();
-							_emailStorageQueue.push_back(session.s_TransportMessage);
-							_emailStorageMutex.unlock();
-						}
-
-						// Prints the stored message
-						DEBUG_ONLY(FullEmail::print(session.s_TransportMessage, logger));
-
-						// ================================================
-						// Notifies the client of storage / relay success
-						//
-						// Since the client has sent an message, we
-						// - now send an confirming response to the client
-						// - which tells that the message has been received
-						// ================================================
-
-						// Sends the data finished command
-						// - to indicate the body was received
-						std::string message;
-						ServerResponse resp(SMTPResponseCommand::SRC_DATA_END, server.s_UseESMTP, nullptr);
-						resp.build(message);
-						SMTPSocket::sendString(fd, ssl, session.getSSLFlag(), message);
 						break;
 					}
 					case ClientCommandType::CCT_UNKNOWN:
 					{
-						std::string message;
-						ServerResponse resp(SMTPResponseCommand::SRC_SYNTAX_ERR_INVALID_COMMAND, server.s_UseESMTP, nullptr);
-						resp.build(message);
-						SMTPSocket::sendString(fd, ssl, session.getSSLFlag(), message);
 						break;
 					}
 				}
+			} catch (const SMTPTransmissionError &e)
+			{
+				logger << FATAL << "Transmission error: " << e.what() << ENDL << CLASSIC;
+				break;
 			} catch (const SyntaxException &e)
 			{
-				std::string message;
-				ServerResponse resp(SMTPResponseCommand::SRC_SYNTAX_ARG_ERR, e.what());
-				resp.build(message);
-				SMTPSocket::sendString(fd, ssl, session.getSSLFlag(), message);
+
 			} catch (const FatalException &e)
 			{
 				logger << FATAL << "Fatal exception: " << e.what() << ENDL << CLASSIC;
-				goto smtp_server_close_conn;
+				break;
 			} catch (const std::runtime_error &e)
 			{
 				logger << FATAL << "Fatal exception ( runtime ): " << e.what() << ENDL << CLASSIC;
-				goto smtp_server_close_conn;
+				break;
 			}
 		}
 
@@ -371,19 +223,13 @@ namespace FSMTP::Server
 
 		// Closes the connection with the client, and if
 		// - an message needs to be sent, please do this before
-		shutdown(fd, SHUT_RDWR);
 		logger << WARN << "Verbinding is gesloten." << ENDL << CLASSIC;
 		delete sAddr;
 
-		if (session.getSSLFlag())
-		{
-			SSL_free(ssl);
-			SSL_CTX_free(sslCtx);
-		}
-
 		// Updates the thread count, and emails handled
 		_serverThreadCount--;
-		if (_forceLoggerNCurses) NCursesDisplay::setThreads(_serverThreadCount);
+		if (_forceLoggerNCurses)
+			NCursesDisplay::setThreads(_serverThreadCount);
 		if (_forceLoggerNCurses)
 		{
 			_emailsHandled++;

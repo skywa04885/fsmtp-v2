@@ -85,13 +85,18 @@ namespace FSMTP::SMTP
 		// - specific compare operations
 		switch (command[0])
 		{
-			case 'h': case 'e':
+			case 'h':
 			{
-				if (command.substr(0, 4) == "helo" || command.substr(0, 4) == "ehlo")
+				if (command.substr(0, 4) == "helo")
 					this->c_CommandType = ClientCommandType::CCT_HELO;
 				else 
 					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
 				break;
+			}
+			case 'e':
+			{
+				if (command.substr(0, 4) == "ehlo")
+					this->c_CommandType = ClientCommandType::CCT_EHLO;
 			}
 			case 's':
 			{

@@ -370,6 +370,7 @@ int main(const int argc, const char **argv)
 
 	server.shutdownServer();
 	dbWorker->stop();
+	transWorker->stop();
 	NCursesDisplay::die();
 
 	return 0;

@@ -39,10 +39,10 @@ namespace FSMTP::Server::Actions
 
 		// Sends the response since everything seems fine to
 		// - me, and then we return without any error
-		ServerResponse resp(SMTPResponseCommand::SRC_HELO_RESP, data.esmtp, nullptr);
-		std::string mess;
-		resp.build(mess);
-		SMTPSocket::sendString(data.fd, nullptr, false, mess);
+		// ServerResponse resp(SMTPResponseCommand::SRC_HELO_RESP, data.esmtp, nullptr);
+		// std::string mess;
+		// resp.build(mess);
+		// SMTPSocket::sendString(data.fd, nullptr, false, mess);
 	}
 
 	/**
@@ -66,10 +66,10 @@ namespace FSMTP::Server::Actions
 
 		// Sends the response since everything seems fine to
 		// - me, and then we return without any error
-		ServerResponse resp(SMTPResponseCommand::SRC_HELO_RESP, data.esmtp, services);
-		std::string mess;
-		resp.build(mess);
-		SMTPSocket::sendString(data.fd, data.ssl, session.getSSLFlag(), mess);
+		// ServerResponse resp(SMTPResponseCommand::SRC_HELO_RESP, data.esmtp, services);
+		// std::string mess;
+		// resp.build(mess);
+		// SMTPSocket::sendString(data.fd, data.ssl, session.getSSLFlag(), mess);
 	}
 
 	/**
@@ -136,10 +136,10 @@ namespace FSMTP::Server::Actions
 
 		// Sends the response which states that the client
 		// - may proceed with sending the email
-		ServerResponse resp(SMTPResponseCommand::SRC_PROCEED, data.esmtp, nullptr);
-		std::string mess;
-		resp.build(mess);
-		SMTPSocket::sendString(data.fd, data.ssl, session.getSSLFlag(), mess);
+		// ServerResponse resp(SMTPResponseCommand::SRC_PROCEED, data.esmtp, nullptr);
+		// std::string mess;
+		// resp.build(mess);
+		// SMTPSocket::sendString(data.fd, data.ssl, session.getSSLFlag(), mess);
 	}
 
 	/**
@@ -213,10 +213,10 @@ namespace FSMTP::Server::Actions
 				if ((session.s_Flags & _SMTP_SERV_SESSION_RELAY_FLAG) != _SMTP_SERV_SESSION_RELAY_FLAG)
 				{
 					// Sends the error message
-					ServerResponse resp(SMTPResponseCommand::SRC_BAD_EMAIL_ADDRESS, data.esmtp, nullptr);
-					std::string mess;
-					resp.build(mess);
-					SMTPSocket::sendString(data.fd, data.ssl, session.getSSLFlag(), mess);
+					// ServerResponse resp(SMTPResponseCommand::SRC_BAD_EMAIL_ADDRESS, data.esmtp, nullptr);
+					// std::string mess;
+					// resp.build(mess);
+					// SMTPSocket::sendString(data.fd, data.ssl, session.getSSLFlag(), mess);
 
 					// Throws the fatal exception
 					std::string message = "Gebruiker of domain niet gevonden in onze database: ";
@@ -231,9 +231,9 @@ namespace FSMTP::Server::Actions
 
 		// Sends the response which states that the client
 		// - may proceed with sending the email
-		ServerResponse resp(SMTPResponseCommand::SRC_PROCEED, data.esmtp, nullptr);
-		std::string mess;
-		resp.build(mess);
-		SMTPSocket::sendString(data.fd, data.ssl, session.getSSLFlag(), mess);
+		// ServerResponse resp(SMTPResponseCommand::SRC_PROCEED, data.esmtp, nullptr);
+		// std::string mess;
+		// resp.build(mess);
+		// SMTPSocket::sendString(data.fd, data.ssl, session.getSSLFlag(), mess);
 	}
 }

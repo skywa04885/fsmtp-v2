@@ -29,17 +29,15 @@ using namespace FSMTP::Cleanup;
 namespace FSMTP::SMTP
 {
 	typedef enum : uint32_t {
-		SRC_INIT = 0,
-		SRC_HELO_RESP,
-		SRC_READY_START_TLS,
-		SRC_PROCEED,
-		SRC_QUIT_RESP,
-		SRC_SYNTAX_ARG_ERR,
-		SRC_SYNTAX_ERR_INVALID_COMMAND,
-		SRC_BAD_EMAIL_ADDRESS,
+		SRC_GREETING,
+		SRC_EHLO,
+		SRC_HELO,
+		SRC_MAIL_FROM,
+		SRC_RCPT_TO,
 		SRC_DATA_START,
-		SRC_DATA_END
-	} SMTPResponseCommand;
+		SRC_DATA_END,
+		SRC_QUIT_GOODBYE
+	} SMTPResponseType;
 
 	typedef struct {
 		const char *s_Name;
@@ -50,48 +48,20 @@ namespace FSMTP::SMTP
 	{
 	public:
 		/**
-		 * Default constructor which will throw default responses
-		 *
-		 * @Param {SMTPResponseCommand &} r_CType
-		 * @Param {bool &} r_ESMTP
-		 * @Param {std::vector<SMTPServiceFunction> *} services
-		 * @Return void
+		 * The default constructor for the response
+		 * - this will generate the text, and do everything
+		 * - automatically
+		 */
+		ServerResponse(const SMTPResponseType c_Type);
+
+		/**
+		 * The default constructor, but then with the services
+		 * - pointer, currently only for EHLO command
 		 */
 		ServerResponse(
-			const SMTPResponseCommand &r_CType,
-			const bool &r_ESMTP, 
-			const std::vector<SMTPServiceFunction> *services
+			const SMTPResponseType c_Type, 
+			std::vector<SMTPServiceFunction> *services
 		);
-
-		/**
-		 * The default constructor for an custom user response
-		 * - but we will still add the status code by default
-		 *
-		 * @Param {SMTPResponseCommand &} r_CType
-		 * @Param {std::string &} r_Message
-		 * @Return void
-		 */
-		ServerResponse(
-			const SMTPResponseCommand &r_CType, 
-			const std::string &r_Message
-		);
-
-		/**
-		 * Builds the response and stores it in the string reference
-		 *
-		 * @Param {std::string &} ret
-		 * @Return void
-		 */
-		void build(std::string &ret);
-
-		/**
-		 * Static method which turns an enum value
-		 * - into an usable code in the string format
-		 *
-		 * @Param {SMTPResponseCommand &} c
-		 * @Return const char *
-		 */
-		static const char *rcToCode(const SMTPResponseCommand &c);
 
 		/**
 		 * Parses an server response into an string and code
@@ -102,8 +72,6 @@ namespace FSMTP::SMTP
 		 */
 		static std::tuple<int32_t, std::string> parseResponse(const std::string &raw);
 	private:
-		std::string r_Message;
-		SMTPResponseCommand r_CType;
-		bool r_ESMTP;
+
 	};
 }

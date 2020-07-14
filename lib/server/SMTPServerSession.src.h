@@ -38,6 +38,7 @@
 #define _SMTP_SERV_PA_DATA_END 32
 #define _SMTP_SERV_PA_HELO_AFTER_STLS 64
 #define _SMTP_SERV_PA_AUTH_PERF 128
+#define _SMTP_SERV_PA_EHLO 128
 
 using namespace FSMTP::Models;
 
@@ -56,36 +57,36 @@ namespace FSMTP::Server
 		explicit SMTPServerSession();
 
 		/**
-		 * Sets the SSL flag
+		 * Sets an session flag
 		 *
-		 * @Param {void}
+		 * @Param {int64_t} mask
 		 * @Return {void}
 		 */
-		void setSSLFlag(void);
+		void setFlag(int64_t mask);
 
 		/**
-		 * Gets the SSL flag as bool
+		 * Gets an flag
 		 *
-		 * @Param {void}
+		 * @Param {int64_t} mask
 		 * @Return {bool}
 		 */
-		bool getSSLFlag(void);
+		bool getFlag(int64_t mask);
 
 		/**
 		 * Sets an action as performed in the register
 		 *
-		 * @Param {int64_t} flag
+		 * @Param {int64_t} mask
 		 * @Return {void}
 		 */
-		void setPerformedAction(int64_t flag);
+		void setAction(int64_t mask);
 
 		/**
 		 * Checks if an action is performed and returns bool
 		 *
-		 * @Param {int64_t} flag
+		 * @Param {int64_t} mask
 		 * @Return {void}
 		 */
-		bool actionPerformed(int64_t flag);
+		bool getAction(int64_t mask);
 
 		int32_t s_Flags;
 		int64_t s_PerformedActions;

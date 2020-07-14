@@ -31,13 +31,13 @@ namespace FSMTP::SMTP
 {
 	typedef enum : uint32_t {
 		CCT_HELO = 0,
+		CCT_EHLO,
 		CCT_START_TLS,
 		CCT_MAIL_FROM,
 		CCT_RCPT_TO,
 		CCT_DATA,
 		CCT_QUIT,
-		CCT_UNKNOWN,
-		CCT_EHLO
+		CCT_UNKNOWN
 	} ClientCommandType;
 
 	class ClientCommand
