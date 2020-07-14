@@ -51,16 +51,60 @@ namespace FSMTP::SMTP
 		 * The default constructor for the response
 		 * - this will generate the text, and do everything
 		 * - automatically
+		 *
+		 * @Param {const SMTPResponseType} c_Type
+		 * @Return {void}
 		 */
 		ServerResponse(const SMTPResponseType c_Type);
 
 		/**
 		 * The default constructor, but then with the services
 		 * - pointer, currently only for EHLO command
+		 *
+		 * @Param {const SMTPResponseType} c_Type
+		 * @Param {const std::string &} c_Message
+		 * @Param {const std::vector<SMTPServiceFunction *} c_Services
+		 * @Return {void}
 		 */
 		ServerResponse(
-			const SMTPResponseType c_Type, 
-			std::vector<SMTPServiceFunction> *services
+			const SMTPResponseType c_Type,
+			const std::string &c_Message, 
+			std::vector<SMTPServiceFunction> *c_Services
+		);
+
+		/**
+		 * Builds the response message
+		 *
+		 * @Param {void}
+		 * @Return {std::string}
+		 */
+		std::string build(void);
+
+		/**
+		 * Gets the message for an specific response type
+		 *
+		 * @Param {const SMTPResponseType} c_Type
+		 * @Return {const char *}
+		 */
+		static const char *getMessage(const SMTPResponseType c_Type);
+
+		/**
+		 * Gets the code for response type
+		 *
+		 * @Param {const SMTPResponseType} c_Type
+		 * @Return {int32_t}
+		 */
+		static int32_t getCode(const SMTPResponseType c_Type);
+
+		/**
+		 * Builds the services list
+		 *
+		 * @Param {const int32_t} code
+		 * @Param {std::vector<SMTPServiceFunction> *} c_Services
+		 */
+		static std::string buildServices(
+			const int32_t code,
+			std::vector<SMTPServiceFunction> *c_Services
 		);
 
 		/**
@@ -72,6 +116,8 @@ namespace FSMTP::SMTP
 		 */
 		static std::tuple<int32_t, std::string> parseResponse(const std::string &raw);
 	private:
-
+		SMTPResponseType c_Type;
+		std::vector<SMTPServiceFunction> *c_Services;
+		std::string c_Message;
 	};
 }

@@ -19,6 +19,90 @@
 namespace FSMTP::SMTP
 {
 	/**
+	 * The default constructor for the response
+	 * - this will generate the text, and do everything
+	 * - automatically
+	 *
+	 * @Param {const SMTPResponseType} c_Type
+	 * @Return {void}
+	 */
+	ServerResponse::ServerResponse(const SMTPResponseType c_Type):
+		c_Type(c_Type), c_Services(nullptr)
+	{}
+
+	/**
+	 * The default constructor, but then with the services
+	 * - pointer, currently only for EHLO command
+	 *
+	 * @Param {const SMTPResponseType} c_Type
+	 * @Param {const std::string &} c_Message
+	 * @Param {const std::vector<SMTPServiceFunction *} c_Services
+	 * @Return {void}
+	 */
+	ServerResponse::ServerResponse(
+		const SMTPResponseType c_Type,
+		const std::string &c_Message, 
+		std::vector<SMTPServiceFunction> *c_Services
+	):
+		c_Type(c_Type), c_Services(c_Services), c_Message(c_Message)
+	{}
+
+	/**
+	 * Builds the response message
+	 *
+	 * @Param {void}
+	 * @Return {std::string}
+	 */
+	std::string build(void)
+	{
+		std::string res;
+
+		return res;
+	}
+
+	/**
+	 * Gets the message for an specific response type
+	 *
+	 * @Param {const SMTPResponseType} c_Type
+	 * @Return {const char *}
+	 */
+	const char *ServerResponse::getMessage(const SMTPResponseType c_Type)
+	{
+
+	}
+
+	/**
+	 * Gets the code for response type
+	 *
+	 * @Param {const SMTPResponseType} c_Type
+	 * @Return {int32_t}
+	 */
+	int32_t ServerResponse::getCode(const SMTPResponseType c_Type)
+	{
+		switch (c_Type)
+		{
+			case SMTPResponseType::SRC_GREETING: return 220;
+			case SMTPResponseType::SRC_EHLO: return 250;
+			case SMTPResponseType::SRC_HELO: return 250;
+			default: return 999;
+		}
+	}
+
+	/**
+	 * Builds the services list
+	 *
+	 * @Param {const int32_t} code
+	 * @Param {std::vector<SMTPServiceFunction> *} c_Services
+	 */
+	std::string ServerResponse::buildServices(
+		const int32_t code,
+		std::vector<SMTPServiceFunction> *c_Services
+	)
+	{
+
+	}
+
+	/**
 	 * Parses an server response into an string and code
 	 *
 	 * @Param {const std::string &} raw
