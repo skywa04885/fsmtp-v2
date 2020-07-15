@@ -25,7 +25,7 @@
 #include "../general/macros.src.h"
 #include "../general/logger.src.h"
 #include "../general/cleanup.src.h"
-#include "../models/email.src.h"
+#include "../models/Email.src.h"
 #include "../general/encoding.src.h"
 
 using namespace FSMTP::Cleanup;

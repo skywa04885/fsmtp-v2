@@ -23,7 +23,7 @@
 #include <string>
 #include <random>
 
-#include "../models/email.src.h"
+#include "../models/Email.src.h"
 #include "../general/encoding.src.h"
 #include "../general/macros.src.h"
 #include "../general/hex.src.h"

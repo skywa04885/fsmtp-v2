@@ -23,12 +23,11 @@
 #include <vector>
 #include <string>
 
-#include <openssl/ssl.h>
-
+#include "lib/general/Passwords.src.h"
 #include "lib/networking/SMTPSocket.src.h"
 #include "lib/server/SMTPServer.src.h"
 #include "lib/smtp/Response.src.h"
-#include "lib/models/email.src.h"
+#include "lib/models/Email.src.h"
 #include "lib/models/LocalDomain.src.h"
 #include "lib/general/connections.src.h"
 #include "lib/general/macros.src.h"

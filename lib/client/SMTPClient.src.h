@@ -23,7 +23,7 @@
 #include <functional>
 
 #include "../networking/SMTPSocket.src.h"
-#include "../models/email.src.h"
+#include "../models/Email.src.h"
 #include "../general/logger.src.h"
 #include "../networking/DNS.src.h"
 #include "../smtp/Response.src.h"

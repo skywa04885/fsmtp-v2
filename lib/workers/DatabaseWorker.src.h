@@ -20,7 +20,7 @@
 #include <thread>
 #include <mutex>
 
-#include "../models/email.src.h"
+#include "../models/Email.src.h"
 #include "./Worker.src.h"
 #include "../general/connections.src.h"
 

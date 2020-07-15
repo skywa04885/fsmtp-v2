@@ -21,7 +21,7 @@
 
 #include <cassandra.h>
 
-#include "../models/email.src.h"
+#include "../models/Email.src.h"
 #include "../general/macros.src.h"
 #include "../models/Account.src.h"
 

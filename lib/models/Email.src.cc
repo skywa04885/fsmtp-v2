@@ -14,7 +14,7 @@
 	limitations under the License.
 */
 
-#include "email.src.h"
+#include "Email.src.h"
 
 
 namespace FSMTP::Models
