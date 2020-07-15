@@ -303,8 +303,8 @@ int main(const int argc, const char **argv)
 		{
 			MailComposerConfig config;
 			config.m_Subject = "Hello";
-			config.m_To.emplace_back("Jeroen Rieff", "jrieff@notariskantoorbergen.nl");
-			config.m_From.emplace_back("Test", "test@fannst.nl");
+			config.m_To.emplace_back("Owner", "owner@fannst.nl");
+			config.m_From.emplace_back("Luke Rieff", "luke.rieff@gmail.com");
 			SMTPClient client(false);
 			client.prepare(config);
 			client.beSocial();

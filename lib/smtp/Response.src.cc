@@ -158,11 +158,14 @@ namespace FSMTP::SMTP
 			{
 				return "Ready to start TLS.";
 			}
+			case SMTPResponseType::SRC_QUIT_GOODBYE:
+			{
+				return "closing connection";
+			}
 			case SMTPResponseType::SRC_DATA_END:
 			{
-				std::string ret = "OK, message queued [";
+				std::string ret = "OK, message queued ";
 				ret += reinterpret_cast<const char *>(this->c_U); // ( MESSAGE ID )
-				ret += ']';
 				return ret;
 			}
 			default: throw std::runtime_error("getMessage() invalid type");

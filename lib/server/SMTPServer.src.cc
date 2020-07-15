@@ -165,6 +165,12 @@ namespace FSMTP::Server
 				// Checks how we should respond to the command
 				switch (command.c_CommandType)
 				{
+					case ClientCommandType::CCT_QUIT:
+					{
+						// Writes the goodbye message, and closes the connection
+						client.sendResponse(SMTPResponseType::SRC_QUIT_GOODBYE);
+						goto smtp_server_close_conn;
+					}
 					case ClientCommandType::CCT_HELO:
 					{ // ( Simple hello command )
 						// Checks we should handle the hello command
@@ -192,6 +198,7 @@ namespace FSMTP::Server
 							// Continues to the next round
 							continue;
 						}
+						break;
 					}
 					case ClientCommandType::CCT_EHLO:
 					{ // ( Extended Hello command )
@@ -220,6 +227,7 @@ namespace FSMTP::Server
 							// Continues to the next round
 							continue;
 						}
+						break;
 					}
 					case ClientCommandType::CCT_START_TLS:
 					{ // ( StartTLS command )
@@ -300,10 +308,88 @@ namespace FSMTP::Server
 					}
 					case ClientCommandType::CCT_RCPT_TO:
 					{
+						// Checks if we're allowed to perform the rcpt to command,
+						// - this is only allowed if mail from is sent, and hello performed
+						if (!session.getAction(_SMTP_SERV_PA_RCPT_TO))
+						{
+							// Checks if we're allowed to perform it, else
+							// - throws order error
+							if (!session.getAction(_SMTP_SERV_PA_HELO))
+								throw CommandOrderException("EHLO/HELLO first.");
+							if (!session.getAction(_SMTP_SERV_PA_MAIL_FROM))
+								throw CommandOrderException("MAIL FROM first.");
+
+
+							// Parses the mail address, if this fails
+							// - throw syntax exception
+							try {
+								session.s_TransportMessage.e_TransportTo.parse(
+									command.c_Arguments[0]);
+							}
+							catch (const std::runtime_error &e)
+							{
+								std::string message = "Invalid email address: ";
+								message += e.what();
+								message += '.';
+								throw SyntaxException(message);
+							}
+
+							// Sends the response and sets the 
+							// - action flag
+							client.sendResponse(
+								SMTPResponseType::SRC_RCPT_TO,
+								"",
+								reinterpret_cast<void *>(
+									const_cast<char *>(
+										session.s_TransportMessage.e_TransportTo.e_Address.c_str()
+									)
+								),
+								nullptr
+							);
+							session.setAction(_SMTP_SERV_PA_RCPT_TO);
+						}
 						break;
 					}
 					case ClientCommandType::CCT_DATA:
 					{
+						// Checks if we're allowed to perform this command
+						if (!session.getAction(_SMTP_SERV_PA_DATA_START))
+						{
+							// Checks if we're allowed to perform this command
+							// - based on the command order
+							if (!session.getAction(_SMTP_SERV_PA_HELO))
+								throw CommandOrderException("EHLO/HELLO first.");
+							if (!session.getAction(_SMTP_SERV_PA_MAIL_FROM))
+								throw CommandOrderException("MAIL FROM first.");
+							if (!session.getAction(_SMTP_SERV_PA_RCPT_TO))
+								throw CommandOrderException("RCPT TO first.");
+
+							// Sets the data start flag
+							session.setAction(_SMTP_SERV_PA_DATA_START);
+
+							// Sends the data start command, 
+							// - and starts receiving the body
+							client.sendResponse(SMTPResponseType::SRC_DATA_START);
+							std::string rawTransportmessage = client.readUntillNewline(true);
+
+							// Joins the message lines and starts the recursive parser
+							MIME::joinMessageLines(rawTransportmessage);
+							MIME::parseRecursive(rawTransportmessage, session.s_TransportMessage, 0);
+							
+							// Sends the response and sets the 
+							// - action flag
+							client.sendResponse(
+								SMTPResponseType::SRC_DATA_END,
+								"",
+								reinterpret_cast<void *>(
+									const_cast<char *>(
+										session.s_TransportMessage.e_MessageID.c_str()
+									)
+								),
+								nullptr
+							);
+							session.setAction(_SMTP_SERV_PA_DATA_END);
+						}
 						break;
 					}
 					case ClientCommandType::CCT_UNKNOWN:
