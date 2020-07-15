@@ -39,6 +39,7 @@
 #include "lib/client/SMTPMessageComposer.src.h"
 #include "lib/client/SMTPClient.src.h"
 #include "lib/networking/DNS.src.h"
+#include "lib/general/AES256.src.h"
 
 using namespace FSMTP;
 using Networking::SMTPSocket;

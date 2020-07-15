@@ -20,6 +20,14 @@ bool _forceLoggerNCurses = false;
 
 int main(const int argc, const char **argv)
 {
+	std::string encrypted = AES256::encrypt("test123", "asd123TEST");
+	std::cout << "Encrypted: " << encrypted << std::endl;
+
+	std::string decrypted = AES256::decrypt(encrypted, "asd123TEST");
+
+
+	return 0;
+
 	// Initializes OpenSSL stuff
 	SSL_load_error_strings();
   OpenSSL_add_ssl_algorithms();
