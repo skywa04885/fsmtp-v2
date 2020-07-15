@@ -18,11 +18,14 @@
 
 #include <cstdint>
 #include <string>
+#include <chrono>
 #include <cstring>
 #include <memory>
 #include <iostream>
 
 #include <cassandra.h>
+#include <openssl/rsa.h>
+#include <openssl/pem.h>
 #include <hiredis/hiredis.h>
 
 #include "../general/connections.src.h"
@@ -35,12 +38,59 @@ namespace FSMTP::Models
 	class Account
 	{
 	public:
-	private:
-		std::string a_Domain;
+		/**
+		 * Default empty constructor for the account
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		explicit Account(void);
+
+		/**
+		 * Saves an account in the cassandra database
+		 *
+		 * @Param {CassadraConnection *} cassandra
+		 * @Return {void}
+		 */
+		void save(CassandraConnection *cassandra);
+
+		/**
+		 * Generates an RSA keypair for the account
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		void generateKeypair(void);
+
+		/**
+		 * Gets the current user bucket
+		 *
+		 * @Param {void}
+		 * @Return {int64_t}
+		 */
+		static int64_t getBucket(void);
+
 		std::string a_Username;
-		std::string a_FullName;
+		std::string a_PictureURI;
 		std::string a_Password;
+		std::string a_Domain;
 		int64_t a_Bucket;
+		std::string a_FullName;
+		int64_t a_BirthDate;
+		int64_t a_CreationDate;
+		std::string a_RSAPublic;
+		std::string a_RSAPrivate;
+		double a_Gas;
+		std::string a_Country;
+		std::string a_Region;
+		std::string a_City;
+		std::string a_Address;
+		std::string a_Phone;
+		int8_t a_Type;
+		CassUuid a_UUID;
+		int64_t a_Flags;
+		int64_t a_StorageUsedInBytes;
+		int64_t a_StorageMaxInBytes;
 	};
 
 	class AccountShortcut
@@ -74,13 +124,13 @@ namespace FSMTP::Models
 		 * Finds an account shortcut in the cassandra
 		 * - database
 		 *
-		 * @Param {std::unique_ptr<CassandraConnection> &} conn
+		 * @Param {std::unique_ptr<CassandraConnection> *} conn
 		 * @Param {const std::string &} domain
 		 * @Param {const std::string &} username
 		 * @Return {AccountShortuct}
 		 */
 		static AccountShortcut find(
-			std::unique_ptr<CassandraConnection> &conn,
+			CassandraConnection *conn,
 			const std::string &domain,
 			const std::string &username
 		);
@@ -98,8 +148,6 @@ namespace FSMTP::Models
 			const std::string &domain,
 			const std::string &username
 		);
-
-		void save(std::unique_ptr<CassandraConnection> &conn);
 
 		int64_t a_Bucket;
 		std::string a_Domain;

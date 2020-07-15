@@ -47,7 +47,7 @@ int main(const int argc, const char **argv)
 			std::cout << "-t, --test: " << "\tVoer tests uit op de vitale functies van de server, zoals database verbinding." << std::endl;
 			std::cout << "-s, --sync: " << "\tSynchroniseerd de redis database met die van cassandra" << std::endl;
 			std::cout << "-n, --ncurses: " << "\tGebruik NCurses in plaats van klassieke terminal." << std::endl;
-			std::cout << "-m, --mailtest: " << "\tVerstuurd een test email." << std::endl; 
+			std::cout << "-a, --adduser:" << "\tAdds an new user to the email server." << std::endl; 
 			return 0;
 		}
 
@@ -299,16 +299,88 @@ int main(const int argc, const char **argv)
 			_forceLoggerNCurses = true;
 		}
 
-		if (compareArg(arg, "mailtest"))
+		if (compareArg(arg, "adduser"))
 		{
-			MailComposerConfig config;
-			config.m_Subject = "Hello";
-			config.m_To.emplace_back("Owner", "owner@fannst.nl");
-			config.m_From.emplace_back("Luke Rieff", "luke.rieff@gmail.com");
-			SMTPClient client(false);
-			client.prepare(config);
-			client.beSocial();
+			Logger logger("AccountCreator", LoggerLevel::INFO);
+			std::string username, domain, password, fullName;
 
+			logger << "[Gebruiker aanmaken]: " << ENDL;
+
+			// Requests the required information about the user
+			// - then we will create and store the user
+			logger << "Vul naam in: " << FLUSH;
+			std::cin >> fullName;
+			logger << "Vul gebruikersnaam in: " << FLUSH;
+			std::cin >> username;
+			logger << "Vul domein in: " << FLUSH;
+			std::cin >> domain;
+			logger << "Vul wachtwoord in: " << FLUSH;
+			std::cin >> password;
+
+			// Prints that the user is being created, and
+			// - hashes the password
+			std::string hash = passwordHash(password);
+			logger << "Wachtwoord hash aangemaakt: " << hash << ENDL;
+
+			// Prints the message
+			logger << "Gebruiker wordt aangemaakt, een ogenblik gedult ..." << ENDL;
+
+			// Connects to cassandra
+			logger << _BASH_UNKNOWN_MARK << "Verbinding maken met Apache Cassandra ..." << ENDL;
+			std::unique_ptr<CassandraConnection> cassandra;
+			try {
+				cassandra = std::make_unique<CassandraConnection>(_CASSANDRA_DATABASE_CONTACT_POINTS);
+				logger << _BASH_SUCCESS_MARK << "Verbonden met apache cassandra !" << ENDL;
+			} catch (const std::runtime_error &e)
+			{
+				return -1;
+			}
+
+			// Connects to Redis
+			logger << _BASH_UNKNOWN_MARK << "Verbinding maken met Redis ..." << ENDL;
+			std::unique_ptr<RedisConnection> redis;
+			try {
+				redis = std::make_unique<RedisConnection>(_REDIS_CONTACT_POINTS, _REDIS_PORT);
+				logger << _BASH_SUCCESS_MARK << "Verbonden met Redis !" << ENDL;
+			} catch (const std::runtime_error &e)
+			{
+				logger << _BASH_FAIL_MARK << "Kon geen verbinding maken met redis: " << e.what() << ENDL;
+				return -1;
+			}
+
+			// Creates the user and adds the asked variables
+			// - into it
+			Account account;
+			account.a_Bucket = Account::getBucket();
+			account.a_Username = username;
+			account.a_Password = hash;
+			account.a_Domain = domain;
+			account.a_FullName = fullName;
+
+			// Generates an random user id for the user
+			// - and stores it
+			CassUuidGen *gen = cass_uuid_gen_new();
+			cass_uuid_gen_time(gen, &account.a_UUID);
+			cass_uuid_gen_free(gen);
+
+			// Generates an new RSA keypair for the user, and prints
+			// - it to the console
+			account.generateKeypair();
+			logger << "Keypair generated ..." << ENDL;
+			logger << "RSA 2048 public: \033[41m\r\n" << account.a_RSAPublic << "\033[0m" << ENDL;
+			logger << "RSA 2048 private: \033[41m\r\n" << account.a_RSAPrivate << "\033[0m" << ENDL;
+
+			// Saves the full account in cassandra, and prints the message
+			account.save(cassandra.get());
+			logger << "Account stored in cassandra" << ENDL;
+
+			// Creates the account shortcut
+			AccountShortcut accountShortcut(
+				account.a_Bucket,
+				account.a_Domain,
+				account.a_Username, 
+				account.a_UUID
+			);
 			return 0;
 		}
 	}

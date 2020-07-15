@@ -42,7 +42,8 @@ namespace FSMTP
 	typedef enum : uint8_t
 	{
 		ENDL = 0,
-		CLASSIC
+		CLASSIC,
+		FLUSH
 	} LoggerOpts;
 
 	class Logger
@@ -103,6 +104,7 @@ namespace FSMTP
 					break;
 				}
 				case LoggerOpts::ENDL:
+				case LoggerOpts::FLUSH:
 				{
 					if (_forceLoggerNCurses)
 					{
@@ -157,7 +159,8 @@ namespace FSMTP
 
 						// Prints the message to the console
 						// and clears the buffers
-						std::cout << this->l_Stream.str() << std::endl;
+						if (a == LoggerOpts::FLUSH) std::cout << this->l_Stream.str() << std::flush;
+						else std::cout << this->l_Stream.str() << std::endl;
 						this->l_Stream.str("");
 						this->l_Stream.clear();
 						break;

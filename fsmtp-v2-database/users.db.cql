@@ -6,10 +6,10 @@ CREATE TABLE IF NOT EXISTS fannst.accounts (
     a_domain VARCHAR,
     a_bucket BIGINT,
     a_full_name VARCHAR,
-    a_birth_date DATE,
-    a_creation_date DATE,
-    a_account_key VARCHAR,
-    e_account_key_salt VARCHAR,
+    a_birth_date BIGINT,
+    a_creation_date BIGINT,
+    a_rsa_public TEXT,
+    a_rsa_private TEXT,
     a_gas DOUBLE,
     a_country VARCHAR,
     a_region VARCHAR,
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS fannst.accounts (
     a_type TINYINT,
     a_uuid TIMEUUID,
     a_flags BIGINT,
-    a_storage_used_kb BIGINT,
+    a_storage_used_bytes BIGINT,
     a_storage_max_bytes BIGINT,
     PRIMARY KEY ((a_bucket), a_domain, a_uuid)
 ) WITH CLUSTERING ORDER BY (a_domain DESC, a_uuid DESC);
