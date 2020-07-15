@@ -193,38 +193,6 @@ namespace FSMTP::Networking
 		void startListening(void);
 
 		/**
-		 * Static method which sends an string to an client
-		 * 
-		 * @Param {int32_t &} sfd
-		 * @Param {bool &} ssl
-		 * @Param {std::string &} data
-		 * @Return void
-		 */
-		static void sendString(
-			int32_t &sfd,
-			SSL *ssl,
-			const bool& useSSL,
-			std::string& data
-		);
-		
-		/**
-		 * Static method which receives an string fron an socket
-		 * 
-		 * @Param {int32_t &} sfd
-		 * @Param {bool &} ssl
-		 * @Param {bool &} bigData - If we are getting the DATA section of message
-		 * @Param {std::string &} ret
-		 * @Return void
-		 */
-		static void receiveString(
-			int32_t &sfd,
-			SSL *useSSL,
-			const bool& ssl,
-			const bool &bigData,
-			std::string& ret
-		);
-
-		/**
 		 * Starts the client acceptor in sync mode ( The slow and blocking one )
 		 *
 		 * @Param {std::function<void(params)> &} cb
@@ -300,21 +268,23 @@ namespace FSMTP::Networking
 		/**
 		 * Default empty constructor for the SMTPServerClientSocket
 		 *
-		 * @Param {void}
+		 * @Param {Logger &} c_Logger
 		 * @Return {void}
 		 */
-		explicit SMTPServerClientSocket(void);
+		explicit SMTPServerClientSocket(Logger &c_Logger);
 
 		/**
 		 * The constructor which adapts existing socket
 		 *
 		 * @Param {const int32_t} s_SocketFD
 		 * @Param {struct sockaddr_in} s_SockAddr
+		 * @Param {Logger &} s_Logger
 		 * @Return {void}
 		 */
 		SMTPServerClientSocket(
 			const int32_t s_SocketFD,
-			struct sockaddr_in s_SockAddr
+			struct sockaddr_in s_SockAddr,
+			Logger &c_Logger
 		);
 
 		/**
@@ -389,6 +359,6 @@ namespace FSMTP::Networking
 		bool s_UseSSL;
 		int32_t s_SocketFD;
 		struct sockaddr_in s_SockAddr;
-		Logger s_Logger;
+		Logger &s_Logger;
 	};
 }

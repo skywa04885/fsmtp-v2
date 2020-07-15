@@ -14,19 +14,19 @@
             <h1>Fannst Account Service</h1>
           </div>
           <fieldset>
-            <legend class="form-title"><%= lang.title %></legend>
-            <p class="form-subtitle"><%= lang.subtitle %></p>
+            <legend class="form-title">Login to your Fannst-Account</legend>
+            <p class="form-subtitle">Fields with <span>*</span> are required.</p>
             <div class="fullscreen-form__field">
-              <label><%= lang.inputs.email %> <span>*</span></label>
+              <label>Email Address <span>*</span></label>
               <input type="text" required />
             </div>
             <div class="fullscreen-form__field">
-              <label><%= lang.inputs.password %> <span>*</span></label>
+              <label>Password <span>*</span></label>
               <input type="password" required />
             </div>
             <div class="btn__left-right">
-              <a href="/accounts/register" class="btn btn-secondary"><%= lang.registerButton %></a>
-              <button type="submit" class="btn btn-primary"><%= lang.loginButton %></button>
+              <a href="/accounts/register" class="btn btn-secondary">Register</a>
+              <button type="submit" class="btn btn-primary">Login</button>
             </div>
           </fieldset>
         </form>

@@ -449,123 +449,6 @@ namespace FSMTP::Networking
 		shutdown(this->s_SocketFD, SHUT_RDWR);
 	}
 
-	/**
-	 * Static method which sends an string to an client
-	 * 
-	 * @Param {int32_t &} sfd
-	 * @Param {bool &} ssl
-	 * @Param {std::string &} data
-	 * @Return void
-	 */
-	void SMTPSocket::sendString(int32_t &sfd, SSL *ssl, const bool &useSSL, std::string &data)
-	{
-		std::size_t rc;
-		if (useSSL)
-		{
-			rc = SSL_write(ssl, data.c_str(), data.length());
-
-			if (rc <= 0)
-			{
-				BIO *bio = BIO_new(BIO_s_mem());
-				ERR_print_errors(bio);
-				char *err = nullptr;
-				std::size_t errLen = BIO_get_mem_data(bio, err);
-				std::string error(err, errLen);
-				BIO_free(bio);
-				throw std::runtime_error("SSL_write() failed: " + error);
-			}
-			return;
-		}
-
-		// Sends the string and checks for any errors
-		rc = send(sfd, data.c_str(), data.length(), 0);
-		if (rc < 0)
-		{
-			std::string error = "send() failed: ";
-			error += strerror(rc);
-			throw std::runtime_error(error);
-		}
-	}
-
-	/**
-	 * Static method which receives an string fron an socket
-	 * 
-	 * @Param {int32_t &} sfd
-	 * @Param {bool &} ssl
-	 * @Param {bool &} bigData - If we are getting the DATA section of message
-	 * @Param {std::string &} ret
-	 * @Return void
-	 */
-	void SMTPSocket::receiveString(
-		int32_t &sfd,
-		SSL *ssl,
-		const bool &useSSL,
-		const bool &bigData,
-		std::string &ret
-	)
-	{
-		uint8_t *buffer = reinterpret_cast<uint8_t *>(malloc(sizeof (uint8_t) * _SMTP_RECEIVE_BUFFER_SIZE));
-		std::size_t rc, bufferPos = 0, bufferSize = _SMTP_RECEIVE_BUFFER_SIZE;
-
-		// Creates the read loop and resizes the buffer if
-		// the buffer size is exceeded
-		while (true)
-		{
-			// Checks if we need to allocate more memory
-			// - since it will otherwise use unallocated memory
-			// - which will just break everything
-			if (bufferPos + _SMTP_RECEIVE_BUFFER_SIZE >= bufferSize)
-			{
-				bufferSize += _SMTP_RECEIVE_BUFFER_SIZE;
-				buffer = reinterpret_cast<uint8_t *>(realloc(buffer, bufferSize));
-			}
-
-			// Receives the data and then increments the buffer position
-			// - after that we check if there is a <CR><LF> in the message
-			if (useSSL)
-				rc = SSL_read(ssl, reinterpret_cast<void *>(&buffer[bufferPos]), _SMTP_RECEIVE_BUFFER_SIZE);
-			else
-				rc = recv(sfd, reinterpret_cast<char *>(&buffer[bufferPos]), _SMTP_RECEIVE_BUFFER_SIZE, 0x0);
-			if (rc <= 0)
-			{
-				free(buffer);
-
-				if (useSSL)
-				{
-					BIO *bio = BIO_new(BIO_s_mem());
-					ERR_print_errors(bio);
-					char *err = nullptr;
-					std::size_t errLen = BIO_get_mem_data(bio, err);
-					std::string error(err, errLen);
-					BIO_free(bio);
-					throw std::runtime_error("SSL_read() failed: " + error);
-				} else
-				{
-					throw std::runtime_error("Could not receive data !");
-				}
-			}
-			bufferPos += rc;
-
-			if (!bigData)
-			{
-	      if (bufferPos >= 2) if (
-					memcmp(&buffer[bufferPos-2], "\r\n", 2) == 0
-				) break;
-			} else
-			{
-				if (bufferPos >= 5) if (
-					memcmp(&buffer[bufferPos-5], "\r\n.\r\n", 5) == 0
-				) break;
-			}
-		}
-
-		// Creates an deep copy of the buffer into an string
-		// - after that we free the buffer which is now trash
-		if (!bigData) ret = std::string(reinterpret_cast<char *>(buffer), bufferPos - 2);
-		else ret = std::string(reinterpret_cast<char *>(buffer), bufferPos - 5);
-		free(buffer);
-	}
-
 	// ================================================
 	//
 	// =>
@@ -577,33 +460,28 @@ namespace FSMTP::Networking
 	/**
 	 * Default empty constructor for the SMTPServerClientSocket
 	 *
-	 * @Param {void}
+	 * @Param {Logger &} s_Logger
 	 * @Return {void}
 	 */
-	SMTPServerClientSocket::SMTPServerClientSocket(void):
-		s_Logger(
-			std::string("ClientSocket:") + inet_ntoa(this->s_SockAddr.sin_addr),
-			LoggerLevel::INFO
-		)
-	{
-	}
+	SMTPServerClientSocket::SMTPServerClientSocket(Logger &s_Logger):
+		s_Logger(s_Logger)
+	{}
 
 	/**
 	 * The constructor which adapts existing socket
 	 *
 	 * @Param {const int32_t} s_SocketFD
 	 * @Param {struct sockaddr_in} s_SockAddr
+	 * @Param {Logger &} s_Logger
 	 * @Return {void}
 	 */
 	SMTPServerClientSocket::SMTPServerClientSocket(
 		const int32_t s_SocketFD,
-		struct sockaddr_in s_SockAddr
+		struct sockaddr_in s_SockAddr,
+		Logger &s_Logger
 	):
 		s_SocketFD(s_SocketFD), s_SockAddr(s_SockAddr), s_UseSSL(false),
-		s_Logger(
-			std::string("ClientSocket:") + inet_ntoa(this->s_SockAddr.sin_addr),
-			LoggerLevel::INFO
-		)
+		s_Logger(s_Logger)
 	{}
 
 	/**
@@ -615,6 +493,8 @@ namespace FSMTP::Networking
 	 */
 	SMTPServerClientSocket::~SMTPServerClientSocket(void)
 	{
+		this->s_Logger << WARN << "Verbinding wordt gesloten!" << ENDL << CLASSIC;
+
 		// Closes the socket, and checks if we should free
 		// - the openssl context
 		shutdown(this->s_SocketFD, SHUT_RDWR);
@@ -792,6 +672,8 @@ namespace FSMTP::Networking
 	{
 		int32_t rc;
 
+		this->s_Logger << "Verbinding wordt beveiligd ..." << ENDL;
+
 		// Creates the SSL context and if something goes
 		// - wrong we throw an error
 		const SSL_METHOD *sslMethod = SSLv23_server_method();
@@ -831,5 +713,6 @@ namespace FSMTP::Networking
 
 		// Sets useSSL to true
 		this->s_UseSSL = true;
+		this->s_Logger << "Verbinding succesvol beveiligd!" << ENDL;
 	}
 }

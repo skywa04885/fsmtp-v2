@@ -18,7 +18,7 @@
             setTimeout(function () {
                 var a = (e.target);
                 window.location.href = a.href;
-            }, 180);
+            }, 5);
         });
     });
 })();

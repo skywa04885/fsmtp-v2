@@ -13,8 +13,8 @@ router.get('/register', (
 ) => {
   // Renders the page
   res.render('accounts/register.view.ejs', prepare({
-    title: lang.title,
-    description: lang.subtitle,
+    title: 'Register',
+    description: 'Create an new Fannst-Account',
     keywords: 'register,software,fannst,account,create,email'
   }));
 });
@@ -26,8 +26,8 @@ router.get('/login', (
 ) => {
   // Renders the page
   res.render('accounts/login.view.ejs', prepare({
-    title: lang.title,
-    description: lang.subtitle,
+    title: 'Login',
+    description: 'Login to your Fannst-Account',
     keywords: 'login,software,fannst,account,use,email'
   }));
 });

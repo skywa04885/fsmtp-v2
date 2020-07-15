@@ -117,15 +117,15 @@ namespace FSMTP::Server
 		_serverThreadCount++;
 		if (_forceLoggerNCurses) NCursesDisplay::setThreads(_serverThreadCount);
 
-		SMTPServerClientSocket client(fd, *sAddr);
 		SMTPServer &server = *reinterpret_cast<SMTPServer *>(u);
 		SMTPServerSession session;
 
 		// Creates the logger with the clients address
 		// - so we can get awesome debug messages
-		std::string prefix = "client:";
+		std::string prefix = "SMTPClient:";
 		prefix += inet_ntoa(sAddr->sin_addr);
-		Logger logger(prefix, LoggerLevel::DEBUG);
+		Logger logger(prefix, LoggerLevel::INFO);
+		SMTPServerClientSocket client(fd, *sAddr, logger);
 
 		// =================================
 		// Connects to redis
@@ -376,6 +376,11 @@ namespace FSMTP::Server
 							MIME::joinMessageLines(rawTransportmessage);
 							MIME::parseRecursive(rawTransportmessage, session.s_TransportMessage, 0);
 							
+							// Pushes the email to the storage queue
+							_emailStorageMutex.lock();
+							_emailStorageQueue.push_back(session.s_TransportMessage);
+							_emailStorageMutex.unlock();
+
 							// Sends the response and sets the 
 							// - action flag
 							client.sendResponse(
@@ -389,6 +394,9 @@ namespace FSMTP::Server
 								nullptr
 							);
 							session.setAction(_SMTP_SERV_PA_DATA_END);
+
+							// Prints that the email is received to the console
+							logger << "Email received: " << session.s_TransportMessage.e_MessageID << ENDL;
 						}
 						break;
 					}
@@ -434,10 +442,6 @@ namespace FSMTP::Server
 		}
 
 	smtp_server_close_conn:
-
-		// Closes the connection with the client, and if
-		// - an message needs to be sent, please do this before
-		logger << WARN << "Verbinding is gesloten." << ENDL << CLASSIC;
 		delete sAddr;
 
 		// Updates the thread count, and emails handled
