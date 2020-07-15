@@ -24,22 +24,10 @@ namespace FSMTP::Server
 	class SyntaxException : public std::exception
 	{
 	public:
-		/**
-		 * Default error constructor
-		 *
-		 * @Param {const std::string &} e_Message
-		 * @Return {void}
-		 */
 		SyntaxException(const std::string &e_Message):
 			e_Message(e_Message)
 		{}
 
-		/**
-		 * Gets the error message
-		 *
-		 * @Param {void}
-		 * @Return {const char *}
-		 */
 		const char *what() const throw()
     {
     	return this->e_Message.c_str();
@@ -49,25 +37,28 @@ namespace FSMTP::Server
 		std::string e_Message;
 	};
 
+	class CommandOrderException : public std::exception
+	{
+	public:
+		CommandOrderException(const std::string &e_Message):
+			e_Message(e_Message)
+		{}
+
+		const char *what() const throw()
+    {
+    	return this->e_Message.c_str();
+    }
+	private:
+		std::string e_Message;
+	};
+
 	class FatalException : public std::exception
 	{
 	public:
-		/**
-		 * Default error constructor
-		 *
-		 * @Param {const std::string &} e_Message
-		 * @Return {void}
-		 */
 		FatalException(const std::string &e_Message):
 			e_Message(e_Message)
 		{}
 
-		/**
-		 * Gets the error message
-		 *
-		 * @Param {void}
-		 * @Return {const char *}
-		 */
 		const char *what() const throw()
     {
     	return this->e_Message.c_str();

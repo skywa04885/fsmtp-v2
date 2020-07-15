@@ -149,6 +149,9 @@ namespace FSMTP::Server
 			goto smtp_server_close_conn;
 		}
 
+		// Sends the initial message
+		client.sendResponse(SMTPResponseType::SRC_GREETING);
+
 		// Starts the infinite reading and writing loop
 		// - in here we will handle commands and send responses
 		while (true)
@@ -157,7 +160,7 @@ namespace FSMTP::Server
 			{
 				// Reads the command, parses it
 				// - and quits when an error is thrown
-				ClientCommand command = ClientCommand(client.readUntillNewline(true));
+				ClientCommand command = ClientCommand(client.readUntillNewline(false));
 
 				// Checks how we should respond to the command
 				switch (command.c_CommandType)
@@ -169,23 +172,130 @@ namespace FSMTP::Server
 						// - hello command was already transmitted
 						if (!session.getAction(_SMTP_SERV_PA_HELO))
 						{
-							session.setAction(_SMTP_SERV_PA_HELO);
-
 							// Checks if there are arguments, else throw syntax
 							// - error because the server domain is required
 							if (command.c_Arguments.size() < 1)
-								throw SyntaxException("Empty HELO command not allowed !");
+								throw SyntaxException("Empty HELO command not allowed");
+
+							// Sets the action flag so we can not allow
+							// - hello again
+							session.setAction(_SMTP_SERV_PA_HELO);
+
+							// Writes the response to the client
+							client.sendResponse(
+								SMTPResponseType::SRC_HELO,
+								"",
+								reinterpret_cast<void *>(sAddr),
+								nullptr
+							);
+
+							// Continues to the next round
+							continue;
+						}
+					}
+					case ClientCommandType::CCT_EHLO:
+					{ // ( Extended Hello command )
+						// Checks if we should handle the hello command
+						// - since it is only allowed when we've not sent it
+						// - or starttls is called
+						if (!session.getAction(_SMTP_SERV_PA_HELO))
+						{
+							// Checks if there are arguments, else throw syntax
+							// - error because the server domain is required
+							if (command.c_Arguments.size() < 1)
+								throw SyntaxException("Empty HELO command not allowed");
+
+							// Sets the action flag so we can not allow
+							// - hello again
+							session.setAction(_SMTP_SERV_PA_HELO);
+
+							// Writes the response to the client
+							client.sendResponse(
+								SMTPResponseType::SRC_EHLO,
+								"",
+								reinterpret_cast<void *>(sAddr),
+								&server.s_Services
+							);
 
 							// Continues to the next round
 							continue;
 						}
 					}
 					case ClientCommandType::CCT_START_TLS:
-					{ // ( Advenced hello command )
+					{ // ( StartTLS command )
+
+						// Checks if we're allowed to do this, this needs to happen
+						// - after the hello message
+						if (!session.getAction(_SMTP_SERV_PA_HELO))
+							throw CommandOrderException("EHLO/HELO first.");
+
+						// Sends the proceed command to the client
+						// - and upgrades the socket
+						client.sendResponse(SMTPResponseType::SRC_START_TLS);
+						client.upgrade();
+
+						// Clears the hello action since hello is now allowed
+						// - to be sent again
+						session.clearAction(_SMTP_SERV_PA_HELO);
 						break;
 					}
 					case ClientCommandType::CCT_MAIL_FROM:
 					{
+						// Checks if the mail from command is allowed, this is
+						// - only possible if the initial greeting was performed
+						if (!session.getAction(_SMTP_SERV_PA_MAIL_FROM))
+						{
+							// Checks if we're allowed to perform the mail from
+							// - command, if not throw exception
+							if (!session.getAction(_SMTP_SERV_PA_HELO))
+								throw CommandOrderException("EHLO/HELO first.");
+
+							// Parses the mail address, if this fails
+							// - throw syntax exception
+							try {
+								session.s_TransportMessage.e_TransportFrom.parse(
+									command.c_Arguments[0]);
+							}
+							catch (const std::runtime_error &e)
+							{
+								std::string message = "Invalid email address: ";
+								message += e.what();
+								message += '.';
+								throw SyntaxException(message);
+							}
+
+							// Parses the domain and finds if the domain
+							// - is local on our server
+							std::string domain = session.s_TransportMessage.e_TransportFrom.getDomain();
+							try {
+								// Gets the domain from redis and checks if the auth flag is set
+								// - if not we throw command order exception, since relaying
+								// - requires authentication
+								LocalDomain localDomain = LocalDomain::findRedis(domain, redis.get());
+								if (!session.getFlag(_SMTP_SERV_SESSION_AUTH_FLAG))
+									throw CommandOrderException("AUTH first.");
+
+								// TODO: Handle relaying
+							}
+							catch (const EmptyQuery &e)
+							{
+								// No worry's is allowed
+							}
+
+							// Sends the response and sets the 
+							// - action flag
+							client.sendResponse(
+								SMTPResponseType::SRC_MAIL_FROM,
+								"",
+								reinterpret_cast<void *>(
+									const_cast<char *>(
+										session.s_TransportMessage.e_TransportFrom.e_Address.c_str()
+									)
+								),
+								nullptr
+							);
+							session.setAction(_SMTP_SERV_PA_MAIL_FROM);
+						}
 						break;
 					}
 					case ClientCommandType::CCT_RCPT_TO:
@@ -197,17 +307,35 @@ namespace FSMTP::Server
 						break;
 					}
 					case ClientCommandType::CCT_UNKNOWN:
+					default:
 					{
+						client.sendResponse(SMTPResponseType::SRC_INVALID_COMMAND);
 						break;
 					}
 				}
+			} catch (const CommandOrderException &e)
+			{
+				logger << FATAL << "Command order error: " << e.what() << ENDL << CLASSIC;
+				client.sendResponse(
+					SMTPResponseType::SRC_ORDER_ERR,
+					e.what(),
+					nullptr,
+					nullptr
+				);
 			} catch (const SMTPTransmissionError &e)
 			{
 				logger << FATAL << "Transmission error: " << e.what() << ENDL << CLASSIC;
 				break;
 			} catch (const SyntaxException &e)
 			{
-
+				// Prints the error to the console and sends the syntax error
+				logger << ERROR << "Syntax error: " << e.what() << ENDL << CLASSIC;
+				client.sendResponse(
+					SMTPResponseType::SRC_SYNTAX_ERR,
+					e.what(),
+					nullptr,
+					nullptr
+				);
 			} catch (const FatalException &e)
 			{
 				logger << FATAL << "Fatal exception: " << e.what() << ENDL << CLASSIC;

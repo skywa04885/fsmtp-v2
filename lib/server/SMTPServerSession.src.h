@@ -38,7 +38,6 @@
 #define _SMTP_SERV_PA_DATA_END 32
 #define _SMTP_SERV_PA_HELO_AFTER_STLS 64
 #define _SMTP_SERV_PA_AUTH_PERF 128
-#define _SMTP_SERV_PA_EHLO 128
 
 using namespace FSMTP::Models;
 
@@ -71,6 +70,14 @@ namespace FSMTP::Server
 		 * @Return {bool}
 		 */
 		bool getFlag(int64_t mask);
+
+		/**
+		 * Clears an action
+		 *
+		 * @Param {int64_t} mask
+		 * @Return {void}
+		 */
+		void clearAction(int64_t mask);
 
 		/**
 		 * Sets an action as performed in the register

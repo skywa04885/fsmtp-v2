@@ -67,4 +67,12 @@ namespace FSMTP::DNS
 		const std::string &hostname,
 		const RecordType type
 	);
+
+	/**
+	 * Gets the hostname based on the ip address
+	 *
+	 * @Param {struct sockaddr_in *addr} addr
+	 * @Return {std::string}
+	 */
+	std::string getHostnameByAddress(struct sockaddr_in *addr);
 }

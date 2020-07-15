@@ -89,14 +89,13 @@ namespace FSMTP::SMTP
 			{
 				if (command.substr(0, 4) == "helo")
 					this->c_CommandType = ClientCommandType::CCT_HELO;
-				else 
-					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
 				break;
 			}
 			case 'e':
 			{
 				if (command.substr(0, 4) == "ehlo")
 					this->c_CommandType = ClientCommandType::CCT_EHLO;
+				break;
 			}
 			case 's':
 			{

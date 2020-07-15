@@ -59,7 +59,7 @@ namespace FSMTP::Models
 		 * @Param {std::unique_ptr<CassandraConnection> &} database
 		 * @Return void
 		 */
-		void getByDomain(const std::string &l_Domain, std::unique_ptr<CassandraConnection>& database);
+		static LocalDomain getByDomain(const std::string &l_Domain, std::unique_ptr<CassandraConnection>& database);
 
 		/**
 		 * Finds an domain and its uuid in the redis db

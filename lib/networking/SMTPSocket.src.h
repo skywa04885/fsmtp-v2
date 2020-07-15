@@ -225,27 +225,6 @@ namespace FSMTP::Networking
 		);
 
 		/**
-		 * Static method to upgrade an existing socket to an SSL socket
-		 *
-		 * @Param {int32_t &} sfd
-		 * @Param {SSL *} ssl
-		 * @Param {SSL_CTX *} sslCtx
-		 * @Return void
-		 */
-		static void upgradeToSSL(int32_t *sfd, SSL **ssl, SSL_CTX **sslCtx);
-
-		/**
-		 * Static single-usage method for reading the OpenSSL keys passphrase
-		 *
-		 * @Param {char *} buffer
-		 * @Param {int} size
-		 * @Param {int} rwflag
-		 * @param {void *} u
-		 * @Return int
-		 */
-		static int readSSLPassphrase(char *buffer, int size, int rwflag, void *u);
-
-		/**
 		 * Starts the client acceptor in sync mode ( The slow and blocking one )
 		 *
 		 * @Param {std::function<void(params)> &} cb
@@ -362,11 +341,54 @@ namespace FSMTP::Networking
 		 * @Return {std::string}
 		 */
 		std::string readUntillNewline(const bool big);
+
+		/**
+		 * Sends an response to the client
+		 * @Param {const SMTPResponseType} c_Type
+		 * @Return {void}
+		 */
+		void sendResponse(const SMTPResponseType c_Type);
+
+		/**
+		 * Sends an response to the client
+		 *
+		 * @Param {const SMTPResponseType} c_Type
+		 * @Param {const std::string &} c_Message
+		 * @Param {void *} c_U
+		 * @Param {const std::vector<SMTPServiceFunction *} c_Services
+		 * @Return {void}
+		 */
+		void sendResponse(
+			const SMTPResponseType c_Type,
+			const std::string &c_Message,
+			void *c_U,
+			std::vector<SMTPServiceFunction> *c_Services
+		);
+
+		/**
+		 * Upgrades connection to ssl
+		 *
+		 * @Param {void}
+		 * @Return void
+		 */
+		void upgrade(void);
+
+		/**
+		 * Static single-usage method for reading the OpenSSL keys passphrase
+		 *
+		 * @Param {char *} buffer
+		 * @Param {int} size
+		 * @Param {int} rwflag
+		 * @param {void *} u
+		 * @Return int
+		 */
+		static int readSSLPassphrase(char *buffer, int size, int rwflag, void *u);
 	private:
 		SSL_CTX *s_SSLCtx;
 		SSL *s_SSL;
 		bool s_UseSSL;
 		int32_t s_SocketFD;
 		struct sockaddr_in s_SockAddr;
+		Logger s_Logger;
 	};
 }

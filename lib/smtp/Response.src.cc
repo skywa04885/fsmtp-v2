@@ -36,15 +36,18 @@ namespace FSMTP::SMTP
 	 *
 	 * @Param {const SMTPResponseType} c_Type
 	 * @Param {const std::string &} c_Message
+	 * @Param {void *} c_U
 	 * @Param {const std::vector<SMTPServiceFunction *} c_Services
 	 * @Return {void}
 	 */
 	ServerResponse::ServerResponse(
 		const SMTPResponseType c_Type,
 		const std::string &c_Message, 
+		void *c_U,
 		std::vector<SMTPServiceFunction> *c_Services
 	):
-		c_Type(c_Type), c_Services(c_Services), c_Message(c_Message)
+		c_Type(c_Type), c_Services(c_Services), c_Message(c_Message),
+		c_U(c_U)
 	{}
 
 	/**
@@ -53,9 +56,33 @@ namespace FSMTP::SMTP
 	 * @Param {void}
 	 * @Return {std::string}
 	 */
-	std::string build(void)
+	std::string ServerResponse::build(void)
 	{
 		std::string res;
+		int32_t code = ServerResponse::getCode(this->c_Type);
+
+		// Checks if we need to generate
+		// - an normal message
+		if (this->c_Services == nullptr)
+		{
+			res += std::to_string(code);
+			res += ' ';
+			res += this->getMessage(this->c_Type);
+
+			if (this->c_Type != SMTPResponseType::SRC_GREETING)
+			{
+				res += ' ';
+				res += _SMTP_SERVICE_NODE_NAME;
+			}
+			res += " - fsmtp\r\n";
+		} else
+		{
+			res += std::to_string(code);
+			res += '-';
+			res += this->getMessage(this->c_Type);
+			res += "\r\n";
+			res += ServerResponse::buildServices(code, this->c_Services);
+		}
 
 		return res;
 	}
@@ -64,11 +91,82 @@ namespace FSMTP::SMTP
 	 * Gets the message for an specific response type
 	 *
 	 * @Param {const SMTPResponseType} c_Type
-	 * @Return {const char *}
+	 * @Return {std::string}
 	 */
-	const char *ServerResponse::getMessage(const SMTPResponseType c_Type)
+	std::string ServerResponse::getMessage(const SMTPResponseType c_Type)
 	{
+		if (!this->c_Message.empty()) return this->c_Message;
 
+		switch (c_Type)
+		{
+			case SMTPResponseType::SRC_GREETING:
+			{
+				char dateBuffer[128];
+				std::time_t rawTime;
+				struct tm *timeInfo = nullptr;
+
+				// Builds the standard message
+				std::string ret = _SMTP_SERVICE_NODE_NAME;
+				ret += " Fannst ESMTP Mail service ready at ";
+
+				// Appends the time to the final string
+				time(&rawTime);
+				timeInfo = localtime(&rawTime);
+				strftime(
+					dateBuffer,
+					sizeof (dateBuffer),
+					"%a, %d %b %Y %T %Z",
+					timeInfo
+				);
+				ret += dateBuffer;
+				
+				return ret;
+			}
+			case SMTPResponseType::SRC_HELO:
+			case SMTPResponseType::SRC_EHLO:
+			{
+				// Builds the response message and returns it
+				std::string ret = _SMTP_SERVICE_DOMAIN;
+				ret += ", at your service ";
+				ret += DNS::getHostnameByAddress(reinterpret_cast<struct sockaddr_in *>(this->c_U));
+				ret += " [";
+				ret += inet_ntoa(reinterpret_cast<struct sockaddr_in *>(this->c_U)->sin_addr);
+				ret += ']';
+				return ret;
+			}
+			case SMTPResponseType::SRC_MAIL_FROM:
+			case SMTPResponseType::SRC_RCPT_TO:
+			{
+				std::string ret = "OK, proceed [";
+				ret += reinterpret_cast<const char *>(this->c_U);
+				ret += ']';
+				return ret;;
+			}
+			case SMTPResponseType::SRC_DATA_START:
+			{
+				return "End data with <CR><LF>.<CR><LF>";
+			}
+			case SMTPResponseType::SRC_ORDER_ERR:
+			{
+				return "Invalid order, why: [unknown].";
+			}
+			case SMTPResponseType::SRC_INVALID_COMMAND:
+			{
+				return "unrecognized command.";
+			}
+			case SMTPResponseType::SRC_START_TLS:
+			{
+				return "Ready to start TLS.";
+			}
+			case SMTPResponseType::SRC_DATA_END:
+			{
+				std::string ret = "OK, message queued [";
+				ret += reinterpret_cast<const char *>(this->c_U); // ( MESSAGE ID )
+				ret += ']';
+				return ret;
+			}
+			default: throw std::runtime_error("getMessage() invalid type");
+		}
 	}
 
 	/**
@@ -84,7 +182,16 @@ namespace FSMTP::SMTP
 			case SMTPResponseType::SRC_GREETING: return 220;
 			case SMTPResponseType::SRC_EHLO: return 250;
 			case SMTPResponseType::SRC_HELO: return 250;
-			default: return 999;
+			case SMTPResponseType::SRC_MAIL_FROM: return 250;
+			case SMTPResponseType::SRC_RCPT_TO: return 250;
+			case SMTPResponseType::SRC_DATA_START: return 354;
+			case SMTPResponseType::SRC_DATA_END: return 250;
+			case SMTPResponseType::SRC_QUIT_GOODBYE: return 221;
+			case SMTPResponseType::SRC_SYNTAX_ERR: return 501;
+			case SMTPResponseType::SRC_ORDER_ERR: return 503;
+			case SMTPResponseType::SRC_INVALID_COMMAND: return 502;
+			case SMTPResponseType::SRC_START_TLS: return 220;
+			default: throw std::runtime_error("getCode() invalid type");
 		}
 	}
 
@@ -99,7 +206,33 @@ namespace FSMTP::SMTP
 		std::vector<SMTPServiceFunction> *c_Services
 	)
 	{
+		std::string res;
 
+		std::size_t index = 0, total = c_Services->size();
+		for (const SMTPServiceFunction service  : *c_Services)
+		{
+			// Appends the code with the
+			// - required separator and name
+			res += std::to_string(code);
+			if (++index == total)
+				res += ' ';
+			else
+				res += '-';
+			res += service.s_Name;
+
+			// Appends the space with the sub arguments
+			// - to the result
+			for (const char *arg : service.s_SubArgs)
+			{
+				res += ' ';
+				res += arg;
+			}
+
+			// Appends the newline
+			res += "\r\n";
+		}
+
+		return res;
 	}
 
 	/**
@@ -119,7 +252,7 @@ namespace FSMTP::SMTP
 			return std::make_pair(std::stoi(clean), "");
 		else return std::make_pair(
 			std::stoi(clean.substr(0, index)),
-			clean.substr(++index)
+			clean.substr(index + 1)
 		);
 	}
 }

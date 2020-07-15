@@ -36,9 +36,9 @@
 #include "../general/logger.src.h"
 #include "../general/macros.src.h"
 #include "SMTPServerSession.src.h"
-#include "SMTPActions.src.h"
 #include "SMTPServerExceptions.src.h"
 #include "../parsers/mime.src.h"
+#include "../models/LocalDomain.src.h"
 
 #define _SERVER_OPT_ENABLE_AUTH 0x1
 #define _SERVER_OPT_ENABLE_TLS 0x2
@@ -51,8 +51,8 @@ using namespace FSMTP::Parsers;
 using namespace FSMTP;
 using namespace FSMTP::SMTP;
 using namespace FSMTP::Networking;
+using namespace FSMTP::Models;
 using namespace FSMTP::Networking;
-using namespace FSMTP::Server::Actions;
 
 extern std::vector<FullEmail> _emailStorageQueue;
 extern std::mutex _emailStorageMutex;

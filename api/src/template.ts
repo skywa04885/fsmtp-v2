@@ -3,7 +3,7 @@ export function prepare(meta: {
   description?: string,
   keywords?: string,
   author?: string
-}, lang: any = {}, custom: any = {}, session: any = {
+}, custom: any = {}, session: any = {
   logged: false
 }): any
 {
@@ -12,7 +12,6 @@ export function prepare(meta: {
     description: meta.description ? meta.description : 'No description',
     keywords: meta.keywords ? meta.keywords : 'unknown,page',
     author: meta.author ? meta.author : 'Skywa04885',
-    lang: lang,
     session: session
   }, custom);
 }

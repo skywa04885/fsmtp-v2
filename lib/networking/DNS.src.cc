@@ -28,7 +28,7 @@ namespace FSMTP::DNS
 	{
 		// Gets the hostent and checks if it is there
 		// - if not throw domain not found error
-		hostent *h = gethostbyname(hostname);
+		struct hostent *h = gethostbyname(hostname);
 		if (h == nullptr)
 			throw std::runtime_error("Could not find hostname");
 
@@ -168,4 +168,23 @@ namespace FSMTP::DNS
 		res_nclose(&state);
 		return res;
 	}
+
+	/**
+	 * Gets the hostname based on the ip address
+	 *
+	 * @Param {struct sockaddr_in *addr} addr
+	 * @Return {std::string}
+	 */
+	std::string getHostnameByAddress(struct sockaddr_in *addr)
+	{
+		char hostname[256];
+    getnameinfo(
+    	reinterpret_cast<struct sockaddr *>(addr),
+    	sizeof (struct sockaddr_in),
+    	hostname,
+    	sizeof (hostname),
+    	NULL, 0, NI_NAMEREQD
+    );
+    return hostname;
+  }
 }

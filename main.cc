@@ -303,7 +303,7 @@ int main(const int argc, const char **argv)
 		{
 			MailComposerConfig config;
 			config.m_Subject = "Hello";
-			config.m_To.emplace_back("Example", "test@gmail.com");
+			config.m_To.emplace_back("Jeroen Rieff", "jrieff@notariskantoorbergen.nl");
 			config.m_From.emplace_back("Test", "test@fannst.nl");
 			SMTPClient client(false);
 			client.prepare(config);

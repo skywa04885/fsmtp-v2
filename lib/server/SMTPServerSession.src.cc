@@ -66,6 +66,17 @@ namespace FSMTP::Server
 	}
 
 	/**
+	 * Clears an action
+	 *
+	 * @Param {int64_t} mask
+	 * @Return {void}
+	 */
+	void SMTPServerSession::clearAction(int64_t mask)
+	{
+		this->s_PerformedActions &= ~mask;
+	}
+
+	/**
 	 * Checks if an action is performed and returns bool
 	 *
 	 * @Param {int64_t} mask

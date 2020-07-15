@@ -20,9 +20,14 @@
 #include <string>
 #include <cstdint>
 #include <tuple>
+#include <ctime>
+
+#include <arpa/inet.h>
+#include <sys/socket.h>
 
 #include "../general/macros.src.h"
 #include "../general/cleanup.src.h"
+#include "../networking/DNS.src.h"
 
 using namespace FSMTP::Cleanup;
 
@@ -36,7 +41,11 @@ namespace FSMTP::SMTP
 		SRC_RCPT_TO,
 		SRC_DATA_START,
 		SRC_DATA_END,
-		SRC_QUIT_GOODBYE
+		SRC_QUIT_GOODBYE,
+		SRC_SYNTAX_ERR,
+		SRC_ORDER_ERR,
+		SRC_INVALID_COMMAND,
+		SRC_START_TLS
 	} SMTPResponseType;
 
 	typedef struct {
@@ -63,12 +72,14 @@ namespace FSMTP::SMTP
 		 *
 		 * @Param {const SMTPResponseType} c_Type
 		 * @Param {const std::string &} c_Message
+		 * @Param {void *} c_U
 		 * @Param {const std::vector<SMTPServiceFunction *} c_Services
 		 * @Return {void}
 		 */
 		ServerResponse(
 			const SMTPResponseType c_Type,
-			const std::string &c_Message, 
+			const std::string &c_Message,
+			void *c_U,
 			std::vector<SMTPServiceFunction> *c_Services
 		);
 
@@ -84,9 +95,9 @@ namespace FSMTP::SMTP
 		 * Gets the message for an specific response type
 		 *
 		 * @Param {const SMTPResponseType} c_Type
-		 * @Return {const char *}
+		 * @Return {std::string}
 		 */
-		static const char *getMessage(const SMTPResponseType c_Type);
+		std::string getMessage(const SMTPResponseType c_Type);
 
 		/**
 		 * Gets the code for response type
@@ -119,5 +130,6 @@ namespace FSMTP::SMTP
 		SMTPResponseType c_Type;
 		std::vector<SMTPServiceFunction> *c_Services;
 		std::string c_Message;
+		void *c_U;
 	};
 }

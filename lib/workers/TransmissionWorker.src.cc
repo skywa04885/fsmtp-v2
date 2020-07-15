@@ -26,7 +26,7 @@ namespace FSMTP::Workers
 	 * @Return {void}
 	 */
 	TransmissionWorker::TransmissionWorker(const std::string &d_ContactPoints):
-		Worker("TransmissionWorker", 5000), d_ContactPoints(d_ContactPoints)
+		Worker("TransmissionWorker", 400), d_ContactPoints(d_ContactPoints)
 	{
 	}
 

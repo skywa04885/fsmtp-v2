@@ -97,7 +97,7 @@ namespace FSMTP::Models
 
 		// Validates the email address by checking for the at symbol
 		if (raw.find_first_of('@') == std::string::npos)
-			throw std::runtime_error("Invalid address");
+			throw std::runtime_error("Could not find @");
 
 		// Removes the non-required whitespace, this is always required
 		// - so used as last, while the name whitespace is only required when
@@ -152,29 +152,29 @@ namespace FSMTP::Models
   /**
    * Parses the domain name from the address
    *
-   * @Param {std::string &} ret
-   * @Return {void}
+   * @Param {void}
+   * @Return {std::string}
    */
-	void EmailAddress::getDomain(std::string &ret)
+	std::string EmailAddress::getDomain(void)
 	{
 		std::size_t index = this->e_Address.find_first_of('@');
 		if (index == std::string::npos)
 			throw std::runtime_error("Invalid email address");
-		ret = this->e_Address.substr(index + 1);
+		return this->e_Address.substr(index + 1);
 	}
 
   /**
    * parses the username from the address
    *
-   * @Param {std::string &} ret
-   * @Return {void}
+   * @Param {void}
+   * @Return {std::string}
    */
-	void EmailAddress::getUsername(std::string &ret)
+	std::string EmailAddress::getUsername(void)
 	{
 		std::size_t index = this->e_Address.find_first_of('@');
 		if (index == std::string::npos)
 			throw std::runtime_error("Invalid email address");
-		ret = this->e_Address.substr(0, index);
+		return this->e_Address.substr(0, index);
 	}
 
 	// ======================================================

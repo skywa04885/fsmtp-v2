@@ -29,6 +29,7 @@
 #include "lib/server/SMTPServer.src.h"
 #include "lib/smtp/Response.src.h"
 #include "lib/models/email.src.h"
+#include "lib/models/LocalDomain.src.h"
 #include "lib/general/connections.src.h"
 #include "lib/general/macros.src.h"
 #include "lib/general/logger.src.h"

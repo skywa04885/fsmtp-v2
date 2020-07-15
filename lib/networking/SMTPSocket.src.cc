@@ -566,85 +566,6 @@ namespace FSMTP::Networking
 		free(buffer);
 	}
 
-	/**
-	 * Static single-usage method for reading the OpenSSL keys passphrase
-	 *
-	 * @Param {char *} buffer
-	 * @Param {int} size
-	 * @Param {int} rwflag
-	 * @param {void *} u
-	 * @Return int
-	 */
-	int SMTPSocket::readSSLPassphrase(char *buffer, int size, int rwflag, void *u)
-	{
-		// Reads the file and stores it inside the buffer
-		// - if something goes wrong we simply throw an error
-		FILE *f = fopen(_SMTP_SSL_PASSPHRASE_PATH, "r");
-		if (!f)
-		{
-			std::string error = "fopen() failed: ";
-			error += strerror(errno);
-			throw std::runtime_error(error);
-		}
-
-		fgets(buffer, size, f);
-		return strlen(buffer);
-	}
-
-	/**
-	 * Static method to upgrade an existing socket to an SSL socket
-	 *
-	 * @Param {int32_t &} sfd
-	 * @Param {SSL *} ssl
-	 * @Param {SSL_CTX *} sslCtx
-	 * @Return void
-	 */
-	void SMTPSocket::upgradeToSSL(
-		int32_t *sfd,
-		SSL **ssl, 
-		SSL_CTX **sslCtx
-	)
-	{
-		int32_t rc;
-
-		// Creates the SSL context and if something goes
-		// - wrong we throw an error
-		const SSL_METHOD *sslMethod = SSLv23_server_method();
-		*sslCtx = SSL_CTX_new(sslMethod);
-		if (!sslCtx)
-			throw std::runtime_error("Could not create context !");
-
-		// Configures the SSL context, with the keys etcetera
-		SSL_CTX_set_ecdh_auto(sslCtx, 1);
-		SSL_CTX_set_default_passwd_cb(*sslCtx, &SMTPSocket::readSSLPassphrase);
-		
-		rc = SSL_CTX_use_certificate_file(*sslCtx, _SMTP_SSL_CERT_PATH, SSL_FILETYPE_PEM);
-		if (rc <= 0)
-		{
-			ERR_print_errors_fp(stderr);
-			throw std::runtime_error("Could not read cert !");
-		}
-
-		rc = SSL_CTX_use_PrivateKey_file(*sslCtx, _SMTP_SSL_KEY_PATH, SSL_FILETYPE_PEM);
-		if (rc <= 0)
-		{
-			ERR_print_errors_fp(stderr);
-			throw std::runtime_error("Could not read private key !");
-		}
-
-		// Creates the ssl element and binds it with the socket,
-		// - after that we accept the connection with the client
-		*ssl = SSL_new(*sslCtx);
-		SSL_set_fd(*ssl, *sfd);
-
-		rc = SSL_accept(*ssl);
-		if (rc <= 0)
-		{
-			ERR_print_errors_fp(stderr);
-			throw std::runtime_error("Could not accept SSL connection !");
-		}
-	}
-
 	// ================================================
 	//
 	// =>
@@ -659,9 +580,12 @@ namespace FSMTP::Networking
 	 * @Param {void}
 	 * @Return {void}
 	 */
-	SMTPServerClientSocket::SMTPServerClientSocket(void)
+	SMTPServerClientSocket::SMTPServerClientSocket(void):
+		s_Logger(
+			std::string("ClientSocket:") + inet_ntoa(this->s_SockAddr.sin_addr),
+			LoggerLevel::INFO
+		)
 	{
-
 	}
 
 	/**
@@ -675,7 +599,11 @@ namespace FSMTP::Networking
 		const int32_t s_SocketFD,
 		struct sockaddr_in s_SockAddr
 	):
-		s_SocketFD(s_SocketFD), s_SockAddr(s_SockAddr), s_UseSSL(false)
+		s_SocketFD(s_SocketFD), s_SockAddr(s_SockAddr), s_UseSSL(false),
+		s_Logger(
+			std::string("ClientSocket:") + inet_ntoa(this->s_SockAddr.sin_addr),
+			LoggerLevel::INFO
+		)
 	{}
 
 	/**
@@ -705,7 +633,36 @@ namespace FSMTP::Networking
 	 */
 	void SMTPServerClientSocket::sendMessage(const std::string &raw)
 	{
+		int32_t rc;
 
+		// Prints the debug message, if enabled
+		DEBUG_ONLY(this->s_Logger << DEBUG << "S->" << raw.substr(0, raw.size() - 2) << ENDL << CLASSIC);
+
+		// Checks if we need to use ssl or not,
+		// - then we send the message and check for errors
+		if (this->s_UseSSL)
+		{
+			rc = SSL_write(this->s_SSL, raw.c_str(), raw.size());
+			if (rc <= 0)
+			{
+				BIO *bio = BIO_new(BIO_s_mem());
+				ERR_print_errors(bio);
+				char *err = nullptr;
+				std::size_t errLen = BIO_get_mem_data(bio, err);
+				std::string error(err, errLen);
+				BIO_free(bio);
+				throw std::runtime_error("SSL_write() failed: " + error);
+			}
+		} else
+		{
+			rc = send(this->s_SocketFD, raw.c_str(), raw.size(), 0);
+			if (rc < 0)
+			{
+				std::string error = "send() failed: ";
+				error += strerror(errno);
+				throw SMTPTransmissionError(error);
+			}
+		}
 	}
 
 	/**
@@ -722,11 +679,22 @@ namespace FSMTP::Networking
 
 		for (;;)
 		{
-			rc = recv(this->s_SocketFD, buffer, 128, 0);
-			if (rc < 0)
+			if (this->s_UseSSL)
 			{
-				delete[] buffer;
-				throw std::runtime_error("Could not read data");
+				rc = SSL_read(this->s_SSL, buffer, 128);
+				if (rc <= 0)
+				{
+					delete[] buffer;
+					throw std::runtime_error("Could not read data (ssl)");
+				}
+			} else
+			{
+				rc = recv(this->s_SocketFD, buffer, 128, 0);
+				if (rc < 0)
+				{
+					delete[] buffer;
+					throw std::runtime_error("Could not read data");
+				}
 			}
 
 			res += std::string(buffer, rc);
@@ -745,8 +713,123 @@ namespace FSMTP::Networking
 			}
 		}
 
+		// Prints the debug message, if enabled
+		#ifdef _SMTP_DEBUG
+		if (!big) this->s_Logger << DEBUG << "C->" << res.substr(0, res.size() - 2) << ENDL << CLASSIC;
+		else this->s_Logger << DEBUG << "C->[BIG DATA]" << ENDL << CLASSIC;
+		#endif
+
 		delete[] buffer;
 		if (big) return res.substr(0, res.size() - 5);
 		else return res.substr(0, res.size() - 2);
+	}
+
+	/**
+	 * Sends an response to the client
+	 * @Param {const SMTPResponseType} c_Type
+	 * @Return {void}
+	 */
+	void SMTPServerClientSocket::sendResponse(const SMTPResponseType c_Type)
+	{
+		ServerResponse response(c_Type);
+		std::string message = response.build();
+		this->sendMessage(message);
+	}
+
+	/**
+	 * Sends an response to the client
+	 *
+	 * @Param {const SMTPResponseType} c_Type
+	 * @Param {const std::string &} c_Message
+	 * @Param {void *} c_U
+	 * @Param {const std::vector<SMTPServiceFunction *} c_Services
+	 * @Return {void}
+	 */
+	void SMTPServerClientSocket::sendResponse(
+		const SMTPResponseType c_Type,
+		const std::string &c_Message,
+		void *c_U,
+		std::vector<SMTPServiceFunction> *c_Services
+	)
+	{
+		ServerResponse response(c_Type, c_Message, c_U, c_Services);
+		std::string message = response.build();
+		this->sendMessage(message);
+	}
+
+	/**
+	 * Static single-usage method for reading the OpenSSL keys passphrase
+	 *
+	 * @Param {char *} buffer
+	 * @Param {int} size
+	 * @Param {int} rwflag
+	 * @param {void *} u
+	 * @Return int
+	 */
+	int SMTPServerClientSocket::readSSLPassphrase(char *buffer, int size, int rwflag, void *u)
+	{
+		// Reads the file and stores it inside the buffer
+		// - if something goes wrong we simply throw an error
+		FILE *f = fopen(_SMTP_SSL_PASSPHRASE_PATH, "r");
+		if (!f)
+		{
+			std::string error = "fopen() failed: ";
+			error += strerror(errno);
+			throw std::runtime_error(error);
+		}
+
+		fgets(buffer, size, f);
+		return strlen(buffer);
+	}
+
+	/**
+	 * Upgrades connection to ssl
+	 *
+	 * @Param {void}
+	 * @Return void
+	 */
+	void SMTPServerClientSocket::upgrade(void)
+	{
+		int32_t rc;
+
+		// Creates the SSL context and if something goes
+		// - wrong we throw an error
+		const SSL_METHOD *sslMethod = SSLv23_server_method();
+		this->s_SSLCtx = SSL_CTX_new(sslMethod);
+		if (!this->s_SSLCtx)
+			throw std::runtime_error("Could not create context !");
+
+		// Configures the SSL context, with the keys etcetera
+		SSL_CTX_set_ecdh_auto(sslCtx, 1);
+		SSL_CTX_set_default_passwd_cb(this->s_SSLCtx, &SMTPServerClientSocket::readSSLPassphrase);
+		
+		rc = SSL_CTX_use_certificate_file(this->s_SSLCtx, _SMTP_SSL_CERT_PATH, SSL_FILETYPE_PEM);
+		if (rc <= 0)
+		{
+			ERR_print_errors_fp(stderr);
+			throw std::runtime_error("Could not read cert !");
+		}
+
+		rc = SSL_CTX_use_PrivateKey_file(this->s_SSLCtx, _SMTP_SSL_KEY_PATH, SSL_FILETYPE_PEM);
+		if (rc <= 0)
+		{
+			ERR_print_errors_fp(stderr);
+			throw std::runtime_error("Could not read private key !");
+		}
+
+		// Creates the ssl element and binds it with the socket,
+		// - after that we accept the connection with the client
+		this->s_SSL = SSL_new(this->s_SSLCtx);
+		SSL_set_fd(this->s_SSL, this->s_SocketFD);
+
+		rc = SSL_accept(this->s_SSL);
+		if (rc <= 0)
+		{
+			ERR_print_errors_fp(stderr);
+			throw std::runtime_error("Could not accept SSL connection !");
+		}
+
+		// Sets useSSL to true
+		this->s_UseSSL = true;
 	}
 }

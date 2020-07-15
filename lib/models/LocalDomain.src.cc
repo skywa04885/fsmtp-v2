@@ -53,11 +53,12 @@ namespace FSMTP::Models
 	 * @Param {std::unique_ptr<CassandraConnection> &} database
 	 * @Return void
 	 */
-	void LocalDomain::getByDomain(
+	LocalDomain LocalDomain::getByDomain(
 		const std::string &l_Domain,
 		std::unique_ptr<CassandraConnection>& database
 	)
 	{
+		LocalDomain res;
 		CassStatement *queryStatement = nullptr;
 		CassFuture *queryFuture = nullptr;
 		CassError rc;
@@ -105,13 +106,15 @@ namespace FSMTP::Models
 			throw EmptyQuery("No LocalDomain found with this specific domain");
 		}
 
-		cass_value_get_uuid(cass_row_get_column_by_name(row, "u_uuid"), &this->l_UUID);
+		cass_value_get_uuid(cass_row_get_column_by_name(row, "u_uuid"), &res.l_UUID);
 
 		// Frees the memory since the query was already
 		// - performed, and we don't want to leak anything
 		cass_statement_free(queryStatement);
 		cass_future_free(queryFuture);
 		cass_result_free(result);
+
+		return res;
 	}
 
 	/**

@@ -57,8 +57,7 @@ namespace FSMTP::Mailer::Client
 		// - could not be found
 		for (EmailAddress &address : config.m_To)
 		{
-			std::string domain;
-			address.getDomain(domain);
+			std::string domain = address.getDomain();
 
 			try
 			{

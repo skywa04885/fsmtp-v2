@@ -72,21 +72,21 @@ namespace FSMTP::Models
 		 */
 		void parse(const std::string &raw);
 
-		/**
-		 * Parses the domain name from the address
-		 *
-		 * @Param {std::string &} ret
-		 * @Return {void}
-		 */
-		void getDomain(std::string &ret);
+	  /**
+	   * Parses the domain name from the address
+	   *
+	   * @Param {void}
+	   * @Return {std::string}
+	   */
+		std::string getDomain(void);
 
-		/**
-		 * parses the username from the address
-		 *
-		 * @Param {std::string &} ret
-		 * @Return {void}
-		 */
-		void getUsername(std::string &ret);
+	  /**
+	   * parses the username from the address
+	   *
+	   * @Param {void}
+	   * @Return {std::string}
+	   */
+		std::string getUsername(void);
 
 		/**
 		 * Parses an raw string into multiple addresses
