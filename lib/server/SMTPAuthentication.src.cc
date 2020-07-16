@@ -74,4 +74,71 @@ namespace FSMTP::Server
 		BIO_free_all(bio);
 		return std::tuple(username, password);
 	}
+
+	/**
+	 * Verifies an authentication entry
+	 *
+	 * @Param {RedisConnection *} redis
+	 * @Param {CassandraConnection *} cassandra
+	 * @Param {const std::string &} user
+	 * @Param {const std::string &} password
+	 * @Return {bool}
+	 */
+	bool authVerify(
+		RedisConnection *redis,
+		CassandraConnection *cassandra,
+		const std::string &user,
+		const std::string &password
+	)
+	{
+		// Parses the user into an address, passes
+		// - the runtime error through the method
+		EmailAddress address(user);	
+
+		// Checks if the domain is local, else throw
+		// - runtime error
+		LocalDomain domain;
+		try {
+			domain = LocalDomain::findRedis(address.getDomain(), redis);
+		} catch (const EmptyQuery &e)
+		{
+			throw std::runtime_error("Domain not local");
+		}
+
+		// Checks if the user is in the database, else throw
+		// - runtime error
+		AccountShortcut shortcut;
+		try {
+			shortcut = AccountShortcut::findRedis(
+				redis, 
+				address.getDomain(), 
+				address.getUsername()
+			);
+		} catch (const EmptyQuery &e)
+		{
+			throw std::runtime_error("User not found on server");
+		}
+
+		// Since the user exists, get his public key and password
+		std::string uPass, uPubKey;
+		try {
+			std::tie(uPass, uPubKey) = Account::getPassAndPublicKey(
+				cassandra, 
+				shortcut.a_Domain, 
+				shortcut.a_Bucket, 
+				shortcut.a_UUID
+			);
+		} catch (const EmptyQuery &e)
+		{
+			std::string message = "User not found in database, possible removed: ";
+			message += e.what();
+			throw std::runtime_error(message);
+		}
+
+		// Verifies the password
+		if (passwordVerify(password, uPass))
+			return true;
+		else
+			return false;
+	}
 }

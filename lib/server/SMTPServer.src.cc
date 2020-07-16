@@ -403,13 +403,25 @@ namespace FSMTP::Server
 
 							// Gets the username and password from the auth
 							// - hash
-							std::string username, password;
-							std::tie(username, password ) = getUserAndPassB64(
+							std::string user, password;
+							std::tie(user, password ) = getUserAndPassB64(
 								command.c_Arguments[1]
 							);
 
-							// Gets the users password
+							// Creates an cassandra connection
+							std::unique_ptr<CassandraConnection> cass;
+							try {
+								cass = std::make_unique<CassandraConnection>(_CASSANDRA_DATABASE_CONTACT_POINTS);
+							} catch (const std::runtime_error &e)
+							{
+								throw FatalException("Could not connect to cassandra");
+							}
 
+							if (!authVerify(redis.get(), cass.get(), user, password))
+							{
+								client.sendResponse(SRC_AUTH_FAIL);
+								goto smtp_server_close_conn;
+							}
 							// Sets the flag and sends the success command
 							session.setAction(_SMTP_SERV_PA_AUTH_PERF);
 							session.setFlag(_SMTP_SERV_SESSION_AUTH_FLAG);

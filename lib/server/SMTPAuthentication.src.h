@@ -24,6 +24,15 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+#include "../general/connections.src.h"
+#include "../general/Passwords.src.h"
+#include "../models/LocalDomain.src.h"
+#include "../models/Account.src.h"
+#include "../models/Email.src.h"
+
+using namespace FSMTP::Connections;
+using namespace FSMTP::Models;
+
 namespace FSMTP::Server
 {
 	/**
@@ -35,5 +44,21 @@ namespace FSMTP::Server
 	 */
 	std::tuple<std::string, std::string> getUserAndPassB64(
 		const std::string &hash
+	);
+
+	/**
+	 * Verifies an authentication entry
+	 *
+	 * @Param {RedisConnection *} redis
+	 * @Param {CassandraConnection *} cassandra
+	 * @Param {const std::string &} user
+	 * @Param {const std::string &} password
+	 * @Return {bool}
+	 */
+	bool authVerify(
+		RedisConnection *redis,
+		CassandraConnection *cassandra,
+		const std::string &user,
+		const std::string &password
 	);
 }

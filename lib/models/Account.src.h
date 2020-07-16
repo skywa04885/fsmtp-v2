@@ -75,14 +75,16 @@ namespace FSMTP::Models
 		 *
 		 * @Param {CassandraConnection *} client
 		 * @Param {const std::string &} domain
-		 * @Param {const std::string &} username
+		 * @Param {const int64_t} bucket
+		 * @Param {const CassUuid &} uuid
 		 * @Return {std::string}
 		 * @Return {std::string}
 		 */
 		static std::tuple<std::string, std::string> getPassAndPublicKey(
 			CassandraConnection *client,
 			const std::string &domain,
-			const std::string &username
+			const int64_t bucket,
+			const CassUuid &uuid
 		);
 
 		std::string a_Username;

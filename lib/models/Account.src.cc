@@ -50,17 +50,80 @@ namespace FSMTP::Models
 	 *
 	 * @Param {CassandraConnection *} client
 	 * @Param {const std::string &} domain
-	 * @Param {const std::string &} username
+	 * @Param {const int64_t} bucket
+	 * @Param {const CassUuid &} uuid
 	 * @Return {std::string}
 	 * @Return {std::string}
 	 */
-	static std::tuple<std::string, std::string> getPassAndPublicKey(
+	std::tuple<std::string, std::string> Account::getPassAndPublicKey(
 		CassandraConnection *client,
 		const std::string &domain,
-		const std::string &username
+		const int64_t bucket,
+		const CassUuid &uuid
 	)
 	{
 		CassFuture *future = nullptr;
+		CassError rc;
+		CassStatement *statement = nullptr;
+		const char *query = R"(SELECT a_password, a_rsa_public 
+		FROM fannst.accounts WHERE a_bucket=? AND a_domain=? AND a_uuid=?)";
+
+		// Prepares the statement and binds the values
+		statement = cass_statement_new(query, 3);
+		cass_statement_bind_int64(statement, 0, bucket);
+		cass_statement_bind_string(statement, 1, domain.c_str());
+		cass_statement_bind_uuid(statement, 2, uuid);
+
+		// Executes the query and checks for errors
+		future = cass_session_execute(client->c_Session, statement);
+		cass_future_wait(future);
+
+		rc = cass_future_error_code(future);
+		if (rc != CASS_OK)
+		{
+			std::string message = "cass_session_execute() failed: ";
+			message += CassandraConnection::getError(future);
+			cass_future_free(future);
+			cass_statement_free(statement);
+			throw DatabaseException(message);
+		}
+
+		// Checks if there are any results, else throw empty
+		// - query exception
+		const CassResult *result = cass_future_get_result(future);
+		const CassRow *row = cass_result_first_row(result);
+
+		if (!row)
+		{
+			cass_future_free(future);
+			cass_statement_free(statement);
+			cass_result_free(result);
+			throw EmptyQuery("Could not find user");
+		}
+
+		// Gets the values from the row
+		const char *password = nullptr, *publicKey = nullptr;
+		std::size_t passwordSize, publicKeySize;
+
+		cass_value_get_string(
+			cass_row_get_column_by_name(row, "a_password"), 
+			&password, 
+			&passwordSize
+		);
+		cass_value_get_string(
+			cass_row_get_column_by_name(row, "a_rsa_public"),
+			&publicKey,
+			&publicKeySize
+		);
+
+		// Creates the results, frees the memory and returns
+		std::string passwordRes(password, passwordSize);
+		std::string pubKeyRes(publicKey, publicKeySize);
+		cass_future_free(future);
+		cass_statement_free(statement);
+		cass_result_free(result);
+
+		return std::tuple(passwordRes, pubKeyRes);
 	}
 
 	/**
@@ -444,10 +507,8 @@ namespace FSMTP::Models
 		} cass_uuid_from_string(reply->element[3]->str, &res.a_UUID);
 
 		freeReplyObject(reply);
+		res.a_Domain = domain;
 
-		char buff[120];
-		cass_uuid_string(res.a_UUID, buff);
-		std::cout << buff << std::endl;
 		return res;
 	}
 
