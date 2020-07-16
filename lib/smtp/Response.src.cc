@@ -162,6 +162,21 @@ namespace FSMTP::SMTP
 			{
 				return "closing connection";
 			}
+			case SMTPResponseType::SRC_AUTH_SUCCESS:
+			{
+				return "Authentication successfull, welcome back.";
+			}
+			case SMTPResponseType::SRC_AUTH_FAIL:
+			{
+				return "Authentication failed, closing transmission channel.";
+			}
+			case SMTPResponseType::SRC_REC_NOT_LOCAL:
+			{
+				std::string ret = "User [";
+				ret += reinterpret_cast<const char *>(this->c_U);
+				ret += "] not local, closing transmission channel.";
+				return ret;
+			}
 			case SMTPResponseType::SRC_DATA_END:
 			{
 				std::string ret = "OK, message queued ";
@@ -194,6 +209,9 @@ namespace FSMTP::SMTP
 			case SMTPResponseType::SRC_ORDER_ERR: return 503;
 			case SMTPResponseType::SRC_INVALID_COMMAND: return 502;
 			case SMTPResponseType::SRC_START_TLS: return 220;
+			case SMTPResponseType::SRC_REC_NOT_LOCAL: return 551;
+			case SMTPResponseType::SRC_AUTH_SUCCESS: return 235;
+			case SMTPResponseType::SRC_AUTH_FAIL: return 530;
 			default: throw std::runtime_error("getCode() invalid type");
 		}
 	}

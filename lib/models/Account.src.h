@@ -70,6 +70,21 @@ namespace FSMTP::Models
 		 */
 		static int64_t getBucket(void);
 
+		/**
+		 * Gets the password and public key
+		 *
+		 * @Param {CassandraConnection *} client
+		 * @Param {const std::string &} domain
+		 * @Param {const std::string &} username
+		 * @Return {std::string}
+		 * @Return {std::string}
+		 */
+		static std::tuple<std::string, std::string> getPassAndPublicKey(
+			CassandraConnection *client,
+			const std::string &domain,
+			const std::string &username
+		);
+
 		std::string a_Username;
 		std::string a_PictureURI;
 		std::string a_Password;
@@ -121,6 +136,14 @@ namespace FSMTP::Models
 		explicit AccountShortcut();
 
 		/**
+		 * Stores an account shortcut in cassandra
+		 *
+		 * @Param {CassandraConnection *} conn
+		 * @Return {void}
+		 */
+		void save(CassandraConnection *conn);
+
+		/**
 		 * Finds an account shortcut in the cassandra
 		 * - database
 		 *
@@ -148,6 +171,14 @@ namespace FSMTP::Models
 			const std::string &domain,
 			const std::string &username
 		);
+
+		/**
+		 * Stores the shortcut in redis
+		 *
+		 * @Param {RedisConnection *} redis
+		 * @Return {void}
+		 */
+		void saveRedis(RedisConnection *redis);
 
 		int64_t a_Bucket;
 		std::string a_Domain;

@@ -59,7 +59,7 @@ namespace FSMTP::Server
 			this->s_Logger << INFO << "SMTP Authenticatie is toegestaan." << ENDL << CLASSIC;
 			this->s_Services.push_back({
 				"AUTH",
-				{"LOGIN", "DIGEST-MD5", "PLAIN"}
+				{"PLAIN"}
 			});
 		}
 		if (BINARY_COMPARE(this->s_Opts, _SERVER_OPT_ENABLE_PIPELINING))
@@ -283,7 +283,8 @@ namespace FSMTP::Server
 								if (!session.getFlag(_SMTP_SERV_SESSION_AUTH_FLAG))
 									throw CommandOrderException("AUTH first.");
 
-								// TODO: Handle relaying
+								// Sets the relaying flag
+								session.setFlag(_SMTP_SERV_SESSION_RELAY_FLAG);
 							}
 							catch (const EmptyQuery &e)
 							{
@@ -334,6 +335,34 @@ namespace FSMTP::Server
 								throw SyntaxException(message);
 							}
 
+							// Checks if we're relaying, and if not if the user
+							// - is inside of the database
+							if (!session.getFlag(_SMTP_SERV_SESSION_RELAY_FLAG))
+							{
+								try {
+									// Finds the user shortcut
+									session.s_ReceivingAccount = AccountShortcut::findRedis(
+										redis.get(), 
+										session.s_TransportMessage.e_TransportTo.getDomain(),
+										session.s_TransportMessage.e_TransportTo.getUsername()
+									);
+								} catch (const EmptyQuery &e)
+								{
+									// Sends the not found error to the client
+									client.sendResponse(
+										SMTPResponseType::SRC_REC_NOT_LOCAL,
+										"",
+										reinterpret_cast<void *>(
+											const_cast<char *>(
+												session.s_TransportMessage.e_TransportTo.e_Address.c_str()
+											)
+										),
+										nullptr
+									);
+									goto smtp_server_close_conn;
+								}
+							}
+
 							// Sends the response and sets the 
 							// - action flag
 							client.sendResponse(
@@ -347,6 +376,45 @@ namespace FSMTP::Server
 								nullptr
 							);
 							session.setAction(_SMTP_SERV_PA_RCPT_TO);
+						}
+						break;
+					}
+					case ClientCommandType::CCT_AUTH:
+					{
+						// Checks if we're allowed to do this, actually only possible
+						// - only possible after helo
+						if (!session.getAction(_SMTP_SERV_PA_AUTH_PERF))
+						{
+							// Checks if we're allowed to perform this command
+							// - based on the command order
+							if (!session.getAction(_SMTP_SERV_PA_HELO))
+								throw CommandOrderException("EHLO/HELLO first.");
+
+							// Checks if the argument count is valid
+							if (command.c_Arguments.size() < 2)
+								throw SyntaxException("Specify type, and hash.");
+
+							// =======================================
+							// Validates the entry
+							//
+							// Checks if the password etcetera is
+							// - correct, if not throw err
+							// =======================================
+
+							// Gets the username and password from the auth
+							// - hash
+							std::string username, password;
+							std::tie(username, password ) = getUserAndPassB64(
+								command.c_Arguments[1]
+							);
+
+							// Gets the users password
+
+							// Sets the flag and sends the success command
+							session.setAction(_SMTP_SERV_PA_AUTH_PERF);
+							session.setFlag(_SMTP_SERV_SESSION_AUTH_FLAG);
+							client.sendResponse(SRC_AUTH_SUCCESS);
+							continue;
 						}
 						break;
 					}
@@ -375,11 +443,23 @@ namespace FSMTP::Server
 							// Joins the message lines and starts the recursive parser
 							MIME::joinMessageLines(rawTransportmessage);
 							MIME::parseRecursive(rawTransportmessage, session.s_TransportMessage, 0);
-							
-							// Pushes the email to the storage queue
-							_emailStorageMutex.lock();
-							_emailStorageQueue.push_back(session.s_TransportMessage);
-							_emailStorageMutex.unlock();
+
+							// Checks if we need to add it to the relay queue, or
+							// - the normal storage queue
+
+							if (!session.getFlag(_SMTP_SERV_SESSION_RELAY_FLAG))
+							{
+								// Adds the user information to the transport message
+								session.s_TransportMessage.e_OwnersUUID = session.s_ReceivingAccount.a_UUID;
+								session.s_TransportMessage.generateMessageUUID();
+								session.s_TransportMessage.e_Bucket = FullEmail::getBucket();
+								session.s_TransportMessage.e_Type = EmailType::ET_INCOMMING;
+
+								// Pushes the email to the storage queue
+								_emailStorageMutex.lock();
+								_emailStorageQueue.push_back(session.s_TransportMessage);
+								_emailStorageMutex.unlock();
+							}
 
 							// Sends the response and sets the 
 							// - action flag

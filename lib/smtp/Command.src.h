@@ -19,6 +19,7 @@
 #include <iostream>
 #include <cstdint>
 #include <string>
+#include <sstream>
 #include <vector>
 #include <algorithm>
 #include <cctype>
@@ -37,7 +38,8 @@ namespace FSMTP::SMTP
 		CCT_RCPT_TO,
 		CCT_DATA,
 		CCT_QUIT,
-		CCT_UNKNOWN
+		CCT_UNKNOWN,
+		CCT_AUTH
 	} ClientCommandType;
 
 	class ClientCommand

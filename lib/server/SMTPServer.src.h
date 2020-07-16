@@ -37,6 +37,7 @@
 #include "../general/macros.src.h"
 #include "SMTPServerSession.src.h"
 #include "SMTPServerExceptions.src.h"
+#include "SMTPAuthentication.src.h"
 #include "../parsers/mime.src.h"
 #include "../models/LocalDomain.src.h"
 

@@ -48,6 +48,56 @@ int main(const int argc, const char **argv)
 			std::cout << "-s, --sync: " << "\tSynchroniseerd de redis database met die van cassandra" << std::endl;
 			std::cout << "-n, --ncurses: " << "\tGebruik NCurses in plaats van klassieke terminal." << std::endl;
 			std::cout << "-a, --adduser:" << "\tAdds an new user to the email server." << std::endl; 
+			std::cout << "-m, --mail: " << "\tSends an emal." << std::endl;
+			return 0;
+		}
+
+		if (compareArg(arg, "mailtest"))
+		{
+			Logger logger("Mail", LoggerLevel::INFO);
+			MailComposerConfig mailComposerConfig;
+
+			// ==================================
+			// Gets the user input
+			//
+			// Stuff like subject and target
+			// ==================================
+
+			std::string type, from, to, subject;
+
+			logger << "Enter type [c: custom, d: default]: " << FLUSH;
+			std::getline(std::cin, type);
+			if (type[0] != 'd')
+			{
+				logger << "Enter subject: " << FLUSH;
+				std::getline(std::cin, subject);
+				logger << "Enter from: " << FLUSH;
+				std::getline(std::cin, from);
+				logger << "Enter to: " << FLUSH;
+				std::getline(std::cin, to);
+
+				mailComposerConfig.m_To.push_back(EmailAddress(to));
+				mailComposerConfig.m_From.push_back(EmailAddress(from));
+				mailComposerConfig.m_Subject = subject;
+			} else
+			{
+				mailComposerConfig.m_To.push_back(EmailAddress("Fannst Test", "test@fannst.nl"));
+				mailComposerConfig.m_From.push_back(EmailAddress("Fannst Test Client", "testc@example.com"));
+				mailComposerConfig.m_Subject = "Test email";
+			}
+
+			// ==================================
+			// Sends the email
+			//
+			// Sends the email with the signature
+			// - etcetra
+			// ==================================
+
+			mailComposerConfig.m_Headers.push_back(EmailHeader{"X-Test", "true"});
+			SMTPClient client(false);
+			client.prepare(mailComposerConfig);
+			client.beSocial();
+
 			return 0;
 		}
 
@@ -384,6 +434,8 @@ int main(const int argc, const char **argv)
 				account.a_Username, 
 				account.a_UUID
 			);
+			accountShortcut.save(cassandra.get());
+			accountShortcut.saveRedis(redis.get());
 			return 0;
 		}
 	}

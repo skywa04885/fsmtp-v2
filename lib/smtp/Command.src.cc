@@ -89,12 +89,16 @@ namespace FSMTP::SMTP
 			{
 				if (command.substr(0, 4) == "helo")
 					this->c_CommandType = ClientCommandType::CCT_HELO;
+				else 
+					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
 				break;
 			}
 			case 'e':
 			{
 				if (command.substr(0, 4) == "ehlo")
 					this->c_CommandType = ClientCommandType::CCT_EHLO;
+				else 
+					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
 				break;
 			}
 			case 's':
@@ -137,6 +141,14 @@ namespace FSMTP::SMTP
 					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
 				break;
 			}
+			case 'a':
+			{
+				if (command.substr(0, 4) == "auth")
+					this->c_CommandType = ClientCommandType::CCT_AUTH;
+				else 
+					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
+				break;
+			}
 			default:
 			{
 				this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
@@ -152,7 +164,15 @@ namespace FSMTP::SMTP
 		std::string argsRaw = raw.substr(++index);
 		std::string ret;
 		reduceWhitespace(argsRaw, ret);
-		if (!ret.empty()) this->c_Arguments.push_back(ret);
+		if (!ret.empty())
+		{
+			std::stringstream stream(ret);
+			std::string arg;
+			while (std::getline(stream, arg, ' '))
+			{
+				this->c_Arguments.push_back(arg);
+			}
+		}
 	}
 
 
@@ -202,6 +222,11 @@ namespace FSMTP::SMTP
 			case ClientCommandType::CCT_QUIT:
 			{
 				res += "QUIT";
+				break;
+			}
+			case ClientCommandType::CCT_AUTH:
+			{
+				res += "AUTH";
 				break;
 			}
 		}

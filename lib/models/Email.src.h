@@ -229,6 +229,14 @@ namespace FSMTP::Models
      */
     void save(std::unique_ptr<CassandraConnection> &conn);
 
+    /**
+     * Generates an UUID for the current message
+     *
+     * @Param {void}
+     * @Return {void}
+     */
+    void generateMessageUUID(void);
+
     EmailAddress e_TransportFrom;
 		EmailAddress e_TransportTo;
 		std::string e_Subject;

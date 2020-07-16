@@ -34,7 +34,7 @@ using namespace FSMTP::Cleanup;
 namespace FSMTP::SMTP
 {
 	typedef enum : uint32_t {
-		SRC_GREETING,
+		SRC_GREETING = 0,
 		SRC_EHLO,
 		SRC_HELO,
 		SRC_MAIL_FROM,
@@ -45,7 +45,10 @@ namespace FSMTP::SMTP
 		SRC_SYNTAX_ERR,
 		SRC_ORDER_ERR,
 		SRC_INVALID_COMMAND,
-		SRC_START_TLS
+		SRC_START_TLS,
+		SRC_REC_NOT_LOCAL,
+		SRC_AUTH_SUCCESS,
+		SRC_AUTH_FAIL
 	} SMTPResponseType;
 
 	typedef struct {

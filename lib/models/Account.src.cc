@@ -46,6 +46,24 @@ namespace FSMTP::Models
 	}
 
 	/**
+	 * Gets the password and public key
+	 *
+	 * @Param {CassandraConnection *} client
+	 * @Param {const std::string &} domain
+	 * @Param {const std::string &} username
+	 * @Return {std::string}
+	 * @Return {std::string}
+	 */
+	static std::tuple<std::string, std::string> getPassAndPublicKey(
+		CassandraConnection *client,
+		const std::string &domain,
+		const std::string &username
+	)
+	{
+		CassFuture *future = nullptr;
+	}
+
+	/**
 	 * Generates an RSA keypair for the account
 	 *
 	 * @Param {void}
@@ -247,6 +265,52 @@ namespace FSMTP::Models
 	{}
 
 	/**
+	 * Stores an account shortcut in cassandra
+	 *
+	 * @Param {CassandraConnection *} conn
+	 * @Return {void}
+	 */
+	void AccountShortcut::save(CassandraConnection *conn)
+	{
+		const char *query = R"(INSERT INTO fannst.account_shortcuts (
+			a_bucket, a_domain, a_uuid,
+			a_username
+		) VALUES (
+			?, ?, ?,
+			?
+		))";
+		CassFuture *future = nullptr;
+		CassStatement *statement = nullptr;
+		CassError rc;
+
+		// Creates the statement and executes it
+		statement = cass_statement_new(query, 4);
+		cass_statement_bind_int64(statement, 0, this->a_Bucket);
+		cass_statement_bind_string(statement, 1, this->a_Domain.c_str());
+		cass_statement_bind_uuid(statement, 2, this->a_UUID);
+		cass_statement_bind_string(statement, 3, this->a_Username.c_str());
+
+		// Executes the statement and throws an error if
+		// - anything went wrong
+		future = cass_session_execute(conn->c_Session, statement);
+		cass_future_wait(future);
+
+		rc = cass_future_error_code(future);
+		if (rc != CASS_OK)
+		{
+			std::string message = "cass_session_execute() failed: ";
+			message += CassandraConnection::getError(future);
+			cass_future_free(future);
+			cass_statement_free(statement);
+			throw std::runtime_error(message);
+		}
+
+		// Free's the memory and returns
+		cass_future_free(future);
+		cass_statement_free(statement);
+	}
+
+	/**
 	 * Finds an account shortcut in the cassandra
 	 * - database
 	 *
@@ -380,6 +444,46 @@ namespace FSMTP::Models
 		} cass_uuid_from_string(reply->element[3]->str, &res.a_UUID);
 
 		freeReplyObject(reply);
+
+		char buff[120];
+		cass_uuid_string(res.a_UUID, buff);
+		std::cout << buff << std::endl;
 		return res;
 	}
+
+	/**
+   * Stores the shortcut in redis
+   *
+   * @Param {RedisConnection *} redis
+   * @Return {void}
+   */
+  void AccountShortcut::saveRedis(RedisConnection *redis)
+  {
+    // Convers the UUID to an string
+    char uuidBuffer[64];
+    cass_uuid_string(this->a_UUID, uuidBuffer);
+
+    // Prepares the redis command 
+    std::string command = "HMSET acc:";
+    command += this->a_Username;
+    command += '@';
+    command += this->a_Domain;
+    command += " v1 ";
+    command += std::to_string(this->a_Bucket);
+    command += " v2 ";
+    command += uuidBuffer;
+
+    // Performs the command on the redis server,
+    // - and throws error if not working idk
+    redisReply *reply = reinterpret_cast<redisReply *>(
+      redisCommand(redis->r_Session, command.c_str())
+    );
+    if (reply->type == REDIS_REPLY_ERROR)
+    {
+      // Gets the error message and throws it
+      std::string message = "redisCommand() failed: ";
+      message += std::string(reply->str, reply->len);
+      throw DatabaseException(message);
+    }
+  }
 }

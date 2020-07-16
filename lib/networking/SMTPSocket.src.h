@@ -353,10 +353,11 @@ namespace FSMTP::Networking
 		 * @Return int
 		 */
 		static int readSSLPassphrase(char *buffer, int size, int rwflag, void *u);
+
 	private:
+		bool s_UseSSL;
 		SSL_CTX *s_SSLCtx;
 		SSL *s_SSL;
-		bool s_UseSSL;
 		int32_t s_SocketFD;
 		struct sockaddr_in s_SockAddr;
 		Logger &s_Logger;

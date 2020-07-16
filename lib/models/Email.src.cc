@@ -565,7 +565,7 @@ namespace FSMTP::Models
 			cass_future_error_message(future, &err, &errLen);
 
 			std::string errString(err, errLen);
-			std::string message = "cass_session_connect() failed: ";
+			std::string message = "cass_session_execute() failed: ";
 			message += errString;
 
       cass_future_free(future);
@@ -574,5 +574,20 @@ namespace FSMTP::Models
 
   	// Frees the memory ( if no error )
   	cass_future_free(future);
+  }
+
+  /**
+   * Generates an UUID for the current message
+   *
+   * @Param {void}
+   * @Return {void}
+   */
+  void FullEmail::generateMessageUUID(void)
+  {
+    // Creates the user uuid gen, and then generates the
+    // - message user id
+    CassUuidGen *gen = cass_uuid_gen_new();
+    cass_uuid_gen_time(gen, &this->e_EmailUUID);
+    cass_uuid_gen_free(gen);
   }
 }
