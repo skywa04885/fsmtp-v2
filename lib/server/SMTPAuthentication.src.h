@@ -53,12 +53,14 @@ namespace FSMTP::Server
 	 * @Param {CassandraConnection *} cassandra
 	 * @Param {const std::string &} user
 	 * @Param {const std::string &} password
+	 * @Param {AccountShortut &} shortcutTarget
 	 * @Return {bool}
 	 */
 	bool authVerify(
 		RedisConnection *redis,
 		CassandraConnection *cassandra,
 		const std::string &user,
-		const std::string &password
+		const std::string &password,
+		AccountShortcut &shortcutTarget
 	);
 }

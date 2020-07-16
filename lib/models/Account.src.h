@@ -182,6 +182,34 @@ namespace FSMTP::Models
 		 */
 		void saveRedis(RedisConnection *redis);
 
+		/**
+		 * Equals operator overload
+		 *
+		 * @Param {const AccountShortcut &} a
+		 * @Return {bool}
+		 */
+		bool operator==(const AccountShortcut &a)
+		{
+			if (a.a_Username == this->a_Username && a.a_Domain == this->a_Domain)
+				return true;
+			else
+				return false;
+		}
+
+		/**
+		 * Equals operator overload
+		 *
+		 * @Param {const AccountShortcut &} a
+		 * @Return {bool}
+		 */
+		bool operator!=(const AccountShortcut &a)
+		{
+			if (a.a_Username != this->a_Username || a.a_Domain != this->a_Domain)
+				return true;
+			else
+				return false;
+		}
+
 		int64_t a_Bucket;
 		std::string a_Domain;
 		std::string a_Username;

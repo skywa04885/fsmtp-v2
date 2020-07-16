@@ -170,6 +170,10 @@ namespace FSMTP::SMTP
 			{
 				return "Authentication failed, closing transmission channel.";
 			}
+			case SMTPResponseType::SRC_RELAY_FAIL:
+			{
+				return "Relay denied.";
+			}
 			case SMTPResponseType::SRC_REC_NOT_LOCAL:
 			{
 				std::string ret = "User [";
@@ -212,6 +216,7 @@ namespace FSMTP::SMTP
 			case SMTPResponseType::SRC_REC_NOT_LOCAL: return 551;
 			case SMTPResponseType::SRC_AUTH_SUCCESS: return 235;
 			case SMTPResponseType::SRC_AUTH_FAIL: return 530;
+			case SMTPResponseType::SRC_RELAY_FAIL: return 551;
 			default: throw std::runtime_error("getCode() invalid type");
 		}
 	}

@@ -283,13 +283,22 @@ namespace FSMTP::Server
 								if (!session.getFlag(_SMTP_SERV_SESSION_AUTH_FLAG))
 									throw CommandOrderException("AUTH first.");
 
+								// Compares the domain and username to the authenticated ones
+								// - if different throw error
+								if (
+									session.s_TransportMessage.e_TransportFrom.getDomain() != session.s_SendingAccount.a_Domain ||
+									session.s_TransportMessage.e_TransportFrom.getUsername() != session.s_SendingAccount.a_Username
+								)
+								{
+									client.sendResponse(SRC_RELAY_FAIL);
+									goto smtp_server_close_conn;
+								}
+
 								// Sets the relaying flag
 								session.setFlag(_SMTP_SERV_SESSION_RELAY_FLAG);
 							}
 							catch (const EmptyQuery &e)
-							{
-								// No worry's is allowed
-							}
+							{ /* No worry's is allowed */ }
 
 							// Sends the response and sets the 
 							// - action flag
@@ -417,7 +426,7 @@ namespace FSMTP::Server
 								throw FatalException("Could not connect to cassandra");
 							}
 
-							if (!authVerify(redis.get(), cass.get(), user, password))
+							if (!authVerify(redis.get(), cass.get(), user, password, session.s_SendingAccount))
 							{
 								client.sendResponse(SRC_AUTH_FAIL);
 								goto smtp_server_close_conn;

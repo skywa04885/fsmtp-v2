@@ -48,7 +48,8 @@ namespace FSMTP::SMTP
 		SRC_START_TLS,
 		SRC_REC_NOT_LOCAL,
 		SRC_AUTH_SUCCESS,
-		SRC_AUTH_FAIL
+		SRC_AUTH_FAIL,
+		SRC_RELAY_FAIL
 	} SMTPResponseType;
 
 	typedef struct {

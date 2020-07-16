@@ -82,13 +82,15 @@ namespace FSMTP::Server
 	 * @Param {CassandraConnection *} cassandra
 	 * @Param {const std::string &} user
 	 * @Param {const std::string &} password
+	 * @Param {AccountShortut &} shortcutTarget
 	 * @Return {bool}
 	 */
 	bool authVerify(
 		RedisConnection *redis,
 		CassandraConnection *cassandra,
 		const std::string &user,
-		const std::string &password
+		const std::string &password,
+		AccountShortcut &shortcutTarget
 	)
 	{
 		// Parses the user into an address, passes
@@ -107,9 +109,8 @@ namespace FSMTP::Server
 
 		// Checks if the user is in the database, else throw
 		// - runtime error
-		AccountShortcut shortcut;
 		try {
-			shortcut = AccountShortcut::findRedis(
+			shortcutTarget = AccountShortcut::findRedis(
 				redis, 
 				address.getDomain(), 
 				address.getUsername()
@@ -124,9 +125,9 @@ namespace FSMTP::Server
 		try {
 			std::tie(uPass, uPubKey) = Account::getPassAndPublicKey(
 				cassandra, 
-				shortcut.a_Domain, 
-				shortcut.a_Bucket, 
-				shortcut.a_UUID
+				shortcutTarget.a_Domain, 
+				shortcutTarget.a_Bucket, 
+				shortcutTarget.a_UUID
 			);
 		} catch (const EmptyQuery &e)
 		{

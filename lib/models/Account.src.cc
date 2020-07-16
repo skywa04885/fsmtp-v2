@@ -508,6 +508,7 @@ namespace FSMTP::Models
 
 		freeReplyObject(reply);
 		res.a_Domain = domain;
+		res.a_Username = username;
 
 		return res;
 	}
