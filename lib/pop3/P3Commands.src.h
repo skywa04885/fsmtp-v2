@@ -23,13 +23,16 @@ namespace FSMTP::POP3
 	typedef enum : uint8_t
 	{
 		PCT_CAPA = 0,
-		PCT_QUIT
+		PCT_QUIT,
+		PCT_UNKNOWN
 	} POP3CommandType;
 
 	class P3Command
 	{
 	public:
-	private:
+		void parse(const std::string &raw);
 		
+		POP3CommandType c_Type;
+		std::vector<std::string> c_Args;
 	};
 }

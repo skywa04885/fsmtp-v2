@@ -36,13 +36,27 @@ namespace FSMTP::POP3
 
 		for (;;)
 		{
+			P3Command command;
+
 			try {
-				std::string command = client->readUntillCRLF();
-				std::cout << command << std::endl;
+				std::string raw = client->readUntillCRLF();
+				command.parse(raw);
 			} catch (const SocketReadException &e)
 			{
 				break;
 			}
+
+			// Checks how to respond to the command
+			switch (command.c_Type)
+			{
+				case POP3CommandType::PCT_QUIT:
+				{
+					goto pop3_session_end;
+				}
+			}
 		}
+
+	pop3_session_end:
+		return;
 	}
 }

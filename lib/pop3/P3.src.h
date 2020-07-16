@@ -26,6 +26,7 @@
 #include <memory>
 #include <atomic>
 #include <tuple>
+#include <sstream>
 
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -36,6 +37,7 @@
 
 #include "../general/logger.src.h"
 #include "../general/macros.src.h"
+#include "../general/cleanup.src.h"
 
 #ifndef _POP3_QUEUE_MAX
 #define _POP3_QUEUE_MAX 40
@@ -48,6 +50,8 @@
 #ifndef _POP3_PORT_SECURE
 #define _POP3_PORT_SECURE 995
 #endif
+
+using namespace FSMTP::Cleanup;
 
 namespace FSMTP::POP3
 {

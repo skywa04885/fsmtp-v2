@@ -18,6 +18,7 @@
 
 #include "P3.src.h"
 #include "P3ServerSocket.src.h"
+#include "P3Commands.src.h"
 
 namespace FSMTP::POP3
 {
