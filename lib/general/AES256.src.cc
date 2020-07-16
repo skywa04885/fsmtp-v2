@@ -36,9 +36,9 @@ namespace FSMTP::AES256
 		unsigned char iv[_AES256_IV_SIZE_BYTES];
 		unsigned char key[_AES256_KEY_SIZE_BYTES];
 		unsigned char salt[_AES256_KEY_SALT_SIZE];
-		unsigned char ret[1024]; // TODO: Make dynamic based on AES256 algo
+		unsigned char ret[(raw.size()/16 + 1) * 16]; // TODO: Make dynamic based on AES256 algo
 		EVP_CIPHER_CTX *ctx = nullptr;
-		int32_t len, ciptherTextLen = 0, rc;
+		int32_t len, ciptherTextLen, rc;
 
 		// ======================================
 		// Prepares
@@ -106,7 +106,7 @@ namespace FSMTP::AES256
 			EVP_CIPHER_CTX_free(ctx);
 			throw std::runtime_error("EVP_EncryptUpdate() failed");
 		}
-		ciptherTextLen += len;
+		ciptherTextLen = len;
 
 		// Gets the encryption result
 		rc = EVP_EncryptFinal_ex(ctx, ret + len, &len);
@@ -160,11 +160,10 @@ namespace FSMTP::AES256
 		const std::string &password
 	)
 	{
-		int32_t rc, len, plainTextLen = 0;
+		int32_t rc, len, plainTextLen = 0, decodedLen;
 		unsigned char iv[_AES256_IV_SIZE_BYTES];
 		unsigned char salt[_AES256_KEY_SALT_SIZE];
 		unsigned char key[_AES256_KEY_SIZE_BYTES];
-		unsigned char out[1024]; // TODO: Make possible with dynamic size
 		EVP_CIPHER_CTX *ctx = nullptr;
 
 		// ======================================
@@ -205,7 +204,18 @@ namespace FSMTP::AES256
 		// Decodes the Base64 string to bytes
 		// ======================================
 
-		
+		BIO *base64 = nullptr, *bio = nullptr;
+		std::string toDecode = encrypted.substr(0, ivIndex);
+		unsigned char *decoded = new unsigned char[toDecode.size()];
+
+		// Prepares the decoder
+		base64 = BIO_new(BIO_f_base64());
+		bio = BIO_new_mem_buf(toDecode.c_str(), toDecode.size());
+		bio = BIO_push(base64, bio);
+		BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+
+		// Reads the decoded base64 data
+		decodedLen = BIO_read(bio, decoded, toDecode.size());
 
 		// ======================================
 		// Decrypts
@@ -213,22 +223,60 @@ namespace FSMTP::AES256
 		// Performs the decryption
 		// ======================================
 
+		unsigned char ret[decodedLen]; // TODO: Make possible with dynamic size
+
 		// Initializes the ctx, and throws error if it goes wrong
 		ctx = EVP_CIPHER_CTX_new();
 		if (!ctx)
+		{
+			BIO_free_all(bio);
+			delete[] decoded;
 			throw std::runtime_error("EVP_CIPHER_CTX_new() failed");
+		}
 
 		// Initializes the decryption operation
 		rc = EVP_DecryptInit(ctx, EVP_aes_256_cbc(), key, iv);
-		if (rc < 0)
+		if (rc != 1)
 		{
 			EVP_CIPHER_CTX_free(ctx);
+			BIO_free_all(bio);
+			delete[] decoded;
 			throw std::runtime_error("EVP_DecryptInit() failed");
 		}
 
 		// Provides the encrypted message
-		std::string toDecrypt = encrypted.substr(0, ivIndex);
+		rc = EVP_DecryptUpdate(
+			ctx,
+			ret,
+			&len,
+			decoded,
+			decodedLen
+		);
+		if (rc != 1)
+		{
+			EVP_CIPHER_CTX_free(ctx);
+			BIO_free_all(bio);
+			delete[] decoded;
+			throw std::runtime_error("EVP_DecryptUpdate() failed");
+		}
+		plainTextLen = len;
 
-		// rc = EVP_DecryptUpdate(ctx, out, 1024, , )
+		// Gets the decrypted bytes
+		rc = EVP_DecryptFinal_ex(ctx, ret + plainTextLen, &len);
+		if (rc != 1)
+		{
+			EVP_CIPHER_CTX_free(ctx);
+			BIO_free_all(bio);
+			delete[] decoded;
+			throw std::runtime_error("EVP_DecryptFinal_ex() failed");
+		}
+		plainTextLen += len;
+
+		// Creates the result, frees the memory and returns
+		std::string result(reinterpret_cast<const char *>(ret), plainTextLen);
+		EVP_CIPHER_CTX_free(ctx);
+		BIO_free_all(bio);
+		delete[] decoded;
+		return result;
 	}
 }

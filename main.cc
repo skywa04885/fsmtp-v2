@@ -20,14 +20,6 @@ bool _forceLoggerNCurses = false;
 
 int main(const int argc, const char **argv)
 {
-	std::string encrypted = AES256::encrypt("test123", "asd123TEST");
-	std::cout << "Encrypted: " << encrypted << std::endl;
-
-	std::string decrypted = AES256::decrypt(encrypted, "asd123TEST");
-
-
-	return 0;
-
 	// Initializes OpenSSL stuff
 	SSL_load_error_strings();
   OpenSSL_add_ssl_algorithms();
@@ -317,13 +309,13 @@ int main(const int argc, const char **argv)
 			// Requests the required information about the user
 			// - then we will create and store the user
 			logger << "Vul naam in: " << FLUSH;
-			std::cin >> fullName;
+			std::getline(std::cin, fullName);
 			logger << "Vul gebruikersnaam in: " << FLUSH;
-			std::cin >> username;
+			std::getline(std::cin, username);
 			logger << "Vul domein in: " << FLUSH;
-			std::cin >> domain;
+			std::getline(std::cin, domain);
 			logger << "Vul wachtwoord in: " << FLUSH;
-			std::cin >> password;
+			std::getline(std::cin, password);
 
 			// Prints that the user is being created, and
 			// - hashes the password
@@ -377,6 +369,9 @@ int main(const int argc, const char **argv)
 			logger << "Keypair generated ..." << ENDL;
 			logger << "RSA 2048 public: \033[41m\r\n" << account.a_RSAPublic << "\033[0m" << ENDL;
 			logger << "RSA 2048 private: \033[41m\r\n" << account.a_RSAPrivate << "\033[0m" << ENDL;
+
+			// Encrypts the rsa private key
+			account.a_RSAPrivate = AES256::encrypt(account.a_RSAPrivate, password);
 
 			// Saves the full account in cassandra, and prints the message
 			account.save(cassandra.get());
