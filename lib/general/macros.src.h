@@ -87,3 +87,9 @@
 #define _BASH_SUCCESS_MARK "\033[32m[\u2713]:\033[0m "
 #define _BASH_FAIL_MARK "\033[31m[\u2717]:\033[0m "
 #define _BASH_UNKNOWN_MARK "\033[35m[?]:\033[0m "
+
+#ifdef _SMTP_DEBUG
+#define EXCEPT_DEBUG(A) std::string(__FILE__) + std::string(": ") + std::to_string(__LINE__) + std::string("->") + A
+#else
+#define EXCEPT_DEBUG(A) A
+#endif

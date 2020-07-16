@@ -41,6 +41,8 @@
 #include "lib/networking/DNS.src.h"
 #include "lib/general/AES256.src.h"
 
+#include "lib/pop3/P3Server.src.h"
+
 using namespace FSMTP;
 using Networking::SMTPSocket;
 using Server::SMTPServer;

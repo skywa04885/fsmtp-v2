@@ -20,6 +20,17 @@ bool _forceLoggerNCurses = false;
 
 int main(const int argc, const char **argv)
 {
+
+	// Starts the POP3 server
+	try {
+		POP3::P3Server pop3server(false);
+		std::cin.get();
+	} catch (POP3::SocketInitializationException &e)
+	{
+		std::cout << e.what() << std::endl;
+	}
+	return 0;
+
 	// Initializes OpenSSL stuff
 	SSL_load_error_strings();
   OpenSSL_add_ssl_algorithms();
