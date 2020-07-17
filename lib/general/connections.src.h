@@ -18,6 +18,8 @@
 
 #include <cstdint>
 #include <stdexcept>
+#include <fstream>
+#include <filesystem>
 #include <hiredis/hiredis.h>
 
 #include <cassandra.h>

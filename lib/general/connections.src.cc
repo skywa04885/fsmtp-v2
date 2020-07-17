@@ -30,6 +30,33 @@ namespace FSMTP::Connections
 		this->c_ConnectFuture = nullptr;
 		this->c_Session = cass_session_new();
 
+		// Reads the credentials from the file
+		if (
+			std::filesystem::exists("../env/cass-pass.txt") &&
+			std::filesystem::exists("../env/cass-user.txt")
+		)
+		{
+			std::string password, username;
+
+			// Reads the password
+			std::ifstream file;
+			file.open("../env/cass-pass.txt");
+			if (!file.is_open())
+				throw std::runtime_error("Could not read password file");
+			file >> password;
+			file.close();
+
+			// Reads the username
+			file.open("../env/cass-user.txt");
+			if (!file.is_open())
+				throw std::runtime_error("Could not read username file");
+			file >> username;
+			file.close();
+
+			// Sets the username and password
+			cass_cluster_set_credentials(this->c_Cluster, username.c_str(), password.c_str());
+		}
+
 		// Sets the contact points and connects to the
 		// - cassandra server, or datacenter idk
 		cass_cluster_set_contact_points(this->c_Cluster, hosts);
