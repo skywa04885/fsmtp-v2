@@ -17,6 +17,9 @@
 
 #include "TransmissionWorker.src.h"
 
+std::mutex _transmissionMutex;
+std::vector<EmailShortcut> _transmissionQueue;
+
 namespace FSMTP::Workers
 {
 	/**

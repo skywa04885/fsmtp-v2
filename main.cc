@@ -20,17 +20,6 @@ bool _forceLoggerNCurses = false;
 
 int main(const int argc, const char **argv)
 {
-
-	// Starts the POP3 server
-	try {
-		POP3::P3Server pop3server(false);
-		std::cin.get();
-	} catch (POP3::SocketInitializationException &e)
-	{
-		std::cout << e.what() << std::endl;
-	}
-	return 0;
-
 	// Initializes OpenSSL stuff
 	SSL_load_error_strings();
   OpenSSL_add_ssl_algorithms();
@@ -60,6 +49,7 @@ int main(const int argc, const char **argv)
 			std::cout << "-n, --ncurses: " << "\tGebruik NCurses in plaats van klassieke terminal." << std::endl;
 			std::cout << "-a, --adduser:" << "\tAdds an new user to the email server." << std::endl; 
 			std::cout << "-m, --mail: " << "\tSends an emal." << std::endl;
+			std::cout << "-p, --pop3:" << "\tStart de pop3 server." << std::endl;
 			return 0;
 		}
 
@@ -109,6 +99,19 @@ int main(const int argc, const char **argv)
 			client.prepare(mailComposerConfig);
 			client.beSocial();
 
+			return 0;
+		}
+
+		if (compareArg(arg, "pop3"))
+		{
+			// Starts the POP3 server
+			try {
+				POP3::P3Server pop3server(false);
+				std::cin.get();
+			} catch (POP3::SocketInitializationException &e)
+			{
+				std::cout << e.what() << std::endl;
+			}
 			return 0;
 		}
 

@@ -480,6 +480,18 @@ namespace FSMTP::Server
 								_emailStorageMutex.lock();
 								_emailStorageQueue.push_back(session.s_TransportMessage);
 								_emailStorageMutex.unlock();
+							} else
+							{
+								// Prepares the email for storage
+								session.s_TransportMessage.e_OwnersUUID = session.s_SendingAccount.a_UUID;
+								session.s_TransportMessage.generateMessageUUID();
+								session.s_TransportMessage.e_Bucket = FullEmail::getBucket();
+								session.s_TransportMessage.e_Type = EmailType::ET_RELAY_OUTGOING;
+
+								// Pushesht the email to the storage queue
+								_emailStorageMutex.lock();
+								_emailStorageQueue.push_back(session.s_TransportMessage);
+								_emailStorageMutex.unlock();
 							}
 
 							// Sends the response and sets the 

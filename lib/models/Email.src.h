@@ -255,4 +255,21 @@ namespace FSMTP::Models
 		EmailType e_Type;
 	};
 
+	class EmailShortcut
+	{
+	public:
+		explicit EmailShortcut(void);
+
+		EmailShortcut(
+			const CassUuid &e_OwnersUUID,
+			const CassUuid &e_EmailUUID,
+			const std::string &e_Domain
+		);
+
+		void save(CassandraConnection *connection);
+	private:
+		CassUuid e_OwnersUUID;
+		CassUuid e_EmailUUID;
+		std::string e_Domain;
+	};
 }
