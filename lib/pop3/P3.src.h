@@ -35,7 +35,7 @@
 #include <arpa/inet.h>
 #include <memory.h>
 
-#include "../general/logger.src.h"
+#include "../general/Logger.src.h"
 #include "../general/macros.src.h"
 #include "../general/cleanup.src.h"
 

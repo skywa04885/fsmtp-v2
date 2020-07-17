@@ -22,7 +22,7 @@
 #include <string>
 #include <chrono>
 
-#include "../general/logger.src.h"
+#include "../general/Logger.src.h"
 
 namespace FSMTP::Workers
 {

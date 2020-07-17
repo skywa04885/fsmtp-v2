@@ -25,7 +25,7 @@
 #include <cassandra.h>
 
 #include "../general/cleanup.src.h"
-#include "../general/logger.src.h"
+#include "../general/Logger.src.h"
 #include "../general/connections.src.h"
 #include "../general/exceptions.src.h"
 

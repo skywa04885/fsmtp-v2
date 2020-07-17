@@ -20,7 +20,7 @@
 #include <string>
 
 #include "SMTPClientSession.src.h"
-#include "../networking/SMTPSocket.src.h"
+#include "../../networking/SMTPSocket.src.h"
 
 using namespace FSMTP::Networking;
 

@@ -24,11 +24,11 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#include "../general/connections.src.h"
-#include "../general/Passwords.src.h"
-#include "../models/LocalDomain.src.h"
-#include "../models/Account.src.h"
-#include "../models/Email.src.h"
+#include "../../general/connections.src.h"
+#include "../../general/Passwords.src.h"
+#include "../../models/LocalDomain.src.h"
+#include "../../models/Account.src.h"
+#include "../../models/Email.src.h"
 
 using namespace FSMTP::Connections;
 using namespace FSMTP::Models;

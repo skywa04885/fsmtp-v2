@@ -20,7 +20,7 @@
 #include <chrono>
 #include <string>
 
-#include "logger.src.h"
+#include "Logger.src.h"
 
 namespace FSMTP
 {

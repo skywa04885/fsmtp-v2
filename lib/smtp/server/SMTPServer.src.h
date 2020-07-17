@@ -30,16 +30,16 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
-#include "../smtp/Response.src.h"
-#include "../smtp/Command.src.h"
-#include "../networking/SMTPSocket.src.h"
-#include "../general/logger.src.h"
-#include "../general/macros.src.h"
+#include "../Response.src.h"
+#include "../Command.src.h"
+#include "../../networking/SMTPSocket.src.h"
+#include "../../general/Logger.src.h"
+#include "../../general/macros.src.h"
 #include "SMTPServerSession.src.h"
 #include "SMTPServerExceptions.src.h"
 #include "SMTPAuthentication.src.h"
-#include "../parsers/mime.src.h"
-#include "../models/LocalDomain.src.h"
+#include "../../parsers/mime.src.h"
+#include "../../models/LocalDomain.src.h"
 
 #define _SERVER_OPT_ENABLE_AUTH 0x1
 #define _SERVER_OPT_ENABLE_TLS 0x2

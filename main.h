@@ -23,23 +23,9 @@
 #include <vector>
 #include <string>
 
-#include "lib/general/Passwords.src.h"
-#include "lib/networking/SMTPSocket.src.h"
-#include "lib/server/SMTPServer.src.h"
-#include "lib/smtp/Response.src.h"
-#include "lib/models/Email.src.h"
-#include "lib/models/LocalDomain.src.h"
-#include "lib/general/connections.src.h"
-#include "lib/general/macros.src.h"
-#include "lib/general/logger.src.h"
-#include "lib/general/encoding.src.h"
-#include "lib/general/NCursesDisplay.src.h"
+#include "lib/smtp/server/SMTPServer.src.h"
 #include "lib/workers/DatabaseWorker.src.h"
 #include "lib/workers/TransmissionWorker.src.h"
-#include "lib/client/SMTPMessageComposer.src.h"
-#include "lib/client/SMTPClient.src.h"
-#include "lib/networking/DNS.src.h"
-#include "lib/general/AES256.src.h"
 
 #include "lib/pop3/P3Server.src.h"
 

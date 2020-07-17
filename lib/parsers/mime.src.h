@@ -23,7 +23,7 @@
 #include <stdexcept>
 
 #include "../general/macros.src.h"
-#include "../general/logger.src.h"
+#include "../general/Logger.src.h"
 #include "../general/cleanup.src.h"
 #include "../models/Email.src.h"
 #include "../general/encoding.src.h"

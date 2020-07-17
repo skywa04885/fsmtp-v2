@@ -27,7 +27,7 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 
-#include "../general/logger.src.h"
+#include "../general/Logger.src.h"
 #include "../general/macros.src.h"
 
 namespace FSMTP::DNS

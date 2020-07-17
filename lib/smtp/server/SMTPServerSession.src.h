@@ -21,9 +21,9 @@
 
 #include <cassandra.h>
 
-#include "../models/Email.src.h"
-#include "../general/macros.src.h"
-#include "../models/Account.src.h"
+#include "../../models/Email.src.h"
+#include "../../general/macros.src.h"
+#include "../../models/Account.src.h"
 
 #define _SMTP_SERV_SESSION_RELAY_FLAG 1
 #define _SMTP_SERV_SESSION_AUTH_FLAG 2

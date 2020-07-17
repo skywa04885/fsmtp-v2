@@ -22,13 +22,13 @@
 #include <chrono>
 #include <functional>
 
-#include "../networking/SMTPSocket.src.h"
-#include "../models/Email.src.h"
-#include "../general/logger.src.h"
-#include "../networking/DNS.src.h"
-#include "../smtp/Response.src.h"
-#include "../smtp/Command.src.h"
-#include "../dkim/DKIM.src.h"
+#include "../../networking/SMTPSocket.src.h"
+#include "../../models/Email.src.h"
+#include "../../general/Logger.src.h"
+#include "../../networking/DNS.src.h"
+#include "../Response.src.h"
+#include "../Command.src.h"
+#include "../../dkim/DKIM.src.h"
 #include "SMTPMessageComposer.src.h"
 #include "SMTPClientSession.src.h"
 

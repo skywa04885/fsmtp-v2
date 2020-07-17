@@ -23,12 +23,12 @@
 #include <string>
 #include <random>
 
-#include "../models/Email.src.h"
-#include "../general/encoding.src.h"
-#include "../general/macros.src.h"
-#include "../general/hex.src.h"
-#include "../general/cleanup.src.h"
-#include "../general/Timer.src.h"
+#include "../../models/Email.src.h"
+#include "../../general/encoding.src.h"
+#include "../../general/macros.src.h"
+#include "../../general/hex.src.h"
+#include "../../general/cleanup.src.h"
+#include "../../general/Timer.src.h"
 
 using namespace FSMTP::Models;
 using namespace FSMTP::Cleanup;

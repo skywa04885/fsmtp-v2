@@ -36,7 +36,7 @@
 
 #include "../parsers/mime.src.h"
 #include "../general/macros.src.h"
-#include "../general/logger.src.h"
+#include "../general/Logger.src.h"
 #include "../general/Timer.src.h"
 #include "../general/cleanup.src.h"
 #include "DKIMHashes.src.h"
