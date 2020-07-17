@@ -72,7 +72,7 @@ namespace FSMTP::Server
 		std::string username(decoded+1, i), password(c+1, rc-i-2);
 		delete[] decoded;
 		BIO_free_all(bio);
-		return std::tuple(username, password);
+		return std::tuple<std::string, std::string>(username, password);
 	}
 
 	/**

@@ -26,25 +26,6 @@ namespace FSMTP::Server::SpamDetection
 	 */
 	bool checkSpamhaus(std::string ip)
 	{
-		std::vector<std::string> segments = {};
-		std::stringstream stream(ip);
-		std::string token;
-		std::stringstream res;
 
-		// Reverses the IP address, so
-		// - we can perform the lookup
-		while (std::getline(stream, token, '.'))
-			segments.push_back(token);
-
-		std::reverse(segments.begin(), segments.end());
-		ip.clear();
-		std::copy(
-			segments.begin(),
-			segments.end(),
-			std::ostream_iterator<std::string>(res, ".")
-		);
-		ip = res.str();
-
-		// Performs the spamhaus lookup
 	}
 }

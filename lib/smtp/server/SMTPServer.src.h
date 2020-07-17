@@ -55,9 +55,6 @@ using namespace FSMTP::Networking;
 using namespace FSMTP::Models;
 using namespace FSMTP::Networking;
 
-extern std::vector<FullEmail> _emailStorageQueue;
-extern std::mutex _emailStorageMutex;
-
 namespace FSMTP::Server
 {
 	class SMTPServer

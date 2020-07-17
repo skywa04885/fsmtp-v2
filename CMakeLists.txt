@@ -22,8 +22,8 @@ set (CMAKE_CXX_STANDARD 17)
 file(GLOB networking_sources "lib/networking/*.cc")
 file(GLOB networking_headers "lib/networking/*.h")
 
-file(GLOB server_sources "lib/server/*.cc")
-file(GLOB server_headers "lib/server/*.h")
+file(GLOB server_sources "lib/smtp/server/*.cc")
+file(GLOB server_headers "lib/smtp/server/*.h")
 
 file(GLOB general_sources "lib/general/*.cc")
 file(GLOB general_headers "lib/general/*.h")
@@ -40,7 +40,7 @@ file(GLOB parsers_headers "lib/parsers/*.h")
 file(GLOB workers_sources "lib/workers/*.cc")
 file(GLOB workers_headers "lib/workers/*.h")
 
-file(GLOB client_sources "lib/client/*.cc")
+file(GLOB client_sources "lib/smtp/client/*.cc")
 file(GLOB client_headers "lib/client/*.h")
 
 file(GLOB dkim_sources "lib/dkim/*.cc")
@@ -51,7 +51,7 @@ file(GLOB pop3_headers "lib/pop3/*.h")
 
 set(sources "main.cc")
 set(headers "main.h")
-set(args "-lpthread -lssl -lresolv -lcrypto -lcassandra -lboost_system -lcurses -lhiredis -lboost_program_options")
+set(args "-lpthread -lssl -lresolv -lcrypto -lcassandra -lcurses -lhiredis")
 
 add_executable(
 	${PROJECT_NAME}

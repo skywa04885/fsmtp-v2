@@ -25,6 +25,7 @@
 #include <functional>
 #include <memory>
 #include <atomic>
+#include <algorithm>
 #include <tuple>
 #include <sstream>
 

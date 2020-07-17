@@ -123,7 +123,7 @@ namespace FSMTP::Models
 		cass_statement_free(statement);
 		cass_result_free(result);
 
-		return std::tuple(passwordRes, pubKeyRes);
+		return std::tuple<std::string, std::string>(passwordRes, pubKeyRes);
 	}
 
 	/**
