@@ -24,6 +24,7 @@
 #include <string>
 
 #include "lib/general/AES256.src.h"
+#include "lib/args/args.src.h"
 #include "lib/smtp/server/SMTPServer.src.h"
 #include "lib/smtp/client/SMTPClient.src.h"
 #include "lib/workers/DatabaseWorker.src.h"

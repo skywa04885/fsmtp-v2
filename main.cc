@@ -22,7 +22,7 @@ int main(const int argc, const char **argv)
 {
 	// Initializes OpenSSL stuff
 	SSL_load_error_strings();
-  OpenSSL_add_ssl_algorithms();
+	OpenSSL_add_ssl_algorithms();
 
 	// Parses the arguments into an vector after this
 	// - we define the anonymous function which will compare
@@ -82,8 +82,8 @@ int main(const int argc, const char **argv)
 				mailComposerConfig.m_Subject = subject;
 			} else
 			{
-				mailComposerConfig.m_To.push_back(EmailAddress("Fannst Test", "test@fannst.nl"));
-				mailComposerConfig.m_From.push_back(EmailAddress("Fannst Test Client", "testc@example.com"));
+				mailComposerConfig.m_To.push_back(EmailAddress("Luke Rieff", "luke.rieff@gmail.com"));
+				mailComposerConfig.m_From.push_back(EmailAddress("Luke Rieff", "lr@fannst.nl"));
 				mailComposerConfig.m_Subject = "Test email";
 			}
 
