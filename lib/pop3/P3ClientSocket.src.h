@@ -32,9 +32,37 @@ namespace FSMTP::POP3
 
 		void sendString(const std::string &raw);
 		void sendResponse(const bool p_Ok, const POP3ResponseType p_Type);
+		void sendResponse(
+			const bool p_Ok,
+			const POP3ResponseType p_Type,
+			const std::string &p_Message,
+			std::vector<POP3Capability> *p_Capabilities
+		);
+
+		/**
+		 * Static single-usage method for reading the OpenSSL keys passphrase
+		 *
+		 * @Param {char *} buffer
+		 * @Param {int} size
+		 * @Param {int} rwflag
+		 * @param {void *} u
+		 * @Return int
+		 */
+		static int readSSLPassphrase(char *buffer, int size, int rwflag, void *u);
+
+		/**
+		 * Upgrades the client to an SSL socket
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		void upgrade(void);
 	private:
 		struct sockaddr_in s_SocketAddr;
 		int32_t s_SocketFD;
 		Logger s_Logger;
+		bool s_UseSSL;
+		SSL_CTX *s_SSLCtx;
+		SSL *s_SSL;
 	};
 }

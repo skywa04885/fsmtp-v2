@@ -16,33 +16,20 @@
 
 #pragma once
 
-#include "P3.src.h"
-#include "P3ServerSocket.src.h"
-#include "P3Commands.src.h"
-#include "P3Response.src.h"
-#include "P3ServerSession.src.h"
+#include <cstdint>
+#include <string>
 
 namespace FSMTP::POP3
 {
-	class P3Server
+	class P3ServerSession
 	{
 	public:
-		P3Server(const bool secure);
+		P3ServerSession();
 
-		static void acceptorCallback(std::unique_ptr<ClientSocket> client, void *u);
-
-		/**
-		 * Stops the pop3 server
-		 *
-		 * @Param {void}
-		 * @Return {void}
-		 */
-		void shutdown(void);
+		std::string s_User;
+		std::string s_Pass;
 	private:
-		ServerSocket s_Socket;
-		Logger s_Logger;
-		std::atomic<bool> s_Run;
-		std::atomic<bool> s_Running;
-		std::vector<POP3Capability> s_Capabilities;
+		int64_t s_Flags;
+		int64_t s_Actions;
 	};
 }

@@ -47,6 +47,10 @@
 #define _SMTP_SERVICE_DKIM_DOMAIN "fannst.nl"
 #endif
 
+#ifndef _SMTP_DEF_DOMAIN
+#define _SMTP_DEF_DOMAIN "fannst.nl"
+#endif
+
 #ifndef _SMTP_SERVICE_NODE_NAME
 #define _SMTP_SERVICE_NODE_NAME "LUKERIEFF_MCLUST_A001"
 #endif
@@ -89,7 +93,7 @@
 #define _BASH_UNKNOWN_MARK "\033[35m[?]:\033[0m "
 
 #ifdef _SMTP_DEBUG
-#define EXCEPT_DEBUG(A) std::string(__FILE__) + std::string(": ") + std::to_string(__LINE__) + std::string("->") + A
+#define EXCEPT_DEBUG(A) std::string(__FILE__) + std::string(": ") + std::to_string(__LINE__) + std::string(": ") + A
 #else
 #define EXCEPT_DEBUG(A) A
 #endif

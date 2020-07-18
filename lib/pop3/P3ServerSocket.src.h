@@ -29,13 +29,15 @@ namespace FSMTP::POP3
 		void startListening(
 			std::atomic<bool> *running,
 			std::atomic<bool> *run,
-			const std::function<void(std::unique_ptr<ClientSocket>)> callback
+			const std::function<void(std::unique_ptr<ClientSocket>, void *)> callback,
+			void *u
 		);
 
 		void acceptingThread(
 			std::atomic<bool> *running,
 			std::atomic<bool> *run,
-			const std::function<void(std::unique_ptr<ClientSocket>)> callback
+			const std::function<void(std::unique_ptr<ClientSocket>, void *)> callback,
+			void *u
 		);
 
 		/**

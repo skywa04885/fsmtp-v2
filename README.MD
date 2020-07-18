@@ -52,15 +52,16 @@ sudo ./fsmtp -n
 Bij het gebruiken van de FSMTP server kunt u ook opdrachten meegeven, als u ```-h``` als argument toevoegd, kunt u het help menu zien, deze zal ik hieronder voor het gemak zetten:
 
 ```bash
-Gebruik:
+Gebruik: 
 sudo fsmtp [arguments]
 
-Opdrachten:
--h, --help: 	Print de lijst met beschikbare opdrachten.
--t, --test: 	Voer tests uit op de vitale functies van de server, zoals database verbinding.
--s, --sync: 	Synchroniseerd de redis database met die van cassandra
--n, --ncurses: 	Gebruik NCurses in plaats van klassieke terminal.
--m, --mailtest: 	Verstuurd een test email.
+Opdrachten: 
+-h, -help: 	Print de lijst met beschikbare opdrachten.
+-t, -test: 	Voer tests uit op de vitale functies van de server, zoals database verbinding.
+-s, -sync: 	Synchroniseerd de redis database met die van cassandra
+-a, -adduser:	Adds an new user to the email server.
+-m, -mailtest: 	Sends an email.
+-r, -run=type: 	Welke server er gestart moet worden, 'smtp' of 'pop3'
 ```
 
 ## Welke systemen werkt FSMTP-V2 mee ?

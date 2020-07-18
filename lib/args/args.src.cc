@@ -147,11 +147,14 @@ namespace FSMTP
 				std::cout << "sudo fsmtp [arguments]" << std::endl;
 
 				std::cout << std::endl << "Opdrachten: " << std::endl;
-				std::cout << "-h, --help: " << "\tPrint de lijst met beschikbare opdrachten." << std::endl;
-				std::cout << "-t, --test: " << "\tVoer tests uit op de vitale functies van de server, zoals database verbinding." << std::endl;
-				std::cout << "-s, --sync: " << "\tSynchroniseerd de redis database met die van cassandra" << std::endl;
-				std::cout << "-a, --adduser:" << "\tAdds an new user to the email server." << std::endl;
-				std::cout << "-m, --mailtest: " << "\tSends an emal." << std::endl;
+				std::cout << "-h, -help: " << "\tPrint de lijst met beschikbare opdrachten." << std::endl;
+				std::cout << "-t, -test: " << "\tVoer tests uit op de vitale functies van de server, zoals database verbinding." << std::endl;
+				std::cout << "-s, -sync: " << "\tSynchroniseerd de redis database met die van cassandra" << std::endl;
+				std::cout << "-a, -adduser:" << "\tAdds an new user to the email server." << std::endl;
+				std::cout << "-m, -mailtest: " << "\tSends an email." << std::endl;
+				std::cout << "-r, -run=type: " << "\tWelke server er gestart moet worden, 'smtp' of 'pop3'" << std::endl;
+
+				std::exit(0);
 			}
 
 			if (arg.compare("run"))

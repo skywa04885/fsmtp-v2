@@ -19,7 +19,7 @@
 namespace FSMTP::POP3
 {
 	P3Response::P3Response(const bool p_Ok, const POP3ResponseType p_Type):
-		p_Type(p_Type), p_Ok(p_Ok)
+		p_Type(p_Type), p_Ok(p_Ok), p_Capabilities(nullptr)
 	{}
 
 	std::string P3Response::build(void)
@@ -31,8 +31,12 @@ namespace FSMTP::POP3
 		else res += "+OK ";
 		res += this->getMessage();
 
-		// Adds the CRLF
-		res += "\r\n";
+		// Checks if we need to append capabilities
+		if (this->p_Capabilities != nullptr)
+		{
+			res += "\r\n";
+			res += buildCapabilities();
+		} else res += "\r\n";
 
 		return res;
 	}
@@ -48,6 +52,68 @@ namespace FSMTP::POP3
 				ret += ">";
 				return ret;
 			}
+			case POP3ResponseType::PRT_CAPA:
+			{
+				return "Capability list follows";
+			}
+			case POP3ResponseType::PRT_STLS_START:
+			{
+				return "Begin TLS negotiation now";
+			}
+			case POP3ResponseType::PRT_COMMAND_INVALID:
+			{
+				return "Invalid command";
+			}
+			case POP3ResponseType::PRT_USER_DONE:
+			{
+				return "Send PASS";
+			}
+			case POP3ResponseType::PRT_AUTH_SUCCESS:
+			{
+				return "Auth Success";
+			}
+			default: throw std::runtime_error(EXCEPT_DEBUG("Message not implemented"));
 		}
 	}
+
+	/**
+	 * Builds the list of capabilities
+	 *
+	 * @Param {void}
+	 * @Return {std::string}
+	 */
+	std::string P3Response::buildCapabilities(void)
+	{
+		std::string res;
+
+		for (const POP3Capability &cap : *this->p_Capabilities)
+		{
+			// Adds the name
+			res += cap.c_Name;
+
+			// Adds the subargs
+			for (const char *arg : cap.c_Args)
+			{
+				res += ' ';
+				res += arg;
+			}
+
+			// Adds the newline
+			res += "\r\n";
+		}
+
+		// Adds the dot
+		res += ".\r\n";
+		return res;
+	}
+
+	P3Response::P3Response(
+		const bool p_Ok,
+		const POP3ResponseType p_Type,
+		const std::string &p_Message,
+		std::vector<POP3Capability> *p_Capabilities
+	):
+		p_Ok(p_Ok), p_Type(p_Type), p_Message(p_Message),
+		p_Capabilities(p_Capabilities)
+	{}
 }

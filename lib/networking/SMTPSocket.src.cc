@@ -682,7 +682,7 @@ namespace FSMTP::Networking
 			throw std::runtime_error("Could not create context !");
 
 		// Configures the SSL context, with the keys etcetera
-		SSL_CTX_set_ecdh_auto(sslCtx, 1);
+		SSL_CTX_set_ecdh_auto(this->s_SSLCtx, 1);
 		SSL_CTX_set_default_passwd_cb(this->s_SSLCtx, &SMTPServerClientSocket::readSSLPassphrase);
 		
 		rc = SSL_CTX_use_certificate_file(this->s_SSLCtx, _SMTP_SSL_CERT_PATH, SSL_FILETYPE_PEM);

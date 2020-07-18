@@ -29,6 +29,7 @@
 #include "../../models/LocalDomain.src.h"
 #include "../../models/Account.src.h"
 #include "../../models/Email.src.h"
+#include "../../general/macros.src.h"
 
 using namespace FSMTP::Connections;
 using namespace FSMTP::Models;

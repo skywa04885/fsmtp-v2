@@ -22,20 +22,48 @@ namespace FSMTP::POP3
 {
 	typedef enum : uint8_t
 	{
-		PRT_GREETING = 0
+		PRT_GREETING = 0,
+		PRT_CAPA,
+		PRT_STLS_START,
+		PRT_COMMAND_INVALID,
+		PRT_USER_DONE,
+		PRT_AUTH_SUCCESS,
+		PRT_AUTH_FAIL
 	} POP3ResponseType;
+
+	typedef struct
+	{
+		const char *c_Name;
+		std::vector<const char *> c_Args;
+	} POP3Capability;
 
 	class P3Response
 	{
 	public:
-		P3Response(const bool ok, const POP3ResponseType p_Type);
+		P3Response(const bool p_Ok, const POP3ResponseType p_Type);
+		
+		P3Response(
+			const bool p_Ok,
+			const POP3ResponseType p_Type,
+			const std::string &p_Message,
+			std::vector<POP3Capability> *p_Capabilities
+		);
+
+		/**
+		 * Builds the list of capabilities
+		 *
+		 * @Param {void}
+		 * @Return {std::string}
+		 */
+		std::string buildCapabilities(void);
 
 		std::string build(void);
 
 		std::string getMessage(void);
 	private:
-		POP3ResponseType p_Type;
 		bool p_Ok;
+		POP3ResponseType p_Type;
 		std::string p_Message;
+		std::vector<POP3Capability> *p_Capabilities;
 	};
 }

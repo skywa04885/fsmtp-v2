@@ -4,5 +4,6 @@ sources += files(
     'P3Commands.src.cc',
     'P3Response.src.cc',
     'P3Server.src.cc',
-    'P3ServerSocket.src.cc'
+    'P3ServerSocket.src.cc',
+    'P3ServerSession.src.cc'
 )

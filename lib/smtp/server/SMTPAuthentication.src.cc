@@ -70,6 +70,13 @@ namespace FSMTP::Server
 		// Parses the username and password into one string,
 		// - frees the memory and returns
 		std::string username(decoded+1, i), password(c+1, rc-i-2);
+
+		// Adds the default domain if not specified
+		if (username.find_first_of('@') == std::string::npos)
+		{
+			username += '@';
+			username += _SMTP_DEF_DOMAIN;
+		}
 		delete[] decoded;
 		BIO_free_all(bio);
 		return std::tuple<std::string, std::string>(username, password);

@@ -52,7 +52,33 @@ namespace FSMTP::POP3
 					this->c_Type = POP3CommandType::PCT_QUIT;
 				else
 					this->c_Type = POP3CommandType::PCT_UNKNOWN;
+				break;
 			}
+			case 's':
+			{
+				if (command == "stls")
+					this->c_Type = POP3CommandType::PCT_STLS;
+				else
+					this->c_Type = POP3CommandType::PCT_UNKNOWN;
+				break;
+			}
+			case 'u':
+			{
+				if (command == "user")
+					this->c_Type = POP3CommandType::PCT_USER;
+				else
+					this->c_Type = POP3CommandType::PCT_UNKNOWN;
+				break;
+			}
+			case 'p':
+			{
+				if (command == "pass")
+					this->c_Type = POP3CommandType::PCT_PASS;
+				else
+					this->c_Type = POP3CommandType::PCT_UNKNOWN;
+				break;
+			}
+			default: this->c_Type = POP3CommandType::PCT_UNKNOWN;
 		}
 
 		// Gets the arguments

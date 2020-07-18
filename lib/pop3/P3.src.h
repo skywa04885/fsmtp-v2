@@ -29,6 +29,8 @@
 #include <tuple>
 #include <sstream>
 
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <string.h>
@@ -86,6 +88,45 @@ namespace FSMTP::POP3
 	{
 	public:
 		SocketInitializationException(const std::string &e_Message):
+			e_Message(e_Message)
+		{}
+
+		const char *what(void) const throw()
+		{ return this->e_Message.c_str(); }
+	private:
+		std::string e_Message;
+	};
+
+	class SocketSSLError : std::exception
+	{
+	public:
+		SocketSSLError(const std::string &e_Message):
+			e_Message(e_Message)
+		{}
+
+		const char *what(void) const throw()
+		{ return this->e_Message.c_str(); }
+	private:
+		std::string e_Message;
+	};
+
+	class InvalidCommand : std::exception
+	{
+	public:
+		InvalidCommand(const std::string &e_Message):
+			e_Message(e_Message)
+		{}
+
+		const char *what(void) const throw()
+		{ return this->e_Message.c_str(); }
+	private:
+		std::string e_Message;
+	};
+
+	class SyntaxError : std::exception
+	{
+	public:
+		SyntaxError(const std::string &e_Message):
 			e_Message(e_Message)
 		{}
 

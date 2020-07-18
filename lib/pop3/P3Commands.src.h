@@ -24,6 +24,9 @@ namespace FSMTP::POP3
 	{
 		PCT_CAPA = 0,
 		PCT_QUIT,
+		PCT_STLS,
+		PCT_USER,
+		PCT_PASS,
 		PCT_UNKNOWN
 	} POP3CommandType;
 

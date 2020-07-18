@@ -27,7 +27,7 @@ namespace FSMTP::POP3
 		s_Logger(
 			std::string("POP3Client:") + inet_ntoa(s_SocketAddr.sin_addr),
 			LoggerLevel::INFO
-		)
+		), s_UseSSL(false)
 	{
 		Logger &logger = this->s_Logger;
 
@@ -104,6 +104,93 @@ namespace FSMTP::POP3
 	void ClientSocket::sendResponse(const bool p_Ok, const POP3ResponseType p_Type)
 	{
 		P3Response response(p_Ok, p_Type);
+		this->sendString(response.build());
+	}
+
+	int ClientSocket::readSSLPassphrase(char *buffer, int size, int rwflag, void *u)
+	{
+		// Reads the file and stores it inside the buffer
+		// - if something goes wrong we simply throw an error
+		FILE *f = fopen(_SMTP_SSL_PASSPHRASE_PATH, "r");
+		if (!f)
+		{
+			std::string error = "fopen() failed: ";
+			error += strerror(errno);
+			throw std::runtime_error(error);
+		}
+
+		fgets(buffer, size, f);
+		return strlen(buffer);
+	}
+
+	/**
+	 * Upgrades the client to an SSL socket
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
+	void ClientSocket::upgrade(void)
+	{
+		Logger &logger = this->s_Logger;
+		int32_t rc;
+
+		logger << "Verbinding wordt beveiligd" << ENDL;
+
+		// Creates the SSL context and throws error
+		// - if something goes wrong
+		const SSL_METHOD *sslMethod = SSLv23_server_method();
+		this->s_SSLCtx = SSL_CTX_new(sslMethod);
+		if (!this->s_SSLCtx)
+			throw SocketSSLError(EXCEPT_DEBUG("Could not create SSL_CTx"));
+
+		// Configures the SSL context with keys etcetera
+		SSL_CTX_set_ecdh_auto(this->s_SSLCtx, 1);
+		SSL_CTX_set_default_passwd_cb(this->s_SSLCtx, &ClientSocket::readSSLPassphrase);
+
+		rc = SSL_CTX_use_certificate_file(this->s_SSLCtx, _SMTP_SSL_CERT_PATH, SSL_FILETYPE_PEM);
+		if (rc <= 0)
+		{
+			ERR_print_errors_fp(stderr);
+			throw SocketSSLError("Could not read cert");
+		}
+
+		rc = SSL_CTX_use_PrivateKey_file(this->s_SSLCtx, _SMTP_SSL_KEY_PATH, SSL_FILETYPE_PEM);
+		if (rc <= 0)
+		{
+			ERR_print_errors_fp(stderr);
+			throw SocketSSLError("Could not read private key");
+		}
+
+		// Creates the ssl struct and binds it with the socket
+		// - then we accept the secure connection
+		this->s_SSL = SSL_new(this->s_SSLCtx);
+		SSL_set_fd(this->s_SSL, this->s_SocketFD);
+
+		rc = SSL_accept(this->s_SSL);
+		if (rc <= 0)
+		{
+			ERR_print_errors_fp(stderr);
+			throw SocketSSLError("Could not accept secure connection");
+		}
+
+		// Sets useSSL to true
+		this->s_UseSSL = true;
+		logger << "Verbinding beveiligd" << ENDL;
+	}
+
+	void ClientSocket::sendResponse(
+		const bool p_Ok,
+		const POP3ResponseType p_Type,
+		const std::string &p_Message,
+		std::vector<POP3Capability> *p_Capabilities
+	)
+	{
+		P3Response response(
+			p_Ok,
+			p_Type,
+			p_Message,
+			p_Capabilities
+		);
 		this->sendString(response.build());
 	}
 }

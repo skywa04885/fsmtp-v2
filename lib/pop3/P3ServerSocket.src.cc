@@ -84,7 +84,8 @@ namespace FSMTP::POP3
 	void ServerSocket::startListening(
 		std::atomic<bool> *running,
 		std::atomic<bool> *run,
-		const std::function<void(std::unique_ptr<ClientSocket>)> callback
+		const std::function<void(std::unique_ptr<ClientSocket>, void *)> callback,
+		void *u
 	)
 	{
 		int32_t rc;
@@ -104,7 +105,8 @@ namespace FSMTP::POP3
 			this,
 			running,
 			run,
-			callback
+			callback,
+			u
 		);
 		acceptorThread.detach();
 	}
@@ -112,7 +114,8 @@ namespace FSMTP::POP3
 	void ServerSocket::acceptingThread(
 		std::atomic<bool> *running,
 		std::atomic<bool> *run,
-		const std::function<void(std::unique_ptr<ClientSocket>)> callback
+		const std::function<void(std::unique_ptr<ClientSocket>, void *)> callback,
+		void *u
 	)
 	{
 		int32_t fd, rc;
@@ -159,7 +162,7 @@ namespace FSMTP::POP3
 			}
 
 			// Creates the new thread
-			std::thread callbackThread(callback, std::make_unique<ClientSocket>(fd, client));
+			std::thread callbackThread(callback, std::make_unique<ClientSocket>(fd, client), u);
 			callbackThread.detach();
 		}
 		*running = false;
