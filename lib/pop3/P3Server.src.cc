@@ -281,21 +281,18 @@ namespace FSMTP::POP3
 					}
 					case POP3CommandType::PCT_STAT:
 					{
-						std::vector<EmailShortcut> shortcuts = EmailShortcut::gatherAll(
+						// Gets the data and builds the response
+						std::pair<int64_t, std::size_t> res = EmailShortcut::getStat(
 							cassandra.get(),
 							0,
-							40,
+							120,
 							session.s_Account.a_Domain,
 							session.s_Account.a_UUID
 						);
 
-						// Constructs the response
-						int64_t octetsTotal = 0;
-						for (const EmailShortcut &shortcut : shortcuts) octetsTotal += shortcut.e_SizeOctets;
-
-						std::string response = std::to_string(shortcuts.size());
+						std::string response = std::to_string(res.second);
 						response += ' ';
-						response += std::to_string(octetsTotal);
+						response += std::to_string(res.first);
 
 						// Sends the stat response
 						client->sendResponse(

@@ -212,7 +212,7 @@ namespace FSMTP::Models
     return ret;
   }
 
-  std::pair<std::size_t, std::size_t> EmailShortcut::getStat(
+  std::pair<int64_t, std::size_t> EmailShortcut::getStat(
     CassandraConnection *cassandra,
     const int32_t skip,
     int32_t limit,
@@ -224,7 +224,6 @@ namespace FSMTP::Models
 
     const char *query = "SELECT e_size_octets FROM fannst.email_shortcuts WHERE e_domain=? AND e_owners_uuid=? LIMIT ?";
     CassStatement *statement = nullptr;
-    CassFuture *future = nullptr;
     cass_bool_t hasMorePages = cass_false;
     CassError rc;
 
@@ -254,8 +253,52 @@ namespace FSMTP::Models
     do
     {
       CassError rc;
-      CassIterator *resultIterator = nullptr;
       CassFuture *future = nullptr;
+
+      // Executes the query, and checks for errors
+      future = cass_session_execute(cassandra->c_Session, statement);
+      cass_future_wait(future);
+
+      rc = cass_future_error_code(future);
+      if (rc != CASS_OK)
+      {
+        std::string message = "cass_session_execute() failed: ";
+        message += CassandraConnection::getError(future);
+
+        cass_future_free(future);
+        cass_statement_free(statement);
+        throw DatabaseException(EXCEPT_DEBUG(message));
+      }
+
+      // Creates the iterator and starts looping
+      // - over the received data
+      const CassResult *result = cass_future_get_result(future);
+      CassIterator *iterator = cass_iterator_from_result(result);
+
+      while (cass_iterator_next(iterator))
+      {
+        const CassRow *row = cass_iterator_get_row(iterator);
+
+        // Gets the size of the raw message
+        int64_t totalOctets;
+        cass_value_get_int64(cass_row_get_column_by_name(
+          row, "e_size_octets"),
+          &totalOctets
+        );
+
+        // Increments the counters
+        total++;
+        octets += totalOctets;
+      }
+
+      // Frees the memory
+      cass_result_free(result);
+      cass_iterator_free(iterator);
+      cass_future_free(future);
     } while (hasMorePages);
+
+    // Frees the memory and returns
+    cass_statement_free(statement);
+    return std::make_pair(octets, total);
   }
 }

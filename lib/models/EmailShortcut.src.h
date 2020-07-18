@@ -70,7 +70,7 @@ namespace FSMTP::Models
       const CassUuid &uuid
     );
 
-    static std::pair<std::size_t, std::size_t> getStat(
+    static std::pair<int64_t, std::size_t> getStat(
       CassandraConnection *cassandra,
       const int32_t skip,
       int32_t limit,
