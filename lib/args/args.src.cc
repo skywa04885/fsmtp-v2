@@ -16,6 +16,9 @@
 
 #include "args.src.h"
 
+extern bool _forceLoggerNCurses;
+extern ServerType _serverType;
+
 namespace FSMTP
 {
 	/**
@@ -36,8 +39,6 @@ namespace FSMTP
 		for (const std::string &arg : raw)
 		{
 			if (i++ == 0) continue;
-
-
 
 			// Gets the value of index, and appends
 			// - the current string if it is not there
@@ -129,8 +130,36 @@ namespace FSMTP
 		for (CMDArg &arg : arguments)
 		{
 			if (arg.compare("test"))
+				ARG_ACTIONS::testArgAction();
+
+			if (arg.compare("adduser"))
+				ARG_ACTIONS::addUserArgAction();
+
+			if (arg.compare("sync"))
+				ARG_ACTIONS::syncArgAction();
+
+			if (arg.compare("mailtest"))
+				ARG_ACTIONS::mailTestArgAction();
+
+			if (arg.compare("help"))
 			{
-				std::cout << "Test command" << std::endl;
+				std::cout << "Gebruik: " << std::endl;
+				std::cout << "sudo fsmtp [arguments]" << std::endl;
+
+				std::cout << std::endl << "Opdrachten: " << std::endl;
+				std::cout << "-h, --help: " << "\tPrint de lijst met beschikbare opdrachten." << std::endl;
+				std::cout << "-t, --test: " << "\tVoer tests uit op de vitale functies van de server, zoals database verbinding." << std::endl;
+				std::cout << "-s, --sync: " << "\tSynchroniseerd de redis database met die van cassandra" << std::endl;
+				std::cout << "-a, --adduser:" << "\tAdds an new user to the email server." << std::endl;
+				std::cout << "-m, --mailtest: " << "\tSends an emal." << std::endl;
+			}
+
+			if (arg.compare("run"))
+			{
+				if (arg.c_Arg == "smtp")
+					_serverType = ServerType::ST_SMTP;
+				if (arg.c_Arg == "pop3")
+					_serverType = ServerType::ST_POP3;
 			}
 		}
 	}

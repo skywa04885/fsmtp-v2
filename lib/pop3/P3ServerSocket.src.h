@@ -37,6 +37,15 @@ namespace FSMTP::POP3
 			std::atomic<bool> *run,
 			const std::function<void(std::unique_ptr<ClientSocket>)> callback
 		);
+
+		/**
+		 * Stops the server
+		 *
+		 * @Param {std::atomic<bool> *} running
+		 * @Param {std::atomic<bool> *} run
+		 * @Return {void}
+		 */
+		void shutdown(std::atomic<bool> *running, std::atomic<bool> *run);
 	private:
 		struct sockaddr_in s_SocketAddr;
 		int32_t s_SocketFD;

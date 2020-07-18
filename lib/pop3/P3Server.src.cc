@@ -55,8 +55,28 @@ namespace FSMTP::POP3
 				}
 			}
 		}
-
 	pop3_session_end:
 		return;
+	}
+
+	/**
+	 * Stops the pop3 server
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
+	void P3Server::shutdown(void)
+	{
+		Logger &logger = this->s_Logger;
+
+		logger << "POP3 Server wordt afgesloten ..." << ENDL;
+		int64_t start = std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::high_resolution_clock::now().time_since_epoch()
+		).count();
+		this->s_Socket.shutdown(&this->s_Running, &this->s_Run);
+		int64_t end = std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::high_resolution_clock::now().time_since_epoch()
+		).count();
+		logger << "POP3 Server afgesloten in " << end - start << " milliseconden" << ENDL;
 	}
 }

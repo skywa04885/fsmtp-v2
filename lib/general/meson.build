@@ -6,7 +6,6 @@ sources += files(
     'exceptions.src.cc',
     'hex.src.cc',
     'Logger.src.cc',
-    'NCursesDisplay.src.cc',
     'Passwords.src.cc',
     'Timer.src.cc'
 )

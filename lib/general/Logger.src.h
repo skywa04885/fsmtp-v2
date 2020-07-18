@@ -20,11 +20,8 @@
 #include <string>
 #include <sstream>
 #include <thread>
+#include <mutex>
 #include <cstdint>
-
-#include "./NCursesDisplay.src.h"
-
-extern bool _forceLoggerNCurses;
 
 namespace FSMTP
 {
@@ -106,65 +103,52 @@ namespace FSMTP
 				case LoggerOpts::ENDL:
 				case LoggerOpts::FLUSH:
 				{
-					if (_forceLoggerNCurses)
-					{
-						NCursesDisplay::print(
-							this->l_Stream.str(),
-							NCursesDisplayPos::NDP_BULLSHIT,
-							static_cast<NCursesLevel>(this->l_Level),
-							this->l_Prefix.c_str()
-						);
-						this->l_Stream.clear();
-						this->l_Stream.str("");
-					} else
-					{
-						std::cout << 'T' << std::this_thread::get_id() << "->";
+					std::cout << 'T' << std::this_thread::get_id() << "->";
 
-						// Adds the loggerlevel prefix,
-						// and the thread id etcetera
-						switch (this->l_Level)
+					// Adds the loggerlevel prefix,
+					// and the thread id etcetera
+					switch (this->l_Level)
+					{
+						case LoggerLevel::DEBUG:
 						{
-							case LoggerLevel::DEBUG:
-							{
-								std::cout << "\033[36m[debug@" << this->l_Prefix << "]: \033[0m";
-								break;
-							}
-							case LoggerLevel::PARSER:
-							{
-								std::cout << "\033[34m[parser@" << this->l_Prefix << "]: \033[0m";
-								break;
-							}
-							case LoggerLevel::INFO:
-							{
-								std::cout << "\033[32m[informatie@" << this->l_Prefix << "]: \033[0m";
-								break;
-							}
-							case LoggerLevel::WARN:
-							{
-								std::cout << "\033[33m[waarschuwing@" << this->l_Prefix << "]: \033[0m";
-								break;
-							}
-							case LoggerLevel::ERROR:
-							{
-								std::cout << "\033[31m[fout@" << this->l_Prefix << "]: \033[0m";
-								break;
-							}
-							case LoggerLevel::FATAL:
-							{
-								std::cout << "\033[31m[super-fout@" << this->l_Prefix << "]: \033[0m";
-								break;
-							}
+							std::cout << "\033[36m[debug@" << this->l_Prefix << "]: \033[0m";
+							break;
 						}
-
-
-						// Prints the message to the console
-						// and clears the buffers
-						if (a == LoggerOpts::FLUSH) std::cout << this->l_Stream.str() << std::flush;
-						else std::cout << this->l_Stream.str() << std::endl;
-						this->l_Stream.str("");
-						this->l_Stream.clear();
-						break;
+						case LoggerLevel::PARSER:
+						{
+							std::cout << "\033[34m[parser@" << this->l_Prefix << "]: \033[0m";
+							break;
+						}
+						case LoggerLevel::INFO:
+						{
+							std::cout << "\033[32m[informatie@" << this->l_Prefix << "]: \033[0m";
+							break;
+						}
+						case LoggerLevel::WARN:
+						{
+							std::cout << "\033[33m[waarschuwing@" << this->l_Prefix << "]: \033[0m";
+							break;
+						}
+						case LoggerLevel::ERROR:
+						{
+							std::cout << "\033[31m[fout@" << this->l_Prefix << "]: \033[0m";
+							break;
+						}
+						case LoggerLevel::FATAL:
+						{
+							std::cout << "\033[31m[super-fout@" << this->l_Prefix << "]: \033[0m";
+							break;
+						}
 					}
+
+
+					// Prints the message to the console
+					// and clears the buffers
+					if (a == LoggerOpts::FLUSH) std::cout << this->l_Stream.str() << std::flush;
+					else std::cout << this->l_Stream.str() << std::endl;
+					this->l_Stream.str("");
+					this->l_Stream.clear();
+					break;
 				}
 			}
 

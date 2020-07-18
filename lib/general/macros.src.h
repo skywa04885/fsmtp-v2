@@ -93,3 +93,10 @@
 #else
 #define EXCEPT_DEBUG(A) A
 #endif
+
+typedef enum : uint8_t
+{
+	ST_SMTP = 0,
+	ST_POP3,
+	ST_IMAP
+} ServerType;

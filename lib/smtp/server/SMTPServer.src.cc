@@ -16,12 +16,8 @@
 
 #include "SMTPServer.src.h"
 
-extern bool _forceLoggerNCurses;
 extern std::vector<FullEmail> _emailStorageQueue;
 extern std::mutex _emailStorageMutex;
-
-static std::atomic<int> _serverThreadCount(0);
-static std::atomic<int> _emailsHandled(0);
 
 namespace FSMTP::Server
 {
@@ -116,9 +112,6 @@ namespace FSMTP::Server
 	 */
 	void SMTPServer::onClientSync(struct sockaddr_in *sAddr, int32_t fd, void *u)
 	{
-		_serverThreadCount++;
-		if (_forceLoggerNCurses) NCursesDisplay::setThreads(_serverThreadCount);
-
 		SMTPServer &server = *reinterpret_cast<SMTPServer *>(u);
 		SMTPServerSession session;
 
@@ -558,16 +551,6 @@ namespace FSMTP::Server
 
 	smtp_server_close_conn:
 		delete sAddr;
-
-		// Updates the thread count, and emails handled
-		_serverThreadCount--;
-		if (_forceLoggerNCurses)
-			NCursesDisplay::setThreads(_serverThreadCount);
-		if (_forceLoggerNCurses)
-		{
-			_emailsHandled++;
-			NCursesDisplay::setEmailsHandled(_emailsHandled);
-		}
 	}
 
 	/**

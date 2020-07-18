@@ -1,3 +1,4 @@
 sources += files(
-    'args.src.cc'
+  'args.src.cc',
+  'arg-actions.src.cc'
 )

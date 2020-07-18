@@ -42,7 +42,7 @@ namespace FSMTP::POP3
 		// Sets the socket reuse address property
 		int32_t option = 0x1;
 		rc = setsockopt(
-			this->s_SocketFD, 
+			this->s_SocketFD,
 			SOL_SOCKET,
 			SO_REUSEADDR,
 			reinterpret_cast<char *>(&option),
@@ -164,5 +164,19 @@ namespace FSMTP::POP3
 		}
 		*running = false;
 		logger << "Accepting thread closed" << ENDL;
+	}
+
+	/**
+	 * Stops the server
+	 *
+	 * @Param {std::atomic<bool> *} running
+	 * @Param {std::atomic<bool> *} run
+	 * @Return {void}
+	 */
+	void ServerSocket::shutdown(std::atomic<bool> *running, std::atomic<bool> *run)
+	{
+		*run = false;
+		while (*running == true) continue;
+		std::this_thread::sleep_for(std::chrono::milliseconds(120));
 	}
 }

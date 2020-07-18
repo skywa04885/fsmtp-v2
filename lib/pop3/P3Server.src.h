@@ -28,6 +28,14 @@ namespace FSMTP::POP3
 		P3Server(const bool secure);
 
 		static void acceptorCallback(std::unique_ptr<ClientSocket> client);
+
+		/**
+		 * Stops the pop3 server
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		void shutdown(void);
 	private:
 		ServerSocket s_Socket;
 		Logger s_Logger;
