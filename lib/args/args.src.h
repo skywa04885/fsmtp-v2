@@ -21,6 +21,8 @@
 #include <vector>
 #include <sstream>
 
+#include "../general/Logger.src.h"
+
 namespace FSMTP
 {
     class CMDArg
@@ -30,10 +32,12 @@ namespace FSMTP
          * Parses an raw string of arguments into an argument
          * - vector
          * 
-         * @Param {const std::string &} raw
+         * @Param {const std::vector<std::string> &} raw
          * @Return {std::vector<CMDArg>}
          */
-        static std::vector<CMDArg> parse(const std::string &raw);
+        static std::vector<CMDArg> parse(
+            const std::vector<std::string> &raw
+        );
 
         /**
          * Default constructor for an command line argument
@@ -54,7 +58,16 @@ namespace FSMTP
          * @Return {void}
          */
         explicit CMDArg(void);
-    private:
+
+        /**
+         * Checks if the current command matches the 
+         * - specified command
+         * 
+         * @Param {const std::string &} command
+         * @Return {bool}
+         */
+        bool compare(const std::string &command);
+
         std::string c_Arg;
         std::string c_Name;
     };
@@ -62,8 +75,8 @@ namespace FSMTP
     /**
      * Handles the arguments from the FSMTP program
      *
-     * @Param {const std::string &} argv
+     * @Param {const std::vector<std::string> &} argList
      * @Return {void}
      */
-    void handleArguments(const std::string &argv);
+    void handleArguments(const std::vector<std::string> &argList);
 }

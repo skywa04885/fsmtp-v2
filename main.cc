@@ -20,6 +20,11 @@ bool _forceLoggerNCurses = false;
 
 int main(const int argc, const char **argv)
 {
+	std::vector<std::string> argList(argv, argv+argc);
+	handleArguments(argList);
+
+	return 0;
+
 	// Initializes OpenSSL stuff
 	SSL_load_error_strings();
 	OpenSSL_add_ssl_algorithms();
@@ -33,7 +38,7 @@ int main(const int argc, const char **argv)
 	auto compareArg = [](const std::string &a, const std::string &b)
 	{
 		if (a == "--" + b || a == "-" + b.substr(0, 1)) return true;
-		else return false;	
+		else return false;
 	};
 	for (const std::string &arg : args)
 	{
@@ -47,7 +52,7 @@ int main(const int argc, const char **argv)
 			std::cout << "-t, --test: " << "\tVoer tests uit op de vitale functies van de server, zoals database verbinding." << std::endl;
 			std::cout << "-s, --sync: " << "\tSynchroniseerd de redis database met die van cassandra" << std::endl;
 			std::cout << "-n, --ncurses: " << "\tGebruik NCurses in plaats van klassieke terminal." << std::endl;
-			std::cout << "-a, --adduser:" << "\tAdds an new user to the email server." << std::endl; 
+			std::cout << "-a, --adduser:" << "\tAdds an new user to the email server." << std::endl;
 			std::cout << "-m, --mail: " << "\tSends an emal." << std::endl;
 			std::cout << "-p, --pop3:" << "\tStart de pop3 server." << std::endl;
 			return 0;
@@ -121,7 +126,7 @@ int main(const int argc, const char **argv)
 			Logger logger("test", LoggerLevel::INFO);
 			logger << "FSMTP gaat nu beginnen met testen !" << ENDL;
 
-			// Performs the database connection tests, so we 
+			// Performs the database connection tests, so we
 			// - can check if we may reach apache cassandra
 			logger << _BASH_UNKNOWN_MARK << "Start van Apache Cassandra || Datastax Enterprise database verbindings test ..." << ENDL;
 			try { CassandraConnection connection(_CASSANDRA_DATABASE_CONTACT_POINTS); }
@@ -174,7 +179,7 @@ int main(const int argc, const char **argv)
 
 			// Creates the redis client
 			std::unique_ptr<RedisConnection> redis;
-			
+
 			logger << "Verbinding maken met Redis ..." << ENDL;
 			try {
 				redis = std::make_unique<RedisConnection>(_REDIS_CONTACT_POINTS, _REDIS_PORT);
@@ -183,12 +188,12 @@ int main(const int argc, const char **argv)
 				logger << FATAL << "Kon geen verbinding met Redis maken: " << e.what() << ENDL;
 				return -1;
 			}
-			
+
 			logger << "Verbinding met Redis gemaakt !" << ENDL;
 
 			// Connects to apache cassandra
 			logger << "Verbinding maken met Apache Cassandra || Datastax Cassandra ..." << ENDL;
-			
+
 			std::unique_ptr<CassandraConnection> cassandra;
 			try {
 				cassandra = std::make_unique<CassandraConnection>(_CASSANDRA_DATABASE_CONTACT_POINTS);
@@ -197,7 +202,7 @@ int main(const int argc, const char **argv)
 				logger << FATAL << "Kon geen verbinding met Cassandra maken: " << e.what() << ENDL;
 				return -1;
 			}
-			
+
 			logger << "Verbinding met Apache Cassandra || Datastax Cassandra gemaakt !" << ENDL;
 
 			// ====================================
@@ -222,7 +227,7 @@ int main(const int argc, const char **argv)
 				cass_uuid_string(domain.l_UUID, uuidBuffer);
 				command += uuidBuffer;
 
-				DEBUG_ONLY(logger << DEBUG 
+				DEBUG_ONLY(logger << DEBUG
 					<< "Uitvoeren van: '" << command << '\'' << ENDL << CLASSIC);
 
 				redisReply *reply = reinterpret_cast<redisReply *>(
@@ -319,7 +324,7 @@ int main(const int argc, const char **argv)
 						// Gets the UUID string
 						cass_uuid_string(uuid, uuidBuffer);
 
-						// Prepares the redis command 
+						// Prepares the redis command
 						std::string command = "HMSET acc:";
 						command += std::string(username, usernameLen);
 						command += '@';
@@ -329,7 +334,7 @@ int main(const int argc, const char **argv)
 						command += " v2 ";
 						command += uuidBuffer;
 
-						DEBUG_ONLY(logger << DEBUG << "Uitvoeren van: '" << command 
+						DEBUG_ONLY(logger << DEBUG << "Uitvoeren van: '" << command
 							<< "' op Redis Server" << ENDL << CLASSIC);
 
 						// Performs the command on the redis server,
@@ -445,7 +450,7 @@ int main(const int argc, const char **argv)
 			AccountShortcut accountShortcut(
 				account.a_Bucket,
 				account.a_Domain,
-				account.a_Username, 
+				account.a_Username,
 				account.a_UUID
 			);
 			accountShortcut.save(cassandra.get());

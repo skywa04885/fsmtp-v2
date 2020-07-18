@@ -21,27 +21,35 @@ namespace FSMTP
 	/**
 	 * Parses an raw string of arguments into an argument
 	 * - vector
-	 * 
-	 * @Param {const std::string &} raw
+	 *
+	 * @Param {const std::vector<std::string> &} raw
 	 * @Return {std::vector<CMDArg>}
 	 */
-	std::vector<CMDArg> CMDArg::parse(const std::string &raw)
+	std::vector<CMDArg> CMDArg::parse(
+		const std::vector<std::string> &raw
+	)
 	{
 		std::vector<CMDArg> res = {};
 
 		// Loops over the arguments and parses them
-		std::string token;
-		std::stringstream stream(raw);
-		while (std::getline(stream, token, '-'))
+		std::size_t i = 0;
+		for (const std::string &arg : raw)
 		{
+			if (i++ == 0) continue;
+
+
+
 			// Gets the value of index, and appends
 			// - the current string if it is not there
-			std::size_t index = token.find_first_of('=');
+			std::size_t index = arg.find_first_of('=');
 			if (index == std::string::npos)
-				res.push_back(CMDArg(raw, ""));
+			{
+				res.push_back(CMDArg(arg, ""));
+				continue;
+			}
 
 			// Pushes the key with the value to the result vector
-			res.push_back(CMDArg(raw.substr(0, index), raw.substr(index+1)));
+			res.push_back(CMDArg(arg.substr(0, index), arg.substr(index+1)));
 		}
 
 		// Returns the vector
@@ -50,7 +58,7 @@ namespace FSMTP
 
 	/**
 	 * Default constructor for an command line argument
-	 * 
+	 *
 	 * @Param {const std::String &} c_Name
 	 * @Param {const std::vector<std::string &} c_Arg
 	 */
@@ -72,13 +80,58 @@ namespace FSMTP
 	{}
 
 	/**
+	 * Checks if the current command matches the
+	 * - specified command
+	 *
+	 * @Param {const std::string &} command
+	 * @Return {bool}
+	 */
+	bool CMDArg::compare(const std::string &command)
+	{
+		std::string clean;
+		if (this->c_Name[0] == '-')
+			clean = this->c_Name.substr(1);
+		else
+			clean = this->c_Name;
+
+		if (command[0] == clean[0])
+			return true;
+		else if (clean == command)
+			return true;
+		else
+			return false;
+	}
+
+	/**
 	 * Handles the arguments from the FSMTP program
 	 *
-	 * @Param {const std::string &} argv
+	 * @Param {const std::vector<std::string> &} argList
 	 * @Return {void}
 	 */
-	void handleArguments(const std::string &argv)
+	void handleArguments(const std::vector<std::string> &argList)
 	{
-		std::vector<CMDArg> arguments = CMDArg::parse(argv);
+		Logger logger("ArgHandler", LoggerLevel::INFO);
+		std::vector<CMDArg> arguments = CMDArg::parse(argList);
+
+		// Checks if there are any arguments, and if so
+		// - print them all
+		if (arguments.size() > 0)
+		{
+			logger << "Found " << arguments.size() << " arguments .." << ENDL;
+			std::size_t i = 0;
+			for (const CMDArg &arg : arguments)
+				logger << "Argument [" << i++ << "]: <" << arg.c_Name << "> - <" << arg.c_Arg << '>' << ENDL;
+		}
+
+		// Loops over the arguments and tries to bind
+		// - an action to it, and then call the function
+		// - which is bound to it
+		for (CMDArg &arg : arguments)
+		{
+			if (arg.compare("test"))
+			{
+				std::cout << "Test command" << std::endl;
+			}
+		}
 	}
 }

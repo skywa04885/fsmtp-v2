@@ -52,10 +52,10 @@ sudo ./fsmtp -n
 Bij het gebruiken van de FSMTP server kunt u ook opdrachten meegeven, als u ```-h``` als argument toevoegd, kunt u het help menu zien, deze zal ik hieronder voor het gemak zetten:
 
 ```bash
-Gebruik: 
+Gebruik:
 sudo fsmtp [arguments]
 
-Opdrachten: 
+Opdrachten:
 -h, --help: 	Print de lijst met beschikbare opdrachten.
 -t, --test: 	Voer tests uit op de vitale functies van de server, zoals database verbinding.
 -s, --sync: 	Synchroniseerd de redis database met die van cassandra
@@ -128,8 +128,8 @@ Message-ID: <6HgYov0Etosg20nhf3iQP3yyOMwi4VuvferEupE2eGoMEclTKFkuLjc3Gy3uChbR@ma
 To: "Example" <test@gmail.com>
 From: "Test" <test@fannst.nl>
 Content-Type: multipart/alternative; boundary="--EOdZuGKWSdoWiR0cSAzXom4Wv3XeluGcCVid06"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=fannst.nl; s=default; 
-       h=subject:date:mime-version:message-id:to:from; 
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=fannst.nl; s=default;
+       h=subject:date:mime-version:message-id:to:from;
        bh=1r6joMzD65Y2I+kDL40gRc/oD2qi9fzYx4IcpkYniQw=; b=GMkrL9n0FVr87NRTSTksp3qs/FO6gU4UTLp7QP1
         Qxx3rGJD41aVpEFq7ZKHCcqO2b5k3QjbwaOwUeZfL8p5sksqnE2TXLbUA5iMfUr8vH/AtMw5E+7uH9Cn5Ye8JbZWXa
         f1jL2iC5BnrU4DSUtl2+XbhRBfsWkhiOA9pgD35azye/jUoXetG8ulw/bdUb8DWulUgGd9oRZybFpe2s54yao9dG0q
