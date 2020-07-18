@@ -46,7 +46,7 @@ namespace FSMTP::Models
 		 * @Return {void}
 		 */
 		EmailAddress(const std::string &e_Name, const std::string &e_Address);
-		
+
 		/**
 		 * Parse constructor for the email address
 		 * - basically calls EmailAddress::parse()
@@ -253,23 +253,5 @@ namespace FSMTP::Models
 		CassUuid e_OwnersUUID;
 		CassUuid e_EmailUUID;
 		EmailType e_Type;
-	};
-
-	class EmailShortcut
-	{
-	public:
-		explicit EmailShortcut(void);
-
-		EmailShortcut(
-			const CassUuid &e_OwnersUUID,
-			const CassUuid &e_EmailUUID,
-			const std::string &e_Domain
-		);
-
-		void save(CassandraConnection *connection);
-	private:
-		CassUuid e_OwnersUUID;
-		CassUuid e_EmailUUID;
-		std::string e_Domain;
 	};
 }

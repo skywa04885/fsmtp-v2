@@ -17,65 +17,42 @@
 #pragma once
 
 #include <string>
-#include <vector>
-#include <iostream>
-#include <stdexcept>
 #include <cstdint>
+#include <stdexcept>
 
 #include <cassandra.h>
 
-#include "Email.src.h"
-#include "../general/connections.src.h"
 #include "../general/macros.src.h"
+#include "../general/connections.src.h"
+#include "../general/exceptions.src.h"
 
 using namespace FSMTP::Connections;
 
 namespace FSMTP::Models
 {
-  class EmailShortcut
+  class RawEmail
   {
   public:
     /**
-     * Default empty constructor for the EmailShortcut class
+     * Default construtor for the raw email
      *
      * @Param {void}
      * @Return {void}
      */
-    explicit EmailShortcut(void);
+    explicit RawEmail(void);
 
     /**
-     * Stores an email shortcut in the cassandra database
+     * Stores an rawEmail into the database
      *
      * @Param {CassandraConnection *} cassandra
      * @Return {void}
      */
     void save(CassandraConnection *cassandra);
 
-    /**
-     * Gathers all messages from an specific user
-     *
-     * @Param {CassandraConnection *} cassandra
-     * @Param {const int32_t} skip
-     * @Param {int32_t} limit
-     * @Param {const std::string &} domain
-     * @Param {const CassUuid &} uuid
-     * @Return {std::vector<EmailShortcut>}
-     */
-    static std::vector<EmailShortcut> gatherAll(
-      CassandraConnection *cassandra,
-      const int32_t skip,
-      int32_t limit,
-      const std::string &domain,
-      const CassUuid &uuid
-    );
-
+    int64_t e_Bucket;
     std::string e_Domain;
-    std::string e_Subject;
-    std::string e_Preview;
     CassUuid e_OwnersUUID;
     CassUuid e_EmailUUID;
-    int64_t e_Bucket;
-    EmailType e_Type;
-    int64_t e_SizeOctets;
+    std::string e_Content;
   };
 }

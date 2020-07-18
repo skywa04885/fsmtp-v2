@@ -30,8 +30,7 @@ namespace FSMTP::POP3
 		PRT_AUTH_SUCCESS,
 		PRT_AUTH_FAIL,
 		PRT_SYNTAX_ERROR,
-		PRT_QUIT,
-		PRT_STAT
+		PRT_QUIT
 	} POP3ResponseType;
 
 	typedef struct

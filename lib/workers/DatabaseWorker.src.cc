@@ -18,7 +18,7 @@
 #include "DatabaseWorker.src.h"
 
 std::mutex _emailStorageMutex;
-std::vector<FullEmail> _emailStorageQueue = {};
+std::vector<std::pair<std::string, FullEmail>> _emailStorageQueue;
 
 namespace FSMTP::Workers
 {
@@ -50,7 +50,7 @@ namespace FSMTP::Workers
 	 * The action that gets performed at interval
 	 *
 	 * @Param {void *} u
-	 */	
+	 */
 	void DatabaseWorker::action(void *u)
 	{
 		// ==================================
@@ -60,7 +60,7 @@ namespace FSMTP::Workers
 		// - and if so, send them
 		// ==================================
 
-		// Checks if there are any emails 
+		// Checks if there are any emails
 		// - which needs to be stored
 		if (_emailStorageQueue.size() <= 0) return;
 
@@ -68,8 +68,38 @@ namespace FSMTP::Workers
 		// TODO: Add batch
 		_emailStorageMutex.lock();
 		this->w_Logger << "Started storing " << _emailStorageQueue.size() << " emails !" << ENDL;
-		for (FullEmail& email : _emailStorageQueue)
-			email.save(this->d_Connection);
+		for (std::pair<std::string, FullEmail>& dataPair : _emailStorageQueue)
+		{
+			// Generates the stuff like the shortcuts and raw messages
+			EmailShortcut shortcut;
+			shortcut.e_Domain = dataPair.second.e_OwnersDomain;
+			shortcut.e_Subject = dataPair.second.e_Subject;
+			shortcut.e_OwnersUUID = dataPair.second.e_OwnersUUID;
+			shortcut.e_EmailUUID = dataPair.second.e_EmailUUID;
+			shortcut.e_Bucket = dataPair.second.e_Bucket;
+			shortcut.e_Type = dataPair.second.e_Type;
+			shortcut.e_SizeOctets = dataPair.first.size();
+
+			RawEmail raw;
+			raw.e_Bucket = dataPair.second.e_Bucket;
+			raw.e_Domain = dataPair.second.e_OwnersDomain;
+			raw.e_OwnersUUID = dataPair.second.e_OwnersUUID;
+			raw.e_EmailUUID = dataPair.second.e_EmailUUID;
+			raw.e_Content = std::move(dataPair.first);
+
+			// Finds an text section if not we will have no preview
+			for (const EmailBodySection &section : dataPair.second.e_BodySections)
+				if (section.e_Type == EmailContentType::ECT_TEXT_PLAIN)
+					shortcut.e_Preview = section.e_Content.substr(
+						0,
+						(section.e_Content.size() > 255 ? 255 : section.e_Content.size())
+					);
+
+			// Stores the shit
+			dataPair.second.save(this->d_Connection);
+			raw.save(this->d_Connection.get());
+			shortcut.save(this->d_Connection.get());
+		}
 		this->w_Logger << "Stored " << _emailStorageQueue.size() << " emails, clearing vector" << ENDL;
 		_emailStorageQueue.clear();
 		_emailStorageMutex.unlock();

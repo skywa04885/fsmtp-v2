@@ -21,6 +21,7 @@
 #include <mutex>
 
 #include "../models/Email.src.h"
+#include "../models/EmailShortcut.src.h"
 #include "./Worker.src.h"
 #include "../general/connections.src.h"
 

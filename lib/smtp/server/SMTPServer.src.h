@@ -21,6 +21,7 @@
 #include <atomic>
 #include <vector>
 #include <stdexcept>
+#include <utility>
 #include <bitset>
 #include <mutex>
 
@@ -95,7 +96,7 @@ namespace FSMTP::Server
 		 * @Return {void}
 		 */
 		static void onClientSync(struct sockaddr_in *sockaddr, int32_t fd, void *u);
-		
+
 		/**
 		 * Closes the SMTP Server
 		 *

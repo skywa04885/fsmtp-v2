@@ -27,14 +27,15 @@ namespace FSMTP::POP3
 		PCT_STLS,
 		PCT_USER,
 		PCT_PASS,
-		PCT_UNKNOWN
+		PCT_UNKNOWN,
+		PCT_STAT
 	} POP3CommandType;
 
 	class P3Command
 	{
 	public:
 		void parse(const std::string &raw);
-		
+
 		POP3CommandType c_Type;
 		std::vector<std::string> c_Args;
 	};

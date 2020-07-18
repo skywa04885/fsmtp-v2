@@ -15,3 +15,145 @@
 */
 
 #include "EmailShortcut.src.h"
+
+namespace FSMTP::Models
+{
+  /**
+   * Default empty constructor for the EmailShortcut class
+   *
+   * @Param {void}
+   * @Return {void}
+   */
+  EmailShortcut::EmailShortcut(void)
+  {}
+
+  /**
+   * Stores an email shortcut in the cassandra database
+   *
+   * @Param {CassandraConnection *} cassandra
+   * @Return {void}
+   */
+  void EmailShortcut::save(CassandraConnection *cassandra)
+  {
+    const char *query = R"(INSERT INTO fannst.email_shortcuts (
+      e_domain, e_subject, e_preview,
+      e_owners_uuid, e_email_uuid, e_bucket,
+      e_type, e_size_octets
+    ) VALUES (
+      ?, ?, ?,
+      ?, ?, ?,
+      ?, ?
+    ))";
+    CassStatement *statement = nullptr;
+    CassFuture *future = nullptr;
+    CassError rc;
+
+    // Creates the statement and query, then binds
+    // - the values
+    std::cout << this->e_Domain.c_str() << std::endl;
+    statement = cass_statement_new(query, 8);
+    cass_statement_bind_string(statement, 0, this->e_Domain.c_str());
+    cass_statement_bind_string(statement, 1, this->e_Subject.c_str());
+    cass_statement_bind_string(statement, 2, this->e_Preview.c_str());
+    cass_statement_bind_uuid(statement, 3, this->e_OwnersUUID);
+    cass_statement_bind_uuid(statement, 4, this->e_EmailUUID);
+    cass_statement_bind_int64(statement, 5, this->e_Bucket);
+    cass_statement_bind_int32(statement, 6, static_cast<int32_t>(this->e_Type));
+    cass_statement_bind_int64(statement, 7, this->e_SizeOctets);
+
+    // Executes the query and checks for errors
+    future = cass_session_execute(cassandra->c_Session, statement);
+    cass_future_wait(future);
+
+    rc = cass_future_error_code(future);
+    if (rc != CASS_OK)
+    {
+      std::string error = "cass_session_execute() failed: ";
+      error += CassandraConnection::getError(future);
+      cass_future_free(future);
+      cass_statement_free(statement);
+      throw DatabaseException(EXCEPT_DEBUG(error));
+    }
+
+    // Frees the memory and returns
+    cass_statement_free(statement);
+    cass_future_free(future);
+  }
+
+  /**
+   * Gathers all messages from an specific user
+   *
+   * @Param {CassandraConnection *} cassandra
+   * @Param {const int32_t} skip
+   * @Param {int32_t} limit
+   * @Param {const std::string &} domain
+   * @Param {const CassUuid &} uuid
+   * @Return {std::vector<EmailShortcut>}
+   */
+  static std::vector<EmailShortcut> gatherAll(
+    CassandraConnection *cassandra,
+    const int32_t skip,
+    int32_t limit,
+    const std::string &domain,
+    const CassUuid &uuid
+  )
+  {
+    std::vector<EmailShortcut> ret = {};
+
+    const char *query = "SELECT * FROM fannst.email_shortcuts WHERE e_domain=? AND e_owners_uuid=? LIMIT ?";
+    CassStatement *statement = nullptr;
+    CassFuture *future = nullptr;
+    CassError rc;
+
+    // Limit of 80 emails a time
+    if (limit > 80) limit = 80;
+
+    // =======================================
+    // Performs the query
+    //
+    // Prepares and executes the query
+    // =======================================
+
+    // Prepares the statement and puts the values into it
+    statement = cass_statement_new(query, 3);
+    cass_statement_bind_string(statement, 0, domain.c_str());
+    cass_statement_bind_uuid(statement, 1, uuid);
+    cass_statement_bind_int32(statement, 2, limit);
+
+    // Executes the query and checks for errors
+    future = cass_session_execute(cassandra->c_Session, statement);
+    cass_future_wait(future);
+
+    rc = cass_future_error_code(future);
+    if (rc != CASS_OK)
+    {
+      std::string error = "cass_session_execute() failed: ";
+      error += CassandraConnection::getError(future);
+      cass_future_free(future);
+      cass_statement_free(statement);
+      throw DatabaseException(EXCEPT_DEBUG(error));
+    }
+
+
+    // =======================================
+    // Handles the data
+    //
+    // Handles the data from the database
+    // - and puts it into the result vector
+    // =======================================
+
+    // Gets the result, and starts looping
+    const CassResult *result = cass_future_get_result(future);
+    CassIterator *resultIterator = cass_iterator_from_result(result);
+
+    while(cass_iterator_next(iterator))
+    {
+      // Gets the row
+      const CassRow *row = cass_iterator_get_row(iterator);
+    }
+
+    // Frees the memory
+    cass_result_free(result);
+    cass_iterator_free(resultIterator);
+  }
+}

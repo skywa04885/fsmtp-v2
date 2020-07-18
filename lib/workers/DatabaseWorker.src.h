@@ -19,15 +19,16 @@
 #include <vector>
 #include <thread>
 #include <mutex>
+#include <utility>
 
 #include "../models/Email.src.h"
+#include "../models/RawEmail.src.h"
+#include "../models/EmailShortcut.src.h"
 #include "./Worker.src.h"
 #include "../general/connections.src.h"
 
 using namespace FSMTP::Models;
 using namespace FSMTP::Connections;
-
-extern std::vector<FullEmail> _emailStorageQueue;
 
 namespace FSMTP::Workers
 {

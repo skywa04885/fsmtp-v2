@@ -281,7 +281,7 @@ namespace FSMTP::POP3
 					}
 					case POP3CommandType::PCT_STAT:
 					{
-						
+
 					}
 					case POP3CommandType::PCT_UNKNOWN:
 					{

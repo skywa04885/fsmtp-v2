@@ -59,7 +59,7 @@ namespace FSMTP::POP3
 				if (command == "stls")
 					this->c_Type = POP3CommandType::PCT_STLS;
 				else if (command == "stat")
-					this->c_Type = POP3CommandTYPE::PCT_STAT;
+					this->c_Type = POP3CommandType::PCT_STAT;
 				else
 					this->c_Type = POP3CommandType::PCT_UNKNOWN;
 				break;

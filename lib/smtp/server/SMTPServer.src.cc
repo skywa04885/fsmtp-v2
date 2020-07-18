@@ -16,7 +16,7 @@
 
 #include "SMTPServer.src.h"
 
-extern std::vector<FullEmail> _emailStorageQueue;
+extern std::vector<std::pair<std::string, FullEmail>> _emailStorageQueue;
 extern std::mutex _emailStorageMutex;
 
 namespace FSMTP::Server
@@ -44,7 +44,7 @@ namespace FSMTP::Server
 		s_RedisPort(s_RedisPort),
 		s_RedisHost(s_RedisHost)
 	{
-		// Sets some default values and after that 
+		// Sets some default values and after that
 		// - we start the socket server, and create
 		// - the listening thread
 		this->s_IsRunning = false;
@@ -79,9 +79,9 @@ namespace FSMTP::Server
 
 		this->s_Socket.startListening();
 		this->s_Socket.startAcceptorSync(
-			&SMTPServer::onClientSync, 
-			30, 
-			true, 
+			&SMTPServer::onClientSync,
+			30,
+			true,
 			this->s_ShouldBeRunning,
 			this->s_IsRunning,
 			reinterpret_cast<void *>(this)
@@ -130,7 +130,7 @@ namespace FSMTP::Server
 		// - later use to get users and
 		// - the domains
 		// =================================
-		
+
 		std::unique_ptr<RedisConnection> redis;
 		try
 		{
@@ -151,7 +151,7 @@ namespace FSMTP::Server
 		// - in here we will handle commands and send responses
 		while (true)
 		{
-			try 
+			try
 			{
 				// Reads the command, parses it
 				// - and quits when an error is thrown
@@ -169,7 +169,7 @@ namespace FSMTP::Server
 					case ClientCommandType::CCT_HELO:
 					{ // ( Simple hello command )
 						// Checks we should handle the hello command
-						// - this is always possible, except when the 
+						// - this is always possible, except when the
 						// - hello command was already transmitted
 						if (!session.getAction(_SMTP_SERV_PA_HELO))
 						{
@@ -295,7 +295,7 @@ namespace FSMTP::Server
 							catch (const EmptyQuery &e)
 							{ /* No worry's is allowed */ }
 
-							// Sends the response and sets the 
+							// Sends the response and sets the
 							// - action flag
 							client.sendResponse(
 								SMTPResponseType::SRC_MAIL_FROM,
@@ -346,7 +346,7 @@ namespace FSMTP::Server
 								try {
 									// Finds the user shortcut
 									session.s_ReceivingAccount = AccountShortcut::findRedis(
-										redis.get(), 
+										redis.get(),
 										session.s_TransportMessage.e_TransportTo.getDomain(),
 										session.s_TransportMessage.e_TransportTo.getUsername()
 									);
@@ -367,7 +367,7 @@ namespace FSMTP::Server
 								}
 							}
 
-							// Sends the response and sets the 
+							// Sends the response and sets the
 							// - action flag
 							client.sendResponse(
 								SMTPResponseType::SRC_RCPT_TO,
@@ -451,7 +451,7 @@ namespace FSMTP::Server
 							// Sets the data start flag
 							session.setAction(_SMTP_SERV_PA_DATA_START);
 
-							// Sends the data start command, 
+							// Sends the data start command,
 							// - and starts receiving the body
 							client.sendResponse(SMTPResponseType::SRC_DATA_START);
 							std::string rawTransportmessage = client.readUntillNewline(true);
@@ -466,6 +466,7 @@ namespace FSMTP::Server
 							if (!session.getFlag(_SMTP_SERV_SESSION_RELAY_FLAG))
 							{
 								// Adds the user information to the transport message
+								session.s_TransportMessage.e_OwnersDomain = session.s_ReceivingAccount.a_Domain;
 								session.s_TransportMessage.e_OwnersUUID = session.s_ReceivingAccount.a_UUID;
 								session.s_TransportMessage.generateMessageUUID();
 								session.s_TransportMessage.e_Bucket = FullEmail::getBucket();
@@ -473,11 +474,12 @@ namespace FSMTP::Server
 
 								// Pushes the email to the storage queue
 								_emailStorageMutex.lock();
-								_emailStorageQueue.push_back(session.s_TransportMessage);
+								_emailStorageQueue.push_back(std::make_pair(rawTransportmessage, session.s_TransportMessage));
 								_emailStorageMutex.unlock();
 							} else
 							{
 								// Prepares the email for storage
+								session.s_TransportMessage.e_OwnersDomain = session.s_SendingAccount.a_Domain;
 								session.s_TransportMessage.e_OwnersUUID = session.s_SendingAccount.a_UUID;
 								session.s_TransportMessage.generateMessageUUID();
 								session.s_TransportMessage.e_Bucket = FullEmail::getBucket();
@@ -485,11 +487,11 @@ namespace FSMTP::Server
 
 								// Pushesht the email to the storage queue
 								_emailStorageMutex.lock();
-								_emailStorageQueue.push_back(session.s_TransportMessage);
+								_emailStorageQueue.push_back(std::make_pair(rawTransportmessage, session.s_TransportMessage));
 								_emailStorageMutex.unlock();
 							}
 
-							// Sends the response and sets the 
+							// Sends the response and sets the
 							// - action flag
 							client.sendResponse(
 								SMTPResponseType::SRC_DATA_END,
