@@ -43,6 +43,8 @@ namespace FSMTP::POP3
 
 	std::string P3Response::getMessage(void)
 	{
+		if (!this->p_Message.empty()) return this->p_Message;
+
 		switch (this->p_Type)
 		{
 			case POP3ResponseType::PRT_GREETING:

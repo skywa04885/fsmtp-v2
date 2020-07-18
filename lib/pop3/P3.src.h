@@ -46,6 +46,8 @@
 #include "../models/LocalDomain.src.h"
 #include "../models/Account.src.h"
 #include "../general/Passwords.src.h"
+#include "../models/RawEmail.src.h"
+#include "../models/EmailShortcut.src.h"
 
 #ifndef _POP3_QUEUE_MAX
 #define _POP3_QUEUE_MAX 40

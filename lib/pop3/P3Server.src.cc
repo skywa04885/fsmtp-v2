@@ -281,7 +281,29 @@ namespace FSMTP::POP3
 					}
 					case POP3CommandType::PCT_STAT:
 					{
+						std::vector<EmailShortcut> shortcuts = EmailShortcut::gatherAll(
+							cassandra.get(),
+							0,
+							40,
+							session.s_Account.a_Domain,
+							session.s_Account.a_UUID
+						);
 
+						// Constructs the response
+						int64_t octetsTotal = 0;
+						for (const EmailShortcut &shortcut : shortcuts) octetsTotal += shortcut.e_SizeOctets;
+
+						std::string response = std::to_string(shortcuts.size());
+						response += ' ';
+						response += std::to_string(octetsTotal);
+
+						// Sends the stat response
+						client->sendResponse(
+							true,
+							POP3ResponseType::PRT_STAT,
+							response, nullptr, nullptr
+						);
+						continue;
 					}
 					case POP3CommandType::PCT_UNKNOWN:
 					{

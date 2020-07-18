@@ -116,7 +116,7 @@ namespace FSMTP::Models
 		std::string e_Name;
 	};
 
-	typedef enum : uint8_t
+	typedef enum : uint32_t
 	{
 		ET_INCOMMING = 0,
 		ET_INCOMMING_SPAM,

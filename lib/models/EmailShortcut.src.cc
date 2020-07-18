@@ -90,7 +90,7 @@ namespace FSMTP::Models
    * @Param {const CassUuid &} uuid
    * @Return {std::vector<EmailShortcut>}
    */
-  static std::vector<EmailShortcut> gatherAll(
+  std::vector<EmailShortcut> EmailShortcut::gatherAll(
     CassandraConnection *cassandra,
     const int32_t skip,
     int32_t limit,
@@ -134,7 +134,6 @@ namespace FSMTP::Models
       throw DatabaseException(EXCEPT_DEBUG(error));
     }
 
-
     // =======================================
     // Handles the data
     //
@@ -146,14 +145,117 @@ namespace FSMTP::Models
     const CassResult *result = cass_future_get_result(future);
     CassIterator *resultIterator = cass_iterator_from_result(result);
 
-    while(cass_iterator_next(iterator))
+    while(cass_iterator_next(resultIterator))
     {
-      // Gets the row
-      const CassRow *row = cass_iterator_get_row(iterator);
+      // Prepares memory for the new element
+      const CassRow *row = cass_iterator_get_row(resultIterator);
+      const char *domain = nullptr;
+      std::size_t domainLen;
+      const char *subject = nullptr;
+      std::size_t subjectLen;
+      const char *preview = nullptr;
+      std::size_t previewLen;
+      EmailShortcut shortcut;
+
+      // Gets the values
+      cass_value_get_string(
+        cass_row_get_column_by_name(row, "e_domain"),
+        &domain,
+        &domainLen
+      );
+      cass_value_get_string(
+        cass_row_get_column_by_name(row, "e_subject"),
+        &subject,
+        &subjectLen
+      );
+      cass_value_get_string(
+        cass_row_get_column_by_name(row, "e_preview"),
+        &preview,
+        &previewLen
+      );
+      cass_value_get_uuid(
+        cass_row_get_column_by_name(row, "e_owners_uuid"),
+        &shortcut.e_OwnersUUID
+      );
+      cass_value_get_uuid(
+        cass_row_get_column_by_name(row, "e_email_uuid"),
+        &shortcut.e_EmailUUID
+      );
+      cass_value_get_int64(
+        cass_row_get_column_by_name(row, "e_owners_uuid"),
+        &shortcut.e_Bucket
+      );
+      cass_value_get_uint32(
+        cass_row_get_column_by_name(row, "e_type"),
+        reinterpret_cast<uint32_t *>(&shortcut.e_Type)
+      );
+      cass_value_get_int64(
+        cass_row_get_column_by_name(row, "e_size_octets"),
+        &shortcut.e_SizeOctets
+      );
+
+      // Stores the strings
+      shortcut.e_Domain.append(domain, domainLen);
+      shortcut.e_Preview.append(preview, previewLen);
+      shortcut.e_Subject.append(subject, subjectLen);
+
+      // Free's the memory and pushes the result
+      ret.push_back(shortcut);
     }
 
     // Frees the memory
     cass_result_free(result);
     cass_iterator_free(resultIterator);
+    cass_future_free(future);
+
+    // Returns the vector
+    return ret;
+  }
+
+  std::pair<std::size_t, std::size_t> EmailShortcut::getStat(
+    CassandraConnection *cassandra,
+    const int32_t skip,
+    int32_t limit,
+    const std::string &domain,
+    const CassUuid &uuid
+  )
+  {
+    std::size_t total = 0, octets = 0;
+
+    const char *query = "SELECT e_size_octets FROM fannst.email_shortcuts WHERE e_domain=? AND e_owners_uuid=? LIMIT ?";
+    CassStatement *statement = nullptr;
+    CassFuture *future = nullptr;
+    cass_bool_t hasMorePages = cass_false;
+    CassError rc;
+
+    // Limit of 80 emails a time
+    if (limit > 80) limit = 80;
+
+    // =======================================
+    // Prepares the statement
+    //
+    // Prepares the statement and binds the
+    // - values
+    // =======================================
+
+    // Prepares the statement and binds the values
+    statement = cass_statement_new(query, 3);
+    cass_statement_bind_string(statement, 0, domain.c_str());
+    cass_statement_bind_uuid(statement, 1, uuid);
+    cass_statement_bind_int32(statement, 2, limit);
+    cass_statement_set_paging_size(statement, 20);
+
+    // =======================================
+    // Counts the data
+    //
+    // Counts the total octets and count
+    // =======================================
+
+    do
+    {
+      CassError rc;
+      CassIterator *resultIterator = nullptr;
+      CassFuture *future = nullptr;
+    } while (hasMorePages);
   }
 }

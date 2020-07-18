@@ -21,6 +21,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <cstdint>
+#include <functional>
 
 #include <cassandra.h>
 
@@ -62,6 +63,14 @@ namespace FSMTP::Models
      * @Return {std::vector<EmailShortcut>}
      */
     static std::vector<EmailShortcut> gatherAll(
+      CassandraConnection *cassandra,
+      const int32_t skip,
+      int32_t limit,
+      const std::string &domain,
+      const CassUuid &uuid
+    );
+
+    static std::pair<std::size_t, std::size_t> getStat(
       CassandraConnection *cassandra,
       const int32_t skip,
       int32_t limit,
