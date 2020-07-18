@@ -21,14 +21,14 @@ namespace FSMTP::Models
 	/**
 	 * Creates an new local domain and generates
 	 * the uuid automatically for it
-	 * 
+	 *
 	 * @Param {std::string} l_Domain
 	 * @Return void
 	 */
 	LocalDomain::LocalDomain(const std::string &l_Domain):
 		l_Domain(l_Domain)
 	{
-		// Creates the UUID gen and generates an new 
+		// Creates the UUID gen and generates an new
 		// - user id for the domain
 		CassUuidGen *uuidGen = cass_uuid_gen_new();
 		cass_uuid_gen_time(uuidGen, &this->l_UUID);
@@ -67,7 +67,7 @@ namespace FSMTP::Models
 		// - after this we execute the query and wait
 		// - for results
 		const char *query = R"(SELECT e_domain_uuid FROM fannst.local_domain WHERE e_domain = ?)";
-		
+
 		queryStatement = cass_statement_new(query, 1);
 		cass_statement_bind_string(queryStatement, 0, l_Domain.c_str());
 
@@ -85,7 +85,7 @@ namespace FSMTP::Models
 			// Frees the memory
 			cass_future_free(queryFuture);
 			cass_statement_free(queryStatement);
-			
+
 			// Throws the exception
 			throw DatabaseException(message);
 		}
@@ -208,7 +208,7 @@ namespace FSMTP::Models
 			const CassRow *row = cass_iterator_get_row(iterator);
 
 			cass_value_get_uuid(
-				cass_row_get_column_by_name(row, "e_domain_uuid"), 
+				cass_row_get_column_by_name(row, "e_domain_uuid"),
 				&temp.l_UUID
 			);
 			cass_value_get_string(

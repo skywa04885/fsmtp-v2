@@ -47,9 +47,8 @@ namespace FSMTP::POP3
 		{
 			case POP3ResponseType::PRT_GREETING:
 			{
-				std::string ret = "POP3 server ready <";
+				std::string ret = "POP3 server ready ";
 				ret += _SMTP_SERVICE_NODE_NAME;
-				ret += ">";
 				return ret;
 			}
 			case POP3ResponseType::PRT_CAPA:
@@ -71,6 +70,24 @@ namespace FSMTP::POP3
 			case POP3ResponseType::PRT_AUTH_SUCCESS:
 			{
 				return "Auth Success";
+			}
+			case POP3ResponseType::PRT_AUTH_FAIL:
+			{
+				std::string ret = "Auth Failure: ";
+				ret += reinterpret_cast<const char *>(this->p_U);
+				return ret;
+			}
+			case POP3ResponseType::PRT_SYNTAX_ERROR:
+			{
+				std::string ret = "Syntax Error: ";
+				ret += reinterpret_cast<const char *>(this->p_U);
+				return ret;
+			}
+			case POP3ResponseType::PRT_QUIT:
+			{
+				std::string ret = "POP3 server signing off ";
+				ret += _SMTP_SERVICE_NODE_NAME;
+				return ret;
 			}
 			default: throw std::runtime_error(EXCEPT_DEBUG("Message not implemented"));
 		}
@@ -111,9 +128,10 @@ namespace FSMTP::POP3
 		const bool p_Ok,
 		const POP3ResponseType p_Type,
 		const std::string &p_Message,
-		std::vector<POP3Capability> *p_Capabilities
+		std::vector<POP3Capability> *p_Capabilities,
+		void *p_U
 	):
 		p_Ok(p_Ok), p_Type(p_Type), p_Message(p_Message),
-		p_Capabilities(p_Capabilities)
+		p_Capabilities(p_Capabilities), p_U(p_U)
 	{}
 }

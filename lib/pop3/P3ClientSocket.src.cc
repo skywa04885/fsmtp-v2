@@ -182,14 +182,16 @@ namespace FSMTP::POP3
 		const bool p_Ok,
 		const POP3ResponseType p_Type,
 		const std::string &p_Message,
-		std::vector<POP3Capability> *p_Capabilities
+		std::vector<POP3Capability> *p_Capabilities,
+		void *p_U
 	)
 	{
 		P3Response response(
 			p_Ok,
 			p_Type,
 			p_Message,
-			p_Capabilities
+			p_Capabilities,
+			p_U
 		);
 		this->sendString(response.build());
 	}

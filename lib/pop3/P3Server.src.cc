@@ -59,11 +59,41 @@ namespace FSMTP::POP3
 
 	void P3Server::acceptorCallback(std::unique_ptr<ClientSocket> client, void *u)
 	{
+		std::string prefix = "P3ServerAcceptor:";
+		prefix += inet_ntoa(client->s_SocketAddr.sin_addr);
+		Logger logger(prefix, LoggerLevel::INFO);
+
 		P3Server &server = *reinterpret_cast<P3Server *>(u);
 		P3ServerSession session;
 
 		// Sends the initial greeting message
 		client->sendResponse(true, POP3ResponseType::PRT_GREETING);
+
+		// Attemts to connect to redis
+		std::unique_ptr<RedisConnection> redis;
+		std::unique_ptr<CassandraConnection> cassandra;
+		try {
+			redis = std::make_unique<RedisConnection>(_REDIS_CONTACT_POINTS, _REDIS_PORT);
+			DEBUG_ONLY(logger << DEBUG << "Verbonden met redis [" << _REDIS_CONTACT_POINTS
+				<< ':' << _REDIS_PORT << ']' << ENDL << CLASSIC);
+		} catch (const std::runtime_error &e)
+		{
+			logger << ERROR << "Kon niet verbinden met Redis [" << _REDIS_CONTACT_POINTS
+				<< ':' << _REDIS_PORT << "]: " << e.what() << ENDL << CLASSIC;
+			goto pop3_session_end;
+		}
+
+		// Connects to cassandra
+		try {
+			cassandra = std::make_unique<CassandraConnection>(_CASSANDRA_DATABASE_CONTACT_POINTS);
+			DEBUG_ONLY(logger << DEBUG << "Verbonden met Cassandra ["
+				<< _CASSANDRA_DATABASE_CONTACT_POINTS << "]" << ENDL << CLASSIC);
+		} catch (const std::runtime_error &e)
+		{
+			logger << ERROR << "Kon niet verbinden met Cassandra [" << _CASSANDRA_DATABASE_CONTACT_POINTS
+				<< "]: " << e.what() << ENDL << CLASSIC;
+			goto pop3_session_end;
+		}
 
 		for (;;)
 		{
@@ -76,7 +106,7 @@ namespace FSMTP::POP3
 			{
 				break;
 			}
-			
+
 			// Checks how to respond to the command
 			try {
 				switch (command.c_Type)
@@ -92,10 +122,66 @@ namespace FSMTP::POP3
 					}
 					case POP3CommandType::PCT_QUIT:
 					{
+						client->sendResponse(true, PRT_QUIT);
 						goto pop3_session_end;
 					}
 					case POP3CommandType::PCT_PASS:
 					{
+						// Checks if the command is not empty
+						if (command.c_Args.size() < 1)
+						{
+							client->sendResponse(
+								false,
+								POP3ResponseType::PRT_SYNTAX_ERROR,
+								"",
+								nullptr,
+								reinterpret_cast<void *>(const_cast<char *>("PASS requires one argument"))
+							);
+							continue;
+						}
+
+						// Gets the user password from the database
+						std::string publicKey, password;
+						try {
+							std::tie(password, publicKey) = Account::getPassAndPublicKey(
+								cassandra.get(),
+								session.s_Account.a_Domain,
+								session.s_Account.a_Bucket,
+								session.s_Account.a_UUID
+							);
+						} catch (const EmptyQuery &e)
+						{
+							// Constructs the error
+							std::string error = "user [";
+							error += session.s_Account.a_Username;
+							error += '@';
+							error += session.s_Account.a_Domain;
+							error += "] was not found in cassandra.";
+
+							// Sends the error response
+							client->sendResponse(
+								false,
+								POP3ResponseType::PRT_AUTH_FAIL,
+								"",
+								nullptr,
+								reinterpret_cast<void *>(const_cast<char *>(error.c_str()))
+							);
+							continue;
+						}
+
+						// Compares the passwords to check if it realy is the user
+						if (!passwordVerify(command.c_Args[0], password))
+						{
+							client->sendResponse(
+								false,
+								POP3ResponseType::PRT_AUTH_FAIL,
+								"",
+								nullptr,
+								reinterpret_cast<void *>(const_cast<char *>("invalid password"))
+							);
+							continue;
+						}
+
 						// Stores the password in the session, and sends
 						// - the continue response
 						session.s_Pass = command.c_Args[0];
@@ -104,22 +190,82 @@ namespace FSMTP::POP3
 					}
 					case POP3CommandType::PCT_USER:
 					{
+						EmailAddress address;
+
+						// Checks if the command is not empty
+						if (command.c_Args.size() < 1)
+						{
+							client->sendResponse(
+								false,
+								POP3ResponseType::PRT_SYNTAX_ERROR,
+								"",
+								nullptr,
+								reinterpret_cast<void *>(const_cast<char *>("USER requires one argument"))
+							);
+							continue;
+						}
+
 						// Checks if there is an domain, if not
 						// - ignore this step and append the default one
 						if (command.c_Args[0].find_first_of('@') != std::string::npos)
 						{
+							address.parse(command.c_Args[0]);
 
+							// Searches the database for the local domain, so we
+							// - know if the users domain is on this server
+							try {
+								LocalDomain domain = LocalDomain::findRedis(address.getDomain(), redis.get());
+							} catch (const EmptyQuery &e)
+							{
+								// Constructs the error
+								std::string error = "domain [";
+								error += address.getDomain();
+								error += "] was not found on this server.";
+
+								// Sends the error response
+								client->sendResponse(
+									false,
+									POP3ResponseType::PRT_AUTH_FAIL,
+									"",
+									nullptr,
+									reinterpret_cast<void *>(const_cast<char *>(error.c_str()))
+								);
+								continue;
+							}
 						} else
 						{
 							command.c_Args[0] += '@';
 							command.c_Args[0] += _SMTP_DEF_DOMAIN;
+							address.parse(command.c_Args[0]);
+						}
+
+						// Checks if the username with the domain is found
+						// - in our redis database
+						try {
+							session.s_Account = AccountShortcut::findRedis(redis.get(), address.getDomain(), address.getUsername());
+						} catch (const EmptyQuery &e)
+						{
+							// Constructs the error
+							std::string error = "user [";
+							error += address.e_Address;
+							error += "] was not found on this server.";
+
+							// Sends the error response
+							client->sendResponse(
+								false,
+								POP3ResponseType::PRT_AUTH_FAIL,
+								"",
+								nullptr,
+								reinterpret_cast<void *>(const_cast<char *>(error.c_str()))
+							);
+							continue;
 						}
 
 						// Stores the user in the session, and sends
 						// - the continue response
 						session.s_User = command.c_Args[0];
 						client->sendResponse(true, POP3ResponseType::PRT_USER_DONE);
-						break;
+						continue;
 					}
 					case POP3CommandType::PCT_CAPA:
 					{
@@ -128,9 +274,14 @@ namespace FSMTP::POP3
 							true,
 							POP3ResponseType::PRT_CAPA,
 							"",
-							&server.s_Capabilities
+							&server.s_Capabilities,
+							nullptr
 						);
-						break;
+						continue;
+					}
+					case POP3CommandType::PCT_STAT:
+					{
+						
 					}
 					case POP3CommandType::PCT_UNKNOWN:
 					{

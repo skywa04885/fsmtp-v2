@@ -22,6 +22,9 @@
 #include "P3Response.src.h"
 #include "P3ServerSession.src.h"
 
+using namespace FSMTP::Connections;
+using namespace FSMTP::Models;
+
 namespace FSMTP::POP3
 {
 	class P3Server

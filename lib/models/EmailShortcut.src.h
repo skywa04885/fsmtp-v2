@@ -16,25 +16,36 @@
 
 #pragma once
 
-#include <cstdint>
 #include <string>
+#include <vector>
+#include <iostream>
+#include <stdexcept>
+#include <cstdint>
 
-#include "P3.src.h"
+#include <cassandra.h>
 
-using namespace FSMTP::Models;
+#include "Email.src.h"
 
-namespace FSMTP::POP3
+namespace FSMTP::Models
 {
-	class P3ServerSession
-	{
-	public:
-		P3ServerSession();
+  class EmailShortcut
+  {
+  public:
+    /**
+     * Default empty constructor for the EmailShortcut class
+     *
+     * @Param {void}
+     * @Return {void}
+     */
+    explicit EmailShortcut(void);
 
-		std::string s_User;
-		std::string s_Pass;
-		AccountShortcut s_Account;
-	private:
-		int64_t s_Flags;
-		int64_t s_Actions;
-	};
+    std::string e_Domain;
+    std::string e_Subject;
+    std::string e_Preview;
+    CassUuid e_OwnersUUID;
+    CassUuid e_EmailUUID;
+    int64_t e_Bucket;
+    EmailType e_Type;
+    int64_t e_SizeOctets;
+  };
 }

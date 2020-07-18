@@ -14,27 +14,4 @@
 	limitations under the License.
 */
 
-#pragma once
-
-#include <cstdint>
-#include <string>
-
-#include "P3.src.h"
-
-using namespace FSMTP::Models;
-
-namespace FSMTP::POP3
-{
-	class P3ServerSession
-	{
-	public:
-		P3ServerSession();
-
-		std::string s_User;
-		std::string s_Pass;
-		AccountShortcut s_Account;
-	private:
-		int64_t s_Flags;
-		int64_t s_Actions;
-	};
-}
+#include "EmailShortcut.src.h"

@@ -36,7 +36,8 @@ namespace FSMTP::POP3
 			const bool p_Ok,
 			const POP3ResponseType p_Type,
 			const std::string &p_Message,
-			std::vector<POP3Capability> *p_Capabilities
+			std::vector<POP3Capability> *p_Capabilities,
+			void *p_U
 		);
 
 		/**
@@ -57,8 +58,9 @@ namespace FSMTP::POP3
 		 * @Return {void}
 		 */
 		void upgrade(void);
-	private:
+
 		struct sockaddr_in s_SocketAddr;
+	private:
 		int32_t s_SocketFD;
 		Logger s_Logger;
 		bool s_UseSSL;

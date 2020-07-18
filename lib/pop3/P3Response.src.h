@@ -28,7 +28,10 @@ namespace FSMTP::POP3
 		PRT_COMMAND_INVALID,
 		PRT_USER_DONE,
 		PRT_AUTH_SUCCESS,
-		PRT_AUTH_FAIL
+		PRT_AUTH_FAIL,
+		PRT_SYNTAX_ERROR,
+		PRT_QUIT,
+		PRT_STAT
 	} POP3ResponseType;
 
 	typedef struct
@@ -41,12 +44,13 @@ namespace FSMTP::POP3
 	{
 	public:
 		P3Response(const bool p_Ok, const POP3ResponseType p_Type);
-		
+
 		P3Response(
 			const bool p_Ok,
 			const POP3ResponseType p_Type,
 			const std::string &p_Message,
-			std::vector<POP3Capability> *p_Capabilities
+			std::vector<POP3Capability> *p_Capabilities,
+			void *p_U
 		);
 
 		/**
@@ -65,5 +69,6 @@ namespace FSMTP::POP3
 		POP3ResponseType p_Type;
 		std::string p_Message;
 		std::vector<POP3Capability> *p_Capabilities;
+		void *p_U;
 	};
 }

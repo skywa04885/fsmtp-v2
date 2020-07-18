@@ -39,6 +39,28 @@ CREATE TABLE IF NOT EXISTS fannst.full_emails (
     PRIMARY KEY ((e_bucket), e_domain, e_owners_uuid, e_email_uuid)
 ) WITH CLUSTERING ORDER BY (e_domain DESC, e_owners_uuid DESC, e_email_uuid DESC);
 
+CREATE TABLE IF NOT EXISTS fannst.raw_emails (
+    e_bucket BIGINT,
+    e_domain VARCHAR,
+    e_owners_uuid TIMEUUID,
+    e_email_uuid TIMEUUID,
+    e_content TEXT,
+    PRIMARY KEY ((e_bucket), e_domain, e_owners_uuid, e_email_uuid)
+) WITH CLUSTERING ORDER BY (e_domain DESC, e_owners_uuid DESC, e_email_uuid DESC);
+
+-- Creates the email index table (per user email index)
+CREATE TABLE IF NOT EXISTS fannst.email_shortcuts (
+    e_domain VARCHAR,
+    e_subject VARCHAR,
+    e_preview VARCHAR,
+    e_owners_uuid TIMEUUID,
+    e_email_uuid TIMEUUID,
+    e_bucket BIGINT,
+    e_type INT,
+    e_size_octets BIGINT,
+    PRIMARY KEY((e_domain), e_owners_uuid, e_email_uuid)
+) WITH CLUSTERING ORDER BY(e_owners_uuid DESC, e_email_uuid DESC);
+
 CREATE TABLE IF NOT EXISTS fannst.local_domain (
     e_domain VARCHAR,
     e_domain_uuid TIMEUUID,

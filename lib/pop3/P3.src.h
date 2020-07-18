@@ -41,6 +41,11 @@
 #include "../general/Logger.src.h"
 #include "../general/macros.src.h"
 #include "../general/cleanup.src.h"
+#include "../models/Email.src.h"
+#include "../general/connections.src.h"
+#include "../models/LocalDomain.src.h"
+#include "../models/Account.src.h"
+#include "../general/Passwords.src.h"
 
 #ifndef _POP3_QUEUE_MAX
 #define _POP3_QUEUE_MAX 40
