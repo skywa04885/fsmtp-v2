@@ -31,10 +31,10 @@ sudo make install
 ## Hoe installeer ik het ?
 
 ```bash
-mkdir build
-cmake ..
-make -j [CORES]
-sudo ./fsmtp
+sudo apt-get install meson ninja
+meson build && cd ./build
+ninja
+./fsmtp
 ```
 
 ## Hoe gebruik ik het ?
