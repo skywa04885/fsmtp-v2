@@ -21,17 +21,18 @@ namespace FSMTP::Parsers::MIME
 	/**
 	 * Parses the headers
 	 *
-	 * @Param {const std::string &} raw
+	 * @Param {std::string} raw
 	 * @Param {std::vector<MimeHeader> &} headers
 	 * @Param {const bool &} removeMsGarbage
 	 * @Param {void}
 	 */
 	void parseHeaders(
-		const std::string &raw,
+		std::string raw,
 		std::vector<EmailHeader> &headers, 
 		const bool &removeMsGarbage
 	)
 	{
+		MIME::joinMessageLines(raw);
 		DEBUG_ONLY(Logger logger("HeaderParser", LoggerLevel::PARSER));
 
 		// Starts splitting the headers up
@@ -55,7 +56,7 @@ namespace FSMTP::Parsers::MIME
 					error += " no colon found: '";
 					error += token;
 					error += '\''; 
-					throw std::runtime_error(error);
+					throw std::runtime_error(EXCEPT_DEBUG(error));
 				}
 				std::string key = token.substr(0, colonPos);
 				std::string value = token.substr(colonPos+1);
@@ -145,6 +146,7 @@ namespace FSMTP::Parsers::MIME
 		std::stringstream stream(raw);
 		std::string token;
 		std::size_t i = 0;
+		bool pendedInSemicolon;
 		while (std::getline(stream, token))
 		{
 			// Removes the '\r'
@@ -152,13 +154,26 @@ namespace FSMTP::Parsers::MIME
 
 			if (token[0] == ' ' || token[0] == '\t')
 			{
-				res += token;
+				// Removes the whitespace in the beginning of it
+				std::size_t delIndex = 0;
+				for (const char c : token)
+				{
+					if (c == ' ' || c == '\t') delIndex++;
+					else continue;
+				}
+
+				if (pendedInSemicolon) res += token.substr(delIndex-1);
+				else res += token.substr(delIndex);
 			} else {
 				if (i != 0) res += "\r\n";
 				res += token;
 			}
 
 			i++;
+			if (token[token.size() - 1] == ';' || token[token.size() - 2] == ';')
+				pendedInSemicolon = true;
+			else
+				pendedInSemicolon = false;
 		}
 
 		// Overwrites the source
@@ -194,7 +209,7 @@ namespace FSMTP::Parsers::MIME
 	{
 		std::size_t index = raw.find_first_of('=');
 		if (index == std::string::npos)
-			throw std::runtime_error("Subtext value could not be splitted");
+			throw std::runtime_error(EXCEPT_DEBUG("Subtext value could not be splitted"));
 		std::string temp = raw.substr(++index);
 		return temp.substr(1, temp.size() - 2);
 	}
@@ -246,7 +261,7 @@ namespace FSMTP::Parsers::MIME
 				std::vector<std::string> subtext = parseHeaderSubtext(header.e_Value);
 
 				if (subtext.size() > 0) parsedContentType = stringToEmailContentType(subtext[0]);
-				else throw std::runtime_error("Empty content-type header is not allowed !");
+				else throw std::runtime_error(EXCEPT_DEBUG("Empty content-type header is not allowed !"));
 
 				// Checks the content type, and then parses
 				// - the correct parameter
@@ -266,7 +281,7 @@ namespace FSMTP::Parsers::MIME
 					case EmailContentType::ECT_MULTIPART_MIXED:
 					{
 						if (subtext.size() >= 2) boundary = parseSubtextValue(subtext[1]);
-						else throw std::runtime_error("Could not find boundary");
+						else throw std::runtime_error(EXCEPT_DEBUG("Could not find boundary"));
 						break;
 					}
 				}

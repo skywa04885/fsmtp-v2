@@ -51,13 +51,13 @@ namespace FSMTP::Parsers::MIME
 	/**
 	 * Parses the headers
 	 *
-	 * @Param {const std::string &} raw
+	 * @Param {std::string} raw
 	 * @Param {std::vector<MimeHeader> &} headers
 	 * @Param {const bool &} removeMsGarbage
 	 * @Param {void}
 	 */
 	void parseHeaders(
-		const std::string &raw,
+		std::string raw,
 		std::vector<EmailHeader> &headers, 
 		const bool &removeMsGarbage
 	);

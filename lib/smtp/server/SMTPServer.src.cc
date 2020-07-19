@@ -313,7 +313,7 @@ namespace FSMTP::Server
 								nullptr
 							);
 							session.setAction(_SMTP_SERV_PA_MAIL_FROM);
-						}
+						} else throw CommandOrderException("MAIL FROM already sent.");
 						break;
 					}
 					case ClientCommandType::CCT_RCPT_TO:
@@ -388,7 +388,7 @@ namespace FSMTP::Server
 								nullptr
 							);
 							session.setAction(_SMTP_SERV_PA_RCPT_TO);
-						}
+						} else throw CommandOrderException("RCPT TO already sent.");
 						break;
 					}
 					case ClientCommandType::CCT_AUTH:
@@ -439,7 +439,7 @@ namespace FSMTP::Server
 							session.setFlag(_SMTP_SERV_SESSION_AUTH_FLAG);
 							client.sendResponse(SRC_AUTH_SUCCESS);
 							continue;
-						}
+						} else throw CommandOrderException("AUTH already done.");
 						break;
 					}
 					case ClientCommandType::CCT_DATA:
@@ -465,7 +465,6 @@ namespace FSMTP::Server
 							std::string rawTransportmessage = client.readUntillNewline(true);
 
 							// Joins the message lines and starts the recursive parser
-							MIME::joinMessageLines(rawTransportmessage);
 							MIME::parseRecursive(rawTransportmessage, session.s_TransportMessage, 0);
 
 							// Checks if we need to add it to the relay queue, or
@@ -522,7 +521,7 @@ namespace FSMTP::Server
 
 							// Prints that the email is received to the console
 							logger << "Email received: " << session.s_TransportMessage.e_MessageID << ENDL;
-						}
+						} else throw CommandOrderException("DATA already received.");
 						break;
 					}
 					case ClientCommandType::CCT_UNKNOWN:

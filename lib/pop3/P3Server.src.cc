@@ -126,7 +126,12 @@ namespace FSMTP::POP3
 					// =========================================
 					case POP3CommandType::PCT_STLS:
 					{
-						client->sendResponse(true, POP3ResponseType::PRT_STLS_START);
+						client->sendResponse(
+							true,
+							POP3ResponseType::PRT_STLS_START,
+							"", nullptr, nullptr,
+							reinterpret_cast<void *>(&client->s_SocketAddr)
+						);
 						client->upgrade();
 						break;
 					}

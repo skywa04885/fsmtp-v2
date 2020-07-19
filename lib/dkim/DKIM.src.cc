@@ -52,10 +52,14 @@ namespace FSMTP::DKIM
 		// - it inside the strings
 		MIME::splitHeadersAndBody(email, headers, body);
 
+		// Prepares the parsable headers
+		std::string headersToParse = headers;
+		MIME::joinMessageLines(headersToParse);
+
 		// Parses the headers and gets the keys, then
 		// - we push the keys to the segment headers
 		std::vector<EmailHeader> parsedHeaders = {};
-		MIME::parseHeaders(headers, parsedHeaders, true);
+		MIME::parseHeaders(headersToParse, parsedHeaders, true);
 		for (const EmailHeader &h : parsedHeaders)
 		{
 			if (shouldUseHeader(h.e_Key))
@@ -84,7 +88,7 @@ namespace FSMTP::DKIM
 				segments.s_CanonAlgo = "relaxed/relaxed";
 				break;
 			}
-			default: throw std::runtime_error("Algorithm pair not implemented");
+			default: throw std::runtime_error(EXCEPT_DEBUG("Algorithm pair not implemented"));
 		}
 
 		DEBUG_ONLY(logger << "Canonicalized headers: \r\n\033[41m" << cannedHeaders.substr(0, cannedHeaders.size() - 2) << "\033[0m" << ENDL);
@@ -216,8 +220,7 @@ namespace FSMTP::DKIM
 			// Finds the key and value and processes them,
 			// - first we find the separator
 			std::size_t sepIndex = token.find_first_of(':');
-			if (sepIndex == std::string::npos)
-				throw std::runtime_error("Invalid headers, missing ':'");
+			if (sepIndex == std::string::npos) continue;
 
 			// Separates the key and value, after that
 			// - we remove all non required whitespace

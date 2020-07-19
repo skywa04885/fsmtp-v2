@@ -38,6 +38,7 @@
 #include <arpa/inet.h>
 #include <memory.h>
 
+#include "../networking/DNS.src.h"
 #include "../general/Logger.src.h"
 #include "../general/macros.src.h"
 #include "../general/cleanup.src.h"

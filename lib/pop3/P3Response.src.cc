@@ -53,8 +53,10 @@ namespace FSMTP::POP3
 		{
 			case POP3ResponseType::PRT_GREETING:
 			{
-				std::string ret = "POP3 server ready ";
-				ret += _SMTP_SERVICE_NODE_NAME;
+				std::string ret = "Fannst POP3 Server ready, ";
+				ret += '[';
+				ret += inet_ntoa(reinterpret_cast<struct sockaddr_in *>(this->p_U)->sin_addr);
+				ret += ']';
 				return ret;
 			}
 			case POP3ResponseType::PRT_CAPA:

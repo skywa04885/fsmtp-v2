@@ -61,11 +61,20 @@ namespace FSMTP::Workers
 			MailComposerConfig composerConfig;
 			composerConfig.m_From = task.t_From;
 			composerConfig.m_To = task.t_To;
-			
-			SMTPClient client(false);
 
-			client.prepare(composerConfig, task.t_Content);
-			client.beSocial();
+			try {
+				#ifdef _SMTP_DEBUG
+				SMTPClient client(false);
+				#else
+				SMTPClient client(true);
+				#endif
+
+				client.prepare(composerConfig, task.t_Content);
+				client.beSocial();
+			} catch (const std::runtime_error &e)
+			{
+				this->w_Logger << FATAL << "Could not send email: " << e.what() << ENDL << CLASSIC;
+			}
 
 			_transmissionQueue.pop_front();
 		}
