@@ -19,7 +19,7 @@
 namespace FSMTP::POP3
 {
 	P3Response::P3Response(const bool p_Ok, const POP3ResponseType p_Type):
-		p_Type(p_Type), p_Ok(p_Ok), p_Capabilities(nullptr)
+		p_Type(p_Type), p_Ok(p_Ok), p_Capabilities(nullptr), p_ListElements(nullptr)
 	{}
 
 	std::string P3Response::build(void)
@@ -35,7 +35,11 @@ namespace FSMTP::POP3
 		if (this->p_Capabilities != nullptr)
 		{
 			res += "\r\n";
-			res += buildCapabilities();
+			res += this->buildCapabilities();
+		} else if (this->p_ListElements != nullptr)
+		{
+			res += "\r\n";
+			res += this->buildList();
 		} else res += "\r\n";
 
 		return res;
@@ -57,6 +61,10 @@ namespace FSMTP::POP3
 			{
 				return "Capability list follows";
 			}
+			case POP3ResponseType::PRT_UIDL:
+			{
+				return "UIDL follows";
+			}
 			case POP3ResponseType::PRT_STLS_START:
 			{
 				return "Begin TLS negotiation now";
@@ -72,6 +80,16 @@ namespace FSMTP::POP3
 			case POP3ResponseType::PRT_AUTH_SUCCESS:
 			{
 				return "Auth Success";
+			}
+			case POP3ResponseType::PRT_LIST:
+			{
+				return "LIST follows";
+			}
+			case POP3ResponseType::PRT_RETR:
+			{
+				std::string ret = std::to_string(*reinterpret_cast<int64_t *>(this->p_U));
+				ret += " octets";
+				return ret;
 			}
 			case POP3ResponseType::PRT_AUTH_FAIL:
 			{
@@ -126,14 +144,42 @@ namespace FSMTP::POP3
 		return res;
 	}
 
+	/**
+	 * Builds an list of index and value pairs
+	 *
+	 * @Param {void}
+	 * @Return {std::string}
+	 */
+	std::string P3Response::buildList(void)
+	{
+		std::string res;
+
+		for (const POP3ListElement &ell : *this->p_ListElements)
+		{
+			// Adds the index and value
+			res += std::to_string(ell.e_Index);
+			res += ' ';
+			res += ell.e_Value;
+
+			// Adds the newline
+			res += "\r\n";
+		}
+
+		// Adds the dot
+		res += ".\r\n";
+		return res;
+	}
+
 	P3Response::P3Response(
 		const bool p_Ok,
 		const POP3ResponseType p_Type,
 		const std::string &p_Message,
 		std::vector<POP3Capability> *p_Capabilities,
+		std::vector<POP3ListElement> *p_ListElements,
 		void *p_U
 	):
 		p_Ok(p_Ok), p_Type(p_Type), p_Message(p_Message),
-		p_Capabilities(p_Capabilities), p_U(p_U)
+		p_Capabilities(p_Capabilities), p_U(p_U),
+		p_ListElements(p_ListElements)
 	{}
 }

@@ -19,6 +19,7 @@
 #include <string>
 #include <cstdint>
 #include <stdexcept>
+#include <memory>
 
 #include <cassandra.h>
 
@@ -48,6 +49,14 @@ namespace FSMTP::Models
      * @Return {void}
      */
     void save(CassandraConnection *cassandra);
+
+    static RawEmail get(
+      CassandraConnection *cassandra,
+      const std::string &domain,
+      const CassUuid &ownersUuid,
+      const CassUuid &emailUuid,
+      const int64_t bucket
+    );
 
     int64_t e_Bucket;
     std::string e_Domain;

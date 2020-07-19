@@ -32,12 +32,11 @@ int main(const int argc, const char **argv)
 	{
 		case ServerType::ST_POP3:
 		{
+			Logger logger("Main", LoggerLevel::INFO);
+			logger << WARN << "Fannst POP3 Server door Luke A.C.A. Rieff, vrij onder de Apache 2.0 license" << ENDL << CLASSIC;
 			POP3::P3Server pop3server(false);
-
-			// Waits till order close
+		
 			std::cin.get();
-
-			// Closes the pop3 server
 			pop3server.shutdown();
 
 			break;

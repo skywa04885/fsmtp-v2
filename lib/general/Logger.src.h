@@ -22,6 +22,8 @@
 #include <thread>
 #include <mutex>
 #include <cstdint>
+#include <chrono>
+#include <ctime>
 
 namespace FSMTP
 {
@@ -103,7 +105,16 @@ namespace FSMTP
 				case LoggerOpts::ENDL:
 				case LoggerOpts::FLUSH:
 				{
-					std::cout << 'T' << std::this_thread::get_id() << "->";
+					// Builds the time and appends it to the log entry
+					char dateBuffer[64];
+					std::time_t rawTime;
+					struct tm *timeInfo = nullptr;
+
+					time(&rawTime);
+					timeInfo = localtime(&rawTime);
+					strftime(dateBuffer, sizeof (dateBuffer), "%a, %d %b %Y %T", timeInfo);
+
+					std::cout << dateBuffer << "->";
 
 					// Adds the loggerlevel prefix,
 					// and the thread id etcetera
@@ -121,22 +132,22 @@ namespace FSMTP
 						}
 						case LoggerLevel::INFO:
 						{
-							std::cout << "\033[32m[informatie@" << this->l_Prefix << "]: \033[0m";
+							std::cout << "\033[32m[info@" << this->l_Prefix << "]: \033[0m";
 							break;
 						}
 						case LoggerLevel::WARN:
 						{
-							std::cout << "\033[33m[waarschuwing@" << this->l_Prefix << "]: \033[0m";
+							std::cout << "\033[33m[warn@" << this->l_Prefix << "]: \033[0m";
 							break;
 						}
 						case LoggerLevel::ERROR:
 						{
-							std::cout << "\033[31m[fout@" << this->l_Prefix << "]: \033[0m";
+							std::cout << "\033[31m[err@" << this->l_Prefix << "]: \033[0m";
 							break;
 						}
 						case LoggerLevel::FATAL:
 						{
-							std::cout << "\033[31m[super-fout@" << this->l_Prefix << "]: \033[0m";
+							std::cout << "\033[31m[fatal@" << this->l_Prefix << "]: \033[0m";
 							break;
 						}
 					}

@@ -116,7 +116,7 @@ namespace FSMTP::Mailer::Composer
 		// ======================================
 
 		// Gets the current date and turns it into an string
-		char dateBuffer[128];
+		char dateBuffer[64];
 		std::time_t rawTime;
 		struct tm *timeInfo = nullptr;
 		std::string dateValue;

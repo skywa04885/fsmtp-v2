@@ -31,7 +31,10 @@ namespace FSMTP::POP3
 		PRT_AUTH_FAIL,
 		PRT_SYNTAX_ERROR,
 		PRT_QUIT,
-		PRT_STAT
+		PRT_STAT,
+		PRT_UIDL,
+		PRT_LIST,
+		PRT_RETR
 	} POP3ResponseType;
 
 	typedef struct
@@ -39,6 +42,12 @@ namespace FSMTP::POP3
 		const char *c_Name;
 		std::vector<const char *> c_Args;
 	} POP3Capability;
+
+	typedef struct
+	{
+		std::size_t e_Index;
+		std::string e_Value;
+	} POP3ListElement;
 
 	class P3Response
 	{
@@ -50,6 +59,7 @@ namespace FSMTP::POP3
 			const POP3ResponseType p_Type,
 			const std::string &p_Message,
 			std::vector<POP3Capability> *p_Capabilities,
+			std::vector<POP3ListElement> *p_ListElements,
 			void *p_U
 		);
 
@@ -61,6 +71,14 @@ namespace FSMTP::POP3
 		 */
 		std::string buildCapabilities(void);
 
+		/**
+		 * Builds an list of index and value pairs
+		 *
+		 * @Param {void}
+		 * @Return {std::string}
+		 */
+		std::string buildList(void);
+
 		std::string build(void);
 
 		std::string getMessage(void);
@@ -69,6 +87,7 @@ namespace FSMTP::POP3
 		POP3ResponseType p_Type;
 		std::string p_Message;
 		std::vector<POP3Capability> *p_Capabilities;
+		std::vector<POP3ListElement> *p_ListElements;
 		void *p_U;
 	};
 }

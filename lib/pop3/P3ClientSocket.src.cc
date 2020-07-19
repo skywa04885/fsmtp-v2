@@ -53,7 +53,7 @@ namespace FSMTP::POP3
 		for (;;)
 		{
 			rc = recv(this->s_SocketFD, buffer, sizeof(buffer), MSG_PEEK);
-			if (rc < 0)
+			if (rc <= 0)
 			{
 				std::string error = "recv() failed: ";
 				error += strerror(errno);
@@ -93,7 +93,7 @@ namespace FSMTP::POP3
 		DEBUG_ONLY(this->s_Logger << DEBUG << "S->" << raw.substr(0, raw.size() - 2) << ENDL);
 
 		int32_t rc = send(this->s_SocketFD, raw.c_str(), raw.size(), 0);
-		if (rc < 0)
+		if (rc <= 0)
 		{
 			std::string error = "send() failed: ";
 			error += strerror(errno);
@@ -183,6 +183,7 @@ namespace FSMTP::POP3
 		const POP3ResponseType p_Type,
 		const std::string &p_Message,
 		std::vector<POP3Capability> *p_Capabilities,
+		std::vector<POP3ListElement> *p_ListElements,
 		void *p_U
 	)
 	{
@@ -191,6 +192,7 @@ namespace FSMTP::POP3
 			p_Type,
 			p_Message,
 			p_Capabilities,
+			p_ListElements,
 			p_U
 		);
 		this->sendString(response.build());

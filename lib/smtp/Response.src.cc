@@ -131,7 +131,7 @@ namespace FSMTP::SMTP
 				ret += DNS::getHostnameByAddress(reinterpret_cast<struct sockaddr_in *>(this->c_U));
 				ret += " [";
 				ret += inet_ntoa(reinterpret_cast<struct sockaddr_in *>(this->c_U)->sin_addr);
-				ret += ']';
+				ret += "] - max 15.000ms";
 				return ret;
 			}
 			case SMTPResponseType::SRC_MAIL_FROM:

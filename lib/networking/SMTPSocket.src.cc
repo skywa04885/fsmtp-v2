@@ -119,7 +119,7 @@ namespace FSMTP::Networking
 		} else
 		{
 			rc = recv(this->s_SocketFD, buffer, ++index, 0);
-			if (rc < 0)
+			if (rc <= 0)
 				throw SMTPTransmissionError("Could not receive data");
 		}
 		res += std::string(buffer, rc);
@@ -175,7 +175,7 @@ namespace FSMTP::Networking
 		} else
 		{
 			rc = send(this->s_SocketFD, message.c_str(), message.size(), 0);
-			if (rc < 0)
+			if (rc <= 0)
 			{
 				std::string error = "send() failed: ";
 				error += strerror(errno);
@@ -348,7 +348,7 @@ namespace FSMTP::Networking
 			// Sets the socket timeout so some clients
 			// - will not keep the server blocked
 			struct timeval timeout;
-			timeout.tv_sec = 5;
+			timeout.tv_sec = 15;
 			timeout.tv_usec = 0;
 
 			rc = setsockopt(clientSockFD, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char *>(&timeout), sizeof (timeout));
@@ -536,7 +536,7 @@ namespace FSMTP::Networking
 		} else
 		{
 			rc = send(this->s_SocketFD, raw.c_str(), raw.size(), 0);
-			if (rc < 0)
+			if (rc <= 0)
 			{
 				std::string error = "send() failed: ";
 				error += strerror(errno);
@@ -570,7 +570,7 @@ namespace FSMTP::Networking
 			} else
 			{
 				rc = recv(this->s_SocketFD, buffer, 128, 0);
-				if (rc < 0)
+				if (rc <= 0)
 				{
 					delete[] buffer;
 					throw std::runtime_error("Could not read data");

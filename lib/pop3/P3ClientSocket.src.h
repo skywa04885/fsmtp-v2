@@ -37,6 +37,7 @@ namespace FSMTP::POP3
 			const POP3ResponseType p_Type,
 			const std::string &p_Message,
 			std::vector<POP3Capability> *p_Capabilities,
+			std::vector<POP3ListElement> *p_ListElements,
 			void *p_U
 		);
 

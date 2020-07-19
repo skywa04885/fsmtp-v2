@@ -20,7 +20,7 @@ namespace FSMTP::POP3
 {
 	P3Server::P3Server(const bool secure):
 		s_Socket((secure ? _POP3_PORT_SECURE : _POP3_PORT_PLAIN)),
-		s_Logger("P3Server", LoggerLevel::INFO)
+		s_Logger("P3Serv", LoggerLevel::INFO)
 	{
 		// Sets the capabilities
 		this->s_Capabilities.push_back(POP3Capability{
@@ -49,12 +49,14 @@ namespace FSMTP::POP3
 		});
 
 		// Starts listenign
+		this->s_Logger << "Server wordt gestart ..." << ENDL;
 		this->s_Socket.startListening(
 			&this->s_Running,
 			&this->s_Run,
 			&P3Server::acceptorCallback,
 			this
 		);
+		this->s_Logger << "Server is gestart op port " << (secure ? 995 : 110) << ENDL;
 	}
 
 	void P3Server::acceptorCallback(std::unique_ptr<ClientSocket> client, void *u)
@@ -130,13 +132,7 @@ namespace FSMTP::POP3
 						// Checks if the command is not empty
 						if (command.c_Args.size() < 1)
 						{
-							client->sendResponse(
-								false,
-								POP3ResponseType::PRT_SYNTAX_ERROR,
-								"",
-								nullptr,
-								reinterpret_cast<void *>(const_cast<char *>("PASS requires one argument"))
-							);
+							throw SyntaxError("PASS requires one argument");
 							continue;
 						}
 
@@ -163,7 +159,7 @@ namespace FSMTP::POP3
 								false,
 								POP3ResponseType::PRT_AUTH_FAIL,
 								"",
-								nullptr,
+								nullptr, nullptr,
 								reinterpret_cast<void *>(const_cast<char *>(error.c_str()))
 							);
 							continue;
@@ -176,11 +172,20 @@ namespace FSMTP::POP3
 								false,
 								POP3ResponseType::PRT_AUTH_FAIL,
 								"",
-								nullptr,
+								nullptr, nullptr,
 								reinterpret_cast<void *>(const_cast<char *>("invalid password"))
 							);
 							continue;
 						}
+
+						// Gets the emails available
+						session.s_References = EmailShortcut::gatherAllReferencesWithSize(
+							cassandra.get(),
+							0,
+							120,
+							session.s_Account.a_Domain,
+							session.s_Account.a_UUID
+						);
 
 						// Stores the password in the session, and sends
 						// - the continue response
@@ -195,14 +200,7 @@ namespace FSMTP::POP3
 						// Checks if the command is not empty
 						if (command.c_Args.size() < 1)
 						{
-							client->sendResponse(
-								false,
-								POP3ResponseType::PRT_SYNTAX_ERROR,
-								"",
-								nullptr,
-								reinterpret_cast<void *>(const_cast<char *>("USER requires one argument"))
-							);
-							continue;
+							throw SyntaxError("USER requires one argument");
 						}
 
 						// Checks if there is an domain, if not
@@ -227,7 +225,7 @@ namespace FSMTP::POP3
 									false,
 									POP3ResponseType::PRT_AUTH_FAIL,
 									"",
-									nullptr,
+									nullptr, nullptr,
 									reinterpret_cast<void *>(const_cast<char *>(error.c_str()))
 								);
 								continue;
@@ -255,7 +253,7 @@ namespace FSMTP::POP3
 								false,
 								POP3ResponseType::PRT_AUTH_FAIL,
 								"",
-								nullptr,
+								nullptr, nullptr,
 								reinterpret_cast<void *>(const_cast<char *>(error.c_str()))
 							);
 							continue;
@@ -275,31 +273,117 @@ namespace FSMTP::POP3
 							POP3ResponseType::PRT_CAPA,
 							"",
 							&server.s_Capabilities,
-							nullptr
+							nullptr, nullptr
 						);
 						continue;
 					}
 					case POP3CommandType::PCT_STAT:
 					{
 						// Gets the data and builds the response
-						std::pair<int64_t, std::size_t> res = EmailShortcut::getStat(
-							cassandra.get(),
-							0,
-							120,
-							session.s_Account.a_Domain,
-							session.s_Account.a_UUID
-						);
+						int64_t octets;
+						for (const std::tuple<CassUuid, int64_t, int64_t> &pair : session.s_References)
+							octets += std::get<1>(pair);
 
-						std::string response = std::to_string(res.second);
+						std::string response = std::to_string(session.s_References.size());
 						response += ' ';
-						response += std::to_string(res.first);
+						response += std::to_string(octets);
 
 						// Sends the stat response
 						client->sendResponse(
 							true,
 							POP3ResponseType::PRT_STAT,
-							response, nullptr, nullptr
+							response, nullptr, nullptr, nullptr
 						);
+						continue;
+					}
+					case POP3CommandType::PCT_UIDL:
+					{
+						std::vector<POP3ListElement> list = {};
+
+						std::size_t i = 0;
+						for (const std::tuple<CassUuid, int64_t, int64_t> &ref : session.s_References)
+							list.push_back(POP3ListElement{
+								i++,
+								std::to_string(cass_uuid_timestamp(std::get<0>(ref)))
+							});
+
+						// Sends the response
+						client->sendResponse(
+							true,
+							POP3ResponseType::PRT_UIDL,
+							"", nullptr, &list, nullptr
+						);
+
+						break;
+					}
+					case POP3CommandType::PCT_LIST:
+					{
+						std::vector<POP3ListElement> list = {};
+
+						std::size_t i = 0;
+						for (const std::tuple<CassUuid, int64_t, int64_t> &ref : session.s_References)
+							list.push_back(POP3ListElement{
+								i++,
+								std::to_string(std::get<1>(ref))
+							});
+
+						// Sends the response
+						client->sendResponse(
+							true,
+							POP3ResponseType::PRT_LIST,
+							"", nullptr, &list, nullptr
+						);
+
+						break;
+					}
+					case POP3CommandType::PCT_RETR:
+					{
+						// Checks if there is an argument
+						if (command.c_Args.size() < 1)
+							throw SyntaxError("RETR requires one argument");
+
+						// Tries to parse the argument, and checks if the index is too
+						// - large by comparing it to the vector
+						std::size_t i;
+						try {
+							i = std::stol(command.c_Args[0]);
+						} catch (const std::invalid_argument &e)
+						{
+							throw SyntaxError("Invalid index for RETR");
+						}
+						if (i > session.s_References.size())
+						{
+							std::string error = "Max index ";
+							error += std::to_string(session.s_References.size());
+							throw SyntaxError(error);
+						}
+
+						// Gets the UUID from the specified message, and then
+						// - query's the raw message
+						const CassUuid &uuid = std::get<0>(session.s_References[i]);
+						RawEmail raw = RawEmail::get(
+							cassandra.get(), 
+							session.s_Account.a_Domain,
+							session.s_Account.a_UUID,
+							uuid,
+							std::get<2>(session.s_References[i])
+						);
+
+						// Prepares the email contents
+						if (raw.e_Content.substr(raw.e_Content.size() - 2) != "\r\n")
+							raw.e_Content += "\r\n";
+						raw.e_Content += ".\r\n";
+
+						// Sends the email contents
+						client->sendResponse(
+							true,
+							POP3ResponseType::PRT_RETR,
+							"",
+							nullptr, nullptr,
+							reinterpret_cast<void *>(&std::get<1>(session.s_References[i]))
+						);
+						client->sendString(raw.e_Content);
+
 						continue;
 					}
 					case POP3CommandType::PCT_UNKNOWN:
@@ -310,6 +394,15 @@ namespace FSMTP::POP3
 			} catch (const InvalidCommand& e)
 			{
 				client->sendResponse(false, POP3ResponseType::PRT_COMMAND_INVALID);
+			} catch (const SyntaxError& e)
+			{
+				client->sendResponse(
+					false,
+					POP3ResponseType::PRT_SYNTAX_ERROR,
+					"",
+					nullptr, nullptr,
+					reinterpret_cast<void *>(const_cast<char *>(e.what()))
+				);
 			}
 		}
 	pop3_session_end:

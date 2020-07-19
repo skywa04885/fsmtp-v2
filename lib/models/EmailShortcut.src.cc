@@ -301,4 +301,104 @@ namespace FSMTP::Models
     cass_statement_free(statement);
     return std::make_pair(octets, total);
   }
+
+
+  std::vector<std::tuple<CassUuid, int64_t, int64_t>> EmailShortcut::gatherAllReferencesWithSize(
+    CassandraConnection *cassandra,
+    const int32_t skip,
+    int32_t limit,
+    const std::string &domain,
+    const CassUuid &uuid
+  )
+  {
+    std::vector<std::tuple<CassUuid, int64_t, int64_t>>  ret = {};
+
+    const char *query = "SELECT e_size_octets, e_email_uuid, e_bucket FROM fannst.email_shortcuts WHERE e_domain=? AND e_owners_uuid=? LIMIT ?";
+    CassStatement *statement = nullptr;
+    cass_bool_t hasMorePages = cass_false;
+    CassError rc;
+
+    // Limit of 80 emails a time
+    if (limit > 500) limit = 500;
+
+    // =======================================
+    // Prepares the statement
+    //
+    // Prepares the statement and binds the
+    // - values
+    // =======================================
+
+    // Prepares the statement and binds the values
+    statement = cass_statement_new(query, 3);
+    cass_statement_bind_string(statement, 0, domain.c_str());
+    cass_statement_bind_uuid(statement, 1, uuid);
+    cass_statement_bind_int32(statement, 2, limit);
+    cass_statement_set_paging_size(statement, 20);
+
+    // =======================================
+    // Counts the data
+    //
+    // Counts the total octets and count
+    // =======================================
+
+    do
+    {
+      CassError rc;
+      CassFuture *future = nullptr;
+
+      // Executes the query, and checks for errors
+      future = cass_session_execute(cassandra->c_Session, statement);
+      cass_future_wait(future);
+
+      rc = cass_future_error_code(future);
+      if (rc != CASS_OK)
+      {
+        std::string message = "cass_session_execute() failed: ";
+        message += CassandraConnection::getError(future);
+
+        cass_future_free(future);
+        cass_statement_free(statement);
+        throw DatabaseException(EXCEPT_DEBUG(message));
+      }
+
+      // Creates the iterator and starts looping
+      // - over the received data
+      const CassResult *result = cass_future_get_result(future);
+      CassIterator *iterator = cass_iterator_from_result(result);
+
+      while (cass_iterator_next(iterator))
+      {
+        const CassRow *row = cass_iterator_get_row(iterator);
+        int64_t octets;
+        int64_t bucket;
+        CassUuid uuid;
+
+        // Gets the values
+        cass_value_get_int64(cass_row_get_column_by_name(
+          row, "e_size_octets"),
+          &octets
+        );
+        cass_value_get_int64(cass_row_get_column_by_name(
+          row, "e_bucket"),
+          &bucket
+        );
+        cass_value_get_uuid(cass_row_get_column_by_name(
+          row, "e_email_uuid"),
+          &uuid
+        );
+
+        // Pushes to the result
+        ret.push_back(std::tuple<CassUuid, int64_t, int64_t>(uuid, octets, bucket));
+      }
+
+      // Frees the memory
+      cass_result_free(result);
+      cass_iterator_free(iterator);
+      cass_future_free(future);
+    } while (hasMorePages);
+
+    // Frees the memory and returns
+    cass_statement_free(statement);
+    return ret;
+  }
 }

@@ -253,6 +253,10 @@ namespace FSMTP::Server
 							if (!session.getAction(_SMTP_SERV_PA_HELO))
 								throw CommandOrderException("EHLO/HELO first.");
 
+							// Checks the argument count
+							if (command.c_Arguments.size() < 1)
+								throw SyntaxException("MAIL FROM requires arguments.");
+
 							// Parses the mail address, if this fails
 							// - throw syntax exception
 							try {
@@ -324,6 +328,9 @@ namespace FSMTP::Server
 							if (!session.getAction(_SMTP_SERV_PA_MAIL_FROM))
 								throw CommandOrderException("MAIL FROM first.");
 
+							// Checks the arguments
+							if (command.c_Arguments.size() < 1)
+								throw SyntaxException("RCPT TO requires arguments.");
 
 							// Parses the mail address, if this fails
 							// - throw syntax exception

@@ -68,6 +68,8 @@ namespace FSMTP::POP3
 			{
 				if (command == "user")
 					this->c_Type = POP3CommandType::PCT_USER;
+				else if (command == "uidl")
+					this->c_Type = POP3CommandType::PCT_UIDL;
 				else
 					this->c_Type = POP3CommandType::PCT_UNKNOWN;
 				break;
@@ -76,6 +78,22 @@ namespace FSMTP::POP3
 			{
 				if (command == "pass")
 					this->c_Type = POP3CommandType::PCT_PASS;
+				else
+					this->c_Type = POP3CommandType::PCT_UNKNOWN;
+				break;
+			}
+			case 'l':
+			{
+				if (command == "list")
+					this->c_Type = POP3CommandType::PCT_LIST;
+				else
+					this->c_Type = POP3CommandType::PCT_UNKNOWN;
+				break;
+			}
+			case 'r':
+			{
+				if (command == "retr")
+					this->c_Type = POP3CommandType::PCT_RETR;
 				else
 					this->c_Type = POP3CommandType::PCT_UNKNOWN;
 				break;

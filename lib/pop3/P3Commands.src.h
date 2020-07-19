@@ -28,7 +28,10 @@ namespace FSMTP::POP3
 		PCT_USER,
 		PCT_PASS,
 		PCT_UNKNOWN,
-		PCT_STAT
+		PCT_STAT,
+		PCT_UIDL,
+		PCT_LIST,
+		PCT_RETR
 	} POP3CommandType;
 
 	class P3Command

@@ -19,7 +19,7 @@
 namespace FSMTP::POP3
 {
 	ServerSocket::ServerSocket(int32_t port):
-		s_Logger("POP3SServerSocket", LoggerLevel::INFO)
+		s_Logger("P3ServSock", LoggerLevel::INFO)
 	{
 		Logger &logger = this->s_Logger;
 		int32_t rc;
@@ -145,7 +145,7 @@ namespace FSMTP::POP3
 			// Sets the socket timeout
 			struct timeval tv;
 			tv.tv_usec = 0;
-			tv.tv_sec = 10;
+			tv.tv_sec = 15;
 
 			rc = setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char *>(&tv), sizeof(struct timeval));
 			if (rc < 0)
