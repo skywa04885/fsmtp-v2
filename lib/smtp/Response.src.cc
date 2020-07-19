@@ -142,6 +142,7 @@ namespace FSMTP::SMTP
 				ret += ']';
 				return ret;;
 			}
+			case SMTPResponseType::SRC_AUTH_NOT_ALLOWED: return "Mail from different then authenticated email";
 			case SMTPResponseType::SRC_DATA_START:
 			{
 				return "End data with <CR><LF>.<CR><LF>";
@@ -222,6 +223,7 @@ namespace FSMTP::SMTP
 			case SMTPResponseType::SRC_AUTH_FAIL: return 530;
 			case SMTPResponseType::SRC_RELAY_FAIL: return 551;
 			case SMTPResponseType::SRC_HELP_RESP: return 214;
+			case SMTPResponseType::SRC_AUTH_NOT_ALLOWED: return 551;
 			default: throw std::runtime_error("getCode() invalid type");
 		}
 	}

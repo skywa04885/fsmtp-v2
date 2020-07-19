@@ -235,7 +235,7 @@ namespace FSMTP::Server
 						// Clears the hello action since hello is now allowed
 						// - to be sent again
 						session.clearAction(_SMTP_SERV_PA_HELO);
-						break;
+						continue;
 					}
 					case ClientCommandType::CCT_MAIL_FROM:
 					{
@@ -285,12 +285,12 @@ namespace FSMTP::Server
 								session.s_TransportMessage.e_TransportFrom.getUsername() != session.s_SendingAccount.a_Username
 							)
 							{
-								client.sendResponse(SRC_RELAY_FAIL);
+								client.sendResponse(SRC_AUTH_NOT_ALLOWED);
 								goto smtp_server_close_conn;
 							}
 
-							// Sets the relaying flag
-							session.setFlag(_SMTP_SERV_SESSION_RELAY_FLAG);
+							// Sets the from local
+							session.setFlag(_SMTP_SERV_SESSION_FROM_LOCAL);
 						}
 						catch (const EmptyQuery &e)
 						{ /* No worry's is allowed */ }
@@ -340,6 +340,19 @@ namespace FSMTP::Server
 							message += e.what();
 							message += '.';
 							throw SyntaxException(message);
+						}
+
+						// Checks if the domain is local, if not set relay
+						// - flag, because we then do not have to find
+						// - the receiving user
+						try {
+							LocalDomain localDomain = LocalDomain::findRedis(
+								session.s_TransportMessage.e_TransportTo.getDomain(),
+								redis.get()
+							);
+						} catch (const EmptyQuery &e)
+						{
+							if (session.getFlag(_SMTP_SERV_SESSION_FROM_LOCAL)) session.setFlag(_SMTP_SERV_SESSION_RELAY_FLAG);
 						}
 
 						// Checks if we're relaying, and if not if the user
@@ -469,7 +482,10 @@ namespace FSMTP::Server
 						// Checks if we need to add it to the relay queue, or
 						// - the normal storage queue
 
-						if (!session.getFlag(_SMTP_SERV_SESSION_RELAY_FLAG))
+						if (
+							!session.getFlag(_SMTP_SERV_SESSION_RELAY_FLAG) ||
+							(session.getFlag(_SMTP_SERV_SESSION_FROM_LOCAL) && !session.getFlag(_SMTP_SERV_SESSION_RELAY_FLAG))
+						)
 						{
 							// Adds the user information to the transport message
 							session.s_TransportMessage.e_OwnersDomain = session.s_ReceivingAccount.a_Domain;

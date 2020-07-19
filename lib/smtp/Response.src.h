@@ -50,7 +50,8 @@ namespace FSMTP::SMTP
 		SRC_AUTH_SUCCESS,
 		SRC_AUTH_FAIL,
 		SRC_RELAY_FAIL,
-		SRC_HELP_RESP
+		SRC_HELP_RESP,
+		SRC_AUTH_NOT_ALLOWED
 	} SMTPResponseType;
 
 	typedef struct {
