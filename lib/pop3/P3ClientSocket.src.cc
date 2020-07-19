@@ -52,12 +52,25 @@ namespace FSMTP::POP3
 		// Gets the index of the newline
 		for (;;)
 		{
-			rc = recv(this->s_SocketFD, buffer, sizeof(buffer), MSG_PEEK);
-			if (rc <= 0)
+			if (this->s_UseSSL)
 			{
-				std::string error = "recv() failed: ";
-				error += strerror(errno);
-				throw SocketReadException(EXCEPT_DEBUG(error));
+				rc = SSL_peek(this->s_SSL, buffer, sizeof (buffer));
+				if (rc <= 0)
+				{
+					// TODO: openssl error stuff
+					std::string error = "SSL_peek() failed: ";
+					error += strerror(errno);
+					throw SocketReadException(EXCEPT_DEBUG(error));
+				}
+			} else
+			{			
+				rc = recv(this->s_SocketFD, buffer, sizeof(buffer), MSG_PEEK);
+				if (rc <= 0)
+				{
+					std::string error = "recv() failed: ";
+					error += strerror(errno);
+					throw SocketReadException(EXCEPT_DEBUG(error));
+				}
 			}
 
 			bool crlfFound = false;
@@ -73,12 +86,25 @@ namespace FSMTP::POP3
 		}
 
 		// Reads the data untill the newline
-		rc = recv(this->s_SocketFD, buffer, ++i, 0);
-		if (rc < 0)
+		if (this->s_UseSSL)
 		{
-			std::string error = "recv() failed: ";
-			error += strerror(errno);
-			throw SocketReadException(EXCEPT_DEBUG(error));
+			rc = SSL_read(this->s_SSL, buffer, ++i);
+			if (rc <= 0)
+			{
+				// TODO: openssl error stuff
+				std::string error = "SSL_read() failed: ";
+				error += strerror(errno);
+				throw SocketReadException(EXCEPT_DEBUG(error));
+			}
+		} else
+		{
+			rc = recv(this->s_SocketFD, buffer, ++i, 0);
+			if (rc <= 0)
+			{
+				std::string error = "recv() failed: ";
+				error += strerror(errno);
+				throw SocketReadException(EXCEPT_DEBUG(error));
+			}
 		}
 
 		// Returns the result
@@ -90,14 +116,27 @@ namespace FSMTP::POP3
 
 	void ClientSocket::sendString(const std::string &raw)
 	{
+		int32_t rc;
 		DEBUG_ONLY(this->s_Logger << DEBUG << "S->" << raw.substr(0, raw.size() - 2) << ENDL);
 
-		int32_t rc = send(this->s_SocketFD, raw.c_str(), raw.size(), 0);
-		if (rc <= 0)
+		if (this->s_UseSSL)
 		{
-			std::string error = "send() failed: ";
-			error += strerror(errno);
-			throw SocketWriteException(EXCEPT_DEBUG(error));
+			rc = SSL_write(this->s_SSL, raw.c_str(), raw.size());
+			if (rc < 0)
+			{
+				// TODO: openssl error stuff
+				std::string error = "SSL_write() failed: ";
+				error += strerror(errno);
+				throw SocketReadException(EXCEPT_DEBUG(error));
+			}
+		} else {
+			rc = send(this->s_SocketFD, raw.c_str(), raw.size(), 0);
+			if (rc <= 0)
+			{
+				std::string error = "send() failed: ";
+				error += strerror(errno);
+				throw SocketWriteException(EXCEPT_DEBUG(error));
+			}
 		}
 	}
 

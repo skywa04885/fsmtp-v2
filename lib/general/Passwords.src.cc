@@ -53,7 +53,10 @@ namespace FSMTP
 		std::string salt = compared.substr(saltIndex + 1);
 
 		// Performs the comparison
-		if (passwordHashOnly(password, salt) == compared.substr(0, saltIndex))
+		std::string newHash = passwordHashOnly(password, salt);
+		std::cout << newHash << std::endl;
+		std::cout << compared.substr(0, saltIndex) << std::endl;
+		if (newHash == compared.substr(0, saltIndex))
 			return true;
 		else return false;
 	}

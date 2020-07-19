@@ -24,9 +24,6 @@ namespace FSMTP::POP3
 		std::string clean;
 		reduceWhitespace(raw, clean);
 		removeFirstAndLastWhite(clean);
-		std::transform(clean.begin(), clean.end(), clean.begin(), [](unsigned char c){
-			return std::tolower(c);
-		});
 
 		// Separates the command from the rest of the crap
 		std::string command;
@@ -34,6 +31,11 @@ namespace FSMTP::POP3
 		if (index == std::string::npos)
 			command = clean;
 		else command = clean.substr(0, index);
+
+		// Makes the command lowercase
+		std::transform(command.begin(), command.end(), command.begin(), [](unsigned char c){
+			return std::tolower(c);
+		});
 
 		// Checks which command it is
 		switch (command[0])

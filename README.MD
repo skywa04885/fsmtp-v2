@@ -9,10 +9,14 @@ kunnen worden uit andere applicaties.
 
 ## Wat kan FSMTP nu ?
 
-1. Emails ontvangen met zowel een plain-text verbinding en beveiligde verbinding.
-1. Ontvangen emails verwerken en opslaan in een database, gelinkt aan een gebruiker.
-1. Emails weigeren wanneer de gebruiker niet in de database staat of wij geen eigenaar van het domein zijn.
-1. Emails versturen met STARTTLS en andere dingen
+1. Emails ontvangen, versturen met een STARTTLS verbinding
+1. Emails opslaan met RSA beveiliging per gebruiker
+1. Emails samen stellen, en versturen
+1. Emails parsen
+1. Communiceren met niet bekende ESMTP / SMTP Servers
+1. Communiceren met bijvoorbeeld Thunderbird en andere email clients
+1. Emails relayen vanaf een bestaand account, met authenticatie
+1. Emails versturen met een CLI
 
 ## Wat bibliotheken heb ik nodig ?
 
