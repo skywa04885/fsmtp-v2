@@ -160,6 +160,66 @@ Someone did NOT specify an message body.
 
 ----EOdZuGKWSdoWiR0cSAzXom4Wv3XeluGcCVid06--
 ```
+Een POP3 server gesprek:
+```bash
++OK POP3 server ready LUKERIEFF_MCLUST_A001
+user jan
++OK Send PASS
+pass jan123
++OK Auth Success
+pass
+-ERR Order Error: Client already authenticated.
+uidl
++OK UIDL follows
+1 1595169235894
+2 1595162385699
+3 1595162175780
+4 1595158783138
+5 1595155108162
+6 1595092185618
+7 1595091526717
+.
+list
++OK LIST follows
+1 1241
+2 2243
+3 448
+4 3224
+5 2239
+6 2233
+7 2292
+.
+retr 2
++OK 2243 octets
+Received: by mail-pj1-f47.google.com with SMTP id t15so8629004pjq.5        for <jan@fannst.nl>; Sun, 19 Jul 2020 05:39:45 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20161025; h=mime-version:from:date:message-id:subject:to; bh=kEHqC/dEDwOikTvj37xshDYcWWYP4MX4/Vb/jDsTL6w=; b=uuaopL2aCVilZ/HPQVRgn28afNBtza8v4+P112qYQcgmlqBUjjlo3k4E8BktZTABI6Sm2V+4L9YAGKomdpebWVAZYQhaKBSj4LerRj+S0oo579RuP2vSz/vDSrDkPe8kIYRjd7IQjNp6B6tWKapUsuJuHBLusch8zMUE7bT9QRev2E/qMmpYBpcfDqCvNQ0hEPrcwzsgHPsMl+DNy81IbGvOi1M0tCCM8TKhT1oU2I+0T3nhSq2CA2qJg/2O/5yt9dwJQ/eEeZWiOu0UZHM7qPIfiAFPu1pnKiy+pUYYjEStBhhds8uB9kQLKbvtTDmdli1fx3yOHa6oQiRHzStaXw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=1e100.net; s=20161025; h=x-gm-message-state:mime-version:from:date:message-id:subject:to; bh=kEHqC/dEDwOikTvj37xshDYcWWYP4MX4/Vb/jDsTL6w=; b=t2GXDGDIl+SHZW6U/35LiiBUk2DXPQEmEZlp8PcSnzGOt4H30atCn4H3QI+D26JAOLzr2JYSuWt3m/iw7vE8GkxENwtsaqH4fs/uWcTw0c2bFdie67+WCRIfbC4Q8eI2JVraUv+hZ91XtDi1eXckUHr/iLhpiDUP1fg9MOnjww6WN7ih/slpvcgjbhlrnyGneCbmJAvp25rxATnwJYaQm+dwC/CINHU+ZFVq0mSVyjyyXr2/2Ajt4rr7IA77ornPxlYpWrHLsso+A         fmrTTunUKNBPoqwKEnbxu53ild8RZOYdcrkw+Mfg5TvqSXzpiZVADzq12noDizEOci5aCvgg==
+X-Gm-Message-State: AOAM533g7kX5+qrRzEQxsduBUZyJvYF6ZCw0nYgmv4FOtW50aSU7h7/W	+HembzZO+pG8ecLZiR5Tyc+vcdbMrq56pRK95SmSAFvP
+X-Google-Smtp-Source: ABdhPJz6n82rs1QnhtgLxrql1k/j2qZ0AjDav6MTAd3kiZl45VkGzRl44MJKSV8lWPfjf9d3Mf2bs9yzdC2nQ6i5h1c=
+X-Received: by 2002:a17:90a:ff92:: with SMTP id hf18mr18670796pjb.10.1595162383461; Sun, 19 Jul 2020 05:39:43 -0700 (PDT)
+MIME-Version: 1.0
+From: Skywalker <luke.rieff@gmail.com>
+Date: Sun, 19 Jul 2020 14:39:31 +0200
+Message-ID: <CAFoEhQPaEv60jy+Rzms=Z4wnrEM_9tUSvUz9bPr-_QfFYL3Gig@mail.gmail.com>
+Subject: Hoi
+To: jan@fannst.nl
+Content-Type: multipart/alternative; boundary="00000000000039b14705aacaafb3"
+
+--00000000000039b14705aacaafb3
+Content-Type: text/plain; charset="UTF-8"
+
+Shhzshhs
+
+--00000000000039b14705aacaafb3
+Content-Type: text/html; charset="UTF-8"
+
+<div dir="auto">Shhzshhs</div>
+
+--00000000000039b14705aacaafb3--
+.
+quit
++OK POP3 server signing off LUKERIEFF_MCLUST_A001
+```
 
 ## Auteurs
 |Name|Github|
