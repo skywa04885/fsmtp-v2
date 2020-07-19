@@ -72,15 +72,20 @@ namespace FSMTP::Mailer::Client
 		 */
 		explicit SMTPClient(bool s_Silent);
 
+		void prepare(
+			const std::vector<EmailAddress> to,
+			const std::vector<EmailAddress> from,
+			const std::string &message
+		);
+
 		/**
 		 * Composes the email message, and sets some options
 		 * - inside of the class, such as the message and targets
 		 * 
 		 * @Param {MailComposerConfig &} config
-		 * @Param {std::string} existing
 		 * @Return {void}
 		 */
-		void prepare(MailComposerConfig &config, const std::string &existing);
+		void prepare(MailComposerConfig &config);
 
 		/**
 		 * ( May take a while )
@@ -91,6 +96,14 @@ namespace FSMTP::Mailer::Client
 		 * @Return {void}
 		 */
 		void beSocial(void);
+
+		/**
+		 * Resolves the recipients servers
+		 *
+		 * @Param {const std::vector<EmailAddress> &} addresses
+		 * @Return {void}
+		 */
+		void configureRecipients(const std::vector<EmailAddress> &addresses);
 
 		/**
 		 * Adds an error to the error log

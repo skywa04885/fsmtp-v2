@@ -591,6 +591,8 @@ namespace FSMTP::Networking
 			{
 				break;
 			}
+
+			if (res.size() > 10485760) throw std::runtime_error("Message too large");
 		}
 
 		// Prints the debug message, if enabled

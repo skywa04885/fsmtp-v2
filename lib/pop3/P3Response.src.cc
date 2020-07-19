@@ -51,6 +51,21 @@ namespace FSMTP::POP3
 
 		switch (this->p_Type)
 		{
+			case POP3ResponseType::PRT_CAPA: return "Capability list follows";
+			case POP3ResponseType::PRT_UIDL: return "UIDL follows";
+			case POP3ResponseType::PRT_STLS_START: return "Begin TLS negotiation now";
+			case POP3ResponseType::PRT_COMMAND_INVALID: return "[SYS] Invalid command";
+			case POP3ResponseType::PRT_DELE_SUCCESS: return "Gravestone added";
+			case POP3ResponseType::PRT_USER_DONE: return "Send PASS";
+			case POP3ResponseType::PRT_AUTH_SUCCESS: return "Auth Success";
+			case POP3ResponseType::PRT_LIST: return "LIST follows";
+			case POP3ResponseType::PRT_TOP: return "Top of message follows";
+			case POP3ResponseType::PRT_RSET: return "Reset state";
+			case POP3ResponseType::PRT_IMPLEMENTATION:
+			{
+				std::string ret = "UNIX, Fannst POP3 https://github.com/skywa04885/fsmtp-v2";
+				return ret;
+			}
 			case POP3ResponseType::PRT_GREETING:
 			{
 				std::string ret = "Fannst POP3 Server ready, ";
@@ -59,41 +74,9 @@ namespace FSMTP::POP3
 				ret += ']';
 				return ret;
 			}
-			case POP3ResponseType::PRT_CAPA:
-			{
-				return "Capability list follows";
-			}
-			case POP3ResponseType::PRT_UIDL:
-			{
-				return "UIDL follows";
-			}
-			case POP3ResponseType::PRT_STLS_START:
-			{
-				return "Begin TLS negotiation now";
-			}
-			case POP3ResponseType::PRT_COMMAND_INVALID:
-			{
-				return "Invalid command";
-			}
-			case POP3ResponseType::PRT_DELE_SUCCESS:
-			{
-				return "Gravestone added";
-			}
-			case POP3ResponseType::PRT_USER_DONE:
-			{
-				return "Send PASS";
-			}
-			case POP3ResponseType::PRT_AUTH_SUCCESS:
-			{
-				return "Auth Success";
-			}
-			case POP3ResponseType::PRT_LIST:
-			{
-				return "LIST follows";
-			}
 			case POP3ResponseType::PRT_ORDER_ERROR:
 			{
-				std::string ret = "Order Error: ";
+				std::string ret = "[SYS] Order Error: ";
 				ret += reinterpret_cast<const char *>(this->p_U);
 				return ret;
 			}
@@ -105,13 +88,13 @@ namespace FSMTP::POP3
 			}
 			case POP3ResponseType::PRT_AUTH_FAIL:
 			{
-				std::string ret = "Auth Failure: ";
+				std::string ret = "[AUTH] Auth Failure: ";
 				ret += reinterpret_cast<const char *>(this->p_U);
 				return ret;
 			}
 			case POP3ResponseType::PRT_SYNTAX_ERROR:
 			{
-				std::string ret = "Syntax Error: ";
+				std::string ret = "[SYS] Syntax Error: ";
 				ret += reinterpret_cast<const char *>(this->p_U);
 				return ret;
 			}

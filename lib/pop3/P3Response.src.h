@@ -36,7 +36,10 @@ namespace FSMTP::POP3
 		PRT_LIST,
 		PRT_RETR,
 		PRT_DELE_SUCCESS,
-		PRT_ORDER_ERROR
+		PRT_ORDER_ERROR,
+		PRT_TOP,
+		PRT_RSET,
+		PRT_IMPLEMENTATION
 	} POP3ResponseType;
 
 	typedef struct

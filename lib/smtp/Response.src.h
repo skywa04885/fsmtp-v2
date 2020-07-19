@@ -49,7 +49,8 @@ namespace FSMTP::SMTP
 		SRC_REC_NOT_LOCAL,
 		SRC_AUTH_SUCCESS,
 		SRC_AUTH_FAIL,
-		SRC_RELAY_FAIL
+		SRC_RELAY_FAIL,
+		SRC_HELP_RESP
 	} SMTPResponseType;
 
 	typedef struct {

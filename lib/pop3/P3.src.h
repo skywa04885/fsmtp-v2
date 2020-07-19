@@ -37,6 +37,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <memory.h>
+#include <sys/sysinfo.h>
 
 #include "../networking/DNS.src.h"
 #include "../general/Logger.src.h"
@@ -49,6 +50,7 @@
 #include "../general/Passwords.src.h"
 #include "../models/RawEmail.src.h"
 #include "../models/EmailShortcut.src.h"
+#include "../parsers/mime.src.h"
 
 #ifndef _POP3_QUEUE_MAX
 #define _POP3_QUEUE_MAX 40
@@ -63,6 +65,7 @@
 #endif
 
 using namespace FSMTP::Cleanup;
+using namespace FSMTP::Parsers;
 
 namespace FSMTP::POP3
 {

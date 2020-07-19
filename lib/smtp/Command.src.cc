@@ -89,6 +89,8 @@ namespace FSMTP::SMTP
 			{
 				if (command.substr(0, 4) == "helo")
 					this->c_CommandType = ClientCommandType::CCT_HELO;
+				else if (command.substr(0, 4) == "help")
+					this->c_CommandType = ClientCommandType::CCT_HELP;
 				else 
 					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
 				break;
@@ -227,6 +229,11 @@ namespace FSMTP::SMTP
 			case ClientCommandType::CCT_AUTH:
 			{
 				res += "AUTH";
+				break;
+			}
+			case ClientCommandType::CCT_HELP:
+			{
+				res += "HELP";
 				break;
 			}
 		}

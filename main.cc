@@ -70,12 +70,7 @@ int main(const int argc, const char **argv)
 			// Runs the server
 			Logger logger("Main", LoggerLevel::INFO);
 
-			int32_t opts = 0x0;
-
-			opts |= _SERVER_OPT_ENABLE_AUTH;
-			opts |= _SERVER_OPT_ENABLE_TLS;
-
-			SMTPServer server(25, true, opts, _REDIS_PORT, _REDIS_CONTACT_POINTS);
+			SMTPServer server(25, true, _REDIS_PORT, _REDIS_CONTACT_POINTS);
 
 			std::cin.get();
 

@@ -66,6 +66,8 @@ namespace FSMTP::Server
 			if (*c == '\0') break;
 			else c++;
 		}
+		if (i == 0)
+			throw std::runtime_error("Could not find separator");
 
 		// Parses the username and password into one string,
 		// - frees the memory and returns

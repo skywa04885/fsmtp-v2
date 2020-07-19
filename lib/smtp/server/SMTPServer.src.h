@@ -68,14 +68,12 @@ namespace FSMTP::Server
 		 *
 		 * @Param {const int32_t} port
 		 * @Param {const bool} s_UseESMTP
-		 * @Param {const int32_t} s_Opts
 		 * @Param {const int32_t} s_RedisPort
 		 * @Param {ocnst std::string &} s_RedisHost
 		 */
 		SMTPServer(
 			const int32_t port,
 			const bool s_UseESMTP,
-			const int32_t s_Opts,
 			const int32_t s_RedisPort,
 			const std::string &s_RedisHost
 		);
@@ -114,7 +112,6 @@ namespace FSMTP::Server
 		std::atomic<bool> s_IsRunning;
 		std::atomic<bool> s_ShouldBeRunning;
 		Logger s_Logger;
-		int32_t s_Opts;
 		int32_t s_RedisPort;
 		std::string s_RedisHost;
 	};

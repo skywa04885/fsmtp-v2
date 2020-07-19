@@ -78,7 +78,7 @@ namespace FSMTP::Models
 	   * @Param {void}
 	   * @Return {std::string}
 	   */
-		std::string getDomain(void);
+		std::string getDomain(void) const;
 
 	  /**
 	   * parses the username from the address
@@ -86,7 +86,7 @@ namespace FSMTP::Models
 	   * @Param {void}
 	   * @Return {std::string}
 	   */
-		std::string getUsername(void);
+		std::string getUsername(void) const;
 
 		/**
 		 * Parses an raw string into multiple addresses
@@ -110,7 +110,7 @@ namespace FSMTP::Models
 		 * @Param {void}
 		 * @Return {std::string}
 		 */
-		std::string toString(void);
+		std::string toString(void) const;
 
 		std::string e_Address;
 		std::string e_Name;

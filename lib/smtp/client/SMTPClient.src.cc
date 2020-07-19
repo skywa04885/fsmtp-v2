@@ -30,37 +30,39 @@ namespace FSMTP::Mailer::Client
 		if (!s_Silent) this->s_Logger << "SMTPClient initialized !" << ENDL;
 	}
 
-	/**
-	 * Composes the email message, and sets some options
-	 * - inside of the class, such as the message and targets
-	 * 
-	 * @Param {MailComposerConfig &} config
-	 * @Param {std::string} existing
-	 * @Return {void}
-	 */
-	void SMTPClient::prepare(MailComposerConfig &config, const std::string &existing)
+	void SMTPClient::prepare(
+		const std::vector<EmailAddress> to,
+		const std::vector<EmailAddress> from,
+		const std::string &message
+	)
 	{
 		if (!s_Silent) this->s_Logger << "Voorbereiden ..." << ENDL;
-
-		std::string plain;
-		if (existing.empty())
-		{
-			plain = compose(config);
-		} else plain = existing;
 
 		// Signs the email
 		DKIM::DKIMConfig dkimConfig;
 		dkimConfig.c_KeySelector = "default";
 		dkimConfig.c_Domain = _SMTP_SERVICE_DKIM_DOMAIN;
 		dkimConfig.c_PrivateKeyPath = "../env/keys/dkim-private.pem";
-		this->s_TransportMessage = DKIM::sign(plain, dkimConfig);
+		this->s_TransportMessage = DKIM::sign(message, dkimConfig);
 
 		// Sets the from
-		this->s_MailFrom = config.m_From[0];
+		this->s_MailFrom = from[0];
 
+		// Resolves the recipients
+		this->configureRecipients(to);
+	}
+
+	/**
+	 * Resolves the recipients servers
+	 *
+	 * @Param {const std::vector<EmailAddress> &} addresses
+	 * @Return {void}
+	 */
+	void SMTPClient::configureRecipients(const std::vector<EmailAddress> &addresses)
+	{
 		// Resolves the hostnames and sets the status if it
 		// - could not be found
-		for (EmailAddress &address : config.m_To)
+		for (const EmailAddress &address : addresses)
 		{
 			std::string domain = address.getDomain();
 
@@ -90,6 +92,34 @@ namespace FSMTP::Mailer::Client
 				this->addError(address.toString(), message);	
 			}
 		}
+	}
+
+	/**
+	 * Composes the email message, and sets some options
+	 * - inside of the class, such as the message and targets
+	 * 
+	 * @Param {MailComposerConfig &} config
+	 * @Return {void}
+	 */
+	void SMTPClient::prepare(MailComposerConfig &config)
+	{
+		if (!s_Silent) this->s_Logger << "Voorbereiden ..." << ENDL;
+
+		// Builds the email
+		std::string plain = compose(config);
+
+		// Signs the email
+		DKIM::DKIMConfig dkimConfig;
+		dkimConfig.c_KeySelector = "default";
+		dkimConfig.c_Domain = _SMTP_SERVICE_DKIM_DOMAIN;
+		dkimConfig.c_PrivateKeyPath = "../env/keys/dkim-private.pem";
+		this->s_TransportMessage = DKIM::sign(plain, dkimConfig);
+
+		// Sets the from
+		this->s_MailFrom = config.m_From[0];
+
+		// Resolves the recipients
+		this->configureRecipients(config.m_To);
 	}
 
 	/**

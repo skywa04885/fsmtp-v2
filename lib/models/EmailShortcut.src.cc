@@ -314,7 +314,7 @@ namespace FSMTP::Models
   {
     std::vector<std::tuple<CassUuid, int64_t, int64_t>>  ret = {};
 
-    const char *query = "SELECT e_size_octets, e_email_uuid, e_bucket FROM fannst.email_shortcuts WHERE e_domain=? AND e_owners_uuid=? AND e_type=? LIMIT ? ALLOW FILTERING";
+    const char *query = "SELECT e_size_octets, e_email_uuid, e_bucket FROM fannst.email_shortcuts WHERE e_domain=? AND e_owners_uuid=? AND e_type=? LIMIT ?";
     CassStatement *statement = nullptr;
     cass_bool_t hasMorePages = cass_false;
     CassError rc;
@@ -402,6 +402,7 @@ namespace FSMTP::Models
 
     // Frees the memory and returns
     cass_statement_free(statement);
+    std::reverse(ret.begin(), ret.end());
     return ret;
   }
 
@@ -420,16 +421,17 @@ namespace FSMTP::Models
     const CassUuid &emailUuid
   )
   {
-    const char *query = "DELETE FROM fannst.email_shortcuts WHERE e_domain=? AND e_owners_uuid=? AND e_email_uuid=?";
+    const char *query = "DELETE FROM fannst.email_shortcuts WHERE e_domain=? AND e_type=? AND e_owners_uuid=? AND e_email_uuid=?";
     CassStatement *statement = nullptr;
     CassFuture *future = nullptr;
     CassError rc;
 
     // Creates the statement and binds the values
-    statement = cass_statement_new(query, 3);
+    statement = cass_statement_new(query, 4);
     cass_statement_bind_string(statement, 0, domain.c_str());
-    cass_statement_bind_uuid(statement, 1, ownersUuid);
-    cass_statement_bind_uuid(statement, 2, emailUuid);
+    cass_statement_bind_int32(statement, 1, EmailType::ET_INCOMMING);
+    cass_statement_bind_uuid(statement, 2, ownersUuid);
+    cass_statement_bind_uuid(statement, 3, emailUuid);
 
     // Executes the query and checks for errors
     future = cass_session_execute(cassandra->c_Session, statement);

@@ -57,11 +57,6 @@ namespace FSMTP::Workers
 		{
 			TransmissionWorkerTask& task = _transmissionQueue.front();
 
-			// Configures the composer and prepares the client
-			MailComposerConfig composerConfig;
-			composerConfig.m_From = task.t_From;
-			composerConfig.m_To = task.t_To;
-
 			try {
 				#ifdef _SMTP_DEBUG
 				SMTPClient client(false);
@@ -69,7 +64,7 @@ namespace FSMTP::Workers
 				SMTPClient client(true);
 				#endif
 
-				client.prepare(composerConfig, task.t_Content);
+				client.prepare(task.t_To, task.t_From, task.t_Content);
 				client.beSocial();
 			} catch (const std::runtime_error &e)
 			{

@@ -48,6 +48,14 @@ namespace FSMTP::POP3
 					this->c_Type = POP3CommandType::PCT_UNKNOWN;
 				break;
 			}
+			case 't':
+			{
+				if (command == "top")
+					this->c_Type = POP3CommandType::PCT_TOP;
+				else
+					this->c_Type = POP3CommandType::PCT_UNKNOWN;
+				break;
+			}
 			case 'q':
 			{
 				if (command == "quit")
@@ -96,6 +104,16 @@ namespace FSMTP::POP3
 			{
 				if (command == "retr")
 					this->c_Type = POP3CommandType::PCT_RETR;
+				else if (command == "rset")
+					this->c_Type = POP3CommandType::PCT_RSET;
+				else
+					this->c_Type = POP3CommandType::PCT_UNKNOWN;
+				break;
+			}
+			case 'i':
+			{
+				if (command == "implementation")
+					this->c_Type = POP3CommandType::PCT_IMPLEMENTATION;
 				else
 					this->c_Type = POP3CommandType::PCT_UNKNOWN;
 				break;

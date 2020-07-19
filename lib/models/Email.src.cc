@@ -62,7 +62,7 @@ namespace FSMTP::Models
    * @Param {void}
    * @Return {std::string}
    */
-  std::string EmailAddress::toString(void)
+  std::string EmailAddress::toString(void) const
   {
     std::string res = "\"";
     res += this->e_Name + "\" <";
@@ -155,7 +155,7 @@ namespace FSMTP::Models
    * @Param {void}
    * @Return {std::string}
    */
-	std::string EmailAddress::getDomain(void)
+	std::string EmailAddress::getDomain(void) const
 	{
 		std::size_t index = this->e_Address.find_first_of('@');
 		if (index == std::string::npos)
@@ -169,7 +169,7 @@ namespace FSMTP::Models
    * @Param {void}
    * @Return {std::string}
    */
-	std::string EmailAddress::getUsername(void)
+	std::string EmailAddress::getUsername(void) const
 	{
 		std::size_t index = this->e_Address.find_first_of('@');
 		if (index == std::string::npos)
@@ -609,17 +609,18 @@ namespace FSMTP::Models
     const int64_t bucket
   )
   {
-    const char *query = "DELETE FROM fannst.full_emails WHERE e_bucket=? AND e_domain=? AND e_owners_uuid=? AND e_email_uuid=?";
+    const char *query = "DELETE FROM fannst.full_emails WHERE e_bucket=? AND e_domain=? AND e_owners_uuid=? AND e_email_uuid=? AND e_type=?";
     CassStatement *statement = nullptr;
     CassFuture *future = nullptr;
     CassError rc;
 
     // Creates the statement and binds the values
-    statement = cass_statement_new(query, 4);
+    statement = cass_statement_new(query, 5);
     cass_statement_bind_int64(statement, 0, bucket);
     cass_statement_bind_string(statement, 1, domain.c_str());
     cass_statement_bind_uuid(statement, 2, ownersUuid);
     cass_statement_bind_uuid(statement, 3, emailUuid);
+    cass_statement_bind_int32(statement, 4, EmailType::ET_INCOMMING);
 
     // Executes the query and checks for errors
     future = cass_session_execute(cassandra->c_Session, statement);

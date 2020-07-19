@@ -75,12 +75,7 @@ namespace FSMTP::ARG_ACTIONS
     logger << _BASH_UNKNOWN_MARK << "Start van server socket test ..." << ENDL;
     std::unique_ptr<SMTPServer> smtpServer;
     try {
-      int32_t opts = 0x0;
-
-      opts |= _SERVER_OPT_ENABLE_AUTH;
-      opts |= _SERVER_OPT_ENABLE_TLS;
-
-      smtpServer = std::make_unique<SMTPServer>(25, true, opts, _REDIS_PORT, _REDIS_CONTACT_POINTS);
+      smtpServer = std::make_unique<SMTPServer>(25, true, _REDIS_PORT, _REDIS_CONTACT_POINTS);
       logger << _BASH_SUCCESS_MARK << "SMTPServer successvol" << ENDL;
       smtpServer->shutdownServer();
     }
@@ -464,7 +459,7 @@ namespace FSMTP::ARG_ACTIONS
 
     mailComposerConfig.m_Headers.push_back(EmailHeader{"X-Test", "true"});
     SMTPClient client(false);
-    client.prepare(mailComposerConfig, "");
+    client.prepare(mailComposerConfig);
     client.beSocial();
 
     std::exit(0);

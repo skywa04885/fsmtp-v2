@@ -77,6 +77,7 @@ namespace FSMTP::POP3
 		std::string s_Pass;
 		AccountShortcut s_Account;
 		std::vector<std::tuple<CassUuid, int64_t, int64_t>> s_References;
+		std::vector<std::size_t> s_Graveyard;
 	private:
 		int64_t s_Flags;
 		int64_t s_Actions;
