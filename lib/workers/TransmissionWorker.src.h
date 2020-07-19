@@ -19,17 +19,27 @@
 #include <vector>
 #include <thread>
 #include <mutex>
+#include <deque>
 
 #include "../models/Email.src.h"
 #include "../models/EmailShortcut.src.h"
+#include "../smtp/client/SMTPClient.src.h"
 #include "./Worker.src.h"
 #include "../general/connections.src.h"
 
 using namespace FSMTP::Models;
 using namespace FSMTP::Connections;
+using namespace FSMTP::Mailer::Client;
 
 namespace FSMTP::Workers
 {
+	typedef struct
+	{
+		std::vector<EmailAddress> t_From;
+		std::vector<EmailAddress> t_To;
+		std::string t_Content;
+	} TransmissionWorkerTask;
+
 	class TransmissionWorker : public Worker
 	{
 	public:

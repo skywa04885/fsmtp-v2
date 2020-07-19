@@ -41,6 +41,7 @@
 #include "SMTPAuthentication.src.h"
 #include "../../parsers/mime.src.h"
 #include "../../models/LocalDomain.src.h"
+#include "../../workers/TransmissionWorker.src.h"
 
 #define _SERVER_OPT_ENABLE_AUTH 0x1
 #define _SERVER_OPT_ENABLE_TLS 0x2
@@ -55,6 +56,7 @@ using namespace FSMTP::SMTP;
 using namespace FSMTP::Networking;
 using namespace FSMTP::Models;
 using namespace FSMTP::Networking;
+using namespace FSMTP::Workers;
 
 namespace FSMTP::Server
 {

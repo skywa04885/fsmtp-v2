@@ -76,9 +76,11 @@ namespace FSMTP::Mailer::Client
 		 * Composes the email message, and sets some options
 		 * - inside of the class, such as the message and targets
 		 * 
-		 * @Param {MailComposerConfig &config}
+		 * @Param {MailComposerConfig &} config
+		 * @Param {std::string} existing
+		 * @Return {void}
 		 */
-		void prepare(MailComposerConfig &config);
+		void prepare(MailComposerConfig &config, const std::string &existing);
 
 		/**
 		 * ( May take a while )

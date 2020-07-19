@@ -34,14 +34,19 @@ namespace FSMTP::Mailer::Client
 	 * Composes the email message, and sets some options
 	 * - inside of the class, such as the message and targets
 	 * 
-	 * @Param {MailComposerConfig &config}
+	 * @Param {MailComposerConfig &} config
+	 * @Param {std::string} existing
+	 * @Return {void}
 	 */
-	void SMTPClient::prepare(MailComposerConfig &config)
+	void SMTPClient::prepare(MailComposerConfig &config, const std::string &existing)
 	{
 		if (!s_Silent) this->s_Logger << "Voorbereiden ..." << ENDL;
 
-		// Sets the targets, and composes the message
-		std::string plain = compose(config);
+		std::string plain;
+		if (existing.empty())
+		{
+			plain = compose(config);
+		} else plain = existing;
 
 		// Signs the email
 		DKIM::DKIMConfig dkimConfig;

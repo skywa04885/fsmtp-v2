@@ -19,7 +19,6 @@
 
 std::mutex _emailStorageMutex;
 std::vector<std::pair<std::string, FullEmail>> _emailStorageQueue;
-extern std::vector<EmailShortcut> _transmissionQueue;
 
 namespace FSMTP::Workers
 {
@@ -95,9 +94,6 @@ namespace FSMTP::Workers
 						0,
 						(section.e_Content.size() > 255 ? 255 : section.e_Content.size())
 					);
-
-			// Pushes the shortcut to the transmission queue
-			_transmissionQueue.push_back(shortcut);
 
 			// Stores the shit
 			dataPair.second.save(this->d_Connection.get());

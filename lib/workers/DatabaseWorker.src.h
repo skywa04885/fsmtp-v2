@@ -20,6 +20,7 @@
 #include <thread>
 #include <mutex>
 #include <utility>
+#include <deque>
 
 #include "../models/Email.src.h"
 #include "../models/RawEmail.src.h"

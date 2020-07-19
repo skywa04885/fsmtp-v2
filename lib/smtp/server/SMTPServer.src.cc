@@ -18,6 +18,7 @@
 
 extern std::vector<std::pair<std::string, FullEmail>> _emailStorageQueue;
 extern std::mutex _emailStorageMutex;
+extern std::deque<TransmissionWorkerTask> _transmissionQueue;
 
 namespace FSMTP::Server
 {
@@ -491,6 +492,13 @@ namespace FSMTP::Server
 								session.s_TransportMessage.generateMessageUUID();
 								session.s_TransportMessage.e_Bucket = FullEmail::getBucket();
 								session.s_TransportMessage.e_Type = EmailType::ET_RELAY_OUTGOING;
+
+								// Pushes message to transmission worker queue
+								_transmissionQueue.push_back(TransmissionWorkerTask{
+									session.s_TransportMessage.e_From,
+									session.s_TransportMessage.e_To,
+									rawTransportmessage
+								});
 
 								// Pushesht the email to the storage queue
 								_emailStorageMutex.lock();

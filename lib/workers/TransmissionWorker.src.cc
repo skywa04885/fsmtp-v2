@@ -18,7 +18,7 @@
 #include "TransmissionWorker.src.h"
 
 std::mutex _transmissionMutex;
-std::vector<EmailShortcut> _transmissionQueue;
+std::deque<FSMTP::Workers::TransmissionWorkerTask> _transmissionQueue;
 
 namespace FSMTP::Workers
 {
@@ -53,9 +53,21 @@ namespace FSMTP::Workers
 	 */	
 	void TransmissionWorker::action(void *u)
 	{
-		if (_transmissionQueue.size())
+		if (_transmissionQueue.size() >= 1)
 		{
+			TransmissionWorkerTask& task = _transmissionQueue.front();
+
+			// Configures the composer and prepares the client
+			MailComposerConfig composerConfig;
+			composerConfig.m_From = task.t_From;
+			composerConfig.m_To = task.t_To;
 			
+			SMTPClient client(false);
+
+			client.prepare(composerConfig, task.t_Content);
+			client.beSocial();
+
+			_transmissionQueue.pop_front();
 		}
 	}
 }

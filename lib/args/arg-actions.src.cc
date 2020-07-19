@@ -464,7 +464,7 @@ namespace FSMTP::ARG_ACTIONS
 
     mailComposerConfig.m_Headers.push_back(EmailHeader{"X-Test", "true"});
     SMTPClient client(false);
-    client.prepare(mailComposerConfig);
+    client.prepare(mailComposerConfig, "");
     client.beSocial();
 
     std::exit(0);
