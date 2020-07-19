@@ -96,7 +96,7 @@ namespace FSMTP::Workers
 					);
 
 			// Stores the shit
-			dataPair.second.save(this->d_Connection);
+			dataPair.second.save(this->d_Connection.get());
 			raw.save(this->d_Connection.get());
 			shortcut.save(this->d_Connection.get());
 		}

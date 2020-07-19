@@ -142,4 +142,17 @@ namespace FSMTP::POP3
 	private:
 		std::string e_Message;
 	};
+
+	class OrderError : std::exception
+	{
+	public:
+		OrderError(const std::string &e_Message):
+			e_Message(e_Message)
+		{}
+
+		const char *what(void) const throw()
+		{ return this->e_Message.c_str(); }
+	private:
+		std::string e_Message;
+	};
 }

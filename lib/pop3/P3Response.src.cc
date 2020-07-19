@@ -73,6 +73,10 @@ namespace FSMTP::POP3
 			{
 				return "Invalid command";
 			}
+			case POP3ResponseType::PRT_DELE_SUCCESS:
+			{
+				return "Gravestone added";
+			}
 			case POP3ResponseType::PRT_USER_DONE:
 			{
 				return "Send PASS";
@@ -84,6 +88,12 @@ namespace FSMTP::POP3
 			case POP3ResponseType::PRT_LIST:
 			{
 				return "LIST follows";
+			}
+			case POP3ResponseType::PRT_ORDER_ERROR:
+			{
+				std::string ret = "Order Error: ";
+				ret += reinterpret_cast<const char *>(this->p_U);
+				return ret;
 			}
 			case POP3ResponseType::PRT_RETR:
 			{

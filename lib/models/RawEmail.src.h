@@ -58,6 +58,24 @@ namespace FSMTP::Models
       const int64_t bucket
     );
 
+    /**
+     * Deletes one email from the database
+     *
+     * @Param {CassandraConnection *} cassandra
+     * @Param {const std::string &} domain
+     * @Param {const CassUuid &} ownersUuid
+     * @Param {const CassUuid &} emailUuid;
+     * @Param {const int64_t} bucket
+     * @Return {void} 
+     */
+    static void deleteOne(
+      CassandraConnection *cassandra,
+      const std::string &domain,
+      const CassUuid &ownersUuid,
+      const CassUuid &emailUuid,
+      const int64_t bucket
+    );
+
     int64_t e_Bucket;
     std::string e_Domain;
     CassUuid e_OwnersUUID;

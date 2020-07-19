@@ -221,13 +221,31 @@ namespace FSMTP::Models
      */
     static int64_t getBucket(void);
 
+	  /**
+	   * Saves an email into the database
+	   *
+	   * @Param {CassandraConnection *} conn
+	   * @Return {void}
+	   */
+	  void save(CassandraConnection *conn);
+
     /**
-     * Saves an email into the database
+     * Deletes one email from the database
      *
-     * @Param {std::unique_ptr<CassandraConnection> &} conn
-     * @Return {void}
+     * @Param {CassandraConnection *} cassandra
+     * @Param {const std::string &} domain
+     * @Param {const CassUuid &} ownersUuid
+     * @Param {const CassUuid &} emailUuid;
+     * @Param {const int64_t} bucket
+     * @Return {void} 
      */
-    void save(std::unique_ptr<CassandraConnection> &conn);
+    static void deleteOne(
+      CassandraConnection *cassandra,
+      const std::string &domain,
+      const CassUuid &ownersUuid,
+      const CassUuid &emailUuid,
+      const int64_t bucket
+    );
 
     /**
      * Generates an UUID for the current message

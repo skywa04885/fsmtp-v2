@@ -31,7 +31,8 @@ namespace FSMTP::POP3
 		PCT_STAT,
 		PCT_UIDL,
 		PCT_LIST,
-		PCT_RETR
+		PCT_RETR,
+		PCT_DELE
 	} POP3CommandType;
 
 	class P3Command

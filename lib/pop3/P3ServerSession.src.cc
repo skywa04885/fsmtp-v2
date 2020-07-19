@@ -18,7 +18,63 @@
 
 namespace FSMTP::POP3
 {
-	P3ServerSession::P3ServerSession():
+	/**
+	 * Initializes the session and zeros the flags and actions
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
+	P3ServerSession::P3ServerSession(void):
 		s_Flags(0x0), s_Actions(0x0)
 	{}
+
+	/**
+	 * Sets an flag
+	 *
+	 * @Param {int64_t} mask
+	 * @Return {void}
+	 */
+	void P3ServerSession::setFlag(int64_t mask)
+	{
+		this->s_Flags |= mask;
+	}
+
+	/**
+	 * Gets an flag
+	 *
+	 * @Param {int64_t} mask
+	 * @Return {bool}
+	 */
+	bool P3ServerSession::getFlag(int64_t mask)
+	{
+		if (BINARY_COMPARE(this->s_Flags, mask))
+			return true;
+		else
+			return false;
+	}
+
+	/**
+	 * Sets an action
+	 *
+	 * @Param {int64_t} mask
+	 * @Return {void}
+	 */
+	void P3ServerSession::setAction(int64_t mask)
+	{
+		this->s_Actions |= mask;
+	}
+
+	/**
+	 * Gets an action
+	 *
+	 * @Param {int64_t} mask
+	 * @Return {bool}
+	 */
+	bool P3ServerSession::getAction(int64_t mask)
+	{
+		if (BINARY_COMPARE(this->s_Actions, mask))
+			return true;
+		else
+			return false;
+	}
 }

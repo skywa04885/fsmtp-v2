@@ -40,6 +40,12 @@ namespace FSMTP::POP3
 
 		shutdown(this->s_SocketFD, SHUT_RDWR);
 		logger << WARN << "Closed transmission channel" << ENDL;
+
+		if (this->s_UseSSL)
+		{
+			SSL_CTX_free(this->s_SSLCtx);
+			SSL_free(this->s_SSL);
+		}
 	}
 
 	std::string ClientSocket::readUntillCRLF(void)
@@ -58,6 +64,7 @@ namespace FSMTP::POP3
 				if (rc <= 0)
 				{
 					// TODO: openssl error stuff
+					ERR_print_errors_fp(stderr);
 					std::string error = "SSL_peek() failed: ";
 					error += strerror(errno);
 					throw SocketReadException(EXCEPT_DEBUG(error));
@@ -91,7 +98,7 @@ namespace FSMTP::POP3
 			rc = SSL_read(this->s_SSL, buffer, ++i);
 			if (rc <= 0)
 			{
-				// TODO: openssl error stuff
+				ERR_print_errors_fp(stderr);
 				std::string error = "SSL_read() failed: ";
 				error += strerror(errno);
 				throw SocketReadException(EXCEPT_DEBUG(error));
@@ -124,7 +131,7 @@ namespace FSMTP::POP3
 			rc = SSL_write(this->s_SSL, raw.c_str(), raw.size());
 			if (rc < 0)
 			{
-				// TODO: openssl error stuff
+				ERR_print_errors_fp(stderr);
 				std::string error = "SSL_write() failed: ";
 				error += strerror(errno);
 				throw SocketReadException(EXCEPT_DEBUG(error));

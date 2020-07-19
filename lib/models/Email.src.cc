@@ -353,10 +353,10 @@ namespace FSMTP::Models
   /**
    * Saves an email into the database
    *
-   * @Param {std::unique_ptr<CassandraConnection> &} conn
+   * @Param {CassandraConnection *} conn
    * @Return {void}
    */
-  void FullEmail::save(std::unique_ptr<CassandraConnection> &conn)
+  void FullEmail::save(CassandraConnection *conn)
   {
   	const CassDataType *udtEmailAddress = nullptr;
   	const CassDataType *udtEmailBodySection = nullptr;
@@ -589,5 +589,54 @@ namespace FSMTP::Models
     CassUuidGen *gen = cass_uuid_gen_new();
     cass_uuid_gen_time(gen, &this->e_EmailUUID);
     cass_uuid_gen_free(gen);
+  }
+
+  /**
+   * Deletes one email from the database
+   *
+   * @Param {CassandraConnection *} cassandra
+   * @Param {const std::string &} domain
+   * @Param {const CassUuid &} ownersUuid
+   * @Param {const CassUuid &} emailUuid;
+   * @Param {const int64_t} bucket
+   * @Return {void} 
+   */
+  void FullEmail::deleteOne(
+    CassandraConnection *cassandra,
+    const std::string &domain,
+    const CassUuid &ownersUuid,
+    const CassUuid &emailUuid,
+    const int64_t bucket
+  )
+  {
+    const char *query = "DELETE FROM fannst.full_emails WHERE e_bucket=? AND e_domain=? AND e_owners_uuid=? AND e_email_uuid=?";
+    CassStatement *statement = nullptr;
+    CassFuture *future = nullptr;
+    CassError rc;
+
+    // Creates the statement and binds the values
+    statement = cass_statement_new(query, 4);
+    cass_statement_bind_int64(statement, 0, bucket);
+    cass_statement_bind_string(statement, 1, domain.c_str());
+    cass_statement_bind_uuid(statement, 2, ownersUuid);
+    cass_statement_bind_uuid(statement, 3, emailUuid);
+
+    // Executes the query and checks for errors
+    future = cass_session_execute(cassandra->c_Session, statement);
+    cass_future_wait(future);
+
+    rc = cass_future_error_code(future);
+    if (rc != CASS_OK)
+    {
+      std::string error = "Could not delete full email: ";
+      error += CassandraConnection::getError(future);
+      cass_future_free(future);
+      cass_statement_free(statement);
+      throw DatabaseException(error);
+    }
+
+    // Frees the memory
+    cass_future_free(future);
+    cass_statement_free(statement);
   }
 }

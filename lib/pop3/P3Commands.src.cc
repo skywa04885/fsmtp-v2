@@ -100,6 +100,14 @@ namespace FSMTP::POP3
 					this->c_Type = POP3CommandType::PCT_UNKNOWN;
 				break;
 			}
+			case 'd':
+			{
+				if (command == "dele")
+					this->c_Type = POP3CommandType::PCT_DELE;
+				else
+					this->c_Type = POP3CommandType::PCT_UNKNOWN;
+				break;
+			}
 			default: this->c_Type = POP3CommandType::PCT_UNKNOWN;
 		}
 

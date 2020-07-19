@@ -23,12 +23,55 @@
 
 using namespace FSMTP::Models;
 
+#define _P3_SERVER_SESS_ACTION_USER 1
+#define _P3_SERVER_SESS_ACTION_PASS 2
+
+#define _P3_SERVER_SESS_FLAG_AUTH 1
+
 namespace FSMTP::POP3
 {
 	class P3ServerSession
 	{
 	public:
-		P3ServerSession();
+		/**
+		 * Initializes the session and zeros the flags and actions
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		P3ServerSession(void);
+
+		/**
+		 * Sets an flag
+		 *
+		 * @Param {int64_t} mask
+		 * @Return {void}
+		 */
+		void setFlag(int64_t mask);
+
+		/**
+		 * Gets an flag
+		 *
+		 * @Param {int64_t} mask
+		 * @Return {bool}
+		 */
+		bool getFlag(int64_t mask);
+
+		/**
+		 * Sets an action
+		 *
+		 * @Param {int64_t} mask
+		 * @Return {void}
+		 */
+		void setAction(int64_t mask);
+
+		/**
+		 * Gets an action
+		 *
+		 * @Param {int64_t} mask
+		 * @Return {bool}
+		 */
+		bool getAction(int64_t mask);
 
 		std::string s_User;
 		std::string s_Pass;

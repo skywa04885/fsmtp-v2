@@ -160,7 +160,7 @@ namespace FSMTP::SMTP
 			}
 			case SMTPResponseType::SRC_QUIT_GOODBYE:
 			{
-				return "closing connection";
+				return "Closing connection";
 			}
 			case SMTPResponseType::SRC_AUTH_SUCCESS:
 			{

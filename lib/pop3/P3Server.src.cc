@@ -36,10 +36,6 @@ namespace FSMTP::POP3
 			{"0"}
 		});
 		this->s_Capabilities.push_back(POP3Capability{
-			"LOGIN-DELAY",
-			{"300"}
-		});
-		this->s_Capabilities.push_back(POP3Capability{
 			"TOP",
 			{}
 		});
@@ -61,7 +57,7 @@ namespace FSMTP::POP3
 
 	void P3Server::acceptorCallback(std::unique_ptr<ClientSocket> client, void *u)
 	{
-		std::string prefix = "P3ServerAcceptor:";
+		std::string prefix = "P3ServThread:";
 		prefix += inet_ntoa(client->s_SocketAddr.sin_addr);
 		Logger logger(prefix, LoggerLevel::INFO);
 
@@ -97,10 +93,18 @@ namespace FSMTP::POP3
 			goto pop3_session_end;
 		}
 
+		// ================================================
+		// Starts the read/write loop
+		//
+		// This will be the communication with the client
+		// ================================================
+
 		for (;;)
 		{
 			P3Command command;
 
+			// Parses the command and breaks when an
+			// - read exception occurs
 			try {
 				std::string raw = client->readUntillCRLF();
 				command.parse(raw);
@@ -109,26 +113,49 @@ namespace FSMTP::POP3
 				break;
 			}
 
-			// Checks how to respond to the command
+			// Checks how to respond to the command from
+			// - the client
 			try {
 				switch (command.c_Type)
 				{
+					// =========================================
+					// Handles the 'STLS' command
+					//
+					// Secures the connection with the client
+					// - using SSL
+					// =========================================
 					case POP3CommandType::PCT_STLS:
 					{
-						// Sends the response that the client may switch to start tls, and
-						// - then upgrades the socket
 						client->sendResponse(true, POP3ResponseType::PRT_STLS_START);
 						client->upgrade();
-
 						break;
 					}
+					// =========================================
+					// Handles the 'QUIT' command
+					//
+					// Closes the connection with the client
+					// =========================================
 					case POP3CommandType::PCT_QUIT:
 					{
 						client->sendResponse(true, PRT_QUIT);
 						goto pop3_session_end;
 					}
+					// =========================================
+					// Handles the 'PASS' command
+					//
+					// The second phase of the auth process
+					// - where the password is verified
+					// =========================================
 					case POP3CommandType::PCT_PASS:
 					{
+						// Checks if we're allowed to perform this command
+						// - this is only possible if we're not authenticated
+						// - and the client has sent the password
+						if (session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
+							throw OrderError("Client already authenticated.");
+						if (!session.getAction(_P3_SERVER_SESS_ACTION_USER))
+							throw OrderError("USER first.");
+
 						// Checks if the command is not empty
 						if (command.c_Args.size() < 1)
 						{
@@ -187,15 +214,29 @@ namespace FSMTP::POP3
 							session.s_Account.a_UUID
 						);
 
-						// Stores the password in the session, and sends
+						// Stores the password in the session, sets the flag and sends
 						// - the continue response
 						session.s_Pass = command.c_Args[0];
+						session.setAction(_P3_SERVER_SESS_ACTION_PASS);
+						session.setFlag(_P3_SERVER_SESS_FLAG_AUTH);
 						client->sendResponse(true, POP3ResponseType::PRT_AUTH_SUCCESS);
 						break;
 					}
+					// =========================================
+					// Handles the 'USER' command
+					//
+					// The first stage of the login process
+					// - after this the password is needed
+					// =========================================
 					case POP3CommandType::PCT_USER:
 					{
 						EmailAddress address;
+
+						// Checks if we're allowed to perform this command,
+						// - this may only happen when the user has not
+						// - authenticated yet
+						if (session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
+							throw OrderError("Client already authenticated.");
 
 						// Checks if the command is not empty
 						if (command.c_Args.size() < 1)
@@ -259,12 +300,25 @@ namespace FSMTP::POP3
 							continue;
 						}
 
-						// Stores the user in the session, and sends
+						// Prints the debug message
+						#ifdef _SMTP_DEBUG
+						char uuidBuffer[64];
+						cass_uuid_string(session.s_Account.a_UUID, uuidBuffer);
+						logger << DEBUG << "Identified as " << session.s_Account.a_Bucket << '@' << uuidBuffer << ENDL << CLASSIC;
+						#endif
+
+						// Stores the user in the session, sets the flag and sends
 						// - the continue response
 						session.s_User = command.c_Args[0];
+						session.setAction(_P3_SERVER_SESS_ACTION_USER);
 						client->sendResponse(true, POP3ResponseType::PRT_USER_DONE);
 						continue;
 					}
+					// =========================================
+					// Handles the 'CAPA' command
+					//
+					// Lists the servers capabilities
+					// =========================================
 					case POP3CommandType::PCT_CAPA:
 					{
 						// Sends the list of capabilities
@@ -277,8 +331,18 @@ namespace FSMTP::POP3
 						);
 						continue;
 					}
+					// =========================================
+					// Handles the 'STATI' command
+					//
+					// Gets the status, the count of emails
+					// - and their summed size
+					// =========================================
 					case POP3CommandType::PCT_STAT:
 					{
+						// Checks if we're authenticated
+						if (!session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
+							throw OrderError("USER/PASS First.");
+
 						// Gets the data and builds the response
 						int64_t octets;
 						for (const std::tuple<CassUuid, int64_t, int64_t> &pair : session.s_References)
@@ -296,14 +360,24 @@ namespace FSMTP::POP3
 						);
 						continue;
 					}
+					// =========================================
+					// Handles the 'UIDL' command
+					//
+					// Lists the messages with the number version
+					// - of their timeuuid
+					// =========================================
 					case POP3CommandType::PCT_UIDL:
 					{
+						// Checks if we're authenticated
+						if (!session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
+							throw OrderError("USER/PASS First.");
+
 						std::vector<POP3ListElement> list = {};
 
 						std::size_t i = 0;
 						for (const std::tuple<CassUuid, int64_t, int64_t> &ref : session.s_References)
 							list.push_back(POP3ListElement{
-								i++,
+								++i,
 								std::to_string(cass_uuid_timestamp(std::get<0>(ref)))
 							});
 
@@ -316,14 +390,24 @@ namespace FSMTP::POP3
 
 						break;
 					}
+					// =========================================
+					// Handles the 'LIST' command
+					//
+					// this will list all the messages, with the
+					// - assigned size in octets
+					// =========================================
 					case POP3CommandType::PCT_LIST:
 					{
+						// Checks if we're authenticated
+						if (!session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
+							throw OrderError("USER/PASS First.");
+
 						std::vector<POP3ListElement> list = {};
 
 						std::size_t i = 0;
 						for (const std::tuple<CassUuid, int64_t, int64_t> &ref : session.s_References)
 							list.push_back(POP3ListElement{
-								i++,
+								++i,
 								std::to_string(std::get<1>(ref))
 							});
 
@@ -336,17 +420,27 @@ namespace FSMTP::POP3
 
 						break;
 					}
+					// =========================================
+					// Handles the 'RETR' command
+					//
+					// this will send an email back to the client
+					// =========================================
 					case POP3CommandType::PCT_RETR:
 					{
+						// Checks if we're authenticated
+						if (!session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
+							throw OrderError("USER/PASS First.");
+
 						// Checks if there is an argument
 						if (command.c_Args.size() < 1)
-							throw SyntaxError("RETR requires one argument");
+							throw SyntaxError("RETR requires one argument.");
 
 						// Tries to parse the argument, and checks if the index is too
 						// - large by comparing it to the vector
 						std::size_t i;
 						try {
 							i = std::stol(command.c_Args[0]);
+							--i;
 						} catch (const std::invalid_argument &e)
 						{
 							throw SyntaxError("Invalid index for RETR");
@@ -386,6 +480,68 @@ namespace FSMTP::POP3
 
 						continue;
 					}
+					// =========================================
+					// Handles the 'DELE' command
+					//
+					// this will delete an email from the server
+					// =========================================
+					case POP3CommandType::PCT_DELE:
+					{
+						// Checks if we're authenticated
+						if (!session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
+							throw OrderError("USER/PASS First.");
+
+						// Checks if there are any arguments, if not throw
+						// - syntax error
+						if (command.c_Args.size() < 1)
+							throw SyntaxError("DELE requires one argument.");
+
+						// Parses the index, if it is too large send error
+						std::size_t i;
+						try {
+							i = std::stol(command.c_Args[0]);
+							--i;
+						} catch (const std::invalid_argument &e)
+						{
+							throw SyntaxError("Invalid index for RETR");
+						}
+						if (i > session.s_References.size())
+						{
+							std::string error = "Max index ";
+							error += std::to_string(session.s_References.size());
+							throw SyntaxError(error);
+						}
+
+						// Deletes the the raw email, shortcut and parsed email
+						const CassUuid &uuid = std::get<0>(session.s_References[i]);
+						const int64_t &bucket = std::get<2>(session.s_References[i]);
+
+						// Deletes the emails
+						EmailShortcut::deleteOne(
+							cassandra.get(),
+							session.s_Account.a_Domain,
+							session.s_Account.a_UUID,
+							uuid
+						);
+						FullEmail::deleteOne(
+							cassandra.get(),
+							session.s_Account.a_Domain,
+							session.s_Account.a_UUID,
+							uuid,
+							bucket
+						);
+						RawEmail::deleteOne(
+							cassandra.get(),
+							session.s_Account.a_Domain,
+							session.s_Account.a_UUID,
+							uuid,
+							bucket
+						);
+
+						// Sends the confirmation
+						client->sendResponse(true, POP3ResponseType::PRT_DELE_SUCCESS);
+						continue;
+					}
 					case POP3CommandType::PCT_UNKNOWN:
 					{
 						throw InvalidCommand("Command not found");
@@ -399,6 +555,23 @@ namespace FSMTP::POP3
 				client->sendResponse(
 					false,
 					POP3ResponseType::PRT_SYNTAX_ERROR,
+					"",
+					nullptr, nullptr,
+					reinterpret_cast<void *>(const_cast<char *>(e.what()))
+				);
+			} catch (const SocketSSLError& e)
+			{
+				logger << FATAL << "SSL Error occured: " << e.what() << ENDL << CLASSIC;
+				break;
+			} catch (const DatabaseException &e)
+			{
+				logger << FATAL << "Database Error occured: " << e.what() << ENDL << CLASSIC;
+				break;
+			} catch (const OrderError &e)
+			{
+				client->sendResponse(
+					false,
+					POP3ResponseType::PRT_ORDER_ERROR,
 					"",
 					nullptr, nullptr,
 					reinterpret_cast<void *>(const_cast<char *>(e.what()))

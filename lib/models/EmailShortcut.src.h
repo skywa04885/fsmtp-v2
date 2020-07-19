@@ -88,6 +88,21 @@ namespace FSMTP::Models
       const CassUuid &uuid
     );
 
+    /**
+     * Delets an email shortcut
+     *
+     * @Param {CassandraConnection *} cassandra
+     * @Param {const std::string &} domain
+     * @Param {const CassUuid &} ownersUuid
+     * @Param {const CassUuid &} emailUuid
+     */
+    static void deleteOne(
+      CassandraConnection *cassandra,
+      const std::string &domain,
+      const CassUuid &ownersUuid,
+      const CassUuid &emailUuid
+    );
+
     std::string e_Domain;
     std::string e_Subject;
     std::string e_Preview;

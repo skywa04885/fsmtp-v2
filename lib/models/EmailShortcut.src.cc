@@ -220,7 +220,8 @@ namespace FSMTP::Models
     const CassUuid &uuid
   )
   {
-    std::size_t total = 0, octets = 0;
+    std::size_t total = 0;
+    int64_t octets = 0;
 
     const char *query = "SELECT e_size_octets FROM fannst.email_shortcuts WHERE e_domain=? AND e_owners_uuid=? LIMIT ?";
     CassStatement *statement = nullptr;
@@ -400,5 +401,50 @@ namespace FSMTP::Models
     // Frees the memory and returns
     cass_statement_free(statement);
     return ret;
+  }
+
+  /**
+   * Delets an email shortcut
+   *
+   * @Param {CassandraConnection *} cassandra
+   * @Param {const std::string &} domain
+   * @Param {const CassUuid &} ownersUuid
+   * @Param {const CassUuid &} emailUuid
+   */
+  void EmailShortcut::deleteOne(
+    CassandraConnection *cassandra,
+    const std::string &domain,
+    const CassUuid &ownersUuid,
+    const CassUuid &emailUuid
+  )
+  {
+    const char *query = "DELETE FROM fannst.email_shortcuts WHERE e_domain=? AND e_owners_uuid=? AND e_email_uuid=?";
+    CassStatement *statement = nullptr;
+    CassFuture *future = nullptr;
+    CassError rc;
+
+    // Creates the statement and binds the values
+    statement = cass_statement_new(query, 3);
+    cass_statement_bind_string(statement, 0, domain.c_str());
+    cass_statement_bind_uuid(statement, 1, ownersUuid);
+    cass_statement_bind_uuid(statement, 2, emailUuid);
+
+    // Executes the query and checks for errors
+    future = cass_session_execute(cassandra->c_Session, statement);
+    cass_future_wait(future);
+
+    rc = cass_future_error_code(future);
+    if (rc != CASS_OK)
+    {
+      std::string error = "Could not delete email shortcut: ";
+      error += CassandraConnection::getError(future);
+      cass_future_free(future);
+      cass_statement_free(statement);
+      throw DatabaseException(error);
+    }
+
+    // Frees the memory
+    cass_future_free(future);
+    cass_statement_free(statement);
   }
 }

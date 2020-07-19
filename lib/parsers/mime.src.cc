@@ -258,7 +258,8 @@ namespace FSMTP::Parsers::MIME
 						if (subtext.size() >= 2)
 							parsedTransferEncoding = stringToEmailTransferEncoding(
 								parseSubtextValue(subtext[1]));
-						else throw std::runtime_error("Could not find charset");
+						else
+							parsedTransferEncoding = EmailTransferEncoding::ETE_7BIT;
 						break;
 					}
 					case EmailContentType::ECT_MULTIPART_ALTERNATIVE:
