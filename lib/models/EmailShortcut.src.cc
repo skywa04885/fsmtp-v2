@@ -228,7 +228,7 @@ namespace FSMTP::Models
     CassError rc;
 
     // Limit of 80 emails a time
-    if (limit > 80) limit = 80;
+    if (limit > 500) limit = 500;
 
     // =======================================
     // Prepares the statement
