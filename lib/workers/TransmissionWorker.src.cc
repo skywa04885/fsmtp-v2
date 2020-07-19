@@ -53,6 +53,9 @@ namespace FSMTP::Workers
 	 */	
 	void TransmissionWorker::action(void *u)
 	{
-
+		if (_transmissionQueue.size())
+		{
+			
+		}
 	}
 }

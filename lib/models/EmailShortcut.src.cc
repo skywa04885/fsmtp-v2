@@ -314,12 +314,13 @@ namespace FSMTP::Models
   {
     std::vector<std::tuple<CassUuid, int64_t, int64_t>>  ret = {};
 
-    const char *query = "SELECT e_size_octets, e_email_uuid, e_bucket FROM fannst.email_shortcuts WHERE e_domain=? AND e_owners_uuid=? LIMIT ?";
+    const char *query = "SELECT e_size_octets, e_email_uuid, e_bucket FROM fannst.email_shortcuts WHERE e_domain=? AND e_owners_uuid=? AND e_type=? LIMIT ? ALLOW FILTERING";
     CassStatement *statement = nullptr;
     cass_bool_t hasMorePages = cass_false;
     CassError rc;
 
     // Limit of 80 emails a time
+    if (limit < 1) throw std::runtime_error("Limit must be positive");
     if (limit > 500) limit = 500;
 
     // =======================================
@@ -330,10 +331,11 @@ namespace FSMTP::Models
     // =======================================
 
     // Prepares the statement and binds the values
-    statement = cass_statement_new(query, 3);
+    statement = cass_statement_new(query, 4);
     cass_statement_bind_string(statement, 0, domain.c_str());
     cass_statement_bind_uuid(statement, 1, uuid);
-    cass_statement_bind_int32(statement, 2, limit);
+    cass_statement_bind_int32(statement, 2, EmailType::ET_INCOMMING);
+    cass_statement_bind_int32(statement, 3, limit);
     cass_statement_set_paging_size(statement, 20);
 
     // =======================================
