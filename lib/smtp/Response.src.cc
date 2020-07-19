@@ -143,42 +143,15 @@ namespace FSMTP::SMTP
 				return ret;;
 			}
 			case SMTPResponseType::SRC_AUTH_NOT_ALLOWED: return "Mail from different then authenticated email";
-			case SMTPResponseType::SRC_DATA_START:
-			{
-				return "End data with <CR><LF>.<CR><LF>";
-			}
-			case SMTPResponseType::SRC_ORDER_ERR:
-			{
-				return "Invalid order, why: [unknown].";
-			}
-			case SMTPResponseType::SRC_INVALID_COMMAND:
-			{
-				return "unrecognized command.";
-			}
-			case SMTPResponseType::SRC_START_TLS:
-			{
-				return "Ready to start TLS.";
-			}
-			case SMTPResponseType::SRC_QUIT_GOODBYE:
-			{
-				return "Closing connection";
-			}
-			case SMTPResponseType::SRC_AUTH_SUCCESS:
-			{
-				return "Authentication successfull, welcome back.";
-			}
-			case SMTPResponseType::SRC_AUTH_FAIL:
-			{
-				return "Authentication failed, closing transmission channel.";
-			}
-			case SMTPResponseType::SRC_RELAY_FAIL:
-			{
-				return "Relay denied.";
-			}
-			case SMTPResponseType::SRC_HELP_RESP:
-			{
-				return "Fannst ESMTP server https://github.com/skywa04885/fsmtp-v2";
-			}
+			case SMTPResponseType::SRC_DATA_START: return "End data with <CR><LF>.<CR><LF>";
+			case SMTPResponseType::SRC_ORDER_ERR: return "Invalid order, why: [unknown].";
+			case SMTPResponseType::SRC_INVALID_COMMAND: return "unrecognized command.";
+			case SMTPResponseType::SRC_START_TLS: return "Ready to start TLS.";
+			case SMTPResponseType::SRC_QUIT_GOODBYE: return "Closing connection";
+			case SMTPResponseType::SRC_AUTH_SUCCESS: return "Authentication successfull, welcome back.";
+			case SMTPResponseType::SRC_AUTH_FAIL: return "Authentication failed, closing transmission channel.";
+			case SMTPResponseType::SRC_RELAY_FAIL: return "Relay denied.";
+			case SMTPResponseType::SRC_HELP_RESP: return "Fannst ESMTP server https://github.com/skywa04885/fsmtp-v2";
 			case SMTPResponseType::SRC_REC_NOT_LOCAL:
 			{
 				std::string ret = "User [";

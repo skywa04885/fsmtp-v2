@@ -1,4 +1,4 @@
-![Fannst Banner](static/nogmail.png)
+![Fannst Banner](static/fannst-banner.png)
 
 # Fannst ESMTP Server Versie 2.0
 
