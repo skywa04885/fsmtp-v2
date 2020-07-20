@@ -36,8 +36,7 @@ int main(const int argc, const char **argv)
 			logger << WARN << "Fannst POP3 Server door Luke A.C.A. Rieff, vrij onder de Apache 2.0 license" << ENDL << CLASSIC;
 			POP3::P3Server pop3server(false);
 		
-			std::cin.get();
-			pop3server.shutdown();
+			for (;;) continue;
 
 			break;
 		}
@@ -72,11 +71,7 @@ int main(const int argc, const char **argv)
 
 			SMTPServer server(25, true, _REDIS_PORT, _REDIS_CONTACT_POINTS);
 
-			std::cin.get();
-
-			server.shutdownServer();
-			dbWorker->stop();
-			transWorker->stop();
+			for (;;) continue;
 
 			break;
 		}

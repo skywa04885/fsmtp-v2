@@ -21,7 +21,7 @@
 // Uncomment in production since it will make you 
 // - crazy when the console is being spammed with
 // - all kinds of debug crap
-#define _SMTP_DEBUG
+// #define _SMTP_DEBUG
 
 #ifdef _SMTP_DEBUG
 #define DEBUG_ONLY(A) A
@@ -104,6 +104,9 @@ typedef enum : uint8_t
 	ST_POP3,
 	ST_IMAP
 } ServerType;
+<<<<<<< HEAD
 
 // Assertion using message
 #define assertm(exp, msg) assert(((void)msg, exp))
+=======
+>>>>>>> 2787e270f579ddbb56abc9c785799c57c5ff0713
