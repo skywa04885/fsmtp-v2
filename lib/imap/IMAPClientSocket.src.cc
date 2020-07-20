@@ -53,7 +53,11 @@ namespace FSMTP::IMAP
 	 */
 	IMAPClientSocket::~IMAPClientSocket(void)
 	{
+		Logger &logger = this->s_Logger;
+		
 		shutdown(this->s_SocketFD, SHUT_RDWR);
+		logger << WARN << "Closed transmission channel" << ENDL;
+		
 		if (this->s_UseSSL)
 		{
 			SSL_free(this->s_SSL);

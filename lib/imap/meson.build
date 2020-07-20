@@ -2,5 +2,6 @@ sources += files(
 	'IMAPServerSocket.src.cc',
 	'IMAPServer.src.cc',
 	'IMAPClientSocket.src.cc',
-	'IMAPResponse.src.cc'
+	'IMAPResponse.src.cc',
+	'IMAPCommand.src.cc'
 )

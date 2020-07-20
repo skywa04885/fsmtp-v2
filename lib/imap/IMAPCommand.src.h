@@ -22,13 +22,40 @@ namespace FSMTP::IMAP
 {
 	typedef enum : uint32_t
 	{
-		ICT_CAPABILITY = 0
+		ICT_CAPABILITY = 0,
+		ICT_UNKNOWN,
+		ICT_LOGOUT
 	} IMAPCommandType;
 
 	class IMAPCommand
 	{
 	public:
-	private:
+		/**
+		 * Default emty constructor
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		explicit IMAPCommand(void);
+
+		/**
+		 * Parses an IMAP command
+		 *
+		 * @Param {const std::string &} raw
+		 * @Return {void}
+		 */
+		IMAPCommand(const std::string &raw);
+
+		/**
+		 * Parses an IMAP command
+		 *
+		 * @Param {const std::string &} raw
+		 * @Return {void}
+		 */
+		void parse(const std::string &raw);
+	
+		int32_t c_Index;
+		IMAPCommandType c_Type;
 		std::vector<std::string> c_Args;
 	};
 }

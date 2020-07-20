@@ -47,39 +47,67 @@ namespace FSMTP::IMAP
 	 */
 	std::string IMAPResponse::build(void)
 	{
-		std::string ret;
-
-		// Appends the tag, or taggles char and after that
-		// - we will add the prefix
-		if (this->r_Untagged) ret += "* ";
-		else
+		if (!r_Untagged)
 		{
-			ret += std::to_string(this->r_TagIndex);
-		}
+			std::string ret = "* ";
 
+			// Adds the message
+			ret += this->getMessage();
+			ret += "\r\n";
+			ret += std::to_string(this->r_TagIndex);
+			ret += ' ';
+
+			// Adds the command name
+			ret += this->getPrefix();
+			ret += this->getCommandName();
+			ret += " completed\r\n";
+			
+			return ret;
+		} else
+		{
+			std::string ret = "* ";
+
+			// Adds the prefix and message
+			ret += this->getPrefix();
+			ret += this->getMessage();
+			ret += "\r\n";
+
+			return ret;
+		}
+	}
+
+	/**
+	 * Gets an command prefix
+	 *
+	 * @Param {void}
+	 * @Return {const char *} 
+	 */
+	const char *IMAPResponse::getPrefix(void)
+	{
 		switch (this->r_PrefType)
 		{
-			case IMAPResponsePrefixType::IPT_BAD:
-			{
-				ret += "BAD ";
-				break;
-			}
-			case IMAPResponsePrefixType::IPT_OK:
-			{
-				ret += "OK ";
-				break;
-			}
-			case IMAPResponsePrefixType::IPT_NO:
-			{
-				ret += "NO ";
-				break;
-			}
+			case IMAPResponsePrefixType::IPT_BAD: return "BAD ";
+			case IMAPResponsePrefixType::IPT_OK: return "OK ";
+			case IMAPResponsePrefixType::IPT_NO: return "NO ";
+			case IMAPResponsePrefixType::IPT_BYE: return "BYE ";
 		}
+	}
 
-		// Adds the message and returns
-		ret += this->getMessage();
-		ret += "\r\n";
-		return ret;
+
+	/**
+	 * Gets the name of the command type
+	 *
+	 * @Param {void}
+	 * @Return {const char *}
+	 */
+	const char *IMAPResponse::getCommandName(void)
+	{
+		switch (this->r_Type)
+		{
+			case IMAPResponseType::IRT_GREETING: return "GREETING";
+			case IMAPResponseType::IRT_LOGOUT: return "LOGOUT";
+			case IMAPResponseType::IRT_CAPABILITIES: return "CAPABILITY";
+		}
 	}
 
 	/**
@@ -115,8 +143,9 @@ namespace FSMTP::IMAP
 
 				return ret;
 			}
+			case IRT_LOGOUT: return "Fannst IMAP4rev1 server terminating connection";
 			case IRT_CAPABILITIES: return IMAPResponse::buildCapabilities(
-				reinterpret_cast<std::vector<IMAPCapability> &capabilities>(this->r_U)
+				*reinterpret_cast<std::vector<IMAPCapability> *>(this->r_U)
 			);
 			default: throw std::runtime_error(EXCEPT_DEBUG("Command not implemented"));
 		}
@@ -127,14 +156,17 @@ namespace FSMTP::IMAP
 	)
 	{
 		std::string ret;
-		for_each(capabilities.begin(), capabilities.end(), [=](const IMAPCapability &c){
+		for (const IMAPCapability &c : capabilities)
+		{
 			ret += c.c_Key;
 			if (c.c_Value != nullptr)
 			{
 				ret += '=';
 				ret += c.c_Value;
 			}
-		});
+			ret += ' ';
+		}
+		ret.pop_back();
 		return ret;
 	}
 }

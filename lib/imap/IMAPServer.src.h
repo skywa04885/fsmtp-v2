@@ -19,6 +19,7 @@
 #include "IMAPServer.src.h"
 #include "IMAPServerSocket.src.h"
 #include "IMAPResponse.src.h"
+#include "IMAPCommand.src.h"
 
 namespace FSMTP::IMAP
 {
@@ -31,6 +32,9 @@ namespace FSMTP::IMAP
 			std::unique_ptr<IMAPClientSocket> client,
 			void *u
 		);
+
+		std::vector<IMAPCapability> s_SecureCapabilities;
+		std::vector<IMAPCapability> s_PlainCapabilities;
 	private:
 		IMAPServerSocket s_Socket;
 		std::atomic<bool> s_SecureRunning;

@@ -23,14 +23,16 @@ namespace FSMTP::IMAP
 	typedef enum : uint32_t
 	{
 		IRT_GREETING = 0,
-		IRT_CAPABILITIES
+		IRT_CAPABILITIES,
+		IRT_LOGOUT
 	} IMAPResponseType;
 
 	typedef enum : uint32_t
 	{
 		IPT_BAD = 0,
 		IPT_OK,
-		IPT_NO
+		IPT_NO,
+		IPT_BYE
 	} IMAPResponsePrefixType;
 
 	typedef struct
@@ -75,6 +77,22 @@ namespace FSMTP::IMAP
 		 * @Return {std::string}
 		 */
 		std::string getMessage(void);
+
+		/**
+		 * Gets the name of the command type
+		 *
+		 * @Param {void}
+		 * @Return {const char *}
+		 */
+		const char *getCommandName(void);
+
+		/**
+		 * Gets an command prefix
+		 *
+		 * @Param {void}
+		 * @Return {const char *} 
+		 */
+		const char *getPrefix(void);
 
 		static std::string buildCapabilities(
 			const std::vector<IMAPCapability> &capabilities

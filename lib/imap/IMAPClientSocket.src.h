@@ -83,12 +83,13 @@ namespace FSMTP::IMAP
 		 * @Return {std::string}
 		 */
 		std::string readUntilCRLF(void);
+
+		struct sockaddr_in s_Addr;
+		bool s_UseSSL;
 	private:
 		Logger s_Logger;
 		const int32_t s_SocketFD;
-		struct sockaddr_in s_Addr;
 		SSL_CTX *s_SSLCTX;
-		bool s_UseSSL;
 		SSL *s_SSL;
 	};
 }

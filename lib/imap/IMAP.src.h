@@ -24,6 +24,7 @@
 #include <memory>
 #include <functional>
 #include <thread>
+#include <cctype>
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
@@ -36,3 +37,6 @@
 #include "../general/Logger.src.h"
 #include "../general/macros.src.h"
 #include "../general/exceptions.src.h"
+#include "../general/cleanup.src.h"
+
+using namespace FSMTP::Cleanup;
