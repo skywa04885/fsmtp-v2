@@ -22,20 +22,20 @@ namespace FSMTP::IMAP
 	 * Default constructor for the imap response
 	 *
 	 * @Param {const IMAPResponseType} r_Type
-	 * @Param {const int32_t} r_TagIndex
-	 * @Param {const bool} r_Untagged
+	 * @Param {const std::string} r_TagIndex
+	 * @Param {const IMAPResponseStructure} r_Structure
 	 * @Param {const IMAPResponsePrefixType} r_PrefType
 	 * @Param {void *} r_U
 	 * @Return {void}
 	 */
 	IMAPResponse::IMAPResponse(
-		const bool r_Untagged,
-		const int32_t r_TagIndex,
+		const IMAPResponseStructure r_Structure,
+		const std::string r_TagIndex,
 		const IMAPResponseType r_Type,
 		const IMAPResponsePrefixType r_PrefType,
 		void *r_U
 	):
-		r_Type(r_Type), r_Untagged(r_Untagged), r_TagIndex(r_TagIndex),
+		r_Type(r_Type), r_Structure(r_Structure), r_TagIndex(r_TagIndex),
 		r_PrefType(r_PrefType), r_U(r_U)
 	{}
 
@@ -47,32 +47,47 @@ namespace FSMTP::IMAP
 	 */
 	std::string IMAPResponse::build(void)
 	{
-		if (!r_Untagged)
+		switch (this->r_Structure)
 		{
-			std::string ret = "* ";
+			case IRS_NTATL:
+			{
+				std::string ret = "* ";
 
-			// Adds the message
-			ret += this->getMessage();
-			ret += "\r\n";
-			ret += std::to_string(this->r_TagIndex);
-			ret += ' ';
+				// Adds the message
+				ret += this->getMessage();
+				ret += "\r\n";
+				ret += this->r_TagIndex;
+				ret += ' ';
 
-			// Adds the command name
-			ret += this->getPrefix();
-			ret += this->getCommandName();
-			ret += " completed\r\n";
-			
-			return ret;
-		} else
-		{
-			std::string ret = "* ";
+				// Adds the command name
+				ret += this->getPrefix();
+				ret += this->getCommandName();
+				ret += " completed\r\n";
 
-			// Adds the prefix and message
-			ret += this->getPrefix();
-			ret += this->getMessage();
-			ret += "\r\n";
+				return ret;
+			}
+			case IRS_NT:
+			{
+				std::string ret = "* ";
 
-			return ret;
+				// Adds the prefix and message
+				ret += this->getPrefix();
+				ret += this->getMessage();
+				ret += "\r\n";
+
+				return ret;
+			}
+			case IRS_TL:
+			{
+				std::string ret = this->r_TagIndex;
+				ret += ' ';
+				ret += this->getPrefix();
+				ret += this->getMessage();
+				ret += "\r\n";
+
+				return ret;
+			}
+			default: throw std::runtime_error(EXCEPT_DEBUG("Structure not implemented"));
 		}
 	}
 
@@ -155,7 +170,7 @@ namespace FSMTP::IMAP
 		const std::vector<IMAPCapability> &capabilities
 	)
 	{
-		std::string ret;
+		std::string ret = "CAPABILITY ";
 		for (const IMAPCapability &c : capabilities)
 		{
 			ret += c.c_Key;

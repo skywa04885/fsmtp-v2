@@ -24,7 +24,8 @@ namespace FSMTP::IMAP
 	{
 		IRT_GREETING = 0,
 		IRT_CAPABILITIES,
-		IRT_LOGOUT
+		IRT_LOGOUT,
+		IRT_ERR
 	} IMAPResponseType;
 
 	typedef enum : uint32_t
@@ -34,6 +35,13 @@ namespace FSMTP::IMAP
 		IPT_NO,
 		IPT_BYE
 	} IMAPResponsePrefixType;
+
+	typedef enum : uint8_t
+	{
+		IRS_NTATL = 0, 	// Non tagged line, followed by tagged line
+		IRS_NT, 				// Non tagged line only
+		IRS_TL 					// Tagged line only
+	} IMAPResponseStructure;
 
 	typedef struct
 	{
@@ -48,15 +56,15 @@ namespace FSMTP::IMAP
 		 * Default constructor for the imap response
 		 *
 		 * @Param {const IMAPResponseType} r_Type
-		 * @Param {const int32_t} r_TagIndex
-		 * @Param {const bool} r_Untagged
+		 * @Param {const std::string} r_TagIndex
+		 * @Param {const IMAPResponseStructure} r_structure
 		 * @Param {const IMAPResponsePrefixType} r_PrefType
 		 * @Param {void *} r_U
 		 * @Return {void}
 		 */
 		explicit IMAPResponse(
-			const bool r_Untagged,
-			const int32_t r_TagIndex,
+			const IMAPResponseStructure r_Structure,
+			const std::string r_TagIndex,
 			const IMAPResponseType r_Type,
 			const IMAPResponsePrefixType r_PrefType,
 			void *r_U
@@ -101,8 +109,8 @@ namespace FSMTP::IMAP
 		std::string r_Message;
 		IMAPResponseType r_Type;
 		void *r_U;
-		bool r_Untagged;
-		int32_t r_TagIndex;
+		IMAPResponseStructure r_Structure;
+		std::string r_TagIndex;
 		IMAPResponsePrefixType r_PrefType;
 	};
 }

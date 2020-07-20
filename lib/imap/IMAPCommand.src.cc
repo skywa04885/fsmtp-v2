@@ -27,11 +27,8 @@ namespace FSMTP::IMAP
 	 * @Param {void}
 	 * @Return {void}
 	 */
-	IMAPCommand::IMAPCommand(void):
-		c_Index(c_Index)
-	{
-
-	}
+	IMAPCommand::IMAPCommand(void)
+	{}
 
 	/**
 	 * Parses an IMAP command
@@ -70,9 +67,7 @@ namespace FSMTP::IMAP
 			throw SyntaxError("Could not parse command");
 
 		// Parses the index
-		std::string index = raw.substr(0, sep);
-		if (!std::isdigit(index[0])) index.erase(0, 1);
-		this->c_Index = std::stoi(index);
+		this->c_Index = clean.substr(0, sep);
 
 		// Parses the command, and converts it to lower case
 		std::string other = clean.substr(sep+1);
@@ -102,6 +97,8 @@ namespace FSMTP::IMAP
 			{
 				if (command == "logout")
 					this->c_Type = IMAPCommandType::ICT_LOGOUT;
+				else if (command == "login")
+					this->c_Type = IMAPCommandType::ICT_LOGIN;
 				else
 					this->c_Type = IMAPCommandType::ICT_UNKNOWN;
 				break;
@@ -109,11 +106,14 @@ namespace FSMTP::IMAP
 			default: this->c_Type = IMAPCommandType::ICT_UNKNOWN;
 		}
 
-		// Checks if there are any arguments, if so parse them
-		other = other.substr(cmdArgSep);
-		if (!other.empty())
+		// Gets the arguments, and removes the first whitespace
+		std::string argumentsRaw = other.substr(cmdArgSep);
+		if (argumentsRaw[0] == ' ') argumentsRaw.erase(0, 1);
+
+		// Checks if there is anything, if so start parsing
+		if (!argumentsRaw.empty())
 		{
-			std::stringstream stream(other);
+			std::stringstream stream(argumentsRaw);
 			std::string arg;
 			while (std::getline(stream, arg, ' '))
 				this->c_Args.push_back(arg);

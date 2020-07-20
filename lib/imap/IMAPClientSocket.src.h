@@ -62,15 +62,15 @@ namespace FSMTP::IMAP
 		 * Sends an response to the client
 		 *
 		 * @Param {const IMAPResponseType} r_Type
-		 * @Param {const int32_t} r_TagIndex
-		 * @Param {const bool} r_Untagged
+		 * @Param {const std::string} r_TagIndex
+		 * @Param {const IMAPResponseStructure} r_Structure
 		 * @Param {const IMAPResponsePrefixType} r_PrefType
 		 * @Param {void *} r_U
 		 * @Return {void}
 		 */
 		void sendResponse(
-			const bool r_Untagged,
-			const int32_t r_TagIndex,
+			const IMAPResponseStructure r_Structure,
+			const std::string r_TagIndex,
 			const IMAPResponseType r_Type,
 			const IMAPResponsePrefixType r_PrefType,
 			void *r_U

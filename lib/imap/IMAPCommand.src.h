@@ -24,7 +24,8 @@ namespace FSMTP::IMAP
 	{
 		ICT_CAPABILITY = 0,
 		ICT_UNKNOWN,
-		ICT_LOGOUT
+		ICT_LOGOUT,
+		ICT_LOGIN
 	} IMAPCommandType;
 
 	class IMAPCommand
@@ -54,7 +55,7 @@ namespace FSMTP::IMAP
 		 */
 		void parse(const std::string &raw);
 	
-		int32_t c_Index;
+		std::string c_Index;
 		IMAPCommandType c_Type;
 		std::vector<std::string> c_Args;
 	};

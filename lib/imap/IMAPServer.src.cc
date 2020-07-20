@@ -41,7 +41,7 @@ namespace FSMTP::IMAP
 
 		// Sets the secure only capability's
 		this->s_SecureCapabilities.push_back(IMAPCapability{
-			"AUTH", "PLAIN"
+			"LOGIN", nullptr
 		});
 
 		// Sets the plain only capability's
@@ -65,7 +65,7 @@ namespace FSMTP::IMAP
 
 		// Sends the initial response
 		client->sendResponse(
-			true, 0,
+			IRS_NT, "",
 			IMAPResponseType::IRT_GREETING,
 			IMAPResponsePrefixType::IPT_OK,
 			nullptr
@@ -94,15 +94,19 @@ namespace FSMTP::IMAP
 			{
 				switch (command.c_Type)
 				{
+					// ===============================================
+					// Handles the 'CAPABILITY' command
+					//
+					// Shows what the server is capable of
+					// ===============================================
 					case IMAPCommandType::ICT_CAPABILITY:
 					{
-						std::cout << "asd" << std::endl;
 						// Checks if we are in plain or secure mode
 						// - this effects the kind of commands we may use
 						if (client->s_UseSSL)
 						{
 							client->sendResponse(
-								true, command.c_Index,
+								IRS_NTATL, command.c_Index,
 								IMAPResponseType::IRT_CAPABILITIES,
 								IMAPResponsePrefixType::IPT_OK,
 								&server.s_SecureCapabilities
@@ -110,7 +114,7 @@ namespace FSMTP::IMAP
 						} else
 						{
 							client->sendResponse(
-								false, command.c_Index,
+								IRS_NTATL, command.c_Index,
 								IMAPResponseType::IRT_CAPABILITIES,
 								IMAPResponsePrefixType::IPT_OK,
 								&server.s_PlainCapabilities
@@ -118,17 +122,58 @@ namespace FSMTP::IMAP
 						}
 						break;
 					}
+					// ===============================================
+					// Handles the 'LOGIN' command
+					//
+					// Authenticates the user, responses:
+					// - OK: Login completed, now in authenticated
+					// state
+					// - NO: Login failure: user or password rejected
+					// - BAD: Command unknown / arguments invalid
+					// ===============================================
+					case IMAPCommandType::ICT_LOGIN:
+					{
+						// Tries to login, in the mean time handles the
+						// - errors, and sends them
+						try
+						{
+
+						} catch (const IMAPBad& e)
+						{
+
+						} catch (const IMAPNo& e)
+						{
+							client->sendResponse(
+								IRS_TL, command.c_Index,
+								IMAPResponseType::IRT_LOGOUT,
+								IMAPResponsePrefixType::IPT_OK,
+								nullptr
+							);
+						}
+						break;
+					}
+					// ===============================================
+					// Handles the 'LOGOUT' command
+					//
+					// Closes the session, and shuts the connection
+					// - down
+					// ===============================================
 					case IMAPCommandType::ICT_LOGOUT:
 					{
 						// Sends the message and terminates
 						client->sendResponse(
-							false, command.c_Index,
+							IRS_NTATL, command.c_Index,
 							IMAPResponseType::IRT_LOGOUT,
 							IMAPResponsePrefixType::IPT_OK,
 							nullptr
 						);
 						goto _imap_server_acceptor_end;
 					}
+					// ===============================================
+					// Handles the unknown commands
+					//
+					// Throws unknown command error
+					// ===============================================
 					case IMAPCommandType::ICT_UNKNOWN:
 					default:
 					{

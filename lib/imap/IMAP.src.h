@@ -40,3 +40,29 @@
 #include "../general/cleanup.src.h"
 
 using namespace FSMTP::Cleanup;
+
+class IMAPBad : std::exception
+{
+public:
+	IMAPBad(const std::string &e_Message):
+		e_Message(e_Message)
+	{}
+
+	const char *what(void) const throw()
+	{ return this->e_Message.c_str(); }
+private:
+	std::string e_Message;
+};
+
+class IMAPNo : std::exception
+{
+public:
+	IMAPNo(const std::string &e_Message):
+		e_Message(e_Message)
+	{}
+
+	const char *what(void) const throw()
+	{ return this->e_Message.c_str(); }
+private:
+	std::string e_Message;
+};
