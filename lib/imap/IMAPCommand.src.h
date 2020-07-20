@@ -26,7 +26,8 @@ namespace FSMTP::IMAP
 		ICT_UNKNOWN,
 		ICT_LOGOUT,
 		ICT_LOGIN,
-		ICT_STARTTLS
+		ICT_STARTTLS,
+		ICT_LIST
 	} IMAPCommandType;
 
 	class IMAPCommand

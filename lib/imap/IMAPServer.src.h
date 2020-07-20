@@ -22,6 +22,7 @@
 #include "IMAPCommand.src.h"
 #include "IMAPAuthHandler.src.h"
 #include "IMAPServerSession.src.h"
+#include "IMAPMessageHander.src.h"
 
 namespace FSMTP::IMAP
 {

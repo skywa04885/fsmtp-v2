@@ -36,4 +36,12 @@ namespace FSMTP::Cleanup
 	 * @Param {std::string &} str
 	 */
 	void removeFirstAndLastWhite(std::string &str);
+
+	/**
+	 * Removes string quotes from string if there
+	 *
+	 * @Param {std::stirng &} str
+	 * @Return {void}
+	 */
+	void removeStringQuotes(std::string &str);
 }

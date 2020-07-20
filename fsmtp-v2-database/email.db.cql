@@ -66,3 +66,13 @@ CREATE TABLE IF NOT EXISTS fannst.local_domain (
     e_domain_uuid TIMEUUID,
     PRIMARY KEY (e_domain, e_domain_uuid)
 );
+
+-- The MAIL folders
+CREATE TABLE IF NOT EXISTS fannst.mailboxes(
+    e_bucket BIGINT,
+    e_domain VARCHAR,
+    e_uuid TIMEUUID,
+    e_mailbox_path VARCHAR,
+    e_mailbox_stand BOOLEAN,
+    PRIMARY KEY((e_bucket), e_domain, e_uuid, e_mailbox_path)
+) WITH CLUSTERING ORDER BY (e_domain DESC, e_uuid DESC, e_mailbox_path DESC);

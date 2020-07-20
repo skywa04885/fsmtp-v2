@@ -102,6 +102,8 @@ namespace FSMTP::IMAP
 					this->c_Type = IMAPCommandType::ICT_LOGOUT;
 				else if (command == "login")
 					this->c_Type = IMAPCommandType::ICT_LOGIN;
+				else if (command == "list")
+					this->c_Type = IMAPCommandType::ICT_LIST;
 				else
 					this->c_Type = IMAPCommandType::ICT_UNKNOWN;
 				break;

@@ -148,7 +148,26 @@ namespace FSMTP::IMAP
 			{
 				switch (command.c_Type)
 				{
-
+					// ===============================================
+					// Handles the 'LIST' command
+					//
+					// Shows the folders etcetera, returns: 
+					// - OK: List completed
+					// - NO: list failure: can't list that reference
+					// or name
+					// - BAD: Command unknown or arguments invalid
+					// ===============================================
+					case IMAPCommandType::ICT_LIST:
+					{
+						MESSAGE_HANDLER::list(
+							client.get(),
+							command,
+							session,
+							redis.get(), 
+							cassandra.get()
+						);
+						continue;
+					}
 					// ===============================================
 					// Handles the 'STATTTLS' command
 					//

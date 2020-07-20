@@ -44,11 +44,16 @@ namespace FSMTP::IMAP::AUTH_HANDLER
 		// Gets the username and password
 		std::string &user = command.c_Args[0];
 		std::string &pass = command.c_Args[1];
+		removeStringQuotes(user);
+		removeStringQuotes(pass);
 
 		// Checks if the email address contains domain,
 		// - if not append one
 		if (user.find_first_of('@') == std::string::npos)
+		{
+			user += '@';
 			user += _SMTP_DEF_DOMAIN;
+		}
 
 		// Parses the email address, and throws error
 		// - if the username is invalid

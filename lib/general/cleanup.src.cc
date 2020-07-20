@@ -56,4 +56,17 @@ namespace FSMTP::Cleanup
 		if (str[0] == ' ') str.erase(0, 1);
 		if (str[str.size() - 1] == ' ') str.erase(str.size() - 1);
 	}
+
+	/**
+	 * Removes string quotes from string if there
+	 *
+	 * @Param {std::stirng &} str
+	 * @Return {void}
+	 */
+	void removeStringQuotes(std::string &str)
+	{
+		if (str.size() < 2) return;
+		if (str[0] == '"') str.erase(0, 1);
+		if (str[str.size() - 1] == '"') str.erase(str.size() - 1);	
+	}
 }
