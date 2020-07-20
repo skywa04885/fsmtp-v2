@@ -22,10 +22,21 @@ namespace FSMTP::IMAP
 	 * Default constructor for the imap response
 	 *
 	 * @Param {const IMAPResponseType} r_Type
+	 * @Param {const int32_t} r_TagIndex
+	 * @Param {const bool} r_Untagged
+	 * @Param {const IMAPResponsePrefixType} r_PrefType
+	 * @Param {void *} r_U
 	 * @Return {void}
 	 */
-	IMAPResponse::IMAPResponse(const IMAPResponseType r_Type):
-		r_Type(r_Type)
+	IMAPResponse::IMAPResponse(
+		const bool r_Untagged,
+		const int32_t r_TagIndex,
+		const IMAPResponseType r_Type,
+		const IMAPResponsePrefixType r_PrefType,
+		void *r_U
+	):
+		r_Type(r_Type), r_Untagged(r_Untagged), r_TagIndex(r_TagIndex),
+		r_PrefType(r_PrefType), r_U(r_U)
 	{}
 
 	/**
@@ -36,7 +47,39 @@ namespace FSMTP::IMAP
 	 */
 	std::string IMAPResponse::build(void)
 	{
+		std::string ret;
 
+		// Appends the tag, or taggles char and after that
+		// - we will add the prefix
+		if (this->r_Untagged) ret += "* ";
+		else
+		{
+			ret += std::to_string(this->r_TagIndex);
+		}
+
+		switch (this->r_PrefType)
+		{
+			case IMAPResponsePrefixType::IPT_BAD:
+			{
+				ret += "BAD ";
+				break;
+			}
+			case IMAPResponsePrefixType::IPT_OK:
+			{
+				ret += "OK ";
+				break;
+			}
+			case IMAPResponsePrefixType::IPT_NO:
+			{
+				ret += "NO ";
+				break;
+			}
+		}
+
+		// Adds the message and returns
+		ret += this->getMessage();
+		ret += "\r\n";
+		return ret;
 	}
 
 	/**
@@ -47,6 +90,51 @@ namespace FSMTP::IMAP
 	 */
 	std::string IMAPResponse::getMessage(void)
 	{
+		switch (this->r_Type)
+		{
+			case IMAPResponseType::IRT_GREETING:
+			{
+				char dateBuffer[128];
+				std::time_t rawTime;
+				struct tm *timeInfo = nullptr;
 
+				// Builds the standard message
+				std::string ret = _SMTP_SERVICE_NODE_NAME;
+				ret += " Fannst IMAP4rev1 service ready at, ";
+
+				// Appends the date
+				time(&rawTime);
+				timeInfo = localtime(&rawTime);
+				strftime(
+					dateBuffer,
+					sizeof (dateBuffer),
+					"%a, %d %b %Y %T %Z",
+					timeInfo
+				);
+				ret += dateBuffer;
+
+				return ret;
+			}
+			case IRT_CAPABILITIES: return IMAPResponse::buildCapabilities(
+				reinterpret_cast<std::vector<IMAPCapability> &capabilities>(this->r_U)
+			);
+			default: throw std::runtime_error(EXCEPT_DEBUG("Command not implemented"));
+		}
+	}
+
+	std::string IMAPResponse::buildCapabilities(
+		const std::vector<IMAPCapability> &capabilities
+	)
+	{
+		std::string ret;
+		for_each(capabilities.begin(), capabilities.end(), [=](const IMAPCapability &c){
+			ret += c.c_Key;
+			if (c.c_Value != nullptr)
+			{
+				ret += '=';
+				ret += c.c_Value;
+			}
+		});
+		return ret;
 	}
 }

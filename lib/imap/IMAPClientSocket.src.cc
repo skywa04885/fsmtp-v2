@@ -33,7 +33,11 @@ namespace FSMTP::IMAP
 		SSL *s_SSL,
 		SSL_CTX *s_SSLCTX
 	):
-		s_Addr(s_Addr), s_SocketFD(s_SocketFD), s_SSL(s_SSL), s_SSLCTX(s_SSLCTX)
+		s_Addr(s_Addr), s_SocketFD(s_SocketFD), s_SSL(s_SSL), s_SSLCTX(s_SSLCTX),
+		s_Logger(
+			std::string("IMAPClientSock:") + inet_ntoa(s_Addr.sin_addr),
+			LoggerLevel::INFO
+		)
 	{
 		if (s_SSL != nullptr) this->s_UseSSL = true;
 		else this->s_UseSSL = false;
@@ -49,9 +53,140 @@ namespace FSMTP::IMAP
 	 */
 	IMAPClientSocket::~IMAPClientSocket(void)
 	{
+		shutdown(this->s_SocketFD, SHUT_RDWR);
 		if (this->s_UseSSL)
 		{
 			SSL_free(this->s_SSL);
 		}
+	}
+
+	/**
+	 * Sends an string to the client
+	 * 
+	 * @Param {const std::stirng &} raw
+	 * @Return {void}
+	 */
+	void IMAPClientSocket::sendString(const std::string &raw)
+	{
+		int32_t rc;
+
+		DEBUG_ONLY(this->s_Logger << DEBUG << "S->" << raw.substr(0, raw.size() - 2) << ENDL);
+
+		// Checks if we need to send it with ssl or not
+		if (this->s_UseSSL)
+		{
+			rc = SSL_write(this->s_SSL, raw.c_str(), raw.size());
+			if (rc <= 0)
+			{
+				ERR_print_errors_fp(stderr);
+				throw SocketWriteException(EXCEPT_DEBUG("SSL_write() failed"));
+			}
+		} else
+		{
+			rc = send(this->s_SocketFD, raw.c_str(), raw.size(), 0);
+			if (rc <= 0)
+			{
+				std::string error = "send() failed: ";
+				error += strerror(errno);
+				throw SocketWriteException(EXCEPT_DEBUG(error)); 
+			}
+		}
+	}
+
+	/**
+	 * Sends an response to the client
+	 *
+	 * @Param {const IMAPResponseType} r_Type
+	 * @Param {const int32_t} r_TagIndex
+	 * @Param {const bool} r_Untagged
+	 * @Param {const IMAPResponsePrefixType} r_PrefType
+	 * @Param {void *} r_U
+	 * @Return {void}
+	 */
+	void IMAPClientSocket::sendResponse(
+		const bool r_Untagged,
+		const int32_t r_TagIndex,
+		const IMAPResponseType r_Type,
+		const IMAPResponsePrefixType r_PrefType,
+		void *r_U
+	)
+	{
+		IMAPResponse response(r_Untagged, r_TagIndex, r_Type, r_PrefType, r_U);
+		this->sendString(response.build());
+	}
+
+	/**
+	 * Reads an string untill CRLF is reached
+	 *
+	 * @Param {void}
+	 * @Return {std::string}
+	 */
+	std::string IMAPClientSocket::readUntilCRLF(void)
+	{
+		int32_t rc;
+		char buffer[1024];
+		std::string res;
+		std::size_t i;
+
+		// Gets the index of the newline
+		for (;;)
+		{
+			if (this->s_UseSSL)
+			{
+				rc = SSL_peek(this->s_SSL, buffer, sizeof (buffer));
+				if (rc <= 0)
+				{
+					// TODO: openssl error stuff
+					ERR_print_errors_fp(stderr);
+					throw SocketReadException(EXCEPT_DEBUG("SSL_peek() failed"));
+				}
+			} else
+			{			
+				rc = recv(this->s_SocketFD, buffer, sizeof(buffer), MSG_PEEK);
+				if (rc <= 0)
+				{
+					std::string error = "recv() failed: ";
+					error += strerror(errno);
+					throw SocketReadException(EXCEPT_DEBUG(error));
+				}
+			}
+
+			bool crlfFound = false;
+			for (i = 0; i < rc; i++)
+			{
+				if (buffer[i] == '\n')
+				{
+					crlfFound = true;
+					break;
+				}
+			}
+			if (crlfFound) break;
+		}
+
+		// Reads the data untill the newline
+		if (this->s_UseSSL)
+		{
+			rc = SSL_read(this->s_SSL, buffer, ++i);
+			if (rc <= 0)
+			{
+				ERR_print_errors_fp(stderr);
+				throw SocketReadException(EXCEPT_DEBUG("SSL_read() failed"));
+			}
+		} else
+		{
+			rc = recv(this->s_SocketFD, buffer, ++i, 0);
+			if (rc <= 0)
+			{
+				std::string error = "recv() failed: ";
+				error += strerror(errno);
+				throw SocketReadException(EXCEPT_DEBUG(error));
+			}
+		}
+
+		// Returns the result
+		std::string result(buffer, rc - 2);
+		memset(buffer, 0, sizeof(buffer));
+		DEBUG_ONLY(this->s_Logger << DEBUG << "C->" << result << ENDL);
+		return result;
 	}
 }

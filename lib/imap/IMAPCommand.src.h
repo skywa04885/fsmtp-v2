@@ -16,25 +16,19 @@
 
 #pragma once
 
-#include "IMAPServer.src.h"
-#include "IMAPServerSocket.src.h"
 #include "IMAPResponse.src.h"
 
 namespace FSMTP::IMAP
 {
-	class IMAPServer
+	typedef enum : uint32_t
+	{
+		ICT_CAPABILITY = 0
+	} IMAPCommandType;
+
+	class IMAPCommand
 	{
 	public:
-		IMAPServer(const int32_t plainPort, const int32_t securePort);
-
-		static void acceptorCallback(
-			std::unique_ptr<IMAPClientSocket> client,
-			void *u
-		);
 	private:
-		IMAPServerSocket s_Socket;
-		std::atomic<bool> s_SecureRunning;
-		std::atomic<bool> s_PlainRunning;
-		std::atomic<bool> s_Run;
+		std::vector<std::string> c_Args;
 	};
 }

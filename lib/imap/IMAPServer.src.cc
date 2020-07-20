@@ -37,6 +37,23 @@ namespace FSMTP::IMAP
 		void *u
 	)
 	{
-		// Sends the initial message
+		// Sends the initial response
+		client->sendResponse(
+			true, 0,
+			IMAPResponseType::IRT_GREETING,
+			IMAPResponsePrefixType::IPT_OK,
+			nullptr
+		);
+
+		// Starts the communication loop
+		for (;;)
+		{
+			try {
+				std::string raw = client->readUntilCRLF();
+			} catch (const SocketReadException &e)
+			{
+
+			}
+		}
 	}
 }

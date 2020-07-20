@@ -17,6 +17,7 @@
 #pragma once
 
 #include "IMAP.src.h"
+#include "IMAPResponse.src.h"
 
 namespace FSMTP::IMAP
 {
@@ -48,11 +49,46 @@ namespace FSMTP::IMAP
 		 * @Return {void}
 		 */
 		~IMAPClientSocket(void);
+
+		/**
+		 * Sends an string to the client
+		 * 
+		 * @Param {const std::stirng &} raw
+		 * @Return {void}
+		 */
+		void sendString(const std::string &raw);
+
+		/**
+		 * Sends an response to the client
+		 *
+		 * @Param {const IMAPResponseType} r_Type
+		 * @Param {const int32_t} r_TagIndex
+		 * @Param {const bool} r_Untagged
+		 * @Param {const IMAPResponsePrefixType} r_PrefType
+		 * @Param {void *} r_U
+		 * @Return {void}
+		 */
+		void sendResponse(
+			const bool r_Untagged,
+			const int32_t r_TagIndex,
+			const IMAPResponseType r_Type,
+			const IMAPResponsePrefixType r_PrefType,
+			void *r_U
+		);
+
+		/**
+		 * Reads an string untill CRLF is reached
+		 *
+		 * @Param {void}
+		 * @Return {std::string}
+		 */
+		std::string readUntilCRLF(void);
 	private:
-		struct sockaddr_in s_Addr;
+		Logger s_Logger;
 		const int32_t s_SocketFD;
-		SSL *s_SSL;
+		struct sockaddr_in s_Addr;
 		SSL_CTX *s_SSLCTX;
 		bool s_UseSSL;
+		SSL *s_SSL;
 	};
 }
