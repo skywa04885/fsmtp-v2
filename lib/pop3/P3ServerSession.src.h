@@ -16,9 +16,6 @@
 
 #pragma once
 
-#include <cstdint>
-#include <string>
-
 #include "P3.src.h"
 
 using namespace FSMTP::Models;

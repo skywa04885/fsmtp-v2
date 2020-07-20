@@ -16,24 +16,23 @@
 
 #pragma once
 
-#include "IMAPServer.src.h"
-#include "IMAPServerSocket.src.h"
+#include <string>
+#include <vector>
+#include <cassert>
+#include <cstdint>
+#include <atomic>
+#include <memory>
+#include <functional>
+#include <thread>
 
-namespace FSMTP::IMAP
-{
-	class IMAPServer
-	{
-	public:
-		IMAPServer(const int32_t plainPort, const int32_t securePort);
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+#include <sys/ioctl.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
-		static void acceptorCallback(
-			std::unique_ptr<IMAPClientSocket> client,
-			void *u
-		);
-	private:
-		IMAPServerSocket s_Socket;
-		std::atomic<bool> s_SecureRunning;
-		std::atomic<bool> s_PlainRunning;
-		std::atomic<bool> s_Run;
-	};
-}
+#include "../general/Logger.src.h"
+#include "../general/macros.src.h"
+#include "../general/exceptions.src.h"

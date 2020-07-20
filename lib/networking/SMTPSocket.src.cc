@@ -306,18 +306,18 @@ namespace FSMTP::Networking
 	 * An single instance of an acceptor thread,
 	 * - these accept the clients
 	 *
-	 * @Param {std::atomic<bool> &} run
+	 * @Param {std::atomic<bool> *} run
 	 * @Param {std::size_t} delay
-	 * @Param {std::atomic<bool> &} running
-	 * @Param {std::function<void(params)> &} cb
+	 * @Param {std::atomic<bool> *} running
+	 * @Param {std::function<void(params)>} cb
 	 * @param {void *} u
 	 * @Return void
 	 */
 	void SMTPSocket::asyncAcceptorThread(
-		std::atomic<bool> &run,
+		std::atomic<bool> *run,
 		const std::size_t delay,
-		std::atomic<bool> &running,
-		const std::function<void(struct sockaddr_in *, int32_t, void *)> &cb,
+		std::atomic<bool> *running,
+		const std::function<void(struct sockaddr_in *, int32_t, void *)> cb,
 		void *u
 	)
 	{
@@ -329,8 +329,8 @@ namespace FSMTP::Networking
 		// Sets running to true and performs infinite loop
 		// - if the run variable is set to false, we will
 		// - quit and set running to false
-		running = true;
-		while (run == true)
+		*running = true;
+		while (*run == true)
 		{
 			// Sleeps for some time ( before all the code because we may use continue )
 			std::this_thread::sleep_for(std::chrono::milliseconds(delay));
@@ -372,7 +372,7 @@ namespace FSMTP::Networking
 			std::thread t(cb, sAddr, clientSockFD, u);
 			t.detach();
 		}
-		running = false;
+		*running = false;
 	}
 
 	/**
@@ -399,20 +399,20 @@ namespace FSMTP::Networking
 	/**
 	 * Starts the client acceptor in sync mode ( The slow and blocking one )
 	 *
-	 * @Param {std::function<void(params)> &} cb
+	 * @Param {std::function<void(params)>} cb
 	 * @Param {std::size_t} delay
-	 * @Param {bool &} mult
-	 * @Param {std::atomic<bool> &} run
-	 * @Param {std::atomic<bool> &} running
+	 * @Param {bool} mult
+	 * @Param {std::atomic<bool> *} run
+	 * @Param {std::atomic<bool> *} running
 	 * @param {void *} u
 	 * @Return void
 	 */
 	void SMTPSocket::startAcceptorSync(
-		const std::function<void(struct sockaddr_in *, int32_t, void *)> &cb,
+		const std::function<void(struct sockaddr_in *, int32_t, void *)> cb,
 		const std::size_t delay,
-		const bool &mult,
-		std::atomic<bool> &run,
-		std::atomic<bool> &running,
+		const bool mult,
+		std::atomic<bool> *run,
+		std::atomic<bool> *running,
 		void *u
 	)
 	{

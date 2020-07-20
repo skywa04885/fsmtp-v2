@@ -69,7 +69,7 @@ namespace FSMTP::POP3
 		rc = bind(
 			this->s_SocketFD,
 			reinterpret_cast<struct sockaddr *>(&this->s_SocketAddr),
-			sizeof (struct sockaddr)
+			sizeof(struct sockaddr)
 		);
 		if (rc < 0)
 		{

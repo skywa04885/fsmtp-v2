@@ -51,6 +51,7 @@
 #include "../models/RawEmail.src.h"
 #include "../models/EmailShortcut.src.h"
 #include "../parsers/mime.src.h"
+#include "../general/exceptions.src.h"
 
 #ifndef _POP3_QUEUE_MAX
 #define _POP3_QUEUE_MAX 40
@@ -66,97 +67,3 @@
 
 using namespace FSMTP::Cleanup;
 using namespace FSMTP::Parsers;
-
-namespace FSMTP::POP3
-{
-	class SocketWriteException : std::exception
-	{
-	public:
-		SocketWriteException(const std::string &e_Message):
-			e_Message(e_Message)
-		{}
-
-		const char *what(void) const throw()
-		{ return this->e_Message.c_str(); }
-	private:
-		std::string e_Message;
-	};
-
-	class SocketReadException : std::exception
-	{
-	public:
-		SocketReadException(const std::string &e_Message):
-			e_Message(e_Message)
-		{}
-
-		const char *what(void) const throw()
-		{ return this->e_Message.c_str(); }
-	private:
-		std::string e_Message;
-	};
-
-	class SocketInitializationException : std::exception
-	{
-	public:
-		SocketInitializationException(const std::string &e_Message):
-			e_Message(e_Message)
-		{}
-
-		const char *what(void) const throw()
-		{ return this->e_Message.c_str(); }
-	private:
-		std::string e_Message;
-	};
-
-	class SocketSSLError : std::exception
-	{
-	public:
-		SocketSSLError(const std::string &e_Message):
-			e_Message(e_Message)
-		{}
-
-		const char *what(void) const throw()
-		{ return this->e_Message.c_str(); }
-	private:
-		std::string e_Message;
-	};
-
-	class InvalidCommand : std::exception
-	{
-	public:
-		InvalidCommand(const std::string &e_Message):
-			e_Message(e_Message)
-		{}
-
-		const char *what(void) const throw()
-		{ return this->e_Message.c_str(); }
-	private:
-		std::string e_Message;
-	};
-
-	class SyntaxError : std::exception
-	{
-	public:
-		SyntaxError(const std::string &e_Message):
-			e_Message(e_Message)
-		{}
-
-		const char *what(void) const throw()
-		{ return this->e_Message.c_str(); }
-	private:
-		std::string e_Message;
-	};
-
-	class OrderError : std::exception
-	{
-	public:
-		OrderError(const std::string &e_Message):
-			e_Message(e_Message)
-		{}
-
-		const char *what(void) const throw()
-		{ return this->e_Message.c_str(); }
-	private:
-		std::string e_Message;
-	};
-}

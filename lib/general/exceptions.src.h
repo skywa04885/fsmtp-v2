@@ -21,15 +21,133 @@
 
 namespace FSMTP
 {
-	class EmptyQuery : public std::runtime_error
+	// =========================================
+	// Socket exceptions
+	//
+	// Exceptions which occur in transport
+	// =========================================
+
+	class SocketWriteException : std::exception
 	{
 	public:
-		EmptyQuery(const std::string &m): std::runtime_error(m) {};
+		SocketWriteException(const std::string &e_Message):
+			e_Message(e_Message)
+		{}
+
+		const char *what(void) const throw()
+		{ return this->e_Message.c_str(); }
+	private:
+		std::string e_Message;
 	};
 
-	class DatabaseException : public std::runtime_error
+	class SocketReadException : std::exception
 	{
 	public:
-		DatabaseException(const std::string &m): std::runtime_error(m) {};
+		SocketReadException(const std::string &e_Message):
+			e_Message(e_Message)
+		{}
+
+		const char *what(void) const throw()
+		{ return this->e_Message.c_str(); }
+	private:
+		std::string e_Message;
+	};
+
+	class SocketInitializationException : std::exception
+	{
+	public:
+		SocketInitializationException(const std::string &e_Message):
+			e_Message(e_Message)
+		{}
+
+		const char *what(void) const throw()
+		{ return this->e_Message.c_str(); }
+	private:
+		std::string e_Message;
+	};
+
+	class SocketSSLError : std::exception
+	{
+	public:
+		SocketSSLError(const std::string &e_Message):
+			e_Message(e_Message)
+		{}
+
+		const char *what(void) const throw()
+		{ return this->e_Message.c_str(); }
+	private:
+		std::string e_Message;
+	};
+
+	class InvalidCommand : std::exception
+	{
+	public:
+		InvalidCommand(const std::string &e_Message):
+			e_Message(e_Message)
+		{}
+
+		const char *what(void) const throw()
+		{ return this->e_Message.c_str(); }
+	private:
+		std::string e_Message;
+	};
+
+	class SyntaxError : std::exception
+	{
+	public:
+		SyntaxError(const std::string &e_Message):
+			e_Message(e_Message)
+		{}
+
+		const char *what(void) const throw()
+		{ return this->e_Message.c_str(); }
+	private:
+		std::string e_Message;
+	};
+
+	class OrderError : std::exception
+	{
+	public:
+		OrderError(const std::string &e_Message):
+			e_Message(e_Message)
+		{}
+
+		const char *what(void) const throw()
+		{ return this->e_Message.c_str(); }
+	private:
+		std::string e_Message;
+	};
+
+	// =========================================
+	// Database exceptions
+	//
+	// Exceptions which occur in database query
+	// -'s etcetera
+	// =========================================
+
+	class EmptyQuery : std::exception
+	{
+	public:
+		EmptyQuery(const std::string &e_Message):
+			e_Message(e_Message)
+		{}
+
+		const char *what(void) const throw()
+		{ return this->e_Message.c_str(); }
+	private:
+		std::string e_Message;
+	};
+
+	class DatabaseException : std::exception
+	{
+	public:
+		DatabaseException(const std::string &e_Message):
+			e_Message(e_Message)
+		{}
+
+		const char *what(void) const throw()
+		{ return this->e_Message.c_str(); }
+	private:
+		std::string e_Message;
 	};
 }

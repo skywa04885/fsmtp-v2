@@ -74,8 +74,8 @@ namespace FSMTP::Server
 			&SMTPServer::onClientSync,
 			30,
 			true,
-			this->s_ShouldBeRunning,
-			this->s_IsRunning,
+			&this->s_ShouldBeRunning,
+			&this->s_IsRunning,
 			reinterpret_cast<void *>(this)
 		);
 
@@ -152,17 +152,32 @@ namespace FSMTP::Server
 				// Checks how we should respond to the command
 				switch (command.c_CommandType)
 				{
+					// ========================================
+					// Handles the 'HELP' command
+					//
+					// Sends information about the server
+					// ========================================
 					case ClientCommandType::CCT_HELP:
 					{
 						client.sendResponse(SMTPResponseType::SRC_HELP_RESP);
 						break;
 					}
+					// ========================================
+					// Handles the 'QUIT' command
+					//
+					// Closes the connection
+					// ========================================
 					case ClientCommandType::CCT_QUIT:
 					{
 						// Writes the goodbye message, and closes the connection
 						client.sendResponse(SMTPResponseType::SRC_QUIT_GOODBYE);
 						goto smtp_server_close_conn;
 					}
+					// ========================================
+					// Handles the 'HELO' command
+					//
+					// Initializes connection
+					// ========================================
 					case ClientCommandType::CCT_HELO:
 					{ // ( Simple hello command )
 						// Checks we should handle the hello command
@@ -191,6 +206,11 @@ namespace FSMTP::Server
 						// Continues to the next round
 						continue;
 					}
+					// ========================================
+					// Handles the 'EHLO' command
+					//
+					// Sends the server capabilities
+					// ========================================
 					case ClientCommandType::CCT_EHLO:
 					{ // ( Extended Hello command )
 						// Checks if we should handle the hello command
@@ -219,6 +239,11 @@ namespace FSMTP::Server
 						// Continues to the next round
 						continue;
 					}
+					// ========================================
+					// Handles the 'STARTTLS' command
+					//
+					// Upgrades the connection to SSL
+					// ========================================
 					case ClientCommandType::CCT_START_TLS:
 					{ // ( StartTLS command )
 
@@ -237,6 +262,11 @@ namespace FSMTP::Server
 						session.clearAction(_SMTP_SERV_PA_HELO);
 						continue;
 					}
+					// ========================================
+					// Handles the 'MAIL FROM' command
+					//
+					// Sets the senders address
+					// ========================================
 					case ClientCommandType::CCT_MAIL_FROM:
 					{
 						// Checks if the mail from command is allowed, this is
@@ -310,6 +340,11 @@ namespace FSMTP::Server
 						session.setAction(_SMTP_SERV_PA_MAIL_FROM);
 						continue;
 					}
+					// ========================================
+					// Handles the 'RCPT TO' command
+					//
+					// Sets the receivers address
+					// ========================================
 					case ClientCommandType::CCT_RCPT_TO:
 					{
 						// Checks if we're allowed to perform the rcpt to command,
@@ -398,6 +433,11 @@ namespace FSMTP::Server
 						session.setAction(_SMTP_SERV_PA_RCPT_TO);
 						continue;
 					}
+					// ========================================
+					// Handles the 'AUTH' command
+					//
+					// Authenticates the user
+					// ========================================
 					case ClientCommandType::CCT_AUTH:
 					{
 						// Checks if we're allowed to do this, actually only possible
@@ -453,6 +493,11 @@ namespace FSMTP::Server
 						client.sendResponse(SRC_AUTH_SUCCESS);
 						continue;
 					}
+					// ========================================
+					// Handles the 'DATA' command
+					//
+					// Receives and parses the body
+					// ========================================
 					case ClientCommandType::CCT_DATA:
 					{
 						// Checks if we're allowed to perform this command

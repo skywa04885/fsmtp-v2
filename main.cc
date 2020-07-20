@@ -80,6 +80,13 @@ int main(const int argc, const char **argv)
 
 			break;
 		}
+		case ServerType::ST_IMAP:
+		{
+			IMAP::IMAPServer sock(143, 993);
+
+			for (;;) {std::this_thread::sleep_for(std::chrono::milliseconds(120));};
+			break;
+		}
 		default: return -1;
 	}
 

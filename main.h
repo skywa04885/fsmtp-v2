@@ -31,6 +31,7 @@
 #include "lib/workers/TransmissionWorker.src.h"
 
 #include "lib/pop3/P3Server.src.h"
+#include "lib/imap/IMAPServer.src.h"
 
 using namespace FSMTP;
 using Networking::SMTPSocket;

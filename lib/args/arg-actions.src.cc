@@ -92,7 +92,7 @@ namespace FSMTP::ARG_ACTIONS
       pop3server = std::make_unique<POP3::P3Server>(false);
       logger << _BASH_SUCCESS_MARK << "POP3 Server successvol" << ENDL;
       pop3server->shutdown();
-    } catch (const POP3::SocketInitializationException &e)
+    } catch (const SocketInitializationException &e)
     {
       logger << _BASH_FAIL_MARK << "Kon de POP3 server niet opstarten: " << e.what() << ENDL;
       fail++;
