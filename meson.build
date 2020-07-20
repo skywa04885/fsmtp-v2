@@ -19,6 +19,7 @@ sources = [
 	'main.cc'
 ]
 
+subdir('env')
 subdir('lib')
 
 executable(
