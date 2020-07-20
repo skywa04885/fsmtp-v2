@@ -38,8 +38,17 @@
 #include "../general/macros.src.h"
 #include "../general/exceptions.src.h"
 #include "../general/cleanup.src.h"
+#include "../general/connections.src.h"
+#include "../models/Account.src.h"
+#include "../models/RawEmail.src.h"
+#include "../models/Email.src.h"
+#include "../models/LocalDomain.src.h"
+#include "../models/EmailShortcut.src.h"
+#include "../general/Passwords.src.h"
 
 using namespace FSMTP::Cleanup;
+using namespace FSMTP::Models;
+using namespace FSMTP::Connections;
 
 class IMAPBad : std::exception
 {

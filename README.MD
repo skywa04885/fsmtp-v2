@@ -18,6 +18,12 @@ kunnen worden uit andere applicaties.
 1. Emails relayen vanaf een bestaand account, met authenticatie
 1. Emails versturen met een CLI
 
+## Waar wordt aan gewerkt ?
+
+1. IMAP Server
+1. Uitbereiding van de ESMTP server
+1. Verbetering leesbaarheid code
+
 ## Wat bibliotheken heb ik nodig ?
 
 1. HiRedis [Github](https://github.com/redis/hiredis)

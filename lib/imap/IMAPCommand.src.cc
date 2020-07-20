@@ -64,7 +64,10 @@ namespace FSMTP::IMAP
 		// Checks where we should perform the separation
 		std::size_t sep = clean.find_first_of(' ');
 		if (sep == std::string::npos)
+		{
+			this->c_Index = clean;
 			throw SyntaxError("Could not parse command");
+		}
 
 		// Parses the index
 		this->c_Index = clean.substr(0, sep);
@@ -99,6 +102,14 @@ namespace FSMTP::IMAP
 					this->c_Type = IMAPCommandType::ICT_LOGOUT;
 				else if (command == "login")
 					this->c_Type = IMAPCommandType::ICT_LOGIN;
+				else
+					this->c_Type = IMAPCommandType::ICT_UNKNOWN;
+				break;
+			}
+			case 's':
+			{
+				if (command == "starttls")
+					this->c_Type = IMAPCommandType::ICT_STARTTLS;
 				else
 					this->c_Type = IMAPCommandType::ICT_UNKNOWN;
 				break;

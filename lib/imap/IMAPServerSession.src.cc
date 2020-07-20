@@ -1,0 +1,94 @@
+/*
+	Copyright [2020] [Luke A.C.A. Rieff]
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+*/
+
+#include "IMAPServerSession.src.h"
+
+namespace FSMTP::IMAP
+{
+
+	/**
+	 * Zeros the flags
+	 * 
+	 * @Param {void}
+	 * @Return {void}
+	 */
+	IMAPServerSession::IMAPServerSession(void):
+		s_Flags(0x0), s_Actions(0x0)
+	{
+
+	}
+
+	/**
+	 * Sets an flag
+	 *
+	 * @Param {const int64_t} mask
+	 * @Return {void}
+	 */
+	void IMAPServerSession::setFlag(const int64_t mask)
+	{
+		this->s_Flags |= mask;
+	}
+
+	/**
+	 * Checks if an flag is set or not
+	 *
+	 * @Param {const int64_t} mask
+	 * @Return {bool}
+	 */
+	bool IMAPServerSession::getFlag(const int64_t mask)
+	{
+		if (BINARY_COMPARE(this->s_Flags, mask))
+			return true;
+		else
+			return false;
+	}
+
+	/**
+	 * Sets an action
+	 * 
+	 * @Param {const int64_t} mask
+	 * @Return {void}
+	 */
+	void IMAPServerSession::setAction(const int64_t mask)
+	{
+		this->s_Actions |= mask;
+	}
+
+	/**
+	 * Checks if an action is set
+	 *
+	 * @Param {const int64_t} mask
+	 * @Param {bool}
+	 */
+	bool IMAPServerSession::getAction(const int64_t mask)
+	{
+		if (BINARY_COMPARE(this->s_Actions, mask))
+			return true;
+		else
+			return false;
+	}
+
+	/**
+	 * Clears an flag
+	 *
+	 * @Param {const int64_t} mask
+	 * @Param {void}
+	 */
+	void IMAPServerSession::clearFlag(const int64_t mask)
+	{
+		this->s_Flags &= ~mask;
+	}
+}

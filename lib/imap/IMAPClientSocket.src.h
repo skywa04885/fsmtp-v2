@@ -77,6 +77,34 @@ namespace FSMTP::IMAP
 		);
 
 		/**
+		 * Sends an response to the client
+		 *
+		 * @Param {const IMAPResponseType} r_Type
+		 * @Param {const std::string} r_TagIndex
+		 * @Param {const IMAPResponseStructure} r_Structure
+		 * @Param {const IMAPResponsePrefixType} r_PrefType
+		 * @Param {const std::string &} r_Message
+		 * @Param {void *} r_U
+		 * @Return {void}
+		 */
+		void sendResponse(
+			const IMAPResponseStructure r_Structure,
+			const std::string r_TagIndex,
+			const IMAPResponseType r_Type,
+			const IMAPResponsePrefixType r_PrefType,
+			const std::string &r_Message,
+			void *r_U
+		);
+
+		/**
+		 * Upgrades the socket to an TLS socket
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		void upgrade(void);
+
+		/**
 		 * Reads an string untill CRLF is reached
 		 *
 		 * @Param {void}

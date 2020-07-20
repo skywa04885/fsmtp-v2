@@ -40,6 +40,28 @@ namespace FSMTP::IMAP
 	{}
 
 	/**
+	 * Default constructor for the imap response
+	 *
+	 * @Param {const IMAPResponseType} r_Type
+	 * @Param {const std::string} r_TagIndex
+	 * @Param {const IMAPResponseStructure} r_Structure
+	 * @Param {const IMAPResponsePrefixType} r_PrefType
+	 * @Param {void *} r_U
+	 * @Return {void}
+	 */
+	IMAPResponse::IMAPResponse(
+		const IMAPResponseStructure r_Structure,
+		const std::string r_TagIndex,
+		const IMAPResponseType r_Type,
+		const IMAPResponsePrefixType r_PrefType,
+		const std::string &r_Message,
+		void *r_U
+	):
+		r_Type(r_Type), r_Structure(r_Structure), r_TagIndex(r_TagIndex),
+		r_PrefType(r_PrefType), r_U(r_U), r_Message(r_Message)
+	{}
+
+	/**
 	 * Builds the response
 	 *
 	 * @Param {const IMAPResponseType} r_Type
@@ -87,6 +109,18 @@ namespace FSMTP::IMAP
 
 				return ret;
 			}
+			case IRS_TLC:
+			{
+				std::string ret = this->r_TagIndex;
+				ret += ' ';
+
+				// Adds the command name
+				ret += this->getPrefix();
+				ret += this->getCommandName();
+				ret += " completed\r\n";
+
+				return ret;
+			}
 			default: throw std::runtime_error(EXCEPT_DEBUG("Structure not implemented"));
 		}
 	}
@@ -105,6 +139,7 @@ namespace FSMTP::IMAP
 			case IMAPResponsePrefixType::IPT_OK: return "OK ";
 			case IMAPResponsePrefixType::IPT_NO: return "NO ";
 			case IMAPResponsePrefixType::IPT_BYE: return "BYE ";
+			default: throw std::runtime_error(EXCEPT_DEBUG("Not implemented"));
 		}
 	}
 
@@ -122,6 +157,9 @@ namespace FSMTP::IMAP
 			case IMAPResponseType::IRT_GREETING: return "GREETING";
 			case IMAPResponseType::IRT_LOGOUT: return "LOGOUT";
 			case IMAPResponseType::IRT_CAPABILITIES: return "CAPABILITY";
+			case IMAPResponseType::IRT_LOGIN_SUCCESS: return "LOGIN";
+			case IMAPResponseType::IRT_STARTTLS: return "STARTTLS";
+			default: throw std::runtime_error(EXCEPT_DEBUG("Not implemented"));
 		}
 	}
 
@@ -133,6 +171,7 @@ namespace FSMTP::IMAP
 	 */
 	std::string IMAPResponse::getMessage(void)
 	{
+		if (!this->r_Message.empty()) return this->r_Message;
 		switch (this->r_Type)
 		{
 			case IMAPResponseType::IRT_GREETING:

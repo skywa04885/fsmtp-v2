@@ -75,6 +75,45 @@ namespace FSMTP::IMAP
 		for (;;)
 		{
 			IMAPCommand command;
+			IMAPServerSession session;
+
+			// ========================================
+			// Connects to the databases
+			//
+			// Connects to Redis and Cassandra so we
+			// - can receive users, messages etc
+			// ========================================
+
+			std::unique_ptr<CassandraConnection> cassandra;
+			std::unique_ptr<RedisConnection> redis;
+
+			try
+			{
+				cassandra = std::make_unique<CassandraConnection>(
+					_CASSANDRA_DATABASE_CONTACT_POINTS);
+			} catch (const std::runtime_error &e)
+			{
+				logger << FATAL << "Could not connect to Cassandra: " << e.what() << ENDL << CLASSIC;
+				goto _imap_server_acceptor_end;
+			}
+
+			try
+			{
+				redis = std::make_unique<RedisConnection>(
+					_REDIS_CONTACT_POINTS, _REDIS_PORT
+				);
+			} catch (const std::runtime_error &e)
+			{
+				logger << FATAL << "Could not connect to Redis: " << e.what() << ENDL << CLASSIC;
+				goto _imap_server_acceptor_end;
+			}
+
+			// ========================================
+			// Sends the initial greeting
+			//
+			// Greets the client, to inform that the
+			// - server is ready
+			// ========================================
 
 			try {
 				std::string raw = client->readUntilCRLF();
@@ -87,13 +126,47 @@ namespace FSMTP::IMAP
 			{
 				logger << FATAL << "Length error (most likely CMD sucker): " << e.what() << ENDL << CLASSIC;
 				break;
+			} catch (const SyntaxError &e)
+			{
+				client->sendResponse(
+					IRS_TL, command.c_Index,
+					IMAPResponseType::IRT_ERR,
+					IMAPResponsePrefixType::IPT_BAD,
+					e.what(),
+					nullptr
+				);
+				continue;
 			}
 
-			// Checks how to respond to the command
+			// ========================================
+			// Handles the commands
+			//
+			// Starts the communication
+			// ========================================
+
 			try
 			{
 				switch (command.c_Type)
 				{
+
+					// ===============================================
+					// Handles the 'STATTTLS' command
+					//
+					// Shows what the server is capable of
+					// ===============================================
+					case IMAPCommandType::ICT_STARTTLS:
+					{
+						// Writes the response
+						client->sendResponse(
+								IRS_TLC, command.c_Index,
+								IMAPResponseType::IRT_STARTTLS,
+								IMAPResponsePrefixType::IPT_OK,
+								nullptr
+							);
+						// Upgrades the socket
+						client->upgrade();
+						continue;
+					}
 					// ===============================================
 					// Handles the 'CAPABILITY' command
 					//
@@ -120,7 +193,7 @@ namespace FSMTP::IMAP
 								&server.s_PlainCapabilities
 							);
 						}
-						break;
+						continue;
 					}
 					// ===============================================
 					// Handles the 'LOGIN' command
@@ -133,24 +206,14 @@ namespace FSMTP::IMAP
 					// ===============================================
 					case IMAPCommandType::ICT_LOGIN:
 					{
-						// Tries to login, in the mean time handles the
-						// - errors, and sends them
-						try
-						{
-
-						} catch (const IMAPBad& e)
-						{
-
-						} catch (const IMAPNo& e)
-						{
-							client->sendResponse(
-								IRS_TL, command.c_Index,
-								IMAPResponseType::IRT_LOGOUT,
-								IMAPResponsePrefixType::IPT_OK,
-								nullptr
-							);
-						}
-						break;
+						AUTH_HANDLER::login(
+							client.get(),
+							command,
+							session,
+							redis.get(),
+							cassandra.get()
+						);
+						continue;
 					}
 					// ===============================================
 					// Handles the 'LOGOUT' command
@@ -183,6 +246,24 @@ namespace FSMTP::IMAP
 			} catch (const InvalidCommand &e)
 			{
 
+			} catch (const IMAPBad& e)
+			{
+				client->sendResponse(
+					IRS_TL, command.c_Index,
+					IMAPResponseType::IRT_ERR,
+					IMAPResponsePrefixType::IPT_BAD,
+					e.what(),
+					nullptr
+				);
+			} catch (const IMAPNo& e)
+			{
+				client->sendResponse(
+					IRS_TL, command.c_Index,
+					IMAPResponseType::IRT_ERR,
+					IMAPResponsePrefixType::IPT_NO,
+					e.what(),
+					nullptr
+				);
 			}
 		}
 

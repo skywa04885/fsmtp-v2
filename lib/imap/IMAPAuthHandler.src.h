@@ -16,31 +16,28 @@
 
 #pragma once
 
-#include "IMAPServer.src.h"
-#include "IMAPServerSocket.src.h"
-#include "IMAPResponse.src.h"
+#include "IMAP.src.h"
+#include "IMAPClientSocket.src.h"
 #include "IMAPCommand.src.h"
-#include "IMAPAuthHandler.src.h"
 #include "IMAPServerSession.src.h"
 
-namespace FSMTP::IMAP
+namespace FSMTP::IMAP::AUTH_HANDLER
 {
-	class IMAPServer
-	{
-	public:
-		IMAPServer(const int32_t plainPort, const int32_t securePort);
-
-		static void acceptorCallback(
-			std::unique_ptr<IMAPClientSocket> client,
-			void *u
-		);
-
-		std::vector<IMAPCapability> s_SecureCapabilities;
-		std::vector<IMAPCapability> s_PlainCapabilities;
-	private:
-		IMAPServerSocket s_Socket;
-		std::atomic<bool> s_SecureRunning;
-		std::atomic<bool> s_PlainRunning;
-		std::atomic<bool> s_Run;
-	};
+	/**
+	 * Handles the 'LOGIN' command
+	 *
+	 * @Param {IMAPClientSocket *} client
+	 * @Param {IMAPCommand &} command
+	 * @Param {IMAPServerSession &} session
+	 * @Param {RedisConnection *} redis
+	 * @Param {CassandraConnection *} cassandra
+	 * @Return {void}
+ 	 */
+	void login(
+		IMAPClientSocket *client,
+		IMAPCommand &command,
+		IMAPServerSession &sessios,
+		RedisConnection *redis,
+		CassandraConnection *cassandra
+	);
 }

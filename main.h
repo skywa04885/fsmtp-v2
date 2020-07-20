@@ -40,4 +40,11 @@ using namespace FSMTP::Workers;
 using namespace FSMTP::Mailer::Composer;
 using namespace FSMTP::Mailer::Client;
 
+/**
+ * Application entry LOL, idiots.. Jk jk
+ *
+ * @Param {const int} argc
+ * @Param {const char **} argv
+ * @Return {int}
+ */
 int main(const int argc, const char **argv);

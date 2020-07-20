@@ -120,6 +120,60 @@ namespace FSMTP::IMAP
 	}
 
 	/**
+	 * Sends an response to the client
+	 *
+	 * @Param {const IMAPResponseType} r_Type
+	 * @Param {const std::string} r_TagIndex
+	 * @Param {const IMAPResponseStructure} r_Structure
+	 * @Param {const IMAPResponsePrefixType} r_PrefType
+	 * @Param {const std::string &} r_Message
+	 * @Param {void *} r_U
+	 * @Return {void}
+	 */
+	void IMAPClientSocket::sendResponse(
+		const IMAPResponseStructure r_Structure,
+		const std::string r_TagIndex,
+		const IMAPResponseType r_Type,
+		const IMAPResponsePrefixType r_PrefType,
+		const std::string &r_Message,
+		void *r_U
+	)
+	{
+		IMAPResponse response(r_Structure, r_TagIndex, r_Type, r_PrefType, r_Message, r_U);
+		this->sendString(response.build());
+	}
+
+	/**
+	 * Upgrades the socket to an TLS socket
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
+	void IMAPClientSocket::upgrade(void)
+	{
+		int32_t rc;
+		DEBUG_ONLY(this->s_Logger << DEBUG << "Uitvoeren SSL upgrade ..." << ENDL << CLASSIC);
+
+		// Creates the SSL struct, and then
+		// - sets the file descriptor
+		this->s_SSL = SSL_new(this->s_SSLCTX);
+		SSL_set_fd(this->s_SSL, this->s_SocketFD);
+
+		// Accepts the client
+		rc = SSL_accept(this->s_SSL);
+		if (rc <= 0)
+		{
+			SSL_free(this->s_SSL);
+			ERR_print_errors_fp(stderr);
+			throw SocketSSLError("SSL_accept() failed");
+		}
+
+		// Sets the useSSL to true
+		this->s_UseSSL = true;
+		DEBUG_ONLY(this->s_Logger << DEBUG << "Verbinding beveiligd !" << ENDL << CLASSIC);
+	}
+
+	/**
 	 * Reads an string untill CRLF is reached
 	 *
 	 * @Param {void}

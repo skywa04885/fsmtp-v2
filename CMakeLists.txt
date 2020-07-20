@@ -1,3 +1,4 @@
+CMAKE_MINiMUM_REQUIRED(VERSION 3.10)
 # ! IGNORE ! Only used for CLANG
 
 project(fsmtp VERSION 1.0.0)

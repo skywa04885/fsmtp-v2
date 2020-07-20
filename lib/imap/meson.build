@@ -3,5 +3,7 @@ sources += files(
 	'IMAPServer.src.cc',
 	'IMAPClientSocket.src.cc',
 	'IMAPResponse.src.cc',
-	'IMAPCommand.src.cc'
+	'IMAPCommand.src.cc',
+	'IMAPServerSession.src.cc',
+	'IMAPAuthHandler.src.cc'
 )

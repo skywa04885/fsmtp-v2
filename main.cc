@@ -18,6 +18,13 @@
 
 ServerType _serverType = ServerType::ST_SMTP;
 
+/**
+ * Application entry LOL, idiots.. Jk jk
+ *
+ * @Param {const int} argc
+ * @Param {const char **} argv
+ * @Return {int}
+ */
 int main(const int argc, const char **argv)
 {
 	// Initializes OpenSSL stuff
@@ -36,51 +43,44 @@ int main(const int argc, const char **argv)
 			logger << WARN << "Fannst POP3 Server door Luke A.C.A. Rieff, vrij onder de Apache 2.0 license" << ENDL << CLASSIC;
 			POP3::P3Server pop3server(false);
 		
-			for (;;) {std::this_thread::sleep_for(std::chrono::milliseconds(120));};
-
-			break;
+			for (;;)
+			{
+				std::this_thread::sleep_for(std::chrono::milliseconds(120));
+			};
 		}
 		case ServerType::ST_SMTP:
 		{
-			// =====================================
-			// Starts the workers
-			//
-			// Due to memory leaks, certain
-			// - tasks will be performed in workers
-			// - such as Cassamdra access
-			// =====================================
+			Logger logger("Main", LoggerLevel::INFO);
+			logger << WARN << "Fannst SMTP/ESMTP Server door Luke A.C.A. Rieff, vrij onder de Apache 2.0 license" << ENDL << CLASSIC;
 
 			// Creates and starts the database worker
 			std::unique_ptr<DatabaseWorker> dbWorker = std::make_unique<DatabaseWorker>(_CASSANDRA_DATABASE_CONTACT_POINTS);
 			if (!dbWorker->start(nullptr))
 				std::exit(-1);
-
+			// Runs the transmission worker
 			std::unique_ptr<TransmissionWorker> transWorker = std::make_unique<TransmissionWorker>(_CASSANDRA_DATABASE_CONTACT_POINTS);
 			if (!transWorker->start(nullptr))
 				std::exit(-1);
-
-			// =====================================
-			// Creates the SMTP Server itself
-			//
-			// Sets the config and starts
-			// - the smtp server
-			// =====================================
-
 			// Runs the server
-			Logger logger("Main", LoggerLevel::INFO);
-
 			SMTPServer server(25, true, _REDIS_PORT, _REDIS_CONTACT_POINTS);
 
-			for (;;) {std::this_thread::sleep_for(std::chrono::milliseconds(120));};
-
-			break;
+			// Loops forever
+			for (;;)
+			{
+				std::this_thread::sleep_for(std::chrono::milliseconds(120));\
+			};
 		}
 		case ServerType::ST_IMAP:
 		{
+			Logger logger("Main", LoggerLevel::INFO);
+			logger << WARN << "Fannst IMAP Server door Luke A.C.A. Rieff, vrij onder de Apache 2.0 license" << ENDL << CLASSIC;
+
 			IMAP::IMAPServer sock(143, 993);
 
-			for (;;) {std::this_thread::sleep_for(std::chrono::milliseconds(120));};
-			break;
+			for (;;)
+			{
+				std::this_thread::sleep_for(std::chrono::milliseconds(120));
+			};
 		}
 		default: return -1;
 	}
