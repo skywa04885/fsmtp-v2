@@ -14,29 +14,39 @@
 	limitations under the License.
 */
 
-#include "IMAPServer.src.h"
+#include "IMAPResponse.src.h"
 
 namespace FSMTP::IMAP
 {
-	IMAPServer::IMAPServer(const int32_t plainPort, const int32_t securePort):
-		s_Socket(plainPort, securePort), s_SecureRunning(false),
-		s_PlainRunning(false), s_Run(true)
+	/**
+	 * Default constructor for the imap response
+	 *
+	 * @Param {const IMAPResponseType} r_Type
+	 * @Return {void}
+	 */
+	IMAPResponse::IMAPResponse(const IMAPResponseType r_Type):
+		r_Type(r_Type)
+	{}
+
+	/**
+	 * Builds the response
+	 *
+	 * @Param {const IMAPResponseType} r_Type
+	 * @Return {void}
+	 */
+	std::string IMAPResponse::build(void)
 	{
-		// Starts listening
-		this->s_Socket.startListening(
-			&this->s_PlainRunning,
-			&this->s_SecureRunning,
-			&this->s_Run,
-			&IMAPServer::acceptorCallback,
-			this
-		);
+
 	}
 
-	void IMAPServer::acceptorCallback(
-		std::unique_ptr<IMAPClientSocket> client,
-		void *u
-	)
+	/**
+	 * Gets the message
+	 *
+	 * @Param {void}
+	 * @Return {std::string}
+	 */
+	std::string IMAPResponse::getMessage(void)
 	{
-		// Sends the initial message
+
 	}
 }

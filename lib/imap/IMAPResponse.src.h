@@ -20,39 +20,40 @@
 
 namespace FSMTP::IMAP
 {
-	class IMAPClientSocket
+	typedef enum : uint32_t
+	{
+		IRT_GREETING = 0	
+	} IMAPResponseType;
+
+	class IMAPResponse
 	{
 	public:
 		/**
-		 * Default constructor for the imap client
+		 * Default constructor for the imap response
 		 *
-		 * @Param {const struct sockaddr_in &} s_Addr
-		 * @Param {const int32_t} s_SocketFD
-		 * @Param {SSL *} s_SSL
-		 * @Param {SSL_CTX *} s_SSLCTX
+		 * @Param {const IMAPResponseType} r_Type
 		 * @Return {void}
 		 */
-		IMAPClientSocket(
-			const struct sockaddr_in &s_Addr,
-			const int32_t s_SocketFD,
-			SSL *s_SSL,
-			SSL_CTX *s_SSLCTX
-		);
+		explicit IMAPResponse(const IMAPResponseType r_Type);
 
 		/**
-		 * Default client socket destructor, clears the SSL
-		 * - when destroyed, since the server holds the SSL_CTX
-		 * - we will not destroy it
+		 * Builds the response
 		 *
-		 * @Param {void}
+		 * @Param {const IMAPResponseType} r_Type
 		 * @Return {void}
 		 */
-		~IMAPClientSocket(void);
+		std::string build(void);
+
+		/**
+		 * Gets the message
+		 *
+		 * @Param {void}
+		 * @Return {std::string}
+		 */
+		std::string getMessage(void);
 	private:
-		struct sockaddr_in s_Addr;
-		const int32_t s_SocketFD;
-		SSL *s_SSL;
-		SSL_CTX *s_SSLCTX;
-		bool s_UseSSL;
+		std::string r_Message;
+		IMAPResponseType r_Type;
+		void *r_U;
 	};
 }

@@ -121,6 +121,22 @@ namespace FSMTP::IMAP
 			throw SocketInitializationException(EXCEPT_DEBUG(error));
 		}
 
+		// Sets the socket reuse property
+		option = 0x1;
+		rc = setsockopt(
+			this->s_SecureSocketFD,
+			SOL_SOCKET,
+			SO_REUSEADDR,
+			reinterpret_cast<char *>(&option),
+			sizeof(option)
+		);
+		if (rc < 0)
+		{
+			std::string error = "setsockopt() failed: ";
+			error += strerror(errno);
+			throw SocketInitializationException(EXCEPT_DEBUG(error));
+		}
+
 		// Binds the socket
 		rc = bind(
 			this->s_SecureSocketFD,
@@ -203,6 +219,33 @@ namespace FSMTP::IMAP
 		);
 		secureAcceptor.detach();
 		logger << "Secure acceptor detached and running ..." << ENDL;
+
+		// =================================================
+		// Listens the plain socket
+		//
+		// Starts the listener for the plain socket
+		// ==================================================
+
+		// Listens the plain socket (120 in queue max)
+		rc = listen(this->s_PlainSocketFD, 120);
+		if (rc < 0)
+		{
+			std::string error = "listen() failed: ";
+			error += strerror(errno);
+			throw SocketInitializationException(EXCEPT_DEBUG(error));
+		}
+
+		// Starts the plain acceptor thread
+		std::thread plainAcceptor(
+			&IMAPServerSocket::asyncAcceptorThreadPlain,
+			this,
+			plainRunning,
+			run,
+			callback,
+			u
+		);
+		plainAcceptor.detach();
+		logger << "Plain acceptor detached and running ..." << ENDL;
 	}
 
 	void IMAPServerSocket::asyncAcceptorThreadSecure(
@@ -212,6 +255,122 @@ namespace FSMTP::IMAP
 		void *u	
 	)
 	{
+		Logger &logger = this->s_Logger;
+		int32_t rc;
+		int32_t sockaddrLen = sizeof(struct sockaddr_in);
 
+		// Sets running to true and starts the accept loop
+		*secureRunning = true;
+		while (*run)
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(20));
+
+			struct sockaddr_in clientAddr;
+			SSL *clientSSL = nullptr;
+			int32_t clientSocketFD;
+
+			// Accepts the client and checks for errors
+			clientSocketFD = accept(
+				this->s_SecureSocketFD,
+				reinterpret_cast<struct sockaddr *>(&clientAddr),
+				reinterpret_cast<socklen_t *>(&sockaddrLen)
+			);
+			if (clientSocketFD < 0)
+			{
+				if (errno != EWOULDBLOCK)
+					logger << ERROR << "accept() failed: " << strerror(errno) << ENDL << CLASSIC;
+				continue;	
+			}
+
+			// Prints the accept message
+			DEBUG_ONLY(logger << DEBUG << "Client " << inet_ntoa(clientAddr.sin_addr) << " accepted (SSL)" << ENDL << CLASSIC);
+
+			// Creates the SSL, accepts the client
+			// - and checks for error
+			clientSSL = SSL_new(this->s_SecureSSLCTX);
+
+			SSL_set_fd(clientSSL, clientSocketFD);
+			rc = SSL_accept(clientSSL);
+			if (rc <= 0)
+			{
+				SSL_free(clientSSL);
+				ERR_print_errors_fp(stderr);
+				shutdown(clientSocketFD, SHUT_RDWR);
+				logger << ERROR << "SSL_accept() failed" << ENDL << CLASSIC;
+				continue;
+			}
+
+			// Prints the upgrade message
+			DEBUG_ONLY(logger << DEBUG << "Client " << inet_ntoa(clientAddr.sin_addr) << " upgraded" << ENDL << CLASSIC);
+
+			// Creates the new handling thread for the client
+			std::thread handler(callback, std::make_unique<IMAPClientSocket>(
+				clientAddr, clientSocketFD, clientSSL, this->s_SecureSSLCTX
+			), u);
+			handler.detach();
+		}
+
+		// Sets running to false and waits an short amount of time
+		*secureRunning = false;
+		std::this_thread::sleep_for(std::chrono::milliseconds(120));
+	}
+
+	void IMAPServerSocket::asyncAcceptorThreadPlain(
+		std::atomic<bool> *plainRunning,
+		std::atomic<bool> *run,
+		std::function<void(std::unique_ptr<IMAPClientSocket>, void *)> callback,
+		void *u	
+	)
+	{
+		Logger &logger = this->s_Logger;
+		int32_t rc;
+		int32_t sockaddrLen = sizeof(struct sockaddr_in);
+
+		// Sets running to true and starts the accept loop
+		*plainRunning = true;
+		while (*run)
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(20));
+
+			struct sockaddr_in clientAddr;
+			int32_t clientSocketFD;
+
+			// Accepts the client and checks for errors
+			clientSocketFD = accept(
+				this->s_PlainSocketFD,
+				reinterpret_cast<struct sockaddr *>(&clientAddr),
+				reinterpret_cast<socklen_t *>(&sockaddrLen)
+			);
+			if (clientSocketFD < 0)
+			{
+				if (errno != EWOULDBLOCK)
+					logger << ERROR << "accept() failed: " << strerror(errno) << ENDL << CLASSIC;
+				continue;	
+			}
+
+			// Prints the accept message
+			DEBUG_ONLY(logger << DEBUG << "Client " << inet_ntoa(clientAddr.sin_addr) << " accepted (PLAIN)" << ENDL << CLASSIC);
+
+			// Creates the new handling thread for the client
+			std::thread handler(callback, std::make_unique<IMAPClientSocket>(
+				clientAddr, clientSocketFD, nullptr, this->s_SecureSSLCTX
+			), u);
+			handler.detach();
+		}
+
+		// Sets running to false and waits an short amount of time
+		*plainRunning = false;
+		std::this_thread::sleep_for(std::chrono::milliseconds(120));
+	}
+
+	/**
+	 * Override constructor, destroys the ssl stuff
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
+	IMAPServerSocket::~IMAPServerSocket(void)
+	{
+		SSL_CTX_free(this->s_SecureSSLCTX);
 	}
 }

@@ -104,9 +104,6 @@ typedef enum : uint8_t
 	ST_POP3,
 	ST_IMAP
 } ServerType;
-<<<<<<< HEAD
 
 // Assertion using message
 #define assertm(exp, msg) assert(((void)msg, exp))
-=======
->>>>>>> 2787e270f579ddbb56abc9c785799c57c5ff0713

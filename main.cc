@@ -36,7 +36,7 @@ int main(const int argc, const char **argv)
 			logger << WARN << "Fannst POP3 Server door Luke A.C.A. Rieff, vrij onder de Apache 2.0 license" << ENDL << CLASSIC;
 			POP3::P3Server pop3server(false);
 		
-			for (;;) continue;
+			for (;;) {std::this_thread::sleep_for(std::chrono::milliseconds(120));};
 
 			break;
 		}
@@ -71,7 +71,7 @@ int main(const int argc, const char **argv)
 
 			SMTPServer server(25, true, _REDIS_PORT, _REDIS_CONTACT_POINTS);
 
-			for (;;) continue;
+			for (;;) {std::this_thread::sleep_for(std::chrono::milliseconds(120));};
 
 			break;
 		}

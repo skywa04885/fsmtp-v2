@@ -43,6 +43,21 @@ namespace FSMTP::IMAP
 			std::function<void(std::unique_ptr<IMAPClientSocket>, void *)> callback,
 			void *u	
 		);
+
+		void asyncAcceptorThreadPlain(
+			std::atomic<bool> *plainRunning,
+			std::atomic<bool> *run,
+			std::function<void(std::unique_ptr<IMAPClientSocket>, void *)> callback,
+			void *u	
+		);
+
+		/**
+		 * Override constructor, destroys the ssl stuff
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		~IMAPServerSocket(void);
 	private:
 		SSL_CTX *s_SecureSSLCTX;
 		const SSL_METHOD *s_SecureSSLMethod;
