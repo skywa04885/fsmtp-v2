@@ -312,6 +312,11 @@ namespace FSMTP::Models
         octets += totalOctets;
       }
 
+      // Performs the paging stuff
+      hasMorePages = cass_result_has_more_pages(result);
+      if (hasMorePages)
+        cass_statement_set_paging_state(statement, result);
+
       // Frees the memory
       cass_result_free(result);
       cass_iterator_free(iterator);
@@ -414,6 +419,11 @@ namespace FSMTP::Models
         // Pushes to the result
         ret.push_back(std::tuple<CassUuid, int64_t, int64_t>(uuid, octets, bucket));
       }
+
+      // Handles the paging stuff
+      hasMorePages = cass_result_has_more_pages(result);
+      if (hasMorePages)
+        cass_statement_set_paging_state(statement, result);
 
       // Frees the memory
       cass_result_free(result);

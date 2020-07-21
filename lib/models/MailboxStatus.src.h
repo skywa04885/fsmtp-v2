@@ -18,6 +18,7 @@
 
 #include "Models.src.h"
 #include "Mailbox.src.h"
+#include "EmailShortcut.src.h"
 
 namespace FSMTP::Models
 {

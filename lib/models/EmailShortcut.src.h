@@ -16,6 +16,13 @@
 
 #pragma once
 
+#define _EMAIL_FLAG_SEEN 1
+#define _EMAIL_FLAG_ANSWERED 2
+#define _EMAIL_FLAG_FLAGGED 4
+#define _EMAIL_FLAG_DELETED 8
+#define _EMAIL_FLAG_DRAFT 16
+#define _EMAIL_FLAG_RECENT 32
+
 #include <string>
 #include <vector>
 #include <iostream>
