@@ -6,5 +6,6 @@ sources += files(
 	'IMAPCommand.src.cc',
 	'IMAPServerSession.src.cc',
 	'IMAPAuthHandler.src.cc',
-	'IMAPMessageHander.src.cc'
+	'IMAPMailboxHandler.src.cc',
+	'IMAPMessageHandler.src.cc'
 )

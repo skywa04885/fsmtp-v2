@@ -138,6 +138,46 @@ namespace FSMTP::IMAP
 				switch (command.c_Type)
 				{
 					// ===============================================
+					// Handles the 'SELECT' command
+					//
+					// Shows the folders etcetera, returns: 
+					// - OK: select completed, now in selected state
+					// - NO: select failure, not in authenticated sta
+					// te, can't access mailbox
+					// - BAD: Command unknown or arguments invalid
+					// ===============================================
+					case IMAPCommandType::ICT_SELECT:
+					{
+						MAILBOX_HANDLER::select(
+							client.get(),
+							command,
+							session,
+							redis.get(),
+							cassandra.get()
+						);
+						continue;
+					}
+					// ===============================================
+					// Handles the 'LSUB' command
+					//
+					// Shows the folders etcetera, returns: 
+					// - OK: lsub completed
+					// - NO: list failure: can't list that reference
+					// or name
+					// - BAD: Command unknown or arguments invalid
+					// ===============================================
+					case IMAPCommandType::ICT_LSUB:
+					{
+						MAILBOX_HANDLER::lsub(
+							client.get(),
+							command,
+							session,
+							redis.get(),
+							cassandra.get()
+						);
+						continue;
+					}
+					// ===============================================
 					// Handles the 'LIST' command
 					//
 					// Shows the folders etcetera, returns: 
@@ -148,7 +188,13 @@ namespace FSMTP::IMAP
 					// ===============================================
 					case IMAPCommandType::ICT_LIST:
 					{
-
+						MAILBOX_HANDLER::list(
+							client.get(),
+							command,
+							session,
+							redis.get(),
+							cassandra.get()
+						);
 						continue;
 					}
 					// ===============================================
@@ -158,7 +204,9 @@ namespace FSMTP::IMAP
 					// ===============================================
 					case IMAPCommandType::ICT_STARTTLS:
 					{
-						// Upgrades the socket
+						// Sends the message, and upgrades
+						client->sendString(IMAPResponse::buildCompleted(
+							command.c_Index, IMAPCommandType::ICT_STARTTLS));
 						client->upgrade();
 						continue;
 					}
@@ -173,9 +221,12 @@ namespace FSMTP::IMAP
 						// - this effects the kind of commands we may use
 						if (client->s_UseSSL)
 						{
-
+							client->sendString(IMAPResponse::buildCapabilities(
+								command.c_Index, server.s_SecureCapabilities));
 						} else
 						{
+							client->sendString(IMAPResponse::buildCapabilities(
+								command.c_Index, server.s_PlainCapabilities));
 						}
 						continue;
 					}
@@ -218,18 +269,15 @@ namespace FSMTP::IMAP
 					case IMAPCommandType::ICT_UNKNOWN:
 					default:
 					{
-						throw InvalidCommand("Command not valid");
+						throw IMAPBad("Command not implemented, fuck !");
 					}
 				}
-			} catch (const InvalidCommand &e)
-			{
-
 			} catch (const IMAPBad& e)
 			{
 				client->sendString(IMAPResponse::buildBad(command.c_Index, e.what()));
 			} catch (const IMAPNo& e)
 			{
-
+				client->sendString(IMAPResponse::buildNo(command.c_Index, e.what()));
 			}
 		}
 

@@ -22,18 +22,19 @@
 #include "IMAPCommand.src.h"
 #include "IMAPResponse.src.h"
 
-namespace FSMTP::IMAP::MESSAGE_HANDLER
+namespace FSMTP::IMAP::MAILBOX_HANDLER
 {
 	typedef enum : uint8_t
 	{
 		LQT_ALL = 0,
-		LQT_LAYERS
+		LQT_LAYERS,
+		LQT_OTHER
 	} ListQueryType;
 
 	typedef struct
 	{
 		ListQueryType l_Type;
-		std::size_t l_Depth;
+		std::variant<std::string, std::size_t> l_Value;
 	} listQuery;
 
 	/**
@@ -56,6 +57,43 @@ namespace FSMTP::IMAP::MESSAGE_HANDLER
 	 * @Return {void}
  	 */
 	void list(
+		IMAPClientSocket *client,
+		IMAPCommand &command,
+		IMAPServerSession &session,
+		RedisConnection *redis,
+		CassandraConnection *cassandra
+	);
+
+	/**
+	 * Handles the 'LSUB' command
+	 *
+	 * @Param {IMAPClientSocket *} client
+	 * @Param {IMAPCommand &} command
+	 * @Param {IMAPServerSession &} session
+	 * @Param {RedisConnection *} redis
+	 * @Param {CassandraConnection *} cassandra
+	 * @Return {void}
+ 	 */
+	void lsub(
+		IMAPClientSocket *client,
+		IMAPCommand &command,
+		IMAPServerSession &session,
+		RedisConnection *redis,
+		CassandraConnection *cassandra
+	);
+
+
+	/**
+	 * Handles the 'SELECT' command
+	 *
+	 * @Param {IMAPClientSocket *} client
+	 * @Param {IMAPCommand &} command
+	 * @Param {IMAPServerSession &} session
+	 * @Param {RedisConnection *} redis
+	 * @Param {CassandraConnection *} cassandra
+	 * @Return {void}
+ 	 */
+	void select(
 		IMAPClientSocket *client,
 		IMAPCommand &command,
 		IMAPServerSession &session,

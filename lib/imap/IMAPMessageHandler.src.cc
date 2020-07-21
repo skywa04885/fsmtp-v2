@@ -14,19 +14,8 @@
 	limitations under the License.
 */
 
-#pragma once
+#include "IMAPMessageHandler.src.h"
 
-#include "Models.src.h"
-
-namespace FSMTP::Models
+namespace FSMTP::IMAP::MESSAGE_HANDLER
 {
-	class Subscription
-	{
-	public:
-	private:
-		int64_t s_Bucket;
-		std::string s_Domain;
-		CassUuid *s_UUID;
-		std::string s_MailboxPath;
-	};
 }

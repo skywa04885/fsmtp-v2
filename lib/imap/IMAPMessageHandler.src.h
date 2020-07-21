@@ -16,17 +16,12 @@
 
 #pragma once
 
-#include <iostream>
-#include <string>
-#include <cstdint>
-#include <vector>
+#include "IMAP.src.h"
+#include "IMAPClientSocket.src.h"
+#include "IMAPServerSession.src.h"
+#include "IMAPCommand.src.h"
+#include "IMAPResponse.src.h"
 
-#include <string.h>
-#include <cassandra.h>
-
-#include "../general/exceptions.src.h"
-#include "../general/Logger.src.h"
-#include "../general/macros.src.h"
-#include "../general/connections.src.h"
-
-using namespace FSMTP::Connections;
+namespace FSMTP::IMAP::MESSAGE_HANDLER
+{
+}

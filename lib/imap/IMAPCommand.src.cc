@@ -21,8 +21,6 @@
 
 namespace FSMTP::IMAP
 {
-	static std::regex stringArgumentRegex(R"()");
-
 	/**
 	 * Default emty constructor
 	 *
@@ -112,9 +110,18 @@ namespace FSMTP::IMAP
 			std::string argument;
 			while (std::getline(argumentStream, argument, ' '))
 			{
-				if (argument == "NIL")
-					this->c_Args.push_back(IMAPCommandArg{IMAPCommandArgType::IAT_NIL, 0});
-
+				try {
+					int32_t num = std::stoi(argument);
+					this->c_Args.push_back(IMAPCommandArg{IMAPCommandArgType::IAT_NUMBER, num});
+				} catch (const std::invalid_argument &e)
+				{
+					if (argument == "NIL")
+						this->c_Args.push_back(IMAPCommandArg{IMAPCommandArgType::IAT_NIL, 0});
+					else if (argument[0] == '"' && argument[argument.size() - 1] == '"')
+						this->c_Args.push_back(IMAPCommandArg{IMAPCommandArgType::IAT_STRING, argument});
+					else
+						this->c_Args.push_back(IMAPCommandArg{IMAPCommandArgType::IAT_ATOM, argument});
+				}
 			}
 		}
 	}

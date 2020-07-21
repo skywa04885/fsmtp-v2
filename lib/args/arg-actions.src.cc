@@ -206,53 +206,53 @@ namespace FSMTP::ARG_ACTIONS
       // Adds the mailboxes
       Mailbox inbox(
         account.a_Bucket, account.a_Domain, account.a_UUID,
-        "~/inbox", true,
+        "INBOX", true,
         0,
-        0
+        0, true
       );
       inbox.save(cassandra.get());
 
       Mailbox sent(
         account.a_Bucket, account.a_Domain, account.a_UUID,
-        "~/sent", true,
+        "INBOX.Sent", true,
         0,
-        _MAILBOX_FLAG_UNMARKED | _MAILBOX_FLAG_SENT
+        _MAILBOX_FLAG_UNMARKED | _MAILBOX_FLAG_SENT, true
       );
       sent.save(cassandra.get());
 
       Mailbox spam(
         account.a_Bucket, account.a_Domain, account.a_UUID,
-        "~/spam",
+        "INBOX.Spam",
         true,
         0,
-        _MAILBOX_FLAG_MARKED | _MAILBOX_FLAG_JUNK
+        _MAILBOX_FLAG_MARKED | _MAILBOX_FLAG_JUNK, true
       );
       spam.save(cassandra.get());
 
       Mailbox archive(
         account.a_Bucket, account.a_Domain, account.a_UUID,
-        "~/archive",
+        "INBOX.Archive",
         true,
         0,
-        _MAILBOX_FLAG_UNMARKED | _MAILBOX_FLAG_ARCHIVE
+        _MAILBOX_FLAG_UNMARKED | _MAILBOX_FLAG_ARCHIVE, true
       );
       archive.save(cassandra.get());
 
       Mailbox drafts(
         account.a_Bucket, account.a_Domain, account.a_UUID,
-        "~/drafts",
+        "INBOX.Drafts",
         true,
         0,
-        _MAILBOX_FLAG_UNMARKED | _MAILBOX_FLAG_DRAFT
+        _MAILBOX_FLAG_UNMARKED | _MAILBOX_FLAG_DRAFT, true
       );
       drafts.save(cassandra.get());
 
       Mailbox trash(
         account.a_Bucket, account.a_Domain, account.a_UUID,
-        "~/trash",
+        "INBOX.Trash",
         true,
         0,
-        _MAILBOX_FLAG_MARKED | _MAILBOX_FLAG_TRASH
+        _MAILBOX_FLAG_MARKED | _MAILBOX_FLAG_TRASH, true
       );
       trash.save(cassandra.get());
     } catch (const DatabaseException &e)

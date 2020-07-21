@@ -61,6 +61,7 @@ namespace FSMTP::Models
 		 * @Param {const bool} e_MailboxStand
 		 * @Param {const in64_t} e_MessageCount
 		 * @Param {const int32_t} e_Flags
+		 * @Param {const bool} e_Subscribed
 		 * @Return {void}
 		 */
 		Mailbox(
@@ -70,7 +71,8 @@ namespace FSMTP::Models
 			const std::string &e_MailboxPath,
 			const bool e_MailboxStand,
 			const int64_t e_MessageCount,
-			const int32_t e_Flags
+			const int32_t e_Flags,
+			const bool e_Subscribed
 		) noexcept;
 
 		/**
@@ -88,13 +90,15 @@ namespace FSMTP::Models
 		 * @Param {const int64_t} bucket
 		 * @Param {const std::string &} domain
 		 * @Param {CassUuid &} uuid
+		 * @Param {const bool} subscribedOnly
 		 * @Return {std::vector<Mailbox>}
 		 */
 		static std::vector<Mailbox> gatherAll(
 			CassandraConnection *cassandra,
 			const int64_t bucket,
 			const std::string &domain,
-			const CassUuid &uuid
+			const CassUuid &uuid,
+			const bool subscribedOnly
 		);
 
 		int64_t e_Bucket;
@@ -103,6 +107,7 @@ namespace FSMTP::Models
 		CassUuid e_UUID;
 		std::string e_MailboxPath;
 		bool e_MailboxStand;
+		bool e_Subscribed;
 		int32_t e_Flags;
 	};
 }

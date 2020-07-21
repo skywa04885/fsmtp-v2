@@ -41,6 +41,14 @@ namespace FSMTP::IMAP::AUTH_HANDLER
 		if (command.c_Args.size() < 2)
 			throw IMAPBad("Arguments invalid");
 
+		if (
+			command.c_Args[0].a_Type != IMAPCommandArgType::IAT_STRING || 
+			command.c_Args[1].a_Type != IMAPCommandArgType::IAT_STRING != 0
+		)
+		{
+			throw IMAPBad("Arguments argument types, required: STRING, STRING");
+		}
+
 		// Gets the username and password
 		std::string &user = std::get<std::string>(command.c_Args[0].a_Value);
 		std::string &pass = std::get<std::string>(command.c_Args[1].a_Value);
@@ -113,6 +121,9 @@ namespace FSMTP::IMAP::AUTH_HANDLER
 			session.clearFlag(_IMAP_FLAG_LOGGED_IN);
 			throw IMAPNo("Password rejected");
 		}
+
 		session.setFlag(_IMAP_FLAG_LOGGED_IN);
+		client->sendString(IMAPResponse::buildCompleted(
+			command.c_Index, IMAPCommandType::ICT_LOGIN));
 	}
 }

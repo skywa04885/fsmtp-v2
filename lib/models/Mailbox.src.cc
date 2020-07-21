@@ -37,6 +37,7 @@ namespace FSMTP::Models
 	 * @Param {const bool} e_MailboxStand
 	 * @Param {const in64_t} e_MessageCount
 	 * @Param {const int32_t} e_Flags
+	 * @Param {const bool} e_Subscribed
 	 * @Return {void}
 	 */
 	Mailbox::Mailbox(
@@ -46,11 +47,12 @@ namespace FSMTP::Models
 		const std::string &e_MailboxPath,
 		const bool e_MailboxStand,
 		const int64_t e_MessageCount,
-		const int32_t e_Flags
+		const int32_t e_Flags,
+		const bool e_Subscribed
 	) noexcept:
 		e_Bucket(e_Bucket), e_Domain(e_Domain), e_UUID(e_UUID),
 		e_MailboxPath(e_MailboxPath), e_MailboxStand(e_MailboxStand),
-		e_MessageCount(e_MessageCount), e_Flags(e_Flags)
+		e_MessageCount(e_MessageCount), e_Flags(e_Flags), e_Subscribed(e_Subscribed)
 	{}
 
 	/**
@@ -64,17 +66,17 @@ namespace FSMTP::Models
 		const char *query = R"(INSERT INTO fannst.mailboxes (
 			e_bucket, e_domain, e_uuid,
 			e_mailbox_path, e_mailbox_stand, e_message_count,
-			e_flags
+			e_flags, e_subscribed
 		) VALUES (
 			?, ?, ?,
 			?, ?, ?,
-			?
+			?, ?
 		))";
 		CassStatement *statement = nullptr;
 		CassFuture *future = nullptr;
 		CassError rc;
 
-		statement = cass_statement_new(query, 7);
+		statement = cass_statement_new(query, 8);
 		cass_statement_bind_int64(statement, 0, this->e_Bucket);
 		cass_statement_bind_string(statement, 1, this->e_Domain.c_str());
 		cass_statement_bind_uuid(statement, 2, this->e_UUID);
@@ -85,6 +87,10 @@ namespace FSMTP::Models
 		);
 		cass_statement_bind_int64(statement, 5, this->e_MessageCount);
 		cass_statement_bind_int32(statement, 6, this->e_Flags);
+		cass_statement_bind_bool(
+			statement, 7, 
+			(this->e_Subscribed ? cass_true : cass_false)
+		);
 
 		future = cass_session_execute(cassandra->c_Session, statement);
 		cass_future_wait(future);
@@ -110,17 +116,28 @@ namespace FSMTP::Models
 	 * @Param {const int64_t} bucket
 	 * @Param {const std::string &} domain
 	 * @Param {CassUuid &} uuid
+	 * @Param {const bool} subscribedOnly
 	 * @Return {std::vector<Mailbox>}
 	 */
 	std::vector<Mailbox> Mailbox::gatherAll(
 		CassandraConnection *cassandra,
 		const int64_t bucket,
 		const std::string &domain,
-		const CassUuid &uuid
+		const CassUuid &uuid,
+		const bool subscribedOnly
 	)
 	{
-		const char *query = R"(SELECT e_mailbox_path, e_mailbox_stand, e_message_count,
-		e_flags FROM fannst.mailboxes WHERE e_bucket=? AND e_domain=? AND e_uuid=?)";
+		const char *query = nullptr;
+		if (subscribedOnly)
+		{
+			query = R"(SELECT e_mailbox_path, e_mailbox_stand, e_message_count,
+				e_flags, e_subscribed FROM fannst.mailboxes WHERE e_bucket=? AND e_domain=? AND e_uuid=? AND e_subscribed=? ALLOW FILTERING)";
+		} else
+		{
+			query = R"(SELECT e_mailbox_path, e_mailbox_stand, e_message_count,
+				e_flags, e_subscribed FROM fannst.mailboxes WHERE e_bucket=? AND e_domain=? AND e_uuid=?)";
+		}
+
 		CassStatement *statement = nullptr;
 		CassFuture *future = nullptr;
 		std::vector<Mailbox> ret;
@@ -133,10 +150,11 @@ namespace FSMTP::Models
 		// - cutes it
 		// =================================
 
-		statement = cass_statement_new(query, 3);
+		statement = cass_statement_new(query, (subscribedOnly ? 4 : 3));
 		cass_statement_bind_int64(statement, 0, bucket);
 		cass_statement_bind_string(statement, 1, domain.c_str());
 		cass_statement_bind_uuid(statement, 2, uuid);
+		if (subscribedOnly) cass_statement_bind_bool(statement, 3, cass_true);
 
 		future = cass_session_execute(cassandra->c_Session, statement);
 		cass_future_wait(future);
@@ -174,6 +192,10 @@ namespace FSMTP::Models
 			cass_value_get_bool(
 				cass_row_get_column_by_name(row, "e_mailbox_stand"),
 				reinterpret_cast<cass_bool_t *>(&mailbox.e_MailboxStand)
+			);
+			cass_value_get_bool(
+				cass_row_get_column_by_name(row, "e_subscribed"),
+				reinterpret_cast<cass_bool_t *>(&mailbox.e_Subscribed)
 			);
 			cass_value_get_int32(
 				cass_row_get_column_by_name(row, "e_flags"),

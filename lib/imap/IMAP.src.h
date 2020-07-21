@@ -23,6 +23,7 @@
 #include <atomic>
 #include <memory>
 #include <functional>
+#include <regex>
 #include <thread>
 #include <cctype>
 #include <variant>

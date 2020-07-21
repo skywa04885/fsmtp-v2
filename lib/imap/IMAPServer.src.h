@@ -16,13 +16,14 @@
 
 #pragma once
 
-#include "IMAPServer.src.h"
+#include "IMAP.src.h"
 #include "IMAPServerSocket.src.h"
 #include "IMAPResponse.src.h"
 #include "IMAPCommand.src.h"
 #include "IMAPAuthHandler.src.h"
 #include "IMAPServerSession.src.h"
-#include "IMAPMessageHander.src.h"
+#include "IMAPMessageHandler.src.h"
+#include "IMAPMailboxHandler.src.h"
 
 namespace FSMTP::IMAP
 {

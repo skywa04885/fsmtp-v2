@@ -282,6 +282,29 @@ namespace FSMTP::IMAP
 				continue;	
 			}
 
+			// Sets the client timeout
+			struct timeval timeout;
+			timeout.tv_usec = 0;
+			timeout.tv_sec = 30 * 60; // 30 Minutes
+
+			// Sets the receive timeout
+			rc = setsockopt(clientSocketFD, SOL_SOCKET, SO_RCVTIMEO, 
+				reinterpret_cast<char *>(&timeout), sizeof(timeout));
+			if (rc < 0)
+			{
+				logger << ERROR << "setsockopt() failed: " << strerror(errno) << ENDL << CLASSIC;
+				continue;	
+			}
+
+			// Sets the send timeout
+			rc = setsockopt(clientSocketFD, SOL_SOCKET, SO_SNDTIMEO, 
+				reinterpret_cast<char *>(&timeout), sizeof(timeout));
+			if (rc < 0)
+			{
+				logger << ERROR << "setsockopt() failed: " << strerror(errno) << ENDL << CLASSIC;
+				continue;	
+			}
+
 			// Prints the accept message
 			DEBUG_ONLY(logger << DEBUG << "Client " << inet_ntoa(clientAddr.sin_addr) << " accepted (SSL)" << ENDL << CLASSIC);
 
@@ -345,6 +368,29 @@ namespace FSMTP::IMAP
 			{
 				if (errno != EWOULDBLOCK)
 					logger << ERROR << "accept() failed: " << strerror(errno) << ENDL << CLASSIC;
+				continue;	
+			}
+
+			// Sets the client timeout
+			struct timeval timeout;
+			timeout.tv_usec = 0;
+			timeout.tv_sec = 30 * 60; // 30 Minutes
+
+			// Sets the receive timeout
+			rc = setsockopt(clientSocketFD, SOL_SOCKET, SO_RCVTIMEO, 
+				reinterpret_cast<char *>(&timeout), sizeof(timeout));
+			if (rc < 0)
+			{
+				logger << ERROR << "setsockopt() failed: " << strerror(errno) << ENDL << CLASSIC;
+				continue;	
+			}
+
+			// Sets the send timeout
+			rc = setsockopt(clientSocketFD, SOL_SOCKET, SO_SNDTIMEO, 
+				reinterpret_cast<char *>(&timeout), sizeof(timeout));
+			if (rc < 0)
+			{
+				logger << ERROR << "setsockopt() failed: " << strerror(errno) << ENDL << CLASSIC;
 				continue;	
 			}
 

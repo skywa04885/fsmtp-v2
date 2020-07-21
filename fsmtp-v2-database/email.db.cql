@@ -76,14 +76,6 @@ CREATE TABLE IF NOT EXISTS fannst.mailboxes (
     e_mailbox_stand BOOLEAN,
     e_message_count BIGINT,
     e_flags INT,
+    e_subscribed BOOLEAN,
     PRIMARY KEY((e_bucket), e_domain, e_uuid, e_mailbox_path)
 ) WITH CLUSTERING ORDER BY (e_domain DESC, e_uuid DESC, e_mailbox_path DESC);
-
--- The subscriptions
-CREATE TABLE IF NOT EXISTS fannst.mail_subs (
-    s_bucket BIGINT,
-    s_domain VARCHAR,
-    s_uuid TIMEUUID,
-    s_mailbox_path VARCHAR,
-    PRIMARY KEY((s_bucket), s_domain, s_uuid, s_mailbox_path)
-) WITH CLUSTERING ORDER BY (s_domain DESC, s_uuid DESC, s_mailbox_path DESC);

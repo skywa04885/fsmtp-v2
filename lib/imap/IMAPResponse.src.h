@@ -33,11 +33,13 @@ namespace FSMTP::IMAP
 		/**
 		 * Builds an list response
 		 *
+		 * @Param {const IMAPCommandType} type
 		 * @Param {const std::vector<Mailbox> &} mailboxes
 		 * @Param {const std::string &} tagIndex
 		 * @Return {void}
 		 */
 		static std::string buildList(
+			const IMAPCommandType type,
 			const std::string &tagIndex,
 			const std::vector<Mailbox> &mailboxes
 		);
@@ -54,9 +56,25 @@ namespace FSMTP::IMAP
 			const IMAPCommandType type
 		);
 
+		/**
+		 * Builds the list of capability's
+		 *
+		 * @Param {const std:string &} tagIndex
+		 * @Param {const std::vector<IMAPCapability> &} capabilities
+		 * @Return {std::string}
+		 */
 		static std::string buildCapabilities(
+			const std::string &tagIndex,
 			const std::vector<IMAPCapability> &capabilities
 		);
+
+		/**
+		 * Gets the string value of a command
+		 *
+		 * @Param {const IMAPCommandType} type
+		 * @Return {const char *}
+		 */
+		static const char *getCommandStr(const IMAPCommandType type);
 
 		/**
 		 * Builds an formal message
@@ -74,5 +92,26 @@ namespace FSMTP::IMAP
 		 * @Return {std::string}
 		 */
 		static std::string buildBad(const std::string index, const std::string &reason);
+
+		/**
+		 * Builds an no message
+		 *
+		 * @Param {const std::string &} reason
+	 	 * @Param {const std::string &} index
+		 * @Return {std::string}
+		 */
+		static std::string buildNo(const std::string index, const std::string &reason);
+
+		/**
+		 * Builds an message with confirmation, stucture:
+		 * `
+		 * * Ready to start TLS
+		 * AA0 OK STARTTLS completed
+		 * ` 
+		 *
+		 * @Param {const IMAPCommandType} type
+		 * @Return {std::string}
+		 */
+		static std::string buildMessageWithConfirm(const IMAPCommandType type);
 	};
 }
