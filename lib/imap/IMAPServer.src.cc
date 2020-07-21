@@ -63,59 +63,54 @@ namespace FSMTP::IMAP
 		prefix += inet_ntoa(client->s_Addr.sin_addr);
 		Logger logger(prefix, LoggerLevel::INFO);
 
-		// Sends the initial response
-		client->sendResponse(
-			IRS_NT, "",
-			IMAPResponseType::IRT_GREETING,
-			IMAPResponsePrefixType::IPT_OK,
-			nullptr
-		);
+		IMAPServerSession session;
+
+		// ========================================
+		// Connects to the databases
+		//
+		// Connects to Redis and Cassandra so we
+		// - can receive users, messages etc
+		// ========================================
+
+		std::unique_ptr<CassandraConnection> cassandra;
+		std::unique_ptr<RedisConnection> redis;
+
+		try
+		{
+			cassandra = std::make_unique<CassandraConnection>(
+				_CASSANDRA_DATABASE_CONTACT_POINTS);
+		} catch (const std::runtime_error &e)
+		{
+			logger << FATAL << "Could not connect to Cassandra: " << e.what() << ENDL << CLASSIC;
+			goto _imap_server_acceptor_end;
+		}
+
+		try
+		{
+			redis = std::make_unique<RedisConnection>(
+				_REDIS_CONTACT_POINTS, _REDIS_PORT
+			);
+		} catch (const std::runtime_error &e)
+		{
+			logger << FATAL << "Could not connect to Redis: " << e.what() << ENDL << CLASSIC;
+			goto _imap_server_acceptor_end;
+		}
+
+		// ========================================
+		// Sends the initial greeting
+		//
+		// Greets the client, to inform that the
+		// - server is ready
+		// ========================================
+
+		client->sendString(IMAPResponse::buildGreeting());
 
 		// Starts the communication loop
 		for (;;)
 		{
 			IMAPCommand command;
-			IMAPServerSession session;
-
-			// ========================================
-			// Connects to the databases
-			//
-			// Connects to Redis and Cassandra so we
-			// - can receive users, messages etc
-			// ========================================
-
-			std::unique_ptr<CassandraConnection> cassandra;
-			std::unique_ptr<RedisConnection> redis;
-
 			try
 			{
-				cassandra = std::make_unique<CassandraConnection>(
-					_CASSANDRA_DATABASE_CONTACT_POINTS);
-			} catch (const std::runtime_error &e)
-			{
-				logger << FATAL << "Could not connect to Cassandra: " << e.what() << ENDL << CLASSIC;
-				goto _imap_server_acceptor_end;
-			}
-
-			try
-			{
-				redis = std::make_unique<RedisConnection>(
-					_REDIS_CONTACT_POINTS, _REDIS_PORT
-				);
-			} catch (const std::runtime_error &e)
-			{
-				logger << FATAL << "Could not connect to Redis: " << e.what() << ENDL << CLASSIC;
-				goto _imap_server_acceptor_end;
-			}
-
-			// ========================================
-			// Sends the initial greeting
-			//
-			// Greets the client, to inform that the
-			// - server is ready
-			// ========================================
-
-			try {
 				std::string raw = client->readUntilCRLF();
 				command.parse(raw);
 			} catch (const SocketReadException &e)
@@ -126,15 +121,9 @@ namespace FSMTP::IMAP
 			{
 				logger << FATAL << "Length error (most likely CMD sucker): " << e.what() << ENDL << CLASSIC;
 				break;
-			} catch (const SyntaxError &e)
+			} catch (const IMAPBad &e)
 			{
-				client->sendResponse(
-					IRS_TL, command.c_Index,
-					IMAPResponseType::IRT_ERR,
-					IMAPResponsePrefixType::IPT_BAD,
-					e.what(),
-					nullptr
-				);
+				client->sendString(IMAPResponse::buildBad(command.c_Index, e.what()));
 				continue;
 			}
 
@@ -159,13 +148,7 @@ namespace FSMTP::IMAP
 					// ===============================================
 					case IMAPCommandType::ICT_LIST:
 					{
-						MESSAGE_HANDLER::list(
-							client.get(),
-							command,
-							session,
-							redis.get(), 
-							cassandra.get()
-						);
+
 						continue;
 					}
 					// ===============================================
@@ -175,13 +158,6 @@ namespace FSMTP::IMAP
 					// ===============================================
 					case IMAPCommandType::ICT_STARTTLS:
 					{
-						// Writes the response
-						client->sendResponse(
-								IRS_TLC, command.c_Index,
-								IMAPResponseType::IRT_STARTTLS,
-								IMAPResponsePrefixType::IPT_OK,
-								nullptr
-							);
 						// Upgrades the socket
 						client->upgrade();
 						continue;
@@ -197,20 +173,9 @@ namespace FSMTP::IMAP
 						// - this effects the kind of commands we may use
 						if (client->s_UseSSL)
 						{
-							client->sendResponse(
-								IRS_NTATL, command.c_Index,
-								IMAPResponseType::IRT_CAPABILITIES,
-								IMAPResponsePrefixType::IPT_OK,
-								&server.s_SecureCapabilities
-							);
+
 						} else
 						{
-							client->sendResponse(
-								IRS_NTATL, command.c_Index,
-								IMAPResponseType::IRT_CAPABILITIES,
-								IMAPResponsePrefixType::IPT_OK,
-								&server.s_PlainCapabilities
-							);
 						}
 						continue;
 					}
@@ -243,12 +208,6 @@ namespace FSMTP::IMAP
 					case IMAPCommandType::ICT_LOGOUT:
 					{
 						// Sends the message and terminates
-						client->sendResponse(
-							IRS_NTATL, command.c_Index,
-							IMAPResponseType::IRT_LOGOUT,
-							IMAPResponsePrefixType::IPT_OK,
-							nullptr
-						);
 						goto _imap_server_acceptor_end;
 					}
 					// ===============================================
@@ -267,22 +226,10 @@ namespace FSMTP::IMAP
 
 			} catch (const IMAPBad& e)
 			{
-				client->sendResponse(
-					IRS_TL, command.c_Index,
-					IMAPResponseType::IRT_ERR,
-					IMAPResponsePrefixType::IPT_BAD,
-					e.what(),
-					nullptr
-				);
+				client->sendString(IMAPResponse::buildBad(command.c_Index, e.what()));
 			} catch (const IMAPNo& e)
 			{
-				client->sendResponse(
-					IRS_TL, command.c_Index,
-					IMAPResponseType::IRT_ERR,
-					IMAPResponsePrefixType::IPT_NO,
-					e.what(),
-					nullptr
-				);
+
 			}
 		}
 

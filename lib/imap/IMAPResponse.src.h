@@ -17,35 +17,10 @@
 #pragma once
 
 #include "IMAP.src.h"
+#include "IMAPCommand.src.h"
 
 namespace FSMTP::IMAP
 {
-	typedef enum : uint32_t
-	{
-		IRT_GREETING = 0,
-		IRT_CAPABILITIES,
-		IRT_LOGOUT,
-		IRT_ERR,
-		IRT_LOGIN_SUCCESS,
-		IRT_STARTTLS
-	} IMAPResponseType;
-
-	typedef enum : uint32_t
-	{
-		IPT_BAD = 0,
-		IPT_OK,
-		IPT_NO,
-		IPT_BYE
-	} IMAPResponsePrefixType;
-
-	typedef enum : uint8_t
-	{
-		IRS_NTATL = 0, 	// Non tagged line, followed by tagged line
-		IRS_NT, 				// Non tagged line only
-		IRS_TL, 				// Tagged line only
-		IRS_TLC					// Tagged line with completed
-	} IMAPResponseStructure;
-
 	typedef struct
 	{
 		const char *c_Key;
@@ -56,83 +31,48 @@ namespace FSMTP::IMAP
 	{
 	public:
 		/**
-		 * Default constructor for the imap response
+		 * Builds an list response
 		 *
-		 * @Param {const IMAPResponseType} r_Type
-		 * @Param {const std::string} r_TagIndex
-		 * @Param {const IMAPResponseStructure} r_structure
-		 * @Param {const IMAPResponsePrefixType} r_PrefType
-		 * @Param {void *} r_U
+		 * @Param {const std::vector<Mailbox> &} mailboxes
+		 * @Param {const std::string &} tagIndex
 		 * @Return {void}
 		 */
-		explicit IMAPResponse(
-			const IMAPResponseStructure r_Structure,
-			const std::string r_TagIndex,
-			const IMAPResponseType r_Type,
-			const IMAPResponsePrefixType r_PrefType,
-			void *r_U
+		static std::string buildList(
+			const std::string &tagIndex,
+			const std::vector<Mailbox> &mailboxes
 		);
 
-			/**
-			 * Default constructor for the imap response
-			 *
-			 * @Param {const IMAPResponseType} r_Type
-			 * @Param {const std::string} r_TagIndex
-			 * @Param {const IMAPResponseStructure} r_Structure
-			 * @Param {const IMAPResponsePrefixType} r_PrefType
-			 * @Param {void *} r_U
-			 * @Return {void}
-			 */
-			IMAPResponse(
-				const IMAPResponseStructure r_Structure,
-				const std::string r_TagIndex,
-				const IMAPResponseType r_Type,
-				const IMAPResponsePrefixType r_PrefType,
-				const std::string &r_Message,
-				void *r_U
-			);
-
 		/**
-		 * Builds the response
+		 * Builds the completed response
 		 *
-		 * @Param {const IMAPResponseType} r_Type
-		 * @Return {void}
-		 */
-		std::string build(void);
-
-		/**
-		 * Gets the message
-		 *
-		 * @Param {void}
+		 * @Param {const std::string &} tagIndex
+		 * @Param {const IMAPCommandType} type
 		 * @Return {std::string}
 		 */
-		std::string getMessage(void);
-
-		/**
-		 * Gets the name of the command type
-		 *
-		 * @Param {void}
-		 * @Return {const char *}
-		 */
-		const char *getCommandName(void);
-
-		/**
-		 * Gets an command prefix
-		 *
-		 * @Param {void}
-		 * @Return {const char *} 
-		 */
-		const char *getPrefix(void);
+		static std::string buildCompleted(
+			const std::string &tagIndex,
+			const IMAPCommandType type
+		);
 
 		static std::string buildCapabilities(
 			const std::vector<IMAPCapability> &capabilities
 		);
-	private:
-		std::string r_Message;
-		IMAPResponseType r_Type;
-		void *r_U;
-		IMAPResponseStructure r_Structure;
-		std::string r_TagIndex;
-		IMAPResponsePrefixType r_PrefType;
+
+		/**
+		 * Builds an formal message
+		 *
+		 * @Param {void}
+		 * @Return {std::string}
+		 */
+		static std::string buildGreeting(void);
+
+		/**
+		 * Builds an bad message
+		 *
+		 * @Param {const std::string &} reason
+	 	 * @Param {const std::string &} index
+		 * @Return {std::string}
+		 */
+		static std::string buildBad(const std::string index, const std::string &reason);
 	};
 }

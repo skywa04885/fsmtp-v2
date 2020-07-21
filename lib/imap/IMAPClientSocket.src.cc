@@ -98,52 +98,6 @@ namespace FSMTP::IMAP
 	}
 
 	/**
-	 * Sends an response to the client
-	 *
-	 * @Param {const IMAPResponseType} r_Type
-	 * @Param {const std::string} r_TagIndex
-	 * @Param {const IMAPResponseStructure} r_Structure
-	 * @Param {const IMAPResponsePrefixType} r_PrefType
-	 * @Param {void *} r_U
-	 * @Return {void}
-	 */
-	void IMAPClientSocket::sendResponse(
-		const IMAPResponseStructure r_Structure,
-		const std::string r_TagIndex,
-		const IMAPResponseType r_Type,
-		const IMAPResponsePrefixType r_PrefType,
-		void *r_U
-	)
-	{
-		IMAPResponse response(r_Structure, r_TagIndex, r_Type, r_PrefType, r_U);
-		this->sendString(response.build());
-	}
-
-	/**
-	 * Sends an response to the client
-	 *
-	 * @Param {const IMAPResponseType} r_Type
-	 * @Param {const std::string} r_TagIndex
-	 * @Param {const IMAPResponseStructure} r_Structure
-	 * @Param {const IMAPResponsePrefixType} r_PrefType
-	 * @Param {const std::string &} r_Message
-	 * @Param {void *} r_U
-	 * @Return {void}
-	 */
-	void IMAPClientSocket::sendResponse(
-		const IMAPResponseStructure r_Structure,
-		const std::string r_TagIndex,
-		const IMAPResponseType r_Type,
-		const IMAPResponsePrefixType r_PrefType,
-		const std::string &r_Message,
-		void *r_U
-	)
-	{
-		IMAPResponse response(r_Structure, r_TagIndex, r_Type, r_PrefType, r_Message, r_U);
-		this->sendString(response.build());
-	}
-
-	/**
 	 * Upgrades the socket to an TLS socket
 	 *
 	 * @Param {void}

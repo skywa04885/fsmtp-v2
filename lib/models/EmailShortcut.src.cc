@@ -38,7 +38,7 @@ namespace FSMTP::Models
     const char *query = R"(INSERT INTO fannst.email_shortcuts (
       e_domain, e_subject, e_preview,
       e_owners_uuid, e_email_uuid, e_bucket,
-      e_type, e_size_octets
+      e_mailbox, e_size_octets
     ) VALUES (
       ?, ?, ?,
       ?, ?, ?,
@@ -58,7 +58,7 @@ namespace FSMTP::Models
     cass_statement_bind_uuid(statement, 3, this->e_OwnersUUID);
     cass_statement_bind_uuid(statement, 4, this->e_EmailUUID);
     cass_statement_bind_int64(statement, 5, this->e_Bucket);
-    cass_statement_bind_int32(statement, 6, static_cast<int32_t>(this->e_Type));
+    cass_statement_bind_string(statement, 6, this->e_Mailbox.c_str());
     cass_statement_bind_int64(statement, 7, this->e_SizeOctets);
 
     // Executes the query and checks for errors
@@ -87,6 +87,7 @@ namespace FSMTP::Models
    * @Param {const int32_t} skip
    * @Param {int32_t} limit
    * @Param {const std::string &} domain
+   * @Param {const std::string &mailbox}
    * @Param {const CassUuid &} uuid
    * @Return {std::vector<EmailShortcut>}
    */
@@ -95,12 +96,13 @@ namespace FSMTP::Models
     const int32_t skip,
     int32_t limit,
     const std::string &domain,
+    const std::string &mailbox,
     const CassUuid &uuid
   )
   {
     std::vector<EmailShortcut> ret = {};
 
-    const char *query = "SELECT * FROM fannst.email_shortcuts WHERE e_domain=? AND e_owners_uuid=? LIMIT ?";
+    const char *query = "SELECT * FROM fannst.email_shortcuts WHERE e_domain=? AND e_mailbox=? AND e_owners_uuid=? LIMIT ?";
     CassStatement *statement = nullptr;
     CassFuture *future = nullptr;
     CassError rc;
@@ -115,10 +117,11 @@ namespace FSMTP::Models
     // =======================================
 
     // Prepares the statement and puts the values into it
-    statement = cass_statement_new(query, 3);
+    statement = cass_statement_new(query, 4);
     cass_statement_bind_string(statement, 0, domain.c_str());
-    cass_statement_bind_uuid(statement, 1, uuid);
-    cass_statement_bind_int32(statement, 2, limit);
+    cass_statement_bind_string(statement, 1, mailbox.c_str());
+    cass_statement_bind_uuid(statement, 2, uuid);
+    cass_statement_bind_int32(statement, 3, limit);
 
     // Executes the query and checks for errors
     future = cass_session_execute(cassandra->c_Session, statement);
@@ -155,6 +158,8 @@ namespace FSMTP::Models
       std::size_t subjectLen;
       const char *preview = nullptr;
       std::size_t previewLen;
+      const char *mailbox = nullptr;
+      std::size_t mailboxLen;
       EmailShortcut shortcut;
 
       // Gets the values
@@ -185,9 +190,9 @@ namespace FSMTP::Models
         cass_row_get_column_by_name(row, "e_owners_uuid"),
         &shortcut.e_Bucket
       );
-      cass_value_get_uint32(
-        cass_row_get_column_by_name(row, "e_type"),
-        reinterpret_cast<uint32_t *>(&shortcut.e_Type)
+      cass_value_get_string(
+        cass_row_get_column_by_name(row, "e_mailbox"),
+        &mailbox, &mailboxLen
       );
       cass_value_get_int64(
         cass_row_get_column_by_name(row, "e_size_octets"),
@@ -198,6 +203,7 @@ namespace FSMTP::Models
       shortcut.e_Domain.append(domain, domainLen);
       shortcut.e_Preview.append(preview, previewLen);
       shortcut.e_Subject.append(subject, subjectLen);
+      shortcut.e_Mailbox.append(mailbox, mailboxLen);
 
       // Free's the memory and pushes the result
       ret.push_back(shortcut);
@@ -217,13 +223,14 @@ namespace FSMTP::Models
     const int32_t skip,
     int32_t limit,
     const std::string &domain,
+    const std::string &mailbox,
     const CassUuid &uuid
   )
   {
     std::size_t total = 0;
     int64_t octets = 0;
 
-    const char *query = "SELECT e_size_octets FROM fannst.email_shortcuts WHERE e_domain=? AND e_owners_uuid=? LIMIT ?";
+    const char *query = "SELECT e_size_octets FROM fannst.email_shortcuts WHERE e_domain=? AND e_mailbox=? AND e_owners_uuid=? LIMIT ?";
     CassStatement *statement = nullptr;
     cass_bool_t hasMorePages = cass_false;
     CassError rc;
@@ -239,10 +246,11 @@ namespace FSMTP::Models
     // =======================================
 
     // Prepares the statement and binds the values
-    statement = cass_statement_new(query, 3);
+    statement = cass_statement_new(query, 4);
     cass_statement_bind_string(statement, 0, domain.c_str());
-    cass_statement_bind_uuid(statement, 1, uuid);
-    cass_statement_bind_int32(statement, 2, limit);
+    cass_statement_bind_string(statement, 1, mailbox.c_str());
+    cass_statement_bind_uuid(statement, 2, uuid);
+    cass_statement_bind_int32(statement, 3, limit);
     cass_statement_set_paging_size(statement, 20);
 
     // =======================================
@@ -309,12 +317,13 @@ namespace FSMTP::Models
     const int32_t skip,
     int32_t limit,
     const std::string &domain,
+    const std::string &mailbox,
     const CassUuid &uuid
   )
   {
     std::vector<std::tuple<CassUuid, int64_t, int64_t>>  ret = {};
 
-    const char *query = "SELECT e_size_octets, e_email_uuid, e_bucket FROM fannst.email_shortcuts WHERE e_domain=? AND e_owners_uuid=? AND e_type=? LIMIT ?";
+    const char *query = "SELECT e_size_octets, e_email_uuid, e_bucket FROM fannst.email_shortcuts WHERE e_domain=? AND e_mailbox=? AND e_owners_uuid=? LIMIT ?";
     CassStatement *statement = nullptr;
     cass_bool_t hasMorePages = cass_false;
     CassError rc;
@@ -333,8 +342,8 @@ namespace FSMTP::Models
     // Prepares the statement and binds the values
     statement = cass_statement_new(query, 4);
     cass_statement_bind_string(statement, 0, domain.c_str());
-    cass_statement_bind_uuid(statement, 1, uuid);
-    cass_statement_bind_int32(statement, 2, EmailType::ET_INCOMMING);
+    cass_statement_bind_string(statement, 1, mailbox.c_str());
+    cass_statement_bind_uuid(statement, 2, uuid);
     cass_statement_bind_int32(statement, 3, limit);
     cass_statement_set_paging_size(statement, 20);
 

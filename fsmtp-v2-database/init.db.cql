@@ -6,3 +6,4 @@ CREATE KEYSPACE IF NOT EXISTS fannst WITH REPLICATION = {
 
 INSERT INTO fannst.local_domain (e_domain, e_domain_uuid) VALUES ('fannst.nl', now());
 INSERT INTO fannst.local_domain (e_domain, e_domain_uuid) VALUES ('lukerieff.com', now());
+INSERT INTO fannst.local_domain (e_domain, e_domain_uuid) VALUES ('missfunfitt.com', now());

@@ -25,6 +25,13 @@
 
 namespace FSMTP::IMAP
 {
+	typedef enum : uint8_t
+	{
+		SST_NO_AUTH = 0,
+		SST_AUTH,
+		SST_SEL
+	} ServerSessionState;
+
 	class IMAPServerSession
 	{
 	public:
@@ -77,6 +84,7 @@ namespace FSMTP::IMAP
 		void clearFlag(const int64_t mask);
 
 		AccountShortcut s_Account;
+		ServerSessionState s_State;
 	private:
 		int64_t s_Flags;
 		int64_t s_Actions;

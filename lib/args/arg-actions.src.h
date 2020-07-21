@@ -32,6 +32,7 @@
 #include "../general/AES256.src.h"
 #include "../smtp/server/SMTPServer.src.h"
 #include "../smtp/client/SMTPClient.src.h"
+#include "../models/Mailbox.src.h"
 
 using namespace FSMTP::Networking;
 using namespace FSMTP::Server;

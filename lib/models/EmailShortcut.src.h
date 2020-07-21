@@ -61,6 +61,7 @@ namespace FSMTP::Models
      * @Param {const int32_t} skip
      * @Param {int32_t} limit
      * @Param {const std::string &} domain
+     * @Param {const std::string &} mailbox
      * @Param {const CassUuid &} uuid
      * @Return {std::vector<EmailShortcut>}
      */
@@ -69,6 +70,7 @@ namespace FSMTP::Models
       const int32_t skip,
       int32_t limit,
       const std::string &domain,
+      const std::string &mailbox,
       const CassUuid &uuid
     );
 
@@ -77,6 +79,7 @@ namespace FSMTP::Models
       const int32_t skip,
       int32_t limit,
       const std::string &domain,
+      const std::string &mailbox,
       const CassUuid &uuid
     );
 
@@ -85,6 +88,7 @@ namespace FSMTP::Models
       const int32_t skip,
       int32_t limit,
       const std::string &domain,
+      const std::string &mailbox,
       const CassUuid &uuid
     );
 
@@ -109,7 +113,7 @@ namespace FSMTP::Models
     CassUuid e_OwnersUUID;
     CassUuid e_EmailUUID;
     int64_t e_Bucket;
-    EmailType e_Type;
+    std::string e_Mailbox;
     int64_t e_SizeOctets;
   };
 }

@@ -20,6 +20,7 @@
 #include "IMAPClientSocket.src.h"
 #include "IMAPServerSession.src.h"
 #include "IMAPCommand.src.h"
+#include "IMAPResponse.src.h"
 
 namespace FSMTP::IMAP::MESSAGE_HANDLER
 {
@@ -57,7 +58,7 @@ namespace FSMTP::IMAP::MESSAGE_HANDLER
 	void list(
 		IMAPClientSocket *client,
 		IMAPCommand &command,
-		IMAPServerSession &sessios,
+		IMAPServerSession &session,
 		RedisConnection *redis,
 		CassandraConnection *cassandra
 	);

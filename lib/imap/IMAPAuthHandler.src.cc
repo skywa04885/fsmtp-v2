@@ -42,8 +42,8 @@ namespace FSMTP::IMAP::AUTH_HANDLER
 			throw IMAPBad("Arguments invalid");
 
 		// Gets the username and password
-		std::string &user = command.c_Args[0];
-		std::string &pass = command.c_Args[1];
+		std::string &user = std::get<std::string>(command.c_Args[0].a_Value);
+		std::string &pass = std::get<std::string>(command.c_Args[1].a_Value);
 		removeStringQuotes(user);
 		removeStringQuotes(pass);
 
@@ -114,13 +114,5 @@ namespace FSMTP::IMAP::AUTH_HANDLER
 			throw IMAPNo("Password rejected");
 		}
 		session.setFlag(_IMAP_FLAG_LOGGED_IN);
-
-		// Writes the success response
-		client->sendResponse(
-			IRS_TLC, command.c_Index,
-			IMAPResponseType::IRT_LOGIN_SUCCESS,
-			IMAPResponsePrefixType::IPT_OK,
-			nullptr
-		);
 	}
 }

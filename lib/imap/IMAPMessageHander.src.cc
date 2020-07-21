@@ -56,7 +56,7 @@ namespace FSMTP::IMAP::MESSAGE_HANDLER
 	void list(
 		IMAPClientSocket *client,
 		IMAPCommand &command,
-		IMAPServerSession &sessios,
+		IMAPServerSession &session,
 		RedisConnection *redis,
 		CassandraConnection *cassandra
 	)
@@ -66,8 +66,8 @@ namespace FSMTP::IMAP::MESSAGE_HANDLER
 			throw IMAPBad("Arguments invalid");
 
 		// Parses the arguments, and removes the quotes
-		std::string &arg0 = command.c_Args[0];
-		std::string &arg1 = command.c_Args[1];
+		std::string &arg0 = std::get<std::string>(command.c_Args[0].a_Value);
+		std::string &arg1 = std::get<std::string>(command.c_Args[1].a_Value);
 		removeStringQuotes(arg0);
 		removeStringQuotes(arg1);
 
@@ -76,11 +76,18 @@ namespace FSMTP::IMAP::MESSAGE_HANDLER
 		listQuery query = listQueryFromString(arg0, arg1);
 
 		// Performs switch on the actions
+		std::vector<Mailbox> mailboxes = Mailbox::gatherAll(
+			cassandra,
+			session.s_Account.a_Bucket,
+			session.s_Account.a_Domain,
+			session.s_Account.a_UUID
+		);
 		switch (query.l_Type)
 		{
 			case ListQueryType::LQT_ALL:
 			{
-
+				client->sendString(IMAPResponse::buildList(command.c_Index, mailboxes));
+				break;
 			}
 			default: throw std::runtime_error(EXCEPT_DEBUG("Query type not implemented"));
 		}

@@ -73,7 +73,7 @@ namespace FSMTP
 		// - random stuff
 		std::random_device rd;
 		std::mt19937 re(rd());
-		std::uniform_int_distribution<int> dist(0, sizeof (_saltDict));
+		std::uniform_int_distribution<int> dist(0, sizeof (_saltDict) - 1);
 		for (std::size_t i = 0; i < 25; i++)
 			salt += _saltDict[dist(re)];
 

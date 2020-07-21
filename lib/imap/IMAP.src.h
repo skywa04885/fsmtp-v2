@@ -25,6 +25,7 @@
 #include <functional>
 #include <thread>
 #include <cctype>
+#include <variant>
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
@@ -44,6 +45,7 @@
 #include "../models/Email.src.h"
 #include "../models/LocalDomain.src.h"
 #include "../models/EmailShortcut.src.h"
+#include "../models/Mailbox.src.h"
 #include "../general/Passwords.src.h"
 
 using namespace FSMTP::Cleanup;

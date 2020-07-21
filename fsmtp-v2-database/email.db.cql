@@ -56,10 +56,10 @@ CREATE TABLE IF NOT EXISTS fannst.email_shortcuts (
     e_owners_uuid TIMEUUID,
     e_email_uuid TIMEUUID,
     e_bucket BIGINT,
-    e_type INT,
     e_size_octets BIGINT,
-    PRIMARY KEY((e_domain), e_type, e_owners_uuid, e_email_uuid)
-) WITH CLUSTERING ORDER BY(e_type DESC, e_owners_uuid DESC, e_email_uuid DESC);
+    e_mailbox VARCHAR,
+    PRIMARY KEY((e_domain), e_owners_uuid, e_mailbox, e_email_uuid)
+) WITH CLUSTERING ORDER BY(e_owners_uuid DESC, e_mailbox DESC, e_email_uuid DESC);
 
 CREATE TABLE IF NOT EXISTS fannst.local_domain (
     e_domain VARCHAR,
@@ -68,11 +68,22 @@ CREATE TABLE IF NOT EXISTS fannst.local_domain (
 );
 
 -- The MAIL folders
-CREATE TABLE IF NOT EXISTS fannst.mailboxes(
+CREATE TABLE IF NOT EXISTS fannst.mailboxes (
     e_bucket BIGINT,
     e_domain VARCHAR,
     e_uuid TIMEUUID,
     e_mailbox_path VARCHAR,
     e_mailbox_stand BOOLEAN,
+    e_message_count BIGINT,
+    e_flags INT,
     PRIMARY KEY((e_bucket), e_domain, e_uuid, e_mailbox_path)
 ) WITH CLUSTERING ORDER BY (e_domain DESC, e_uuid DESC, e_mailbox_path DESC);
+
+-- The subscriptions
+CREATE TABLE IF NOT EXISTS fannst.mail_subs (
+    s_bucket BIGINT,
+    s_domain VARCHAR,
+    s_uuid TIMEUUID,
+    s_mailbox_path VARCHAR,
+    PRIMARY KEY((s_bucket), s_domain, s_uuid, s_mailbox_path)
+) WITH CLUSTERING ORDER BY (s_domain DESC, s_uuid DESC, s_mailbox_path DESC);

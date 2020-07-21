@@ -299,6 +299,7 @@ namespace FSMTP::POP3
 							0,
 							120,
 							session.s_Account.a_Domain,
+							"~/inbox",
 							session.s_Account.a_UUID
 						);
 

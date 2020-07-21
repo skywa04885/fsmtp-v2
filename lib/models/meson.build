@@ -4,5 +4,7 @@ sources += files(
   'LocalDomain.src.cc',
   'TransmissionRequest.src.cc',
   'EmailShortcut.src.cc',
-  'RawEmail.src.cc'
+  'RawEmail.src.cc',
+  'Mailbox.src.cc',
+  'Subscription.src.cc'
 )

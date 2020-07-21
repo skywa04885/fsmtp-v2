@@ -201,6 +201,65 @@ namespace FSMTP::ARG_ACTIONS
     accountShortcut.save(cassandra.get());
     accountShortcut.saveRedis(redis.get());
 
+    try
+    {
+      // Adds the mailboxes
+      Mailbox inbox(
+        account.a_Bucket, account.a_Domain, account.a_UUID,
+        "~/inbox", true,
+        0,
+        0
+      );
+      inbox.save(cassandra.get());
+
+      Mailbox sent(
+        account.a_Bucket, account.a_Domain, account.a_UUID,
+        "~/sent", true,
+        0,
+        _MAILBOX_FLAG_UNMARKED | _MAILBOX_FLAG_SENT
+      );
+      sent.save(cassandra.get());
+
+      Mailbox spam(
+        account.a_Bucket, account.a_Domain, account.a_UUID,
+        "~/spam",
+        true,
+        0,
+        _MAILBOX_FLAG_MARKED | _MAILBOX_FLAG_JUNK
+      );
+      spam.save(cassandra.get());
+
+      Mailbox archive(
+        account.a_Bucket, account.a_Domain, account.a_UUID,
+        "~/archive",
+        true,
+        0,
+        _MAILBOX_FLAG_UNMARKED | _MAILBOX_FLAG_ARCHIVE
+      );
+      archive.save(cassandra.get());
+
+      Mailbox drafts(
+        account.a_Bucket, account.a_Domain, account.a_UUID,
+        "~/drafts",
+        true,
+        0,
+        _MAILBOX_FLAG_UNMARKED | _MAILBOX_FLAG_DRAFT
+      );
+      drafts.save(cassandra.get());
+
+      Mailbox trash(
+        account.a_Bucket, account.a_Domain, account.a_UUID,
+        "~/trash",
+        true,
+        0,
+        _MAILBOX_FLAG_MARKED | _MAILBOX_FLAG_TRASH
+      );
+      trash.save(cassandra.get());
+    } catch (const DatabaseException &e)
+    {
+      logger << FATAL << "Could not create mailboxes: " << e.what() << ENDL;
+    }
+
     std::exit(0);
   }
 
@@ -445,8 +504,8 @@ namespace FSMTP::ARG_ACTIONS
       mailComposerConfig.m_Subject = subject;
     } else
     {
-      mailComposerConfig.m_To.push_back(EmailAddress("Luke Rieff", "luke.rieff@gmail.com"));
-      mailComposerConfig.m_From.push_back(EmailAddress("Luke Rieff", "lr@fannst.nl"));
+      mailComposerConfig.m_From.push_back(EmailAddress("Luke Rieff", "luke.rieff@gmail.com"));
+      mailComposerConfig.m_To.push_back(EmailAddress("Luke Rieff", "lr@missfunfitt.com"));
       mailComposerConfig.m_Subject = "Test email";
     }
 

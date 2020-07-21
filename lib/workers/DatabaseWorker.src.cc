@@ -77,7 +77,7 @@ namespace FSMTP::Workers
 			shortcut.e_OwnersUUID = dataPair.second.e_OwnersUUID;
 			shortcut.e_EmailUUID = dataPair.second.e_EmailUUID;
 			shortcut.e_Bucket = dataPair.second.e_Bucket;
-			shortcut.e_Type = dataPair.second.e_Type;
+			shortcut.e_Mailbox = "~/inbox";
 			shortcut.e_SizeOctets = dataPair.first.size();
 
 			RawEmail raw;
@@ -96,7 +96,6 @@ namespace FSMTP::Workers
 					);
 
 			// Stores the shit
-			dataPair.second.save(this->d_Connection.get());
 			raw.save(this->d_Connection.get());
 			shortcut.save(this->d_Connection.get());
 		}

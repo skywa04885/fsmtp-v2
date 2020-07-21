@@ -26,7 +26,7 @@ namespace FSMTP::IMAP
 	 * @Return {void}
 	 */
 	IMAPServerSession::IMAPServerSession(void):
-		s_Flags(0x0), s_Actions(0x0)
+		s_Flags(0x0), s_Actions(0x0), s_State(ServerSessionState::SST_NO_AUTH)
 	{
 
 	}

@@ -16,19 +16,56 @@
 
 #pragma once
 
-#include "IMAPResponse.src.h"
+#include "IMAP.src.h"
 
 namespace FSMTP::IMAP
 {
 	typedef enum : uint32_t
 	{
-		ICT_CAPABILITY = 0,
-		ICT_UNKNOWN,
-		ICT_LOGOUT,
+		// Non authenticated commands
+		ICT_STARTTLS = 0,
+		ICT_AUTHENTICATE,
 		ICT_LOGIN,
-		ICT_STARTTLS,
-		ICT_LIST
+		ICT_LOGOUT,
+		ICT_CAPABILITY,
+		// Authenticated commands
+		ICT_SELECT,
+		ICT_EXAMINE,
+		ICT_CREATE,
+		ICT_DELETE,
+		ICT_RENAME,
+		ICT_SUBSCRIBE,
+		ICT_UNSUBSCRIBE,
+		ICT_LIST,
+		ICT_LSUB,
+		ICT_STATUS,
+		ICT_APPEND,
+		// Selected state
+		ICT_CHECK,
+		ICT_CLOSE,
+		ICT_EXPUNGE,
+		ICT_SEARCH,
+		ICT_FETCH,
+		ICT_STORE,
+		ICT_COPY,
+		ICT_UID,
+		// Other
+		ICT_UNKNOWN
 	} IMAPCommandType;
+
+	typedef enum : uint8_t
+	{
+		IAT_ATOM = 0,
+		IAT_NUMBER,
+		IAT_STRING,
+		IAT_NIL
+	} IMAPCommandArgType;
+
+	typedef struct
+	{
+		IMAPCommandArgType a_Type;
+		std::variant<std::string, int32_t> a_Value;
+	} IMAPCommandArg;
 
 	class IMAPCommand
 	{
@@ -56,9 +93,17 @@ namespace FSMTP::IMAP
 		 * @Return {void}
 		 */
 		void parse(const std::string &raw);
+
+		/**
+		 * Gets and sets the type of the command
+		 *
+		 * @Param {std::string} command
+		 * @Return {void}
+		 */
+		void getType(std::string command);
 	
 		std::string c_Index;
 		IMAPCommandType c_Type;
-		std::vector<std::string> c_Args;
+		std::vector<IMAPCommandArg> c_Args;
 	};
 }
