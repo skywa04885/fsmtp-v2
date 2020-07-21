@@ -30,7 +30,7 @@ namespace FSMTP::Models
 	/**
 	 * The constructor which litterally makes one
 	 *
-	 * @Param {const int64_t} e_Bucket
+	 * @Param {const int32_t} e_Bucket
 	 * @Param {const std::string &} e_Domain
 	 * @Param {const CassUuid &} e_UUID
 	 * @Param {const std::String &} e_MailboxPath;
@@ -46,7 +46,7 @@ namespace FSMTP::Models
 		const CassUuid &e_UUID,
 		const std::string &e_MailboxPath,
 		const bool e_MailboxStand,
-		const int64_t e_MessageCount,
+		const int32_t e_MessageCount,
 		const int32_t e_Flags,
 		const bool e_Subscribed
 	) noexcept:
@@ -85,7 +85,7 @@ namespace FSMTP::Models
 			statement, 4, 
 			(this->e_MailboxStand ? cass_true : cass_false)
 		);
-		cass_statement_bind_int64(statement, 5, this->e_MessageCount);
+		cass_statement_bind_int32(statement, 5, this->e_MessageCount);
 		cass_statement_bind_int32(statement, 6, this->e_Flags);
 		cass_statement_bind_bool(
 			statement, 7, 
@@ -201,7 +201,7 @@ namespace FSMTP::Models
 				cass_row_get_column_by_name(row, "e_flags"),
 				&mailbox.e_Flags
 			);
-			cass_value_get_int64(
+			cass_value_get_int32(
 				cass_row_get_column_by_name(row, "e_message_count"),
 				&mailbox.e_MessageCount
 			);

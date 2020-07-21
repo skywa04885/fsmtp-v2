@@ -201,8 +201,12 @@ namespace FSMTP::IMAP::MAILBOX_HANDLER
 		if (
 			command.c_Args[0].a_Type != IMAPCommandArgType::IAT_STRING &&
 			command.c_Args[0].a_Type != IMAPCommandArgType::IAT_ATOM
-		) throw IMAPBad("Invalid argument type, required STRING/ATOM");
+		)
+		{
+			throw IMAPBad("Invalid argument type, required STRING/ATOM");
+		}
 
-			// Query's for the specified mailbox
+		// Query's for the specified mailbox
+		
 	}
 }

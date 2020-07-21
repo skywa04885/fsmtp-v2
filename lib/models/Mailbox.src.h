@@ -59,7 +59,7 @@ namespace FSMTP::Models
 		 * @Param {const CassUuid &} e_UUID
 		 * @Param {const std::String &} e_MailboxPath;
 		 * @Param {const bool} e_MailboxStand
-		 * @Param {const in64_t} e_MessageCount
+		 * @Param {const int32_t} e_MessageCount
 		 * @Param {const int32_t} e_Flags
 		 * @Param {const bool} e_Subscribed
 		 * @Return {void}
@@ -70,7 +70,7 @@ namespace FSMTP::Models
 			const CassUuid &e_UUID,
 			const std::string &e_MailboxPath,
 			const bool e_MailboxStand,
-			const int64_t e_MessageCount,
+			const int32_t e_MessageCount,
 			const int32_t e_Flags,
 			const bool e_Subscribed
 		) noexcept;
@@ -102,7 +102,7 @@ namespace FSMTP::Models
 		);
 
 		int64_t e_Bucket;
-		int64_t e_MessageCount;
+		int32_t e_MessageCount;
 		std::string e_Domain;
 		CassUuid e_UUID;
 		std::string e_MailboxPath;

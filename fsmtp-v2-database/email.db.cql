@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS fannst.email_shortcuts (
     e_email_uuid TIMEUUID,
     e_bucket BIGINT,
     e_size_octets BIGINT,
+    e_uid INT,
     e_mailbox VARCHAR,
     PRIMARY KEY((e_domain), e_owners_uuid, e_mailbox, e_email_uuid)
 ) WITH CLUSTERING ORDER BY(e_owners_uuid DESC, e_mailbox DESC, e_email_uuid DESC);
@@ -74,7 +75,7 @@ CREATE TABLE IF NOT EXISTS fannst.mailboxes (
     e_uuid TIMEUUID,
     e_mailbox_path VARCHAR,
     e_mailbox_stand BOOLEAN,
-    e_message_count BIGINT,
+    e_message_count INT,
     e_flags INT,
     e_subscribed BOOLEAN,
     PRIMARY KEY((e_bucket), e_domain, e_uuid, e_mailbox_path)
