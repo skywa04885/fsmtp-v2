@@ -38,11 +38,13 @@ namespace FSMTP::Models
     const char *query = R"(INSERT INTO fannst.email_shortcuts (
       e_domain, e_subject, e_preview,
       e_owners_uuid, e_email_uuid, e_bucket,
-      e_mailbox, e_size_octets, e_uid
+      e_mailbox, e_size_octets, e_uid,
+      e_flags
     ) VALUES (
       ?, ?, ?,
       ?, ?, ?,
-      ?, ?
+      ?, ?, ?,
+      ?
     ))";
     CassStatement *statement = nullptr;
     CassFuture *future = nullptr;
@@ -51,7 +53,7 @@ namespace FSMTP::Models
     // Creates the statement and query, then binds
     // - the values
     std::cout << this->e_Domain.c_str() << std::endl;
-    statement = cass_statement_new(query, 9);
+    statement = cass_statement_new(query, 10);
     cass_statement_bind_string(statement, 0, this->e_Domain.c_str());
     cass_statement_bind_string(statement, 1, this->e_Subject.c_str());
     cass_statement_bind_string(statement, 2, this->e_Preview.c_str());
@@ -61,6 +63,7 @@ namespace FSMTP::Models
     cass_statement_bind_string(statement, 6, this->e_Mailbox.c_str());
     cass_statement_bind_int64(statement, 7, this->e_SizeOctets);
     cass_statement_bind_int32(statement, 8, this->e_UID);
+    cass_statement_bind_int32(statement, 9, this->e_Flags);
 
     // Executes the query and checks for errors
     future = cass_session_execute(cassandra->c_Session, statement);
@@ -202,6 +205,10 @@ namespace FSMTP::Models
       cass_value_get_int32(
         cass_row_get_column_by_name(row, "e_uid"),
         &shortcut.e_UID
+      );
+      cass_value_get_int32(
+        cass_row_get_column_by_name(row, "e_Flags"),
+        &shortcut.e_Flags
       );
 
       // Stores the strings

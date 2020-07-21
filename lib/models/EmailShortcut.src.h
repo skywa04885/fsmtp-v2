@@ -113,6 +113,7 @@ namespace FSMTP::Models
     CassUuid e_OwnersUUID;
     CassUuid e_EmailUUID;
     int32_t e_UID;
+    int32_t e_Flags;
     int64_t e_Bucket;
     std::string e_Mailbox;
     int64_t e_SizeOctets;

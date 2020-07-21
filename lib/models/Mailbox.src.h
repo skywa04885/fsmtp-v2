@@ -101,6 +101,23 @@ namespace FSMTP::Models
 			const bool subscribedOnly
 		);
 
+		/**
+		 * Gets an mailbox
+		 *
+		 * @Param {CassandraConnection *} cassandra
+		 * @Param {const std::string &} domain
+		 * @Param {const CassUuid &} uuid
+		 * @Param {const std::string &} mailboxPath
+		 * @Return {MailboxStatus}
+		 */
+		static Mailbox get(
+			CassandraConnection *cassandra,
+			const int64_t bucket,
+			const std::string &domain,
+			const CassUuid &uuid,
+			const std::string &mailboxPath
+		);
+
 		int64_t e_Bucket;
 		int32_t e_MessageCount;
 		std::string e_Domain;
