@@ -31,6 +31,176 @@ namespace FSMTP::Models
 	{}
 
 	/**
+	 * Gets the mailbox status
+	 *
+	 * @Param {RedisConnection *} redis
+	 * @Param {CassandraConnection *} cassandra
+	 * @Param {const int64_t} s_Bucket
+	 * @Param {const std::string &} s_Domain
+	 * @Param {const CassUuid &} uuid
+	 * @Param {const std::string &} mailboxPath
+	 */
+	MailboxStatus MailboxStatus::get(
+		RedisConnection *redis,
+		CassandraConnection *cassandra,
+		const int64_t s_Bucket,
+		const std::string &s_Domain,
+		const CassUuid &uuid,
+		const std::string &mailboxPath
+	)
+	{
+		MailboxStatus res;
+
+		// =================================
+		// Attempts to get the status
+		//
+		// If this fails, we will create
+		// - one based on the database
+		// =================================
+
+		// Builds the command
+		std::string command = "HGETALL mstat:";
+		command += std::to_string(s_Bucket);
+		command += ':';
+		command += s_Domain;
+		command += ':';
+		command += std::to_string(cass_uuid_timestamp(uuid));
+		command += ':';
+		command += mailboxPath;
+
+		// Executes the command
+		redisReply *reply = reinterpret_cast<redisReply *>(redisCommand(
+			redis->r_Session, command.c_str()
+		));
+		// Checks if we even received something
+		if (reply->type != REDIS_REPLY_NIL && reply->elements > 0)
+		{
+			// Checks if the reply object is valid
+			if (reply->type != REDIS_REPLY_ARRAY)
+			{
+				freeReplyObject(reply);
+				throw DatabaseException(EXCEPT_DEBUG("Expected type array, got something else .."));
+			}
+
+			// Gets the flags
+			if (reply->element[1]->type != REDIS_REPLY_STRING)
+			{
+				freeReplyObject(reply);
+				throw DatabaseException(EXCEPT_DEBUG("Expected type integer, got something else .."));
+			} res.s_Flags = std::stoi(reply->element[1]->str);
+
+			// Gets the unseen count
+			if (reply->element[3]->type != REDIS_REPLY_STRING)
+			{
+				freeReplyObject(reply);
+				throw DatabaseException(EXCEPT_DEBUG("Expected type integer, got something else .."));
+			} res.s_Unseen = std::stoi(reply->element[3]->str);
+
+			// Gets the total count
+			if (reply->element[5]->type != REDIS_REPLY_STRING)
+			{
+				freeReplyObject(reply);
+				throw DatabaseException(EXCEPT_DEBUG("Expected type integer, got something else .."));
+			} res.s_Total = std::stoi(reply->element[5]->str);
+
+			// Gets the perma flags
+			if (reply->element[7]->type != REDIS_REPLY_STRING)
+			{
+				freeReplyObject(reply);
+				throw DatabaseException(EXCEPT_DEBUG("Expected type integer, got something else .."));
+			} res.s_PerfmaFlags = std::stoi(reply->element[7]->str);
+
+			// Gets the next UID
+			if (reply->element[9]->type != REDIS_REPLY_STRING)
+			{
+				freeReplyObject(reply);
+				throw DatabaseException(EXCEPT_DEBUG("Expected type integer, got something else .."));
+			} res.s_NextUID = std::stoi(reply->element[9]->str);
+
+			// Gets the most recent one
+			if (reply->element[11]->type != REDIS_REPLY_STRING)
+			{
+				freeReplyObject(reply);
+				throw DatabaseException(EXCEPT_DEBUG("Expected type integer, got something else .."));
+			} res.s_Recent = std::stoi(reply->element[11]->str);
+
+			// Returns the result
+			freeReplyObject(reply);
+			return res;
+		} else freeReplyObject(reply);
+		
+		// =================================
+		// Builds the status
+		//
+		// Since it does not exists
+		// - we generate one
+		// =================================
+
+		// Restores the data from cassandra
+		res = MailboxStatus::restoreFromCassandra(
+			cassandra,
+			s_Bucket,
+			s_Domain,
+			uuid,
+			mailboxPath
+		);
+
+		// Saves the data in redis
+		res.save(redis, mailboxPath);
+
+		return res;
+	}
+
+	/**
+	 * Saves the mailbox status
+	 *
+	 * @Param {RedisConnection *} redis
+	 * @Return {void}
+	 */
+	void MailboxStatus::save(RedisConnection *redis, const std::string &mailboxPath)
+	{
+		// Builds the command
+		std::string command = "HMSET mstat:";
+		command += std::to_string(this->s_Bucket);
+		command += ':';
+		command += s_Domain;
+		command += ':';
+		command += std::to_string(cass_uuid_timestamp(this->s_UUID));
+		command += ':';
+		command += mailboxPath;
+
+		// Appends the values
+		command += " v1 ";
+		command += std::to_string(this->s_Flags);
+		command += " v2 ";
+		command += std::to_string(this->s_Unseen);
+		command += " v3 ";
+		command += std::to_string(this->s_Total);
+		command += " v4 ";
+		command += std::to_string(this->s_PerfmaFlags);
+		command += " v5 ";
+		command += std::to_string(this->s_NextUID);
+		command += " v6 ";
+		command += std::to_string(this->s_Recent);
+
+		// Executes the command
+		redisReply *reply = reinterpret_cast<redisReply *>(redisCommand(
+			redis->r_Session,
+			command.c_str()
+		));
+		if (reply->type == REDIS_REPLY_ERROR)
+		{
+			std::string error = "redisCommand() failed: ";
+			error += std::string(reply->str, reply->len);
+			freeReplyObject(reply);
+			throw DatabaseException(EXCEPT_DEBUG(error));
+		}
+
+		// Frees the memory and returns
+		freeReplyObject(reply);
+	}
+
+	/**
 	 * Restores an mailbox status from cassandra (EXPENSIVE)
 	 *
 	 * @Param {CassandraConnection *} cassandra
@@ -50,7 +220,7 @@ namespace FSMTP::Models
 		MailboxStatus res;
 		res.s_Bucket = bucket;
 		res.s_Domain = domain;
-		res.s_UUID = cass_uuid_timestamp(uuid);
+		res.s_UUID = uuid;
 		int32_t largestUID = 0;
 
 		// Gets the mailbox itself, and sets
@@ -124,7 +294,6 @@ namespace FSMTP::Models
 				// Checks if it is unseen
 				if (!(BINARY_COMPARE(flags, _EMAIL_FLAG_SEEN)))
 				{
-					if (res.s_Recent == 0) res.s_Recent = uid;
 					++res.s_Unseen;
 				}
 
@@ -143,12 +312,33 @@ namespace FSMTP::Models
 			cass_iterator_free(iterator);
 		} while (hasMorePages);
 
-
 		// Sets the next UID
 		res.s_NextUID = ++largestUID;
 
 		// Frees the statement
 		cass_statement_free(statement);		
 		return res;
+	}
+
+	/**
+	 * Adds an new message to an mailbox
+	 *
+	 * @Param {RedisConnection *} redis
+ 	 * @Param {CassandraConnection *} cassandra
+	 * @Param {const int64_t} s_Bucket
+	 * @Param {const std::string &} s_Domain
+	 * @Param {const CassUuid &} uuid
+	 * @Param {const std::string &} mailboxPath
+	 */
+	static void addOneMessage(
+		RedisConnection *redis,
+		CassandraConnection *cassandra,
+		const int64_t s_Bucket,
+		const std::string &s_Domain,
+		const CassUuid &uuid,
+		const std::string &mailboxPath
+	)
+	{
+		
 	}
 }

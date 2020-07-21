@@ -48,6 +48,7 @@
 #include "../models/EmailShortcut.src.h"
 #include "../models/Mailbox.src.h"
 #include "../general/Passwords.src.h"
+#include "../models/MailboxStatus.src.h"
 
 using namespace FSMTP::Cleanup;
 using namespace FSMTP::Models;

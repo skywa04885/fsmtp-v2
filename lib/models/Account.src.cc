@@ -545,7 +545,9 @@ namespace FSMTP::Models
       // Gets the error message and throws it
       std::string message = "redisCommand() failed: ";
       message += std::string(reply->str, reply->len);
+      freeReplyObject(reply);
       throw DatabaseException(message);
     }
+    freeReplyObject(reply);
   }
 }

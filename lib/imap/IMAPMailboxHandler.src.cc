@@ -206,7 +206,18 @@ namespace FSMTP::IMAP::MAILBOX_HANDLER
 			throw IMAPBad("Invalid argument type, required STRING/ATOM");
 		}
 
+		std::string &mailboxName = std::get<std::string>(command.c_Args[0].a_Value);
+		removeStringQuotes(mailboxName);
+
 		// Query's for the specified mailbox
-		
+		MailboxStatus status = MailboxStatus::get(
+			redis, cassandra, session.s_Account.a_Bucket,
+			session.s_Account.a_Domain, session.s_Account.a_UUID,
+			mailboxName
+		);
+
+		// Writes the response
+		client->sendString(IMAPResponse::buildSelectInformation(
+			command.c_Index, status));
 	}
 }

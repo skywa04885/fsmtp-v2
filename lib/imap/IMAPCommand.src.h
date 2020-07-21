@@ -50,7 +50,8 @@ namespace FSMTP::IMAP
 		ICT_COPY,
 		ICT_UID,
 		// Other
-		ICT_UNKNOWN
+		ICT_UNKNOWN,
+		ICT_NOOP
 	} IMAPCommandType;
 
 	typedef enum : uint8_t

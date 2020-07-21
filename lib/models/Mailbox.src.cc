@@ -185,17 +185,20 @@ namespace FSMTP::Models
 			std::size_t mailboxPathLen;
 			Mailbox mailbox;
 
+
+			cass_bool_t subscribed;
+			cass_bool_t mailboxStand;
 			cass_value_get_string(
 				cass_row_get_column_by_name(row, "e_mailbox_path"),
 				&mailboxPath, &mailboxPathLen
 			);
 			cass_value_get_bool(
 				cass_row_get_column_by_name(row, "e_mailbox_stand"),
-				reinterpret_cast<cass_bool_t *>(&mailbox.e_MailboxStand)
+				&mailboxStand
 			);
 			cass_value_get_bool(
 				cass_row_get_column_by_name(row, "e_subscribed"),
-				reinterpret_cast<cass_bool_t *>(&mailbox.e_Subscribed)
+				&subscribed
 			);
 			cass_value_get_int32(
 				cass_row_get_column_by_name(row, "e_flags"),
@@ -205,6 +208,8 @@ namespace FSMTP::Models
 				cass_row_get_column_by_name(row, "e_message_count"),
 				&mailbox.e_MessageCount
 			);
+			mailbox.e_Subscribed = (subscribed == cass_true ? true : false);
+			mailbox.e_MailboxStand = (mailboxStand == cass_true ? true : false);
 
 			mailbox.e_MailboxPath.append(mailboxPath, mailboxPathLen);
 
@@ -291,6 +296,8 @@ namespace FSMTP::Models
 		res.e_UUID = uuid;
 		res.e_MailboxPath = mailboxPath;
 
+		cass_bool_t subscribed;
+		cass_bool_t mailboxStand;
 		cass_value_get_int32(
 			cass_row_get_column_by_name(row, "e_flags"), 
 			&res.e_Flags
@@ -301,16 +308,20 @@ namespace FSMTP::Models
 		);
 		cass_value_get_bool(
 			cass_row_get_column_by_name(row, "e_subscribed"),
-			reinterpret_cast<cass_bool_t *>(&res.e_Subscribed)
+			&subscribed
 		);
 		cass_value_get_bool(
 			cass_row_get_column_by_name(row, "e_mailbox_stand"),
-			reinterpret_cast<cass_bool_t *>(&res.e_MailboxStand)
+			&mailboxStand
 		);
+
+		res.e_Subscribed = (subscribed == cass_true ? true : false);
+		res.e_MailboxStand = (mailboxStand == cass_true ? true : false);
 
 		cass_future_free(future);
 		cass_result_free(result);
 		cass_statement_free(statement);
+
 		return res;
 	}
 }

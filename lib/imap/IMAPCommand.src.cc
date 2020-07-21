@@ -147,6 +147,12 @@ namespace FSMTP::IMAP
 		// - of the current class
 		switch (command[0])
 		{
+			case 'n':
+			{ // NOOP
+				if (command == "noop") this->c_Type = IMAPCommandType::ICT_NOOP;
+				else this->c_Type = IMAPCommandType::ICT_UNKNOWN;
+				break;
+			}
 			case 's':
 			{ // STARTTLS, SELECT, STATUS, STORE, SUBSCRIBE
 				if (command == "starttls") this->c_Type = IMAPCommandType::ICT_STARTTLS;

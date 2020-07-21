@@ -24,6 +24,7 @@ namespace FSMTP::Models
 {
 	class MailboxStatus
 	{
+	public:
 		/**
 		 * Empty constructor for the mailbox status
 		 *
@@ -36,15 +37,38 @@ namespace FSMTP::Models
 		 * Gets the mailbox status
 		 *
 		 * @Param {RedisConnection *} redis
+	 	 * @Param {CassandraConnection *} cassandra
 		 * @Param {const int64_t} s_Bucket
 		 * @Param {const std::string &} s_Domain
 		 * @Param {const CassUuid &} uuid
+		 * @Param {const std::string &} mailboxPath
 		 */
 		static MailboxStatus get(
 			RedisConnection *redis,
+			CassandraConnection *cassandra,
 			const int64_t s_Bucket,
 			const std::string &s_Domain,
-			const CassUuid &uuid
+			const CassUuid &uuid,
+			const std::string &mailboxPath
+		);
+
+		/**
+		 * Adds an new message to an mailbox
+		 *
+		 * @Param {RedisConnection *} redis
+	 	 * @Param {CassandraConnection *} cassandra
+		 * @Param {const int64_t} s_Bucket
+		 * @Param {const std::string &} s_Domain
+		 * @Param {const CassUuid &} uuid
+		 * @Param {const std::string &} mailboxPath
+		 */
+		static void addOneMessage(
+			RedisConnection *redis,
+			CassandraConnection *cassandra,
+			const int64_t s_Bucket,
+			const std::string &s_Domain,
+			const CassUuid &uuid,
+			const std::string &mailboxPath
 		);
 
 		/**
@@ -53,7 +77,7 @@ namespace FSMTP::Models
 		 * @Param {RedisConnection *} redis
 		 * @Return {void}
 		 */
-		void save(RedisConnection *redis);
+		void save(RedisConnection *redis, const std::string &mailboxPath);
 
 		/**
 		 * Restores an mailbox status from cassandra (EXPENSIVE)
@@ -74,7 +98,7 @@ namespace FSMTP::Models
 
 		int64_t s_Bucket;
 		std::string s_Domain;
-		int64_t s_UUID;
+		CassUuid s_UUID;
 		int32_t s_Unseen;
 		int32_t s_NextUID;
 		int32_t s_Recent;

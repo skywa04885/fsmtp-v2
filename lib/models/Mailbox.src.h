@@ -24,6 +24,7 @@
 #define _MAILBOX_FLAG_DRAFT 32
 #define _MAILBOX_FLAG_MARKED 64
 #define _MAILBOX_FLAG_JUNK 128
+#define _MAILBOX_SYS_FLAG_READ_ONLY 256
 
 #include <cstdint>
 #include <iostream>

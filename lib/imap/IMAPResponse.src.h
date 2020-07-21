@@ -113,5 +113,25 @@ namespace FSMTP::IMAP
 		 * @Return {std::string}
 		 */
 		static std::string buildMessageWithConfirm(const IMAPCommandType type);
+
+		/**
+		 * Builds the select information header, when an mailbox is selected
+		 *
+		 * @Param {const std::string &} index
+		 * @Param {const MailboxStatys &} status
+		 * @Return {std::string}
+		 */
+		static std::string buildSelectInformation(
+			const std::string &index,
+			const MailboxStatus &status
+		);
+
+		/**
+		 * Builds an list of email flags
+		 *
+		 * @Param {const int32_t} flags
+		 * @return {std::string}
+		 */
+		static std::string buildEmailFlagList(const int32_t flags);
 	};
 }

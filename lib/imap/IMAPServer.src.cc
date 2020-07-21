@@ -262,6 +262,17 @@ namespace FSMTP::IMAP
 						goto _imap_server_acceptor_end;
 					}
 					// ===============================================
+					// Handles the 'NOOP' command
+					//
+					// Resets the timer
+					// ===============================================
+					case IMAPCommandType::ICT_NOOP:
+					{
+						client->sendString(IMAPResponse::buildCompleted(command.c_Index, 
+							IMAPCommandType::ICT_NOOP));
+						continue;
+					}
+					// ===============================================
 					// Handles the unknown commands
 					//
 					// Throws unknown command error
@@ -278,6 +289,10 @@ namespace FSMTP::IMAP
 			} catch (const IMAPNo& e)
 			{
 				client->sendString(IMAPResponse::buildNo(command.c_Index, e.what()));
+			} catch (const DatabaseException &e)
+			{
+				logger << FATAL << "Database exception: " << e.what() << ENDL << CLASSIC;
+				goto _imap_server_acceptor_end;
 			}
 		}
 

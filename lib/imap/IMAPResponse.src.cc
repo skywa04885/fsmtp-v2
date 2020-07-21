@@ -156,6 +156,7 @@ namespace FSMTP::IMAP
 			case IMAPCommandType::ICT_STORE: return "STORE";
 			case IMAPCommandType::ICT_COPY: return "COPY";
 			case IMAPCommandType::ICT_UID: return "UID";
+			case IMAPCommandType::ICT_NOOP: return "NOOP";
 			default: throw std::runtime_error(EXCEPT_DEBUG("Type not implemented"));
 		}
 	}
@@ -220,5 +221,66 @@ namespace FSMTP::IMAP
 	{
 		// TODO: make this
 		return "";
+	}
+
+	/**
+	 * Builds the select information header, when an mailbox is selected
+	 *
+	 * @Param {const std::string &} index
+	 * @Param {const MailboxStatys &} status
+	 * @Return {std::string}
+	 */
+	std::string IMAPResponse::buildSelectInformation(
+		const std::string &index,
+		const MailboxStatus &status
+	)
+	{
+		std::ostringstream stream;
+
+		// Builds the basic stuff
+		stream << "* " << status.s_Total << " EXISTS\r\n";
+		stream << "* " << status.s_Recent << " RECENT\r\n";
+		stream << "* OK [UNSEEN " << status.s_Unseen << " Message " << status.s_Unseen << " is first unseen\r\n";
+		stream << "* OK [UIDVALIDITY " << std::numeric_limits<int32_t>::max() << "] UIDs valid\r\n";
+		stream << "* OK [UIDNEXT " << status.s_NextUID << "] Predicted next UID\r\n";
+		stream << "* FLAGS " << IMAPResponse::buildEmailFlagList(status.s_Flags) << "\r\n";
+		stream << "* OK [PERMANENTFLAGS " << IMAPResponse::buildEmailFlagList(_EMAIL_FLAG_DELETED | _EMAIL_FLAG_SEEN) << "] LIMITED\r\n"; // TODO: Dynamic permanent flags
+		if (BINARY_COMPARE(status.s_Flags, _MAILBOX_SYS_FLAG_READ_ONLY))
+			stream << index << " [READ-ONLY] SELECT completed" << "\r\n";
+		else
+			stream << index << " [READ-WRITE] SELECT completed" << "\r\n";
+
+		return stream.str();
+	}
+
+	/**
+	 * Builds an list of email flags
+	 *
+	 * @Param {const int32_t} flags
+	 * @return {std::string}
+	 */
+	std::string IMAPResponse::buildEmailFlagList(const int32_t flags)
+	{
+		std::vector<const char *> vec = {};
+		if (BINARY_COMPARE(flags, _EMAIL_FLAG_RECENT))
+			vec.push_back("\\RECENT");
+		if (BINARY_COMPARE(flags, _EMAIL_FLAG_SEEN))
+			vec.push_back("\\SEEN");
+		if (BINARY_COMPARE(flags, _EMAIL_FLAG_DELETED))
+			vec.push_back("\\DELETED");
+		if (BINARY_COMPARE(flags, _EMAIL_FLAG_ANSWERED))
+			vec.push_back("\\ANSWERERED");
+		if (BINARY_COMPARE(flags, _EMAIL_FLAG_DRAFT))
+			vec.push_back("\\DRAFT");
+
+		std::string res = "(";
+		std::size_t i = 0;
+		for (const char *p : vec)
+		{
+			res += p;
+			if (++i < vec.size()) res += ' ';
+		}
+		res += ')';
+		return res;
 	}
 }

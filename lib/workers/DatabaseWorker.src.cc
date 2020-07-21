@@ -89,11 +89,30 @@ namespace FSMTP::Workers
 
 			// Finds an text section if not we will have no preview
 			for (const EmailBodySection &section : dataPair.second.e_BodySections)
+			{
 				if (section.e_Type == EmailContentType::ECT_TEXT_PLAIN)
+				{
 					shortcut.e_Preview = section.e_Content.substr(
 						0,
 						(section.e_Content.size() > 255 ? 255 : section.e_Content.size())
 					);
+				}
+			}
+
+			// Updates the inbox status of an user
+			if (dataPair.second.e_Type == EmailType::ET_INCOMMING)
+			{
+
+			} else if (dataPair.second.e_Type == EmailType::ET_INCOMMING_SPAM)
+			{
+
+			} else if (
+				dataPair.second.e_Type == EmailType::ET_OUTGOING ||
+				dataPair.second.e_Type == EmailType::ET_RELAY_OUTGOING
+			)
+			{
+
+			}
 
 			// Stores the shit
 			raw.save(this->d_Connection.get());
