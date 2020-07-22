@@ -27,6 +27,32 @@ namespace FSMTP::IMAP
 		const char *c_Value;
 	} IMAPCapability;
 
+	typedef enum
+	{
+		BVT_LIST = 0,
+		BVT_STRING,
+		BVT_ATOM,
+		BVT_BRACKETS,
+		BVT_OK,
+		BVT_BAD,
+		BVT_NO,
+		BVT_COMPLETED,
+		BVT_INT32,
+		BVT_COMMAND
+	} BuildLineSectionType;
+
+	typedef struct
+	{
+		BuildLineSectionType b_Type;
+		const void *b_Value;
+	} BuildLineSection;
+
+	typedef struct
+	{
+		const char *b_Index;
+		std::vector<BuildLineSection> b_Sections;
+	} BuildLine;
+
 	class IMAPResponse
 	{
 	public:
@@ -103,18 +129,6 @@ namespace FSMTP::IMAP
 		static std::string buildNo(const std::string index, const std::string &reason);
 
 		/**
-		 * Builds an message with confirmation, stucture:
-		 * `
-		 * * Ready to start TLS
-		 * AA0 OK STARTTLS completed
-		 * ` 
-		 *
-		 * @Param {const IMAPCommandType} type
-		 * @Return {std::string}
-		 */
-		static std::string buildMessageWithConfirm(const IMAPCommandType type);
-
-		/**
 		 * Builds the select information header, when an mailbox is selected
 		 *
 		 * @Param {const std::string &} index
@@ -133,5 +147,20 @@ namespace FSMTP::IMAP
 		 * @return {std::string}
 		 */
 		static std::string buildEmailFlagList(const int32_t flags);
+
+		/**
+		 * Builds an response message
+		 *
+		 * @Param {const std::vector<BuildLine> &} lines
+		 */
+		static std::string build(const std::vector<BuildLine> &lines);
+
+		/**
+		 * Builds th emailbox flags
+		 *
+		 * @Param {const int32_t flags}
+		 * @Return {std::vector<const char *>}
+		 */
+		static std::vector<const char *> buildMailboxFlags(const int32_t flags);
 	};
 }

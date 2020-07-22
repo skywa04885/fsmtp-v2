@@ -59,14 +59,18 @@ namespace FSMTP::Models
 		// =================================
 
 		// Builds the command
-		std::string command = "HGETALL mstat:";
-		command += std::to_string(s_Bucket);
-		command += ':';
-		command += s_Domain;
-		command += ':';
-		command += std::to_string(cass_uuid_timestamp(uuid));
-		command += ':';
-		command += mailboxPath;
+		std::string prefix = "mstat:";
+		prefix += std::to_string(s_Bucket);
+		prefix += ':';
+		prefix += s_Domain;
+		prefix += ':';
+		prefix += std::to_string(cass_uuid_timestamp(uuid));
+		prefix += ':';
+		prefix += mailboxPath;
+
+		// Builds the command
+		std::string command = "HGETALL ";
+		command += prefix;
 
 		// Executes the command
 		redisReply *reply = reinterpret_cast<redisReply *>(redisCommand(
@@ -125,6 +129,34 @@ namespace FSMTP::Models
 			} res.s_Recent = std::stoi(reply->element[11]->str);
 
 			// Returns the result
+			freeReplyObject(reply);
+
+			// ======================================
+			// Updates the status
+			//
+			// Since we're reading it, we can reset
+			// - the recent counter
+			// ======================================
+
+			// Builds the new command
+			command = "HMSET ";
+			command += prefix;
+			command += " v6 0";
+
+			// Executes the command and checks for errors
+			reply = reinterpret_cast<redisReply *>(redisCommand(
+				redis->r_Session, command.c_str()
+			));
+			if (reply->type == REDIS_REPLY_ERROR)
+			{
+				std::string error = "redisCommand() failed: ";
+				error += std::string(reply->str, reply->len);
+				freeReplyObject(reply);
+				throw DatabaseException(EXCEPT_DEBUG(error));
+			}
+
+
+			// Free's the memory and returns the result
 			freeReplyObject(reply);
 			return res;
 		} else freeReplyObject(reply);
@@ -339,6 +371,13 @@ namespace FSMTP::Models
 		const std::string &mailboxPath
 	)
 	{
-		
+		int32_t prevUid, prevTotal;
+
+		// ==================================
+		// Gets the original value
+		//
+		// If this fails, create new status
+		// - and then continue
+		// ==================================
 	}
 }

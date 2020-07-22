@@ -26,6 +26,8 @@
 #define _MAILBOX_FLAG_JUNK 128
 #define _MAILBOX_SYS_FLAG_READ_ONLY 256
 
+#define _MAILBOX_FLAG_COUNT 8
+
 #include <cstdint>
 #include <iostream>
 #include <string>

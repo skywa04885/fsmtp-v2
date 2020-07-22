@@ -30,26 +30,80 @@ namespace FSMTP::IMAP
 		const std::vector<IMAPCapability> &capabilities
 	)
 	{
-		std::ostringstream stream;
+		static IMAPCommandType type = IMAPCommandType::ICT_CAPABILITY;
 
-		// Builds the capability set
-		stream << "* CAPABILITY ";
+		// Builds the capability list
+		std::string capaStr;
 		std::size_t i = 0;
-		for (const IMAPCapability &c : capabilities)
+		for (auto &capability : capabilities)
 		{
-			stream << c.c_Key;
-			if (c.c_Value != nullptr)
+			capaStr += capability.c_Key;
+			if (capability.c_Value != nullptr)
 			{
-				stream << '=';
-				stream << c.c_Value;
+				capaStr += '=';
+				capaStr += capability.c_Value;
 			}
-			if (++i < capabilities.size()) stream << ' ';
+			if (++i < capabilities.size()) capaStr += ' ';
 		}
-		stream << "\r\n";
 
-		// Adds the completed, and returns
-		stream << IMAPResponse::buildCompleted(tagIndex, IMAPCommandType::ICT_CAPABILITY);
-		return stream.str();
+		// Builds the response
+		return IMAPResponse::build({
+			BuildLine {
+				nullptr,
+				{
+					BuildLineSection {
+						BVT_ATOM, reinterpret_cast<const void *>("CAPABILITY")
+					},
+					BuildLineSection {
+						BVT_ATOM, reinterpret_cast<const void *>(capaStr.c_str())
+					}
+				}
+			},
+			BuildLine {
+				tagIndex.c_str(),
+				{
+					BuildLineSection {
+						BVT_OK, nullptr
+					},
+					BuildLineSection {
+						BVT_COMPLETED, reinterpret_cast<const void *>(&type)
+					}
+				}
+			}
+		});
+	}
+
+
+	/**
+	 * Builds th emailbox flags
+	 *
+	 * @Param {const int32_t flags}
+	 * @Return {std::vector<const char *>}
+	 */
+	std::vector<const char *> IMAPResponse::buildMailboxFlags(const int32_t flags)
+	{
+		std::vector<const char *> res;
+		res.reserve(_MAILBOX_FLAG_COUNT);
+
+		// Compares and creates the flags
+		if (BINARY_COMPARE(flags, _MAILBOX_FLAG_HAS_SUBDIRS))
+			res.push_back("\\HasChildren");
+		else
+			res.push_back("\\HasNoChildren");
+		if (BINARY_COMPARE(flags, _MAILBOX_FLAG_UNMARKED))
+			res.push_back("\\UnMarked");
+		if (BINARY_COMPARE(flags, _MAILBOX_FLAG_MARKED))
+			res.push_back("\\Marked");
+		if (BINARY_COMPARE(flags, _MAILBOX_FLAG_JUNK))
+			res.push_back("\\Junk");
+		if (BINARY_COMPARE(flags, _MAILBOX_FLAG_DRAFT))
+			res.push_back("\\Draft");
+		if (BINARY_COMPARE(flags, _MAILBOX_FLAG_SENT))
+			res.push_back("\\Sent");
+		if (BINARY_COMPARE(flags, _MAILBOX_FLAG_ARCHIVE))
+			res.push_back("\\Archive");
+
+		return res;
 	}
 
 	/**
@@ -66,41 +120,47 @@ namespace FSMTP::IMAP
 		const std::vector<Mailbox> &mailboxes
 	)
 	{
-		std::stringstream result;
-		for (const Mailbox &box : mailboxes)
+		// Builds the mailboxes list
+		std::string result;
+		for (auto &mailbox : mailboxes)
 		{
-			// Creates the flags string
-			std::vector<const char *> flags;
-			if (BINARY_COMPARE(box.e_Flags, _MAILBOX_FLAG_HAS_SUBDIRS))
-				flags.push_back("\\HasChildren");
-			else flags.push_back("\\HasNoChildren");
-			if (BINARY_COMPARE(box.e_Flags, _MAILBOX_FLAG_UNMARKED))
-				flags.push_back("\\UnMarked");
-			if (BINARY_COMPARE(box.e_Flags, _MAILBOX_FLAG_MARKED))
-				flags.push_back("\\Marked");
-			if (BINARY_COMPARE(box.e_Flags, _MAILBOX_FLAG_JUNK))
-				flags.push_back("\\Junk");
-			if (BINARY_COMPARE(box.e_Flags, _MAILBOX_FLAG_DRAFT))
-				flags.push_back("\\Draft");
-			if (BINARY_COMPARE(box.e_Flags, _MAILBOX_FLAG_SENT))
-				flags.push_back("\\Sent");
-			if (BINARY_COMPARE(box.e_Flags, _MAILBOX_FLAG_ARCHIVE))
-				flags.push_back("\\Archive");
-
-			// Builds the result
-			result << "* " << IMAPResponse::getCommandStr(type) << " (";
-			std::size_t i = 0;
-			for (const char *flag : flags)
-			{
-				result << flag;
-				if (++i < flags.size()) result << ' ';
-			}
-			result << ") \".\" \"" << box.e_MailboxPath << "\"\r\n";
+			std::vector<const char *> flags = IMAPResponse::buildMailboxFlags(mailbox.e_Flags);
+			result += IMAPResponse::build({
+				BuildLine {
+					nullptr,
+					{
+						BuildLineSection {
+							BVT_COMMAND, reinterpret_cast<const void *>(&type)
+						},
+						BuildLineSection {
+							BVT_LIST, reinterpret_cast<const void *>(&flags)
+						},
+						BuildLineSection {
+							BVT_STRING, reinterpret_cast<const void *>(".")
+						},
+						BuildLineSection {
+							BVT_STRING, reinterpret_cast<const void *>(mailbox.e_MailboxPath.c_str())
+						}
+					}
+				}
+			});
 		}
 
-		// Adds the completed message
-		result << IMAPResponse::buildCompleted(tagIndex, type);
-		return result.str();
+		// Builds the completed message and returns
+		result += IMAPResponse::build({
+			BuildLine {
+				tagIndex.c_str(),
+				{
+					BuildLineSection {
+						BVT_OK, nullptr
+					},
+					BuildLineSection {
+						BVT_COMPLETED, reinterpret_cast<const void *>(&type)
+					}
+				}
+			}
+		});
+		return result;
 	}
 
 	/**
@@ -115,11 +175,19 @@ namespace FSMTP::IMAP
 		const IMAPCommandType type
 	)
 	{
-		std::string ret = tagIndex;
-		ret += " OK ";
-		ret += IMAPResponse::getCommandStr(type);
-		ret += " completed\r\n";
-		return ret;
+		return IMAPResponse::build({
+			BuildLine {
+				tagIndex.c_str(),
+				{
+					BuildLineSection {
+						BVT_OK, nullptr
+					},
+					BuildLineSection {
+						BVT_COMPLETED, reinterpret_cast<const void *>(&type)
+					}
+				}
+			}
+		});
 	}
 
 	/**
@@ -169,10 +237,22 @@ namespace FSMTP::IMAP
 	 */
 	std::string IMAPResponse::buildGreeting(void)
 	{
-		std::string ret = "* OK ";
-		ret += _SMTP_SERVICE_NODE_NAME;
-		ret += " Fannst IMAP4rev1 service ready - max 1.800.000ms\r\n";
-		return ret;
+		return IMAPResponse::build({
+			BuildLine {
+				nullptr,
+				{
+					BuildLineSection {
+						BVT_OK, nullptr
+					},
+					BuildLineSection {
+						BVT_ATOM, reinterpret_cast<const void *>(_SMTP_SERVICE_NODE_NAME)
+					},
+					BuildLineSection {
+						BVT_ATOM, reinterpret_cast<const void *>("Fannst IMAP4rev1 service ready - max 1.800.000ms")
+					}
+				}
+			}
+		});
 	}
 
 	/**
@@ -184,11 +264,19 @@ namespace FSMTP::IMAP
 	 */
 	std::string IMAPResponse::buildBad(const std::string index, const std::string &reason)
 	{
-		std::string ret = index;
-		ret += " BAD ";
-		ret += reason;
-		ret += "\r\n";
-		return ret;
+		return IMAPResponse::build({
+			BuildLine {
+				index.c_str(),
+				{
+					BuildLineSection {
+						BVT_BAD, nullptr
+					},
+					BuildLineSection {
+						BVT_ATOM, reinterpret_cast<const void *>(reason.c_str())
+					}
+				}
+			}
+		});
 	}
 
 	/**
@@ -200,27 +288,19 @@ namespace FSMTP::IMAP
 	 */
 	std::string IMAPResponse::buildNo(const std::string index, const std::string &reason)
 	{
-		std::string ret = index;
-		ret += " NO ";
-		ret += reason;
-		ret += "\r\n";
-		return ret;
-	}
-
-	/**
-	 * Builds an message with confirmation, stucture:
-	 * `
-	 * * Ready to start TLS
-	 * AA0 OK STARTTLS completed
-	 * ` 
-	 *
-	 * @Param {const IMAPCommandType} type
-	 * @Return {std::string}
-	 */
-	std::string IMAPResponse::buildMessageWithConfirm(const IMAPCommandType type)
-	{
-		// TODO: make this
-		return "";
+		return IMAPResponse::build({
+			BuildLine {
+				index.c_str(),
+				{
+					BuildLineSection {
+						BVT_NO, nullptr
+					},
+					BuildLineSection {
+						BVT_ATOM, reinterpret_cast<const void *>(reason.c_str())
+					}
+				}
+			}
+		});
 	}
 
 	/**
@@ -235,22 +315,124 @@ namespace FSMTP::IMAP
 		const MailboxStatus &status
 	)
 	{
-		std::ostringstream stream;
+		static IMAPCommandType type = IMAPCommandType::ICT_SELECT;
+		char uidValidity[64];
+		char uidNext[64];
+		char unseenStr[64];
 
-		// Builds the basic stuff
-		stream << "* " << status.s_Total << " EXISTS\r\n";
-		stream << "* " << status.s_Recent << " RECENT\r\n";
-		stream << "* OK [UNSEEN " << status.s_Unseen << " Message " << status.s_Unseen << " is first unseen\r\n";
-		stream << "* OK [UIDVALIDITY " << std::numeric_limits<int32_t>::max() << "] UIDs valid\r\n";
-		stream << "* OK [UIDNEXT " << status.s_NextUID << "] Predicted next UID\r\n";
-		stream << "* FLAGS " << IMAPResponse::buildEmailFlagList(status.s_Flags) << "\r\n";
-		stream << "* OK [PERMANENTFLAGS " << IMAPResponse::buildEmailFlagList(_EMAIL_FLAG_DELETED | _EMAIL_FLAG_SEEN) << "] LIMITED\r\n"; // TODO: Dynamic permanent flags
-		if (BINARY_COMPARE(status.s_Flags, _MAILBOX_SYS_FLAG_READ_ONLY))
-			stream << index << " [READ-ONLY] SELECT completed" << "\r\n";
-		else
-			stream << index << " [READ-WRITE] SELECT completed" << "\r\n";
+		// Prints to the buffers
+		sprintf(uidValidity, "%s %d", "UIDVALIDITY", std::numeric_limits<int32_t>::max());
+		sprintf(unseenStr, "%s %d", "UNSEEN", status.s_Unseen);
+		sprintf(uidNext, "%s %d", "UIDNEXT", status.s_NextUID);
 
-		return stream.str();
+		// Builds the flags
+		std::vector<const char *> flags = IMAPResponse::buildMailboxFlags(status.s_Flags);
+
+		// Builds the result
+		return IMAPResponse::build({
+			BuildLine {
+				nullptr,
+				{
+					BuildLineSection {
+						BVT_INT32, reinterpret_cast<const void *>(&status.s_Total)
+					},
+					BuildLineSection {
+						BVT_ATOM, reinterpret_cast<const void *>("EXISTS")
+					}
+				}
+			},
+			BuildLine {
+				nullptr,
+				{
+					BuildLineSection {
+						BVT_INT32, reinterpret_cast<const void *>(&status.s_Recent)
+					},
+					BuildLineSection {
+						BVT_ATOM, reinterpret_cast<const void *>("RECENT")
+					}
+				}
+			},
+			BuildLine {
+				nullptr,
+				{
+					BuildLineSection{IMAP::BVT_OK, nullptr},
+					BuildLineSection{
+						BVT_BRACKETS, 
+						reinterpret_cast<const void *>(unseenStr)
+					},
+					BuildLineSection {
+						BVT_ATOM, reinterpret_cast<const void *>("Message")
+					},
+					BuildLineSection {
+						BVT_INT32, reinterpret_cast<const void *>(&status.s_Unseen)
+					},
+					BuildLineSection {
+						BVT_ATOM, reinterpret_cast<const void *>("is first unseen")
+					},
+				}
+			},
+			BuildLine {
+				nullptr,
+				{
+					BuildLineSection{IMAP::BVT_OK, nullptr},
+					BuildLineSection{
+						BVT_BRACKETS, reinterpret_cast<const void *>(uidValidity)
+					},
+					BuildLineSection {
+						BVT_ATOM, reinterpret_cast<const void *>("UIDs valid")
+					}
+				}
+			},
+			BuildLine {
+				nullptr,
+				{
+					BuildLineSection{IMAP::BVT_OK, nullptr},
+					BuildLineSection{
+						BVT_BRACKETS, reinterpret_cast<const void *>(uidNext)
+					},
+					BuildLineSection {
+						BVT_ATOM, reinterpret_cast<const void *>("predicted next UID")
+					}
+				}
+			},
+			BuildLine {
+				nullptr,
+				{
+					BuildLineSection{
+						BVT_ATOM, reinterpret_cast<const void *>("FLAGS")
+					},
+					BuildLineSection {
+						BVT_LIST, reinterpret_cast<const void *>(&flags)
+					}
+				}
+			},
+			BuildLine {
+				nullptr,
+				{
+					BuildLineSection{IMAP::BVT_OK, nullptr},
+					BuildLineSection{
+						BVT_BRACKETS, 
+						reinterpret_cast<const void *>(
+							"PERMANENTFLAGS (\\Flagged \\Seen \\Answered \\Deleted \\Draft)")
+					},
+					BuildLineSection{
+						BVT_ATOM, reinterpret_cast<const void *>("LIMITED")
+					},
+				}
+			},
+			BuildLine {
+				"JZT1",
+				{
+					BuildLineSection{IMAP::BVT_OK, nullptr},
+					BuildLineSection{
+						BVT_BRACKETS, reinterpret_cast<const void *>("READ-WRITE")
+					},
+					BuildLineSection {
+						BVT_COMPLETED, reinterpret_cast<const void *>(&type)
+					}
+				}
+			}
+		});
 	}
 
 	/**
@@ -282,5 +464,130 @@ namespace FSMTP::IMAP
 		}
 		res += ')';
 		return res;
+	}
+
+	/**
+	 * Builds an response message
+	 *
+	 * @Param {const std::vector<BuildLine> &} lines
+	 */
+	std::string IMAPResponse::build(const std::vector<BuildLine> &lines)
+	{
+		std::ostringstream os;
+		for (auto &line : lines)
+		{
+			// Adds the section start, either the index
+			// - or the default "* "
+			if (line.b_Index == nullptr) os << "* ";
+			else os << line.b_Index << ' ';
+
+			// Loops and appends the sections
+			std::size_t i = 0;
+			for (auto &section : line.b_Sections)
+			{
+				// Checks how to insert the value
+				switch (section.b_Type)
+				{
+					case BuildLineSectionType::BVT_LIST:
+					{
+						// Checks if it is not an nullptr
+						if (section.b_Value == nullptr)
+							throw std::invalid_argument(EXCEPT_DEBUG("[BVT_LIST] Value may not be nullptr"));
+
+						// Appends the list elements
+						os << '(';
+						std::size_t listIndex = 0;
+						auto &vec = *reinterpret_cast<const std::vector<const char *> *>(section.b_Value);
+						for (const char *p : vec)
+						{
+							os << p;
+							if (++listIndex < vec.size()) os << ' ';
+						}
+						os << ')';
+						break;
+					}
+					case BuildLineSectionType::BVT_STRING:
+					{
+						// Checks if it is not an nullptr
+						if (section.b_Value == nullptr)
+							throw std::invalid_argument(EXCEPT_DEBUG("[BVT_STRING] Value may not be nullptr"));
+
+						os << '"' << reinterpret_cast<const char *>(section.b_Value) << '"';
+						break;
+					}
+					case BuildLineSectionType::BVT_ATOM:
+					{
+						// Checks if it is not an nullptr
+						if (section.b_Value == nullptr)
+							throw std::invalid_argument(EXCEPT_DEBUG("[BVT_ATOM] Value may not be nullptr"));
+
+						os << reinterpret_cast<const char *>(section.b_Value);
+						break;
+					}
+					case BuildLineSectionType::BVT_BRACKETS:
+					{
+						// Checks if it is not an nullptr
+						if (section.b_Value == nullptr)
+							throw std::invalid_argument(EXCEPT_DEBUG("[BVT_BRACKETS] Value may not be nullptr"));
+
+						os << '[' << reinterpret_cast<const char *>(section.b_Value) << ']';
+						break;
+					}
+					case BuildLineSectionType::BVT_OK:
+					{
+						os << "OK";
+						break;
+					}
+					case BuildLineSectionType::BVT_BAD:
+					{
+						os << "BAD";
+						break;
+					}
+					case BuildLineSectionType::BVT_NO:
+					{
+						os << "NO";
+						break;
+					}
+					case BuildLineSectionType::BVT_COMMAND:
+					{
+							// Checks if it is not an nullptr
+						if (section.b_Value == nullptr)
+							throw std::invalid_argument(EXCEPT_DEBUG("[BVT_COMMAND] Value may not be nullptr"));
+
+						os << IMAPResponse::getCommandStr(
+							*reinterpret_cast<const IMAPCommandType *>(section.b_Value));
+						break;
+					}
+					case BuildLineSectionType::BVT_COMPLETED:
+					{
+						// Checks if it is not an nullptr
+						if (section.b_Value == nullptr)
+							throw std::invalid_argument(EXCEPT_DEBUG("[BVT_COMPLETED] Value may not be nullptr"));
+
+						// Appends the completed command
+						os << IMAPResponse::getCommandStr(
+							*reinterpret_cast<const IMAPCommandType *>(section.b_Value))
+							<< " completed";
+						break;
+					}
+					case BuildLineSectionType::BVT_INT32:
+					{
+						// Checks if it is not an nullptr
+						if (section.b_Value == nullptr)
+							throw std::invalid_argument(EXCEPT_DEBUG("[BVT_NUMBER] Value may not be nullptr"));
+
+						os << *reinterpret_cast<const int32_t *>(section.b_Value);
+						break;
+					}
+					default: throw std::runtime_error(EXCEPT_DEBUG("Type not implemented !"));
+				}
+
+				// Checks if we need to insert whitespace, if so
+				// - insert it
+				if (++i < line.b_Sections.size()) os << ' ';
+			}
+			os << "\r\n";
+		}
+		return os.str();
 	}
 }
