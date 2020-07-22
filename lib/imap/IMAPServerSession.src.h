@@ -85,6 +85,7 @@ namespace FSMTP::IMAP
 
 		AccountShortcut s_Account;
 		ServerSessionState s_State;
+		std::string s_SelectedMailbox;
 	private:
 		int64_t s_Flags;
 		int64_t s_Actions;

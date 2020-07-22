@@ -27,6 +27,15 @@ ServerType _serverType = ServerType::ST_SMTP;
  */
 int main(const int argc, const char **argv)
 {
+	IMAP::IMAPCommand command("1 LOGIN 12335 [ASD] (test1, test2) \"TE ST\"");
+
+	for_each(command.c_Args.begin(), command.c_Args.end(), [=](IMAP::IMAPCommandArg &a)
+	{
+		if (a.a_Type == IMAP::IAT_STRING) std::cout << "string: " << std::get<std::string>(a.a_Value) << std::endl;
+		else if (a.a_Type == IMAP::IAT_NUMBER) std::cout << "num: " << std::get<int32_t>(a.a_Value) << std::endl;
+	});
+	return 0;
+
 	// Initializes OpenSSL stuff
 	SSL_load_error_strings();
 	OpenSSL_add_ssl_algorithms();
@@ -54,7 +63,7 @@ int main(const int argc, const char **argv)
 			logger << WARN << "Fannst SMTP/ESMTP Server door Luke A.C.A. Rieff, vrij onder de Apache 2.0 license" << ENDL << CLASSIC;
 
 			// Creates and starts the database worker
-			std::unique_ptr<DatabaseWorker> dbWorker = std::make_unique<DatabaseWorker>(_CASSANDRA_DATABASE_CONTACT_POINTS);
+			std::unique_ptr<DatabaseWorker> dbWorker = std::make_unique<DatabaseWorker>();
 			if (!dbWorker->start(nullptr))
 				std::exit(-1);
 			// Runs the transmission worker

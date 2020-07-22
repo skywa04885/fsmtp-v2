@@ -421,7 +421,7 @@ namespace FSMTP::IMAP
 				}
 			},
 			BuildLine {
-				"JZT1",
+				index.c_str(),
 				{
 					BuildLineSection{IMAP::BVT_OK, nullptr},
 					BuildLineSection{

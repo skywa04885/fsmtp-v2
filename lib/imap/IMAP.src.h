@@ -26,6 +26,7 @@
 #include <regex>
 #include <thread>
 #include <cctype>
+#include <algorithm>
 #include <variant>
 
 #include <openssl/err.h>
@@ -35,6 +36,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <strings.h>
 
 #include "../general/Logger.src.h"
 #include "../general/macros.src.h"

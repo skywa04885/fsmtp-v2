@@ -61,8 +61,9 @@ namespace FSMTP::Models
 		 * @Param {const std::string &} s_Domain
 		 * @Param {const CassUuid &} uuid
 		 * @Param {const std::string &} mailboxPath
+	 	 * @Return {int32_t} uid
 		 */
-		static void addOneMessage(
+		static int32_t addOneMessage(
 			RedisConnection *redis,
 			CassandraConnection *cassandra,
 			const int64_t s_Bucket,

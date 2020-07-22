@@ -270,6 +270,7 @@ namespace FSMTP::Models
 		std::string e_OwnersDomain;
 		CassUuid e_OwnersUUID;
 		CassUuid e_EmailUUID;
+		int64_t e_OwnersBucket;
 		EmailType e_Type;
 	};
 }

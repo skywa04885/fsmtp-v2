@@ -17,6 +17,7 @@
 #pragma once
 
 #include "IMAP.src.h"
+#include "IMAPCommandParser.src.h"
 
 namespace FSMTP::IMAP
 {
@@ -65,7 +66,7 @@ namespace FSMTP::IMAP
 	typedef struct
 	{
 		IMAPCommandArgType a_Type;
-		std::variant<std::string, int32_t> a_Value;
+		std::variant<std::string, int32_t, std::vector<std::string>> a_Value;
 	} IMAPCommandArg;
 
 	class IMAPCommand
@@ -102,6 +103,14 @@ namespace FSMTP::IMAP
 		 * @Return {void}
 		 */
 		void getType(std::string command);
+
+		/**
+		 * Parses the arguments
+		 *
+		 * @Param {const std::string &} raw
+		 * @Return {void}
+		 */
+		void parseArguments(const std::string &raw);
 	
 		std::string c_Index;
 		IMAPCommandType c_Type;

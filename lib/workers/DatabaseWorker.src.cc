@@ -25,13 +25,12 @@ namespace FSMTP::Workers
 	/**
 	 * Default constructor for the database worker
 	 *
-	 * @Param {const std::string &} d_ContactPoints
+	 * @Param {void{}
 	 * @Return {void}
 	 */
-	DatabaseWorker::DatabaseWorker(const std::string &d_ContactPoints):
-		Worker("DatabaseWorker", 900), d_ContactPoints(d_ContactPoints)
-	{
-	}
+	DatabaseWorker::DatabaseWorker(void):
+		Worker("DatabaseWorker", 900)
+	{}
 
 	/**
 	 * The startup action of the worker
@@ -41,9 +40,11 @@ namespace FSMTP::Workers
 	 */
 	void DatabaseWorker::startupTask(void)
 	{
-		this->w_Logger << "Verbinding maken met: " << this->d_ContactPoints << ENDL;
-		this->d_Connection = std::make_unique<CassandraConnection>(this->d_ContactPoints.c_str());
-		this->w_Logger << "Verbinding met database is in stand gebracht !" << ENDL;
+		this->d_Cassandra = std::make_unique<CassandraConnection>(_CASSANDRA_DATABASE_CONTACT_POINTS);
+		this->w_Logger << "Verbinding met Cassandra is in stand gebracht !" << ENDL;
+
+		this->d_Redis = std::make_unique<RedisConnection>(_REDIS_CONTACT_POINTS, _REDIS_PORT);
+		this->w_Logger << "Verbinding met Redis is in stand gebracht !" << ENDL;
 	}
 
 	/**
@@ -77,7 +78,6 @@ namespace FSMTP::Workers
 			shortcut.e_OwnersUUID = dataPair.second.e_OwnersUUID;
 			shortcut.e_EmailUUID = dataPair.second.e_EmailUUID;
 			shortcut.e_Bucket = dataPair.second.e_Bucket;
-			shortcut.e_Mailbox = "~/inbox";
 			shortcut.e_SizeOctets = dataPair.first.size();
 
 			RawEmail raw;
@@ -99,24 +99,34 @@ namespace FSMTP::Workers
 				}
 			}
 
-			// Updates the inbox status of an user
+			// Checks in which folder the message belongs
 			if (dataPair.second.e_Type == EmailType::ET_INCOMMING)
 			{
-
+				shortcut.e_Mailbox = "INBOX";
 			} else if (dataPair.second.e_Type == EmailType::ET_INCOMMING_SPAM)
 			{
-
+				shortcut.e_Mailbox = "INBOX.Spam";
 			} else if (
 				dataPair.second.e_Type == EmailType::ET_OUTGOING ||
 				dataPair.second.e_Type == EmailType::ET_RELAY_OUTGOING
 			)
 			{
-
+				shortcut.e_Mailbox = "INBOX.Sent";
 			}
 
+			// Updates the folder
+			shortcut.e_UID = MailboxStatus::addOneMessage(
+				this->d_Redis.get(),
+				this->d_Cassandra.get(),
+				dataPair.second.e_OwnersBucket,
+				dataPair.second.e_OwnersDomain,
+				dataPair.second.e_OwnersUUID,
+				shortcut.e_Mailbox
+			);
+
 			// Stores the shit
-			raw.save(this->d_Connection.get());
-			shortcut.save(this->d_Connection.get());
+			raw.save(this->d_Cassandra.get());
+			shortcut.save(this->d_Cassandra.get());
 		}
 		this->w_Logger << "Stored " << _emailStorageQueue.size() << " emails, clearing vector" << ENDL;
 		_emailStorageQueue.clear();

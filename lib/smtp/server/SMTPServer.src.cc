@@ -535,6 +535,7 @@ namespace FSMTP::Server
 							// Adds the user information to the transport message
 							session.s_TransportMessage.e_OwnersDomain = session.s_ReceivingAccount.a_Domain;
 							session.s_TransportMessage.e_OwnersUUID = session.s_ReceivingAccount.a_UUID;
+							session.s_TransportMessage.e_OwnersBucket = session.s_ReceivingAccount.a_Bucket;
 							session.s_TransportMessage.generateMessageUUID();
 							session.s_TransportMessage.e_Bucket = FullEmail::getBucket();
 							session.s_TransportMessage.e_Type = EmailType::ET_INCOMMING;
@@ -548,6 +549,7 @@ namespace FSMTP::Server
 							// Prepares the email for storage
 							session.s_TransportMessage.e_OwnersDomain = session.s_SendingAccount.a_Domain;
 							session.s_TransportMessage.e_OwnersUUID = session.s_SendingAccount.a_UUID;
+							session.s_TransportMessage.e_OwnersBucket = session.s_SendingAccount.a_Bucket;
 							session.s_TransportMessage.generateMessageUUID();
 							session.s_TransportMessage.e_Bucket = FullEmail::getBucket();
 							session.s_TransportMessage.e_Type = EmailType::ET_RELAY_OUTGOING;

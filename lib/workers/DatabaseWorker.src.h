@@ -27,6 +27,7 @@
 #include "../models/EmailShortcut.src.h"
 #include "./Worker.src.h"
 #include "../general/connections.src.h"
+#include "../models/MailboxStatus.src.h"
 
 using namespace FSMTP::Models;
 using namespace FSMTP::Connections;
@@ -39,10 +40,10 @@ namespace FSMTP::Workers
 		/**
 		 * Default constructor for the database worker
 		 *
-		 * @Param {const std::string &} d_ContactPoints
+		 * @Param {void{}
 		 * @Return {void}
 		 */
-		DatabaseWorker(const std::string &d_ContactPoints);
+		DatabaseWorker(void);
 
 		/**
 		 * The startup action of the worker
@@ -59,7 +60,7 @@ namespace FSMTP::Workers
 		 */
 		virtual void action(void *u);
 	private:
-		std::string d_ContactPoints;
-		std::unique_ptr<CassandraConnection> d_Connection;
+		std::unique_ptr<CassandraConnection> d_Cassandra;
+		std::unique_ptr<RedisConnection> d_Redis;
 	};
 }

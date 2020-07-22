@@ -62,19 +62,6 @@ namespace FSMTP::IMAP::MAILBOX_HANDLER
 		CassandraConnection *cassandra
 	)
 	{
-		if (command.c_Args.size() < 2)
-			throw IMAPBad("Arguments argument count, required 2");
-
-		if (
-			(command.c_Args[0].a_Type != IMAPCommandArgType::IAT_STRING || 
-			command.c_Args[1].a_Type != IMAPCommandArgType::IAT_STRING != 0) &&
-			(command.c_Args[0].a_Type != IMAPCommandArgType::IAT_ATOM || 
-			command.c_Args[1].a_Type != IMAPCommandArgType::IAT_ATOM != 0)
-		)
-		{
-			throw IMAPBad("Arguments argument types, required: STRING/ATOM, STRING/ATOM");
-		}
-
 		// Parses the arguments, and removes the quotes
 		std::string &arg0 = std::get<std::string>(command.c_Args[0].a_Value);
 		std::string &arg1 = std::get<std::string>(command.c_Args[1].a_Value);
@@ -132,16 +119,6 @@ namespace FSMTP::IMAP::MAILBOX_HANDLER
 	{
 		if (command.c_Args.size() < 2)
 			throw IMAPBad("Arguments argument count, required 2");
-
-		if (
-			(command.c_Args[0].a_Type != IMAPCommandArgType::IAT_STRING || 
-			command.c_Args[1].a_Type != IMAPCommandArgType::IAT_STRING != 0) &&
-			(command.c_Args[0].a_Type != IMAPCommandArgType::IAT_ATOM ||
-			command.c_Args[1].a_Type != IMAPCommandArgType::IAT_ATOM != 0)
-		)
-		{
-			throw IMAPBad("Arguments argument types, required: STRING/ATOM, STRING/ATOM");
-		}
 
 		// Parses the arguments, and removes the quotes
 		std::string &arg0 = std::get<std::string>(command.c_Args[0].a_Value);
@@ -210,11 +187,22 @@ namespace FSMTP::IMAP::MAILBOX_HANDLER
 		removeStringQuotes(mailboxName);
 
 		// Query's for the specified mailbox
-		MailboxStatus status = MailboxStatus::get(
-			redis, cassandra, session.s_Account.a_Bucket,
-			session.s_Account.a_Domain, session.s_Account.a_UUID,
-			mailboxName
-		);
+		MailboxStatus status;
+		try
+		{
+			status = MailboxStatus::get(
+				redis, cassandra, session.s_Account.a_Bucket,
+				session.s_Account.a_Domain, session.s_Account.a_UUID,
+				mailboxName
+			);
+		} catch (const EmptyQuery &e)
+		{
+			throw IMAPNo("Can't selekt mailbox");
+		}
+
+		// Updates the session
+		session.s_SelectedMailbox = mailboxName;
+		session.s_State = ServerSessionState::SST_SEL;
 
 		// Writes the response
 		client->sendString(IMAPResponse::buildSelectInformation(

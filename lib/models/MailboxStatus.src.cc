@@ -18,6 +18,22 @@
 
 namespace FSMTP::Models
 {
+	static void getPrefix(
+		const int64_t bucket,
+		const char *domain,
+		const CassUuid &uuid,
+		const char *path,
+		char *ret
+	)
+	{
+		sprintf(
+			ret, "%ld:%s:%ld:%s",
+			bucket, domain,
+			cass_uuid_timestamp(uuid),
+			path
+		);
+	}
+
 	/**
 	 * Empty constructor for the mailbox status
 	 *
@@ -58,23 +74,20 @@ namespace FSMTP::Models
 		// - one based on the database
 		// =================================
 
-		// Builds the command
-		std::string prefix = "mstat:";
-		prefix += std::to_string(s_Bucket);
-		prefix += ':';
-		prefix += s_Domain;
-		prefix += ':';
-		prefix += std::to_string(cass_uuid_timestamp(uuid));
-		prefix += ':';
-		prefix += mailboxPath;
+		// Builds the prefix
+		char prefix[256];
+		getPrefix(s_Bucket, s_Domain.c_str(), uuid, mailboxPath.c_str(), prefix);
 
 		// Builds the command
-		std::string command = "HGETALL ";
-		command += prefix;
+		char command[512];
+		sprintf(
+			command, "%s %s",
+			"HGETALL", prefix
+		);
 
 		// Executes the command
 		redisReply *reply = reinterpret_cast<redisReply *>(redisCommand(
-			redis->r_Session, command.c_str()
+			redis->r_Session, command
 		));
 		// Checks if we even received something
 		if (reply->type != REDIS_REPLY_NIL && reply->elements > 0)
@@ -139,13 +152,14 @@ namespace FSMTP::Models
 			// ======================================
 
 			// Builds the new command
-			command = "HMSET ";
-			command += prefix;
-			command += " v6 0";
+			sprintf(
+				command, "%s %s v6 %d",
+				"HMSET", prefix, 0
+			);
 
 			// Executes the command and checks for errors
 			reply = reinterpret_cast<redisReply *>(redisCommand(
-				redis->r_Session, command.c_str()
+				redis->r_Session, command
 			));
 			if (reply->type == REDIS_REPLY_ERROR)
 			{
@@ -191,34 +205,26 @@ namespace FSMTP::Models
 	 */
 	void MailboxStatus::save(RedisConnection *redis, const std::string &mailboxPath)
 	{
-		// Builds the command
-		std::string command = "HMSET mstat:";
-		command += std::to_string(this->s_Bucket);
-		command += ':';
-		command += s_Domain;
-		command += ':';
-		command += std::to_string(cass_uuid_timestamp(this->s_UUID));
-		command += ':';
-		command += mailboxPath;
+		char prefix[256];
+		getPrefix(s_Bucket, s_Domain.c_str(), this->s_UUID, mailboxPath.c_str(), prefix); 
 
-		// Appends the values
-		command += " v1 ";
-		command += std::to_string(this->s_Flags);
-		command += " v2 ";
-		command += std::to_string(this->s_Unseen);
-		command += " v3 ";
-		command += std::to_string(this->s_Total);
-		command += " v4 ";
-		command += std::to_string(this->s_PerfmaFlags);
-		command += " v5 ";
-		command += std::to_string(this->s_NextUID);
-		command += " v6 ";
-		command += std::to_string(this->s_Recent);
+		// Builds the command
+		char command[512];
+		sprintf(
+			command, "%s %s v1 %d v2 %d v3 %d v4 %d v5 %d v6 %d",
+			"HMSET", prefix,
+			this->s_Flags,
+			this->s_Unseen,
+			this->s_Total,
+			this->s_PerfmaFlags,
+			this->s_NextUID,
+			this->s_Recent
+		);
 
 		// Executes the command
 		redisReply *reply = reinterpret_cast<redisReply *>(redisCommand(
 			redis->r_Session,
-			command.c_str()
+			command
 		));
 		if (reply->type == REDIS_REPLY_ERROR)
 		{
@@ -329,8 +335,10 @@ namespace FSMTP::Models
 					++res.s_Unseen;
 				}
 
-				// Checks if this is the largest UID
+				// Checks if this is the largest UID, and increments
+				// - the total
 				if (uid > largestUID) largestUID = uid;
+				++res.s_Total;
 			}
 
 			// Checks if there are more pages
@@ -361,8 +369,9 @@ namespace FSMTP::Models
 	 * @Param {const std::string &} s_Domain
 	 * @Param {const CassUuid &} uuid
 	 * @Param {const std::string &} mailboxPath
+	 * @Return {int32_t} uid
 	 */
-	static void addOneMessage(
+	int32_t MailboxStatus::addOneMessage(
 		RedisConnection *redis,
 		CassandraConnection *cassandra,
 		const int64_t s_Bucket,
@@ -371,13 +380,46 @@ namespace FSMTP::Models
 		const std::string &mailboxPath
 	)
 	{
-		int32_t prevUid, prevTotal;
+		int32_t retUID;
 
-		// ==================================
-		// Gets the original value
-		//
-		// If this fails, create new status
-		// - and then continue
-		// ==================================
+		// Builds the command
+		MailboxStatus old = MailboxStatus::get(redis, cassandra, 
+			s_Bucket, s_Domain, uuid, mailboxPath);
+
+		// Upgrades the variables, and gets the
+		// - UID
+		retUID = old.s_NextUID;
+		old.s_NextUID++;
+		old.s_Total++;
+		old.s_Recent++;
+		old.s_Unseen++;
+
+		// Builds the query
+		char prefix[128];
+		getPrefix(s_Bucket, s_Domain.c_str(), uuid, mailboxPath.c_str(), prefix);
+		
+		char command[512];
+		sprintf(
+			command, "%s %s v2 %d v3 %d v5 %d v6 %d",
+			"HMSET", prefix,
+			old.s_Unseen, old.s_Total, old.s_NextUID, old.s_Recent
+		);
+
+		// Executes the query and checks for errors
+		redisReply *reply = reinterpret_cast<redisReply *>(redisCommand(
+			redis->r_Session, command
+		));
+
+		if (reply->type == REDIS_REPLY_ERROR)
+		{
+			std::string error = "redisCommand() failed: ";
+			error += std::string(reply->str, reply->len);
+			freeReplyObject(reply);
+			throw DatabaseException(EXCEPT_DEBUG(error));
+		}
+
+		// Frees the memory and returns
+		freeReplyObject(reply);
+		return retUID;
 	}
 }

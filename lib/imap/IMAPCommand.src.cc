@@ -106,24 +106,21 @@ namespace FSMTP::IMAP
 		if (arguments[0] == ' ') arguments.erase(0, 1);
 		if (!arguments.empty())
 		{
-			std::stringstream argumentStream(arguments);
-			std::string argument;
-			while (std::getline(argumentStream, argument, ' '))
-			{
-				try {
-					int32_t num = std::stoi(argument);
-					this->c_Args.push_back(IMAPCommandArg{IMAPCommandArgType::IAT_NUMBER, num});
-				} catch (const std::invalid_argument &e)
-				{
-					if (argument == "NIL")
-						this->c_Args.push_back(IMAPCommandArg{IMAPCommandArgType::IAT_NIL, 0});
-					else if (argument[0] == '"' && argument[argument.size() - 1] == '"')
-						this->c_Args.push_back(IMAPCommandArg{IMAPCommandArgType::IAT_STRING, argument});
-					else
-						this->c_Args.push_back(IMAPCommandArg{IMAPCommandArgType::IAT_ATOM, argument});
-				}
-			}
+			this->parseArguments(arguments);
 		}
+	}
+
+
+	/**
+	 * Parses the arguments
+	 *
+	 * @Param {const std::string &} raw
+	 * @Return {void}
+	 */
+	void IMAPCommand::parseArguments(const std::string &raw)
+	{
+		CommandParser::Lexer l(raw);
+		l.makeTokens();
 	}
 
 	/**
