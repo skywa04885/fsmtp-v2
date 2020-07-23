@@ -55,7 +55,7 @@ namespace FSMTP::IMAP::CommandParser
 		int32_t getInt32(void) const;
 		int64_t getInt64(void) const;
 
-		std::string stringRepresentation(void) const;
+		std::string toString(void) const;
 
 		TokenType t_Type;
 	private:
@@ -70,6 +70,12 @@ namespace FSMTP::IMAP::CommandParser
 
 		void advance(void);
 
+		/**
+		 * Starts making the tokens
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
 		void makeTokens(void);
 
 		void makeNumber(void);
@@ -85,9 +91,123 @@ namespace FSMTP::IMAP::CommandParser
 		char l_CurrentChar;
 	};
 
+	class Node
+	{
+	public:
+		virtual std::string toString(void) = 0;
+
+		std::vector<std::unique_ptr<Node>> n_Nodes;
+	};
+
+	class StringNode : public Node
+	{ // "DATA"
+	public:
+		StringNode(const std::string &n_Value);
+
+		virtual std::string toString(void);
+
+		std::string n_Value;
+	};
+
+	class NumberNode : public Node
+	{ // 1234
+	public:
+		NumberNode(const int32_t n_Value);
+
+		virtual std::string toString(void);
+
+		int32_t n_Value;
+	};
+
+	class SectionNode : public Node
+	{ // [DATA]
+	public:
+		SectionNode(void);
+
+		virtual std::string toString(void);
+	};
+
+	class ListNode : public Node
+	{ // (DATA, DATA1, DATA2)
+	public:
+		ListNode(void);
+
+		virtual std::string toString(void);
+	};
+
+	class AtomNode : public Node
+	{ // "DATA"
+	public:
+		AtomNode(const std::string &n_Value);
+
+		virtual std::string toString(void);
+
+		std::string n_Value;
+	};
+
 	class Parser
 	{
 	public:
+		Parser(const std::vector<Token> &p_Tokens);
+
+		void parse(void);
+
+		/**
+		 * Analyzes and selects which action to start based
+		 * - on the then current token
+		 *
+		 * @Param {std::vector<std::unique_ptr<Node>> &} target
+	 	 * @Param {const bool} head
+		 * @Return {void}
+		 */
+		void analyze(std::vector<std::unique_ptr<Node>> &target, const bool head);
+
+		/**
+		 * Goes to the next token, and sets the pointer to nullptr
+		 * - if EOF
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		void advance(void);
+
+		/**
+		 * Parses an number and pushes it to the target
+		 *
+		 * @Param {std::vector<std::unique_ptr<Node>> &} target
+		 * @Return {bool}
+		 */
+		bool number(std::vector<std::unique_ptr<Node>> &target);
+
+		/**
+		 * Parses an string and pushes it to the target
+		 *
+		 * @Param {std::vector<std::unique_ptr<Node>> &} target
+		 * @Return {bool}
+		 */
+		bool string(std::vector<std::unique_ptr<Node>> &target);
+
+		/**
+		 * Parses an atom and pushes it to the target
+		 *
+		 * @Param {std::vector<std::unique_ptr<Node>> &} target
+		 * @Return {bool}
+		 */
+		bool other(std::vector<std::unique_ptr<Node>> &target);
+
+		/**
+		 * Builds an list node in the recursive manner
+		 *
+		 * @Param {std::vector<std::unique_ptr<Node>> &} target
+		 * @Return {bool}
+		 */
+		bool list(std::vector<std::unique_ptr<Node>> &target);
+
+		std::vector<std::unique_ptr<Node>> p_Nodes;
 	private:
+		const Token *p_CurrentToken;
+		char p_CurrentChar;
+		std::size_t p_TokenIndex;
+		const std::vector<Token> &p_Tokens;
 	};
 }

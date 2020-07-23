@@ -121,6 +121,17 @@ namespace FSMTP::IMAP
 	{
 		CommandParser::Lexer l(raw);
 		l.makeTokens();
+
+		CommandParser::Parser p(l.l_Tokens);
+		p.parse();
+
+		for_each(
+			p.p_Nodes.begin(),
+			p.p_Nodes.end(), 
+			[=](std::unique_ptr<CommandParser::Node> &n){
+				std::cout << n->toString() << std::endl;
+			}
+		);
 	}
 
 	/**

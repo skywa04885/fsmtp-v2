@@ -99,7 +99,7 @@ namespace FSMTP::IMAP::CommandParser
 		}
 	}
 
-	std::string Token::stringRepresentation(void) const
+	std::string Token::toString(void) const
 	{
 		std::string ret = tokenTypeString(this->t_Type);
 		ret += ": ";
@@ -152,6 +152,12 @@ namespace FSMTP::IMAP::CommandParser
 		this->advance();
 	}
 
+	/**
+	 * Starts making the tokens
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
 	void Lexer::makeTokens(void)
 	{
 		while (this->l_CurrentChar != '\0')
@@ -216,7 +222,7 @@ namespace FSMTP::IMAP::CommandParser
 			{ // - Process the number
 				this->makeNumber();
 				continue; // To skip the advance
-			} else if (std::isalpha(this->l_CurrentChar))
+			} else if (std::isalpha(this->l_CurrentChar) || this->l_CurrentChar == '\\')
 			{ // -> Processes an string
 				this->makeOther();
 				continue;
@@ -225,7 +231,7 @@ namespace FSMTP::IMAP::CommandParser
 
 		std::cout << "Parsing process step 1 (LEXER): " << std::endl;
 		for_each(this->l_Tokens.begin(), this->l_Tokens.end(), [=](const Token &token){
-			std::cout << "- " << token.stringRepresentation() << std::endl;
+			std::cout << "- " << token.toString() << std::endl;
 		});
 	}
 
@@ -234,7 +240,7 @@ namespace FSMTP::IMAP::CommandParser
 		std::string otherBuf;
 
 		// Gets all the numbers in sequence
-		while (std::isalpha(this->l_CurrentChar))
+		while (std::isalpha(this->l_CurrentChar) || this->l_CurrentChar == '\\')
 		{
 			if (this->l_CurrentChar == '\0') break;
 			otherBuf += this->l_CurrentChar;
@@ -281,4 +287,224 @@ namespace FSMTP::IMAP::CommandParser
 	// Parser
 	// ======================================
 
+	Parser::Parser(const std::vector<Token> &p_Tokens):
+		p_Tokens(p_Tokens), p_TokenIndex(-1), p_CurrentToken(nullptr)
+	{}
+
+	void Parser::parse(void)
+	{
+		this->advance();
+		this->analyze(this->p_Nodes, true);
+	}
+
+	/**
+	 * Analyzes and selects which action to start based
+	 * - on the then current token
+	 *
+	 * @Param {std::vector<std::unique_ptr<Node>> &} target
+	 * @Param {const bool} head
+	 * @Return {void}
+	 */
+	void Parser::analyze(std::vector<std::unique_ptr<Node>> &target, const bool head)
+	{
+		switch (this->p_CurrentToken->t_Type)
+		{
+			case TT_RPAREN:
+			{
+				this->list(target);
+				break;
+			}
+			case TT_QUOTE:
+			{
+				this->string(target);
+				break;
+			}
+			case TT_NUMBER:
+			{
+				this->number(target);
+				break;
+			}
+			case TT_WSP: break;
+			case TT_OTHER:
+			{
+				this->other(target);
+				break;
+			}
+			default: throw std::runtime_error(EXCEPT_DEBUG("Not implemented !"));
+		}
+
+	}
+
+	/**
+	 * Goes to the next token, and sets the pointer to nullptr
+	 * - if EOF
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
+	void Parser::advance(void)
+	{
+		++this->p_TokenIndex;
+		if (this->p_TokenIndex < this->p_Tokens.size())
+			this->p_CurrentToken = &this->p_Tokens[p_TokenIndex];
+		else
+			this->p_CurrentToken = nullptr;
+	}
+
+	/**
+	 * Parses an number and pushes it to the target
+	 *
+	 * @Param {std::vector<std::unique_ptr<Node>> &} target
+	 * @Return {bool}
+	 */
+	bool Parser::number(std::vector<std::unique_ptr<Node>> &target)
+	{
+		const Token &token = *this->p_CurrentToken;
+
+		if (token.t_Type == TT_NUMBER)
+		{
+			target.push_back(std::make_unique<NumberNode>(token.getInt32()));
+			return true;
+		} else return false;
+	}
+
+	/**
+	 * Parses an atom and pushes it to the target
+	 *
+	 * @Param {std::vector<std::unique_ptr<Node>> &} target
+	 * @Return {bool}
+	 */
+	bool Parser::other(std::vector<std::unique_ptr<Node>> &target)
+	{
+		target.push_back(std::make_unique<AtomNode>(this->p_CurrentToken->getString()));
+		return true;
+	}
+
+	/**
+	 * Parses an string and pushes it to the target
+	 *
+	 * @Param {std::vector<std::unique_ptr<Node>> &} target
+	 * @Return {bool}
+	 */
+	bool Parser::string(std::vector<std::unique_ptr<Node>> &target)
+	{
+		std::string content;
+
+		while (true)
+		{
+			this->advance();
+
+			// Checks if we've reached the end
+			if (this->p_CurrentToken == nullptr)
+				throw std::runtime_error(EXCEPT_DEBUG("Closing quote not found !"));
+
+			// Checks if it is an closing quote, if so
+			// - break and push the result
+			if (this->p_CurrentToken->t_Type == TT_QUOTE)
+			{
+				target.push_back(std::make_unique<StringNode>(content));
+				return true;
+			}
+
+			// Gets the token reference, and checks the type
+			// - and appends it to the content
+			const Token &token = *this->p_CurrentToken;
+			if (token.t_Type == TT_OTHER) content += token.getString();
+			else if (token.t_Type == TT_NUMBER) content += std::to_string(token.getInt32());
+			else content += token.getChar();
+		}
+
+		return false;
+	}
+
+	/**
+	 * Builds an list node in the recursive manner
+	 *
+	 * @Param {std::vector<std::unique_ptr<Node>> &target}
+	 * @Return {bool}
+	 */
+	bool Parser::list(std::vector<std::unique_ptr<Node>> &target)
+	{
+		target.push_back(std::make_unique<ListNode>());
+		std::unique_ptr<Node> &node = target[target.size() - 1];
+
+		while (true)
+		{
+			this->advance();
+
+			// Checks if we've reached the end
+			if (this->p_CurrentToken == nullptr)
+				throw std::runtime_error(EXCEPT_DEBUG("Closing paren not found"));
+
+			// Checks if we've reached the end, then we push
+			// - the result
+			if (this->p_CurrentToken->t_Type == TT_LPAREN)
+				return true;
+
+			// Performs the action
+			if (this->p_CurrentToken->t_Type == TT_COMMA) continue;
+			this->analyze(node->n_Nodes, false);
+		}
+
+		return false;
+	};
+
+	NumberNode::NumberNode(const int32_t n_Value):
+		n_Value(n_Value), Node()
+	{}
+
+	SectionNode::SectionNode(void):
+		Node()
+	{}
+
+	StringNode::StringNode(const std::string &n_Value):
+		n_Value(n_Value), Node()
+	{}
+
+	AtomNode::AtomNode(const std::string &n_Value):
+		n_Value(n_Value), Node()
+	{}
+
+	ListNode::ListNode(void):
+		Node()
+	{}
+
+	std::string NumberNode::toString(void)
+	{
+		return "NumberNode: " + std::to_string(this->n_Value);
+	}
+
+	std::string StringNode::toString(void)
+	{
+		return "StringNode: " + this->n_Value;
+	}
+
+	std::string AtomNode::toString(void)
+	{
+		return "AtomNode: " + this->n_Value;
+	}
+
+	std::string SectionNode::toString(void)
+	{
+		std::ostringstream os;
+		os << "SectionNode: \n";
+
+		std::size_t i = 0;
+		for (auto &n : this->n_Nodes)
+			os << ++i << ": " << n->toString() << "\n";
+
+		return os.str();
+	}
+
+	std::string ListNode::toString(void)
+	{
+		std::ostringstream os;
+		os << "ListNode: \n";
+
+		std::size_t i = 0;
+		for (auto &n : this->n_Nodes)
+			os << ++i << ": " << n->toString() << "\n";
+
+		return os.str();
+	}
 }
