@@ -27,16 +27,6 @@ ServerType _serverType = ServerType::ST_SMTP;
  */
 int main(const int argc, const char **argv)
 {
-	IMAP::IMAPCommand command(R"(1 LOGIN fetch 1:4 (BODY[HEADER.FIELDS (Subject)]))");
-	// IMAP::IMAPCommand command("1 LOGIN 12335 [ASD] (test1, test2) \"TE ST\"");
-
-	for_each(command.c_Args.begin(), command.c_Args.end(), [=](IMAP::IMAPCommandArg &a)
-	{
-		if (a.a_Type == IMAP::IAT_STRING) std::cout << "string: " << std::get<std::string>(a.a_Value) << std::endl;
-		else if (a.a_Type == IMAP::IAT_NUMBER) std::cout << "num: " << std::get<int32_t>(a.a_Value) << std::endl;
-	});
-	return 0;
-
 	// Initializes OpenSSL stuff
 	SSL_load_error_strings();
 	OpenSSL_add_ssl_algorithms();

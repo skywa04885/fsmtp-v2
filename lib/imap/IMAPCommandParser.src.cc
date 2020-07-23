@@ -209,11 +209,24 @@ namespace FSMTP::IMAP::CommandParser
 					reinterpret_cast<const void *>(" ")
 				);
 				this->advance();
+			} else if (this->l_CurrentChar == ':')
+			{ // -> WSP
+				this->l_Tokens.emplace_back(
+					TT_COLON,
+					TVT_CHAR, 
+					reinterpret_cast<const void *>(":")
+				);
+				this->advance();
 			} else if (numbers.find(this->l_CurrentChar) != std::string::npos)
 			{ // - Process the number
 				this->makeNumber();
 				continue; // To skip the advance
-			} else if (std::isalpha(this->l_CurrentChar) || this->l_CurrentChar == '\\')
+			} else if (
+				this->l_CurrentChar != ' ' && this->l_CurrentChar != '[' && 
+				this->l_CurrentChar != ')' && this->l_CurrentChar != '(' &&
+				this->l_CurrentChar != '[' && this->l_CurrentChar != ']' &&
+				this->l_CurrentChar != '"'
+			)
 			{ // -> Processes an string
 				this->makeOther();
 				continue;
@@ -231,7 +244,12 @@ namespace FSMTP::IMAP::CommandParser
 		std::string otherBuf;
 
 		// Gets all the numbers in sequence
-		while (std::isalpha(this->l_CurrentChar) || this->l_CurrentChar == '\\')
+		while (
+			this->l_CurrentChar != ' ' && this->l_CurrentChar != '[' && 
+			this->l_CurrentChar != ')' && this->l_CurrentChar != '(' &&
+			this->l_CurrentChar != '[' && this->l_CurrentChar != ']' &&
+			this->l_CurrentChar != '"'
+		)
 		{
 			if (this->l_CurrentChar == '\0') break;
 			otherBuf += this->l_CurrentChar;
@@ -282,10 +300,10 @@ namespace FSMTP::IMAP::CommandParser
 		p_Tokens(p_Tokens), p_TokenIndex(-1), p_CurrentToken(nullptr)
 	{}
 
-	void Parser::parse(void)
+	void Parser::parse(std::vector<std::unique_ptr<Node>> &target)
 	{
 		this->advance();
-		this->analyze(this->p_Nodes, true);
+		this->analyze(target, true);
 	}
 
 	/**
@@ -301,29 +319,34 @@ namespace FSMTP::IMAP::CommandParser
 		switch (this->p_CurrentToken->t_Type)
 		{
 			case TT_RPAREN:
-			{
+			{// (asd)
 				this->list(target);
 				break;
 			}
 			case TT_RBRACKET:
-			{
+			{ // [asd]
 				this->section(target);
 				break;
 			}
 			case TT_QUOTE:
-			{
+			{// "asd"
 				this->string(target);
 				break;
 			}
 			case TT_NUMBER:
-			{
+			{// 1234
 				this->number(target);
 				break;
 			}
 			case TT_WSP: break;
 			case TT_OTHER:
-			{
+			{ // \ABC
 				this->other(target);
+				break;
+			}
+			case TT_COLON:
+			{ // 1:4
+				this->range(target);
 				break;
 			}
 			default:
@@ -358,6 +381,42 @@ namespace FSMTP::IMAP::CommandParser
 			this->p_CurrentToken = &this->p_Tokens[p_TokenIndex];
 		else
 			this->p_CurrentToken = nullptr;
+	}
+
+	/**
+	 * Builds an section node in the recursive manner
+	 *
+	 * @Param {std::vector<std::unique_ptr<Node>> &} target
+	 * @Return {bool}
+	 */
+	bool Parser::range(std::vector<std::unique_ptr<Node>> &target)
+	{
+		// Checks if there are enough numbers for an range
+		if (target.size() < 1)
+			throw SyntaxException(this->p_TokenIndex, "Invalid range !");
+
+		// Checks if the next and previous token is an number
+		if (
+			this->p_Tokens[this->p_TokenIndex - 1].t_Type != TT_NUMBER ||
+			this->p_Tokens[this->p_TokenIndex + 1].t_Type != TT_NUMBER
+		)
+		{
+			throw SyntaxException(this->p_TokenIndex, "Range requires two numbers");
+		}
+
+		// Removes the previous number, since this is 
+		// - now part of the range
+		target.pop_back();
+
+		// Creates the node
+		target.push_back(std::make_unique<RangeNode>(
+			this->p_Tokens[this->p_TokenIndex - 1].getInt32(),
+			this->p_Tokens[this->p_TokenIndex + 1].getInt32()
+		));
+
+		// Goes to the next token and returns
+		this->advance();
+		return true;
 	}
 
 	/**
@@ -490,25 +549,68 @@ namespace FSMTP::IMAP::CommandParser
 		return false;
 	}
 
-	NumberNode::NumberNode(const int32_t n_Value):
-		n_Value(n_Value), Node()
+	Node::Node(const NodeType n_Type):
+		n_Type(n_Type)
 	{}
 
+	std::string Node::getString(void)
+	{
+		throw std::runtime_error("String cannot be accessed");
+	}
+
+	int32_t Node::getInt32(void)
+	{
+		throw std::runtime_error("Int32t cannot be accessed");
+	}
+
+	std::pair<int32_t, int32_t> Node::getRange(void)
+	{
+		throw std::runtime_error("Range cannot be accessed");
+	}
+
+	NumberNode::NumberNode(const int32_t n_Value):
+		n_Value(n_Value), Node(NT_NUMBER)
+	{}
+
+	int32_t NumberNode::getInt32(void)
+	{
+		throw this->n_Value;
+	}
+
 	SectionNode::SectionNode(void):
-		Node()
+		Node(NT_SECTION)
 	{}
 
 	StringNode::StringNode(const std::string &n_Value):
-		n_Value(n_Value), Node()
+		n_Value(n_Value), Node(NT_STRING)
 	{}
+
+	std::string StringNode::getString(void)
+	{
+		return this->n_Value;
+	}
 
 	AtomNode::AtomNode(const std::string &n_Value):
-		n_Value(n_Value), Node()
+		n_Value(n_Value), Node(NT_ATOM)
 	{}
 
+	std::string AtomNode::getString(void)
+	{
+		throw this->getString();
+	}
+
 	ListNode::ListNode(void):
-		Node()
+		Node(NT_LIST)
 	{}
+
+	RangeNode::RangeNode(const int32_t n_From, const int32_t n_To):
+		n_From(n_From), n_To(n_To), Node(NT_RANGE)
+	{}
+
+	std::pair<int32_t, int32_t> RangeNode::getRange(void)
+	{
+		throw std::make_pair(this->n_From, this->n_To);
+	}
 
 	std::string NumberNode::toString(void)
 	{
@@ -523,6 +625,11 @@ namespace FSMTP::IMAP::CommandParser
 	std::string AtomNode::toString(void)
 	{
 		return "AtomNode: " + this->n_Value;
+	}
+
+	std::string RangeNode::toString(void)
+	{
+		return "RangeNode: " + std::to_string(this->n_From) + " : " + std::to_string(this->n_To);
 	}
 
 	std::string SectionNode::toString(void)

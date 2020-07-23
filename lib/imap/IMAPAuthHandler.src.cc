@@ -41,9 +41,16 @@ namespace FSMTP::IMAP::AUTH_HANDLER
 		if (command.c_Args.size() < 2)
 			throw IMAPBad("Arguments invalid");
 
+		// Checks if the types are valid
+		if ((command.c_Args[0]->n_Type == NT_ATOM || command.c_Args[0]->n_Type == NT_STRING) &&
+			(command.c_Args[1]->n_Type == NT_ATOM || command.c_Args[1]->n_Type == NT_STRING))
+		{
+			throw IMAPBad("Arguments invalid, required ATOM/STRING ATOM/STRING");
+		}
+
 		// Gets the username and password
-		std::string &user = std::get<std::string>(command.c_Args[0].a_Value);
-		std::string &pass = std::get<std::string>(command.c_Args[1].a_Value);
+		std::string user = command.c_Args[0]->getString();
+		std::string pass = command.c_Args[1]->getString();
 		removeStringQuotes(user);
 		removeStringQuotes(pass);
 

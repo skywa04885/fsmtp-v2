@@ -119,19 +119,13 @@ namespace FSMTP::IMAP
 	 */
 	void IMAPCommand::parseArguments(const std::string &raw)
 	{
-		CommandParser::Lexer l(raw);
-		l.makeTokens();
+		// Performs the lexical analysis
+		CommandParser::Lexer lexer(raw);
+		lexer.makeTokens();
 
-		CommandParser::Parser p(l.l_Tokens);
-		p.parse();
-
-		for_each(
-			p.p_Nodes.begin(),
-			p.p_Nodes.end(), 
-			[=](std::unique_ptr<CommandParser::Node> &n){
-				std::cout << n->toString() << std::endl;
-			}
-		);
+		// Parses the tokens
+		CommandParser::Parser parser(lexer.l_Tokens);
+		parser.parse(this->c_Args);
 	}
 
 	/**

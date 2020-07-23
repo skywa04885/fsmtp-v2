@@ -19,6 +19,8 @@
 #include "IMAP.src.h"
 #include "IMAPCommandParser.src.h"
 
+using namespace FSMTP::IMAP::CommandParser;
+
 namespace FSMTP::IMAP
 {
 	typedef enum : uint32_t
@@ -54,20 +56,6 @@ namespace FSMTP::IMAP
 		ICT_UNKNOWN,
 		ICT_NOOP
 	} IMAPCommandType;
-
-	typedef enum : uint8_t
-	{
-		IAT_ATOM = 0,
-		IAT_NUMBER,
-		IAT_STRING,
-		IAT_NIL
-	} IMAPCommandArgType;
-
-	typedef struct
-	{
-		IMAPCommandArgType a_Type;
-		std::variant<std::string, int32_t, std::vector<std::string>> a_Value;
-	} IMAPCommandArg;
 
 	class IMAPCommand
 	{
@@ -114,6 +102,6 @@ namespace FSMTP::IMAP
 	
 		std::string c_Index;
 		IMAPCommandType c_Type;
-		std::vector<IMAPCommandArg> c_Args;
+		std::vector<std::unique_ptr<Node>> c_Args;
 	};
 }

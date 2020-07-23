@@ -62,9 +62,21 @@ namespace FSMTP::IMAP::MAILBOX_HANDLER
 		CassandraConnection *cassandra
 	)
 	{
+		// Checks if there are enough arguments
+		if (command.c_Args.size() < 2)
+			throw IMAPBad("Invalid arguments");
+
+
+		// Checks if the types are valid
+		if ((command.c_Args[0]->n_Type == NT_ATOM || command.c_Args[0]->n_Type == NT_STRING) &&
+			(command.c_Args[1]->n_Type == NT_ATOM || command.c_Args[1]->n_Type == NT_STRING))
+		{
+			throw IMAPBad("Arguments invalid, required ATOM/STRING ATOM/STRING");
+		}
+
 		// Parses the arguments, and removes the quotes
-		std::string &arg0 = std::get<std::string>(command.c_Args[0].a_Value);
-		std::string &arg1 = std::get<std::string>(command.c_Args[1].a_Value);
+		std::string arg0 = command.c_Args[0]->getString();
+		std::string arg1 = command.c_Args[1]->getString();
 		removeStringQuotes(arg0);
 		removeStringQuotes(arg1);
 
@@ -120,9 +132,17 @@ namespace FSMTP::IMAP::MAILBOX_HANDLER
 		if (command.c_Args.size() < 2)
 			throw IMAPBad("Arguments argument count, required 2");
 
+
+		// Checks if the types are valid
+		if ((command.c_Args[0]->n_Type == NT_ATOM || command.c_Args[0]->n_Type == NT_STRING) &&
+			(command.c_Args[1]->n_Type == NT_ATOM || command.c_Args[1]->n_Type == NT_STRING))
+		{
+			throw IMAPBad("Arguments invalid, required ATOM/STRING ATOM/STRING");
+		}
+
 		// Parses the arguments, and removes the quotes
-		std::string &arg0 = std::get<std::string>(command.c_Args[0].a_Value);
-		std::string &arg1 = std::get<std::string>(command.c_Args[1].a_Value);
+		std::string arg0 = command.c_Args[0]->getString();
+		std::string arg1 = command.c_Args[1]->getString();
 		removeStringQuotes(arg0);
 		removeStringQuotes(arg1);
 
@@ -176,14 +196,14 @@ namespace FSMTP::IMAP::MAILBOX_HANDLER
 
 		// Checks if the arguments are valid
 		if (
-			command.c_Args[0].a_Type != IMAPCommandArgType::IAT_STRING &&
-			command.c_Args[0].a_Type != IMAPCommandArgType::IAT_ATOM
+			command.c_Args[0]->n_Type != NT_STRING &&
+			command.c_Args[0]->n_Type != NT_ATOM
 		)
 		{
 			throw IMAPBad("Invalid argument type, required STRING/ATOM");
 		}
 
-		std::string &mailboxName = std::get<std::string>(command.c_Args[0].a_Value);
+		std::string mailboxName = command.c_Args[0]->getString();
 		removeStringQuotes(mailboxName);
 
 		// Query's for the specified mailbox

@@ -38,8 +38,34 @@ namespace FSMTP::IMAP::CommandParser
 		TT_LBRACKET,
 		TT_RBRACKET,
 		TT_NUMBER,
-		TT_WSP
+		TT_WSP,
+		TT_COLON
 	} TokenType;
+
+	typedef enum : uint8_t
+	{
+		NT_STRING = 0,
+		NT_NUMBER,
+		NT_LIST,
+		NT_SECTION,
+		NT_ATOM,
+		NT_RANGE
+	} NodeType;
+
+	class SyntaxException
+	{
+	public:
+		SyntaxException(const std::size_t i, const std::string &e_Message):
+			e_Message("ERR [token: " + std::to_string(i) + "]: " + e_Message)
+		{}
+
+		const char *what(void) const throw()
+		{
+			return this->e_Message.c_str();
+		}
+	private:
+		std::string e_Message;
+	};
 
 	const char *tokenTypeString(const TokenType type);
 
@@ -93,9 +119,16 @@ namespace FSMTP::IMAP::CommandParser
 	class Node
 	{
 	public:
+		Node(const NodeType n_Type);
+
 		virtual std::string toString(void) = 0;
 
+		virtual std::string getString(void);
+		virtual int32_t getInt32(void);
+		virtual std::pair<int32_t, int32_t> getRange(void);
+
 		std::vector<std::unique_ptr<Node>> n_Nodes;
+		NodeType n_Type;
 	};
 
 	class StringNode : public Node
@@ -104,6 +137,7 @@ namespace FSMTP::IMAP::CommandParser
 		StringNode(const std::string &n_Value);
 
 		virtual std::string toString(void);
+		virtual std::string getString(void);
 
 		std::string n_Value;
 	};
@@ -114,6 +148,7 @@ namespace FSMTP::IMAP::CommandParser
 		NumberNode(const int32_t n_Value);
 
 		virtual std::string toString(void);
+		virtual int32_t getInt32(void);
 
 		int32_t n_Value;
 	};
@@ -141,7 +176,20 @@ namespace FSMTP::IMAP::CommandParser
 
 		virtual std::string toString(void);
 
+		virtual std::string getString(void);
+
 		std::string n_Value;
+	};
+	class RangeNode : public Node
+	{ // 1:4
+	public:
+		RangeNode(const int32_t n_From, const int32_t n_To);
+
+		virtual std::string toString(void);
+		virtual std::pair<int32_t, int32_t> getRange(void);
+
+		int32_t n_From;
+		int32_t n_To;
 	};
 
 	class Parser
@@ -149,7 +197,7 @@ namespace FSMTP::IMAP::CommandParser
 	public:
 		Parser(const std::vector<Token> &p_Tokens);
 
-		void parse(void);
+		void parse(std::vector<std::unique_ptr<Node>> &target);
 
 		/**
 		 * Analyzes and selects which action to start based
@@ -210,7 +258,13 @@ namespace FSMTP::IMAP::CommandParser
 		 */
 		bool section(std::vector<std::unique_ptr<Node>> &target);
 
-		std::vector<std::unique_ptr<Node>> p_Nodes;
+		/**
+		 * Builds an section node in the recursive manner
+		 *
+		 * @Param {std::vector<std::unique_ptr<Node>> &} target
+		 * @Return {bool}
+		 */
+		bool range(std::vector<std::unique_ptr<Node>> &target);
 	private:
 		const Token *p_CurrentToken;
 		char p_CurrentChar;
