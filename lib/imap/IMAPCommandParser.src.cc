@@ -89,7 +89,6 @@ namespace FSMTP::IMAP::CommandParser
 			case TT_RPAREN: return "RPAREN";
 			case TT_QUOTE: return "QUOTE";
 			case TT_OTHER: return "OTHER";
-			case TT_COMMA: return "COMMA";
 			case TT_SPACE: return "SPACE";
 			case TT_LBRACKET: return "LBRACKET";
 			case TT_RBRACKET: return "RBRACKET";
@@ -186,28 +185,20 @@ namespace FSMTP::IMAP::CommandParser
 					reinterpret_cast<const void *>("\"")
 				);
 				this->advance();
-			} else if (this->l_CurrentChar == ',')
-			{ // -> COMMA
-				this->l_Tokens.emplace_back(
-					TT_COMMA,
-					TVT_CHAR, 
-					reinterpret_cast<const void *>(",")
-				);
-				this->advance();
-			} else if (this->l_CurrentChar == ']')
+			} else if (this->l_CurrentChar == '[')
 			{ // -> RBRACKET
 				this->l_Tokens.emplace_back(
 					TT_RBRACKET,
 					TVT_CHAR, 
-					reinterpret_cast<const void *>("]")
+					reinterpret_cast<const void *>("[")
 				);
 				this->advance();
-			} else if (this->l_CurrentChar == '[')
+			} else if (this->l_CurrentChar == ']')
 			{ // -> LBRACKET
 				this->l_Tokens.emplace_back(
 					TT_LBRACKET,
 					TVT_CHAR, 
-					reinterpret_cast<const void *>("[")
+					reinterpret_cast<const void *>("]")
 				);
 				this->advance();
 			} else if (this->l_CurrentChar == ' ')
@@ -229,10 +220,10 @@ namespace FSMTP::IMAP::CommandParser
 			} else throw std::runtime_error(EXCEPT_DEBUG("Invalid char"));
 		}
 
-		std::cout << "Parsing process step 1 (LEXER): " << std::endl;
-		for_each(this->l_Tokens.begin(), this->l_Tokens.end(), [=](const Token &token){
-			std::cout << "- " << token.toString() << std::endl;
-		});
+		// std::cout << "Parsing process step 1 (LEXER): " << std::endl;
+		// for_each(this->l_Tokens.begin(), this->l_Tokens.end(), [=](const Token &token){
+		// 	std::cout << "- " << token.toString() << std::endl;
+		// });
 	}
 
 	void Lexer::makeOther(void)
@@ -314,6 +305,11 @@ namespace FSMTP::IMAP::CommandParser
 				this->list(target);
 				break;
 			}
+			case TT_RBRACKET:
+			{
+				this->section(target);
+				break;
+			}
 			case TT_QUOTE:
 			{
 				this->string(target);
@@ -330,9 +326,22 @@ namespace FSMTP::IMAP::CommandParser
 				this->other(target);
 				break;
 			}
-			default: throw std::runtime_error(EXCEPT_DEBUG("Not implemented !"));
+			default:
+			{
+				throw std::runtime_error("Not implemented");
+			}
 		}
 
+		// Checks if we're in the head, and need to scan
+		// - for another argument
+		if (head)
+		{
+			this->advance();
+			if (this->p_CurrentToken != nullptr)
+			{
+				this->analyze(target, true);
+			}
+		}
 	}
 
 	/**
@@ -442,12 +451,44 @@ namespace FSMTP::IMAP::CommandParser
 				return true;
 
 			// Performs the action
-			if (this->p_CurrentToken->t_Type == TT_COMMA) continue;
+			if (this->p_CurrentToken->t_Type == TT_WSP) continue;
 			this->analyze(node->n_Nodes, false);
 		}
 
 		return false;
 	};
+
+	/**
+	 * Builds an section node in the recursive manner
+	 *
+	 * @Param {std::vector<std::unique_ptr<Node>> &} target
+	 * @Return {bool}
+	 */
+	bool Parser::section(std::vector<std::unique_ptr<Node>> &target)
+	{
+		target.push_back(std::make_unique<SectionNode>());
+		std::unique_ptr<Node> &node = target[target.size() - 1];
+
+		while (true)
+		{
+			this->advance();
+
+			// Checks if we've reached the end
+			if (this->p_CurrentToken == nullptr)
+				throw std::runtime_error(EXCEPT_DEBUG("Closing paren not found"));
+
+			// Checks if we've reached the end, then we push
+			// - the result
+			if (this->p_CurrentToken->t_Type == TT_LBRACKET)
+				return true;
+
+			// Performs the action
+			if (this->p_CurrentToken->t_Type == TT_WSP) continue;
+			this->analyze(node->n_Nodes, false);
+		}
+
+		return false;
+	}
 
 	NumberNode::NumberNode(const int32_t n_Value):
 		n_Value(n_Value), Node()

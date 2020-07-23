@@ -27,7 +27,7 @@ ServerType _serverType = ServerType::ST_SMTP;
  */
 int main(const int argc, const char **argv)
 {
-	IMAP::IMAPCommand command(R"(1 LOGIN ("TEST ss", "asd", 123, (123, asd, 44, (\asdasd))))");
+	IMAP::IMAPCommand command(R"(1 LOGIN fetch 1:4 (BODY[HEADER.FIELDS (Subject)]))");
 	// IMAP::IMAPCommand command("1 LOGIN 12335 [ASD] (test1, test2) \"TE ST\"");
 
 	for_each(command.c_Args.begin(), command.c_Args.end(), [=](IMAP::IMAPCommandArg &a)

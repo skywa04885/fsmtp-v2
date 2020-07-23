@@ -34,7 +34,6 @@ namespace FSMTP::IMAP::CommandParser
 		TT_RPAREN,
 		TT_QUOTE,
 		TT_OTHER,
-		TT_COMMA,
 		TT_SPACE,
 		TT_LBRACKET,
 		TT_RBRACKET,
@@ -202,6 +201,14 @@ namespace FSMTP::IMAP::CommandParser
 		 * @Return {bool}
 		 */
 		bool list(std::vector<std::unique_ptr<Node>> &target);
+
+		/**
+		 * Builds an section node in the recursive manner
+		 *
+		 * @Param {std::vector<std::unique_ptr<Node>> &} target
+		 * @Return {bool}
+		 */
+		bool section(std::vector<std::unique_ptr<Node>> &target);
 
 		std::vector<std::unique_ptr<Node>> p_Nodes;
 	private:
