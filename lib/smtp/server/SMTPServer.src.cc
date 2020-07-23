@@ -27,14 +27,10 @@ namespace FSMTP::Server
 	 *
 	 * @Param {const int32_t} port
 	 * @Param {const bool} s_UseESMTP
-	 * @Param {const int32_t} s_RedisPort
-	 * @Param {ocnst std::string &} s_RedisHost
 	 */
 	SMTPServer::SMTPServer(
 		const int32_t port,
-		const bool s_UseESMTP,
-		const int32_t s_RedisPort,
-		const std::string &s_RedisHost
+		const bool s_UseESMTP
 	):
 		s_Socket(port),
 		s_UseESMTP(s_UseESMTP),
@@ -127,8 +123,8 @@ namespace FSMTP::Server
 		try
 		{
 			redis = std::make_unique<RedisConnection>(
-				server.s_RedisHost.c_str(),
-				server.s_RedisPort
+				_REDIS_CONTACT_POINTS,
+				_REDIS_PORT
 			);
 		} catch (const std::runtime_error &e)
 		{

@@ -62,7 +62,7 @@ int main(const int argc, const char **argv)
 			if (!transWorker->start(nullptr))
 				std::exit(-1);
 			// Runs the server
-			SMTPServer server(25, true, _REDIS_PORT, _REDIS_CONTACT_POINTS);
+			SMTPServer server(25, true);
 
 			// Loops forever
 			for (;;)

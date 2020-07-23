@@ -68,14 +68,10 @@ namespace FSMTP::Server
 		 *
 		 * @Param {const int32_t} port
 		 * @Param {const bool} s_UseESMTP
-		 * @Param {const int32_t} s_RedisPort
-		 * @Param {ocnst std::string &} s_RedisHost
 		 */
 		SMTPServer(
 			const int32_t port,
-			const bool s_UseESMTP,
-			const int32_t s_RedisPort,
-			const std::string &s_RedisHost
+			const bool s_UseESMTP
 		);
 
 		/**

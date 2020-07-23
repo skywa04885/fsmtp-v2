@@ -75,7 +75,7 @@ namespace FSMTP::ARG_ACTIONS
     logger << _BASH_UNKNOWN_MARK << "Start van server socket test ..." << ENDL;
     std::unique_ptr<SMTPServer> smtpServer;
     try {
-      smtpServer = std::make_unique<SMTPServer>(25, true, _REDIS_PORT, _REDIS_CONTACT_POINTS);
+      smtpServer = std::make_unique<SMTPServer>(25, true);
       logger << _BASH_SUCCESS_MARK << "SMTPServer successvol" << ENDL;
       smtpServer->shutdownServer();
     }

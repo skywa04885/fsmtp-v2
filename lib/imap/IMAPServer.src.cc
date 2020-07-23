@@ -146,7 +146,7 @@ namespace FSMTP::IMAP
 					// te, can't access mailbox
 					// - BAD: Command unknown or arguments invalid
 					// ===============================================
-					case IMAPCommandType::ICT_SELECT:
+					case IMAPCommandType::ICT_UID:
 					{
 						MAILBOX_HANDLER::select(
 							client.get(),
