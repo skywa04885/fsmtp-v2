@@ -115,7 +115,6 @@ namespace FSMTP::IMAP::CommandParser
 		std::size_t l_Pos;
 		char l_CurrentChar;
 	};
-
 	class Node
 	{
 	public:
