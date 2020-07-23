@@ -138,6 +138,26 @@ namespace FSMTP::IMAP
 				switch (command.c_Type)
 				{
 					// ===============================================
+					// Handles the 'UID' command
+					//
+					// Shows the folders etcetera, returns: 
+					// - OK: select completed, now in selected state
+					// - NO: select failure, not in authenticated sta
+					// te, can't access mailbox
+					// - BAD: Command unknown or arguments invalid
+					// ===============================================
+					case IMAPCommandType::ICT_SELECT:
+					{
+						MAILBOX_HANDLER::select(
+							client.get(),
+							command,
+							session,
+							redis.get(),
+							cassandra.get()
+						);
+						continue;
+					}
+					// ===============================================
 					// Handles the 'SELECT' command
 					//
 					// Shows the folders etcetera, returns: 

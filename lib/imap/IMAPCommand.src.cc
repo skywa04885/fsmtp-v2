@@ -119,13 +119,21 @@ namespace FSMTP::IMAP
 	 */
 	void IMAPCommand::parseArguments(const std::string &raw)
 	{
-		// Performs the lexical analysis
-		CommandParser::Lexer lexer(raw);
-		lexer.makeTokens();
+		try
+		{
+			// Performs the lexical analysis
+			CommandParser::Lexer lexer(raw);
+			lexer.makeTokens();
 
-		// Parses the tokens
-		CommandParser::Parser parser(lexer.l_Tokens);
-		parser.parse(this->c_Args);
+			// Parses the tokens
+			CommandParser::Parser parser(lexer.l_Tokens);
+			parser.parse(this->c_Args);
+		} catch (const SyntaxException &e)
+		{
+			std::string error = "Syntax error: ";
+			error += e.what();
+			throw IMAPBad(EXCEPT_DEBUG(error));
+		}
 	}
 
 	/**

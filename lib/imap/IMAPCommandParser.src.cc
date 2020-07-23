@@ -94,7 +94,7 @@ namespace FSMTP::IMAP::CommandParser
 			case TT_RBRACKET: return "RBRACKET";
 			case TT_NUMBER: return "NUMBER";
 			case TT_WSP: return "WSP";
-			default: throw std::runtime_error(EXCEPT_DEBUG("Not implemented"));
+			default: throw std::runtime_error("Not implemented");
 		}
 	}
 
@@ -230,7 +230,7 @@ namespace FSMTP::IMAP::CommandParser
 			{ // -> Processes an string
 				this->makeOther();
 				continue;
-			} else throw std::runtime_error(EXCEPT_DEBUG("Invalid char"));
+			} else throw SyntaxException(this->l_Pos, "Invalid char");
 		}
 
 		// std::cout << "Parsing process step 1 (LEXER): " << std::endl;
@@ -398,7 +398,8 @@ namespace FSMTP::IMAP::CommandParser
 		// Checks if the next and previous token is an number
 		if (
 			this->p_Tokens[this->p_TokenIndex - 1].t_Type != TT_NUMBER ||
-			this->p_Tokens[this->p_TokenIndex + 1].t_Type != TT_NUMBER
+			(this->p_Tokens[this->p_TokenIndex + 1].t_Type != TT_NUMBER &&
+				this->p_Tokens[this->p_TokenIndex + 1].t_Type != TT_OTHER)
 		)
 		{
 			throw SyntaxException(this->p_TokenIndex, "Range requires two numbers");
@@ -408,9 +409,16 @@ namespace FSMTP::IMAP::CommandParser
 		// - now part of the range
 		target.pop_back();
 
+		// Checks what kind of node we create
+		int32_t from;
+		if (this->p_Tokens[this->p_TokenIndex + 1].t_Type == TT_OTHER)
+			from = -1;
+		else
+			this->p_Tokens[this->p_TokenIndex - 1].getInt32();
+
 		// Creates the node
 		target.push_back(std::make_unique<RangeNode>(
-			this->p_Tokens[this->p_TokenIndex - 1].getInt32(),
+			from,
 			this->p_Tokens[this->p_TokenIndex + 1].getInt32()
 		));
 
@@ -464,7 +472,7 @@ namespace FSMTP::IMAP::CommandParser
 
 			// Checks if we've reached the end
 			if (this->p_CurrentToken == nullptr)
-				throw std::runtime_error(EXCEPT_DEBUG("Closing quote not found !"));
+				throw SyntaxException(this->p_TokenIndex, "Closing quote not found !");
 
 			// Checks if it is an closing quote, if so
 			// - break and push the result
@@ -502,7 +510,7 @@ namespace FSMTP::IMAP::CommandParser
 
 			// Checks if we've reached the end
 			if (this->p_CurrentToken == nullptr)
-				throw std::runtime_error(EXCEPT_DEBUG("Closing paren not found"));
+				throw SyntaxException(this->p_TokenIndex, "Closing paren not found");
 
 			// Checks if we've reached the end, then we push
 			// - the result
@@ -534,7 +542,7 @@ namespace FSMTP::IMAP::CommandParser
 
 			// Checks if we've reached the end
 			if (this->p_CurrentToken == nullptr)
-				throw std::runtime_error(EXCEPT_DEBUG("Closing paren not found"));
+				throw SyntaxException(this->p_TokenIndex, "Closing paren not found");
 
 			// Checks if we've reached the end, then we push
 			// - the result
@@ -596,7 +604,7 @@ namespace FSMTP::IMAP::CommandParser
 
 	std::string AtomNode::getString(void)
 	{
-		throw this->getString();
+		return this->n_Value;
 	}
 
 	ListNode::ListNode(void):

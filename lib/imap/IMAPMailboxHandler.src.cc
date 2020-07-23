@@ -68,8 +68,8 @@ namespace FSMTP::IMAP::MAILBOX_HANDLER
 
 
 		// Checks if the types are valid
-		if ((command.c_Args[0]->n_Type == NT_ATOM || command.c_Args[0]->n_Type == NT_STRING) &&
-			(command.c_Args[1]->n_Type == NT_ATOM || command.c_Args[1]->n_Type == NT_STRING))
+		if ((command.c_Args[0]->n_Type != NT_ATOM && command.c_Args[0]->n_Type != NT_STRING) ||
+			(command.c_Args[1]->n_Type != NT_ATOM && command.c_Args[1]->n_Type != NT_STRING))
 		{
 			throw IMAPBad("Arguments invalid, required ATOM/STRING ATOM/STRING");
 		}
@@ -134,8 +134,8 @@ namespace FSMTP::IMAP::MAILBOX_HANDLER
 
 
 		// Checks if the types are valid
-		if ((command.c_Args[0]->n_Type == NT_ATOM || command.c_Args[0]->n_Type == NT_STRING) &&
-			(command.c_Args[1]->n_Type == NT_ATOM || command.c_Args[1]->n_Type == NT_STRING))
+		if ((command.c_Args[0]->n_Type != NT_ATOM && command.c_Args[0]->n_Type != NT_STRING) ||
+			(command.c_Args[1]->n_Type != NT_ATOM && command.c_Args[1]->n_Type != NT_STRING))
 		{
 			throw IMAPBad("Arguments invalid, required ATOM/STRING ATOM/STRING");
 		}
