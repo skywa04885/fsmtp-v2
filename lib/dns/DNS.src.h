@@ -22,6 +22,7 @@
 #include <atomic>
 #include <functional>
 #include <thread>
+#include <vector>
 #include <tuple>
 
 #include <string.h>

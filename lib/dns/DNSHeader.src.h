@@ -47,7 +47,7 @@ namespace FSMTP::DNS
 		QUERY_CLASS_HESIOD,
 		QUERY_CLASS_NONE,
 		QUERY_CLASS_ALL,
-		QUERY_CLASS_ANY
+		QUERY_CLASS_UNKNOWN
 	} QueryClass;
 
 	typedef enum : uint8_t
@@ -112,8 +112,8 @@ namespace FSMTP::DNS
 		void log(Logger &logger);
 
 		std::string d_QName;
-		int16_t d_QClass;
-		int16_t d_QType;
+		QueryClass d_QClass;
+		QueryType d_QType;
 	};
 
 	class DNSHeader
@@ -136,6 +136,14 @@ namespace FSMTP::DNS
 		void getID(char *buffer);
 
 		/**
+		 * Sets the ID in the header
+		 *
+		 * @Param {const char *id}
+		 * @Return {void}
+		 */
+		void setID(char *buffer);
+
+		/**
 		 * Logs the DNS header
 		 *
 		 * @Param {Logger &logger}
@@ -152,12 +160,28 @@ namespace FSMTP::DNS
 		bool getType(void);
 
 		/**
+		 * Sets the query type, true is query
+		 *
+		 * @Param {const bool} isQuery
+		 * @Return {bool}
+		 */
+		void setType(const bool isQuery);
+
+		/**
 		 * Gets the query opcode
 		 *
 		 * @Param {void}
 		 * @Return {QueryOpcode}
 		 */
 		QueryOpcode getOpcode(void);
+
+		/**
+		 * Gets the query opcode
+		 *
+		 * @Param {const QueryOpcode} opcode
+		 * @Return {void}
+		 */
+		void setOpcode(const QueryOpcode opcode);
 
 		/**
 		 * Checks if this is an authoritive answer
@@ -168,12 +192,28 @@ namespace FSMTP::DNS
 		bool getAA(void);
 
 		/**
+		 * Sets this is an authoritive answer
+		 *
+		 * @Param {const bool} isAuthoritive
+		 * @Return {void}
+		 */
+		void setAA(const bool isAuthoritive);
+
+		/**
 		 * Checks if the message was truncated
 		 *
 		 * @Param {void}
 		 * @Return {bool}
 		 */
 		bool getTruncated(void);
+
+		/**
+		 * Sets the message was truncated
+		 *
+		 * @Param {const bool} truncated
+		 * @Return {void}
+		 */
+		void setTruncated(const bool truncated);
 
 		/**
 		 * Checks if recursion is desired
@@ -184,6 +224,14 @@ namespace FSMTP::DNS
 		bool getRecursionDesired(void);
 
 		/**
+		 * Checks if recursion is desired
+		 *
+		 * @Param {const bool} recursionDesired
+		 * @Return {void}
+		 */
+		void setRecursionDesired(const bool recursionDesired);
+
+		/**
 		 * Checks if recursion is available
 		 *
 		 * @Param {void}
@@ -192,12 +240,28 @@ namespace FSMTP::DNS
 		bool getRecursionAvailable(void);
 
 		/**
+		 * Sets if recursion is available
+		 *
+		 * @Param {const bool} recursionAvailable
+		 * @Return {void}
+		 */
+		void setRecursionAvailable(const bool recursionAvailable);
+
+		/**
 		 * Gets the response code
 		 *
 		 * @Param {void}
 		 * @Return {ResponseCode}
 		 */
 		ResponseCode getResponseCode(void);
+
+		/**
+		 * Sets the response code
+		 *
+		 * @Param {const ResponseCode rCode}
+		 * @Return {void}
+		 */
+		void setResponseCode(const ResponseCode rCode);
 
 		/**
 		 * Gets the number of questions in the question section

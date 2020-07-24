@@ -20,9 +20,10 @@ kunnen worden uit andere applicaties.
 
 ## Waar wordt aan gewerkt ?
 
-1. IMAP Server
+1. IMAP Server (IMAP4rev1)
 1. Uitbereiding van de ESMTP server
 1. Verbetering leesbaarheid code
+1. DNS Server, die ook DKIM sleutels dagelijks update
 
 ## Wat bibliotheken heb ik nodig ?
 

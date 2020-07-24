@@ -77,9 +77,46 @@ namespace FSMTP::DNS
 		++byteOffset;
 
 		// Gets the request type, and name
-		this->d_QType = ntohs(*reinterpret_cast<const int16_t *>(&parse[byteOffset]));
+		int32_t queryType = ntohs(*reinterpret_cast<const int16_t *>(&parse[byteOffset]));
 		byteOffset += 2;
-		this->d_QClass = ntohs(*reinterpret_cast<const int16_t *>(&parse[byteOffset]));
+		int32_t queryClass = ntohs(*reinterpret_cast<const int16_t *>(&parse[byteOffset]));
+		byteOffset += 2;
+
+		// Sets the query type
+		switch (queryType)
+		{
+			case 0x0000:
+			{ this->d_QType = QueryType::QUERY_TYPE_QUERY; break; }
+			case 0x0001:
+			{ this->d_QType = QueryType::QUERY_TYPE_IQUERY; break; }
+			case 0x0002:
+			{ this->d_QType = QueryType::QUERY_TYPE_STATUS; break; }
+			case 0x0004:
+			{ this->d_QType = QueryType::QUERY_TYPE_NOTIFY; break; }
+			case 0x0005:
+			{ this->d_QType = QueryType::QUERY_TYPE_UPDATE; break; }
+			default: case 0x0003:
+			{ this->d_QType = QueryType::QUERY_TYPE_UNKNOWN; break; }
+		}
+
+		// Sets the query class
+		switch (queryClass)
+		{
+			case 0x0001:
+			{ this->d_QClass = QueryClass::QUERY_CLASS_INTERNET; break; }
+			case 0x0002:
+			{ this->d_QClass = QueryClass::QUERY_CLASS_CSNET; break; }
+			case 0x0003:
+			{ this->d_QClass = QueryClass::QUERY_CLASS_CHAOS; break; }
+			case 0x0004:
+			{ this->d_QClass = QueryClass::QUERY_CLASS_HESIOD; break; }
+			case 0x00fe:
+			{ this->d_QClass = QueryClass::QUERY_CLASS_NONE; break; }
+			case 0x00ff:
+			{ this->d_QClass = QueryClass::QUERY_CLASS_ALL; break; }
+			default:
+			{ this->d_QClass = QueryClass::QUERY_CLASS_CSNET; break; }
+		}
 
 		// Returns the bool if we need to parse another question
 		// - and the current byte offset of the question
@@ -98,6 +135,7 @@ namespace FSMTP::DNS
 		logger << "[DNS Question]: " << ENDL;
 		logger << "\t- QName: " << this->d_QName << ENDL;
 		logger << "\t- QClass: " << d_QClass << ENDL;
+		logger << "\t- QType: " << d_QType << ENDL;
 		logger << CLASSIC;
 	}
 
@@ -127,6 +165,17 @@ namespace FSMTP::DNS
 	}
 
 	/**
+	 * Sets the ID in the header
+	 *
+	 * @Param {const char *id}
+	 * @Return {void}
+	 */
+	void DNSHeader::setID(char *buffer)
+	{
+		memcpy(this->d_Buffer, buffer, sizeof (char) * 2);
+	}
+
+	/**
 	 * Gets the query type, true is query
 	 *
 	 * @Param {void}
@@ -138,6 +187,18 @@ namespace FSMTP::DNS
 			return false;
 		else
 			return true;
+	}
+
+	/**
+	 * Sets the query type, true is query
+	 *
+	 * @Param {const bool} isQuery
+	 * @Return {bool}
+	 */
+	void DNSHeader::setType(const bool isQuery)
+	{
+		if (isQuery) this->d_Buffer[2] &= ~0b10000000;
+		else this->d_Buffer[2] |= 0b10000000;
 	}
 
 	/**
@@ -157,6 +218,33 @@ namespace FSMTP::DNS
 			case 2: return QueryOpcode::QUERY_OP_SERVER_STAT_REQ;
 			default: return QueryOpcode::QUERY_OP_INVALID;
 		}
+	}
+
+	/**
+	 * Gets the query opcode
+	 *
+	 * @Param {const QueryOpcode} opcode
+	 * @Return {void}
+	 */
+	void DNSHeader::setOpcode(const QueryOpcode opcode)
+	{
+		int8_t newOp = 0x0;
+
+		switch (opcode)
+		{
+			case QueryOpcode::QUERY_OP_STANDARD:
+			{ newOp = 0; break; }
+			case QueryOpcode::QUERY_OP_INVERSE:
+			{ newOp = 1; break; }
+			case QueryOpcode::QUERY_OP_SERVER_STAT_REQ:
+			{ newOp = 2; break; }
+			case QueryOpcode::QUERY_OP_INVALID: 
+			{ throw std::runtime_error(EXCEPT_DEBUG("Invalid opcode")); }
+		}
+
+		newOp <<= 3;
+		this->d_Buffer[2] &= ~0b01111000;	// Clears bits 0b01111000
+		this->d_Buffer[2] |= newOp;
 	}
 
 	/**
@@ -189,6 +277,18 @@ namespace FSMTP::DNS
 	}
 
 	/**
+	 * Sets this is an authoritive answer
+	 *
+	 * @Param {const bool} isAuthoritive
+	 * @Return {void}
+	 */
+	void DNSHeader::setAA(const bool isAuthoritive)
+	{
+		if (isAuthoritive) this->d_Buffer[2] |= 0b00000100;
+		else this->d_Buffer[2] &= ~0b00000100;
+	}
+
+	/**
 	 * Checks if the message was truncated
 	 *
 	 * @Param {void}
@@ -198,6 +298,18 @@ namespace FSMTP::DNS
 	{
 		if (BINARY_COMPARE(this->d_Buffer[2], 0b00000010)) return true;
 		else return false;
+	}
+
+	/**
+	 * Sets the message was truncated
+	 *
+	 * @Param {const bool} truncated
+	 * @Return {void}
+	 */
+	void DNSHeader::setTruncated(const bool truncated)
+	{
+		if (truncated) this->d_Buffer[2] |= 0b00000010;
+		else this->d_Buffer[2] &= ~0b00000010;
 	}
 
 	/**
@@ -213,6 +325,18 @@ namespace FSMTP::DNS
 	}
 
 	/**
+	 * Checks if recursion is desired
+	 *
+	 * @Param {const bool} recursionDesired
+	 * @Return {void}
+	 */
+	void DNSHeader::setRecursionDesired(const bool recursionDesired)
+	{
+		if (recursionDesired) this->d_Buffer[2] |= 0b00000001;
+		else this->d_Buffer[2] &= ~0b00000001;
+	}
+
+	/**
 	 * Checks if recursion is available
 	 *
 	 * @Param {void}
@@ -222,6 +346,18 @@ namespace FSMTP::DNS
 	{
 		if (BINARY_COMPARE(this->d_Buffer[3], 0b10000000)) return true;
 		else return false;
+	}
+
+	/**
+	 * Sets if recursion is available
+	 *
+	 * @Param {const bool} recursionAvailable
+	 * @Return {void}
+	 */
+	void DNSHeader::setRecursionAvailable(const bool recursionAvailable)
+	{
+		if (recursionAvailable) this->d_Buffer[3] |= 0b10000000;
+		else this->d_Buffer[3] &= ~0b10000000;
 	}
 
 	/**
@@ -243,6 +379,17 @@ namespace FSMTP::DNS
 			case 5: return ResponseCode::QUERY_RESP_REFUSED;
 			default: return QUERY_RESP_REFUSED;
 		}
+	}
+
+	/**
+	 * Sets the response code
+	 *
+	 * @Param {const ResponseCode rCode}
+	 * @Return {void}
+	 */
+	void DNSHeader::setResponseCode(const ResponseCode rCode)
+	{
+
 	}
 
 	/**

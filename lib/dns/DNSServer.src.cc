@@ -65,7 +65,7 @@ namespace FSMTP::DNS
 			// Processes the request, and builds the response
 			// ================================================
 
-			// Parses the questions
+			// Parses the questions, TODO: Support multiple query's
 			DNSQuestion question(&request.d_Buffer[12]);
 			question.log(logger);
 
