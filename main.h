@@ -32,6 +32,7 @@
 
 #include "lib/pop3/P3Server.src.h"
 #include "lib/imap/IMAPServer.src.h"
+#include "lib/dns/DNSServer.src.h"
 
 using namespace FSMTP;
 using Networking::SMTPSocket;

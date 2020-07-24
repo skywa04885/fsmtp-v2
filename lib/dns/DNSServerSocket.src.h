@@ -17,20 +17,30 @@
 #pragma once
 
 #include "DNS.src.h"
-#include "DNSServerSocket.src.h"
-#include "DNSHeader.src.h"
 
 namespace FSMTP::DNS
 {
-	class DNSServer
+	class DNSServerSocket
 	{
 	public:
-		DNSServer(const int32_t port);
+		DNSServerSocket(const int32_t port);
 
-		static void acceptorCallback(DNSServerSocket *server, void *u);
-	private:
-		DNSServerSocket s_Socket;
-		std::atomic<bool> s_Run;
-		std::atomic<bool> s_Running;
+		void startAcceptorSync(
+			std::atomic<bool> *run,
+			std::atomic<bool> *running,
+			const std::function<void(DNSServerSocket *, void *)> cb,
+			void *u
+		);
+
+		void syncAcceptorThread(
+			std::atomic<bool> *run,
+			std::atomic<bool> *running,
+			const std::function<void(DNSServerSocket *, void *)> cb,
+			void *u
+		);
+
+		int32_t s_SocketFD;
+		struct sockaddr_in s_SocketAddr;
+		Logger s_Logger;
 	};
 }

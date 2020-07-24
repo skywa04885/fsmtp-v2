@@ -82,6 +82,24 @@ int main(const int argc, const char **argv)
 				std::this_thread::sleep_for(std::chrono::milliseconds(120));
 			};
 		}
+		case ServerType::ST_DNS:
+		{
+			Logger logger("Main", LoggerLevel::INFO);
+			logger << WARN << "Fannst DNS Server door Luke A.C.A. Rieff, vrij onder de Apache 2.0 license" << ENDL << CLASSIC;
+			
+			try
+			{
+				DNS::DNSServer dnsServer(53);
+				
+				for (;;)
+				{
+					std::this_thread::sleep_for(std::chrono::milliseconds(120));
+				};
+			} catch (const SocketInitializationException &e)
+			{
+				logger << FATAL << e.what() << ENDL << CLASSIC;
+			}
+		}
 		default: return -1;
 	}
 

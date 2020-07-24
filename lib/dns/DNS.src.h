@@ -16,21 +16,21 @@
 
 #pragma once
 
-#include "DNS.src.h"
-#include "DNSServerSocket.src.h"
-#include "DNSHeader.src.h"
+#include <string>
+#include <iostream>
+#include <cstdint>
+#include <atomic>
+#include <functional>
+#include <thread>
 
-namespace FSMTP::DNS
-{
-	class DNSServer
-	{
-	public:
-		DNSServer(const int32_t port);
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <memory.h>
 
-		static void acceptorCallback(DNSServerSocket *server, void *u);
-	private:
-		DNSServerSocket s_Socket;
-		std::atomic<bool> s_Run;
-		std::atomic<bool> s_Running;
-	};
-}
+#include "../general/Logger.src.h"
+#include "../general/exceptions.src.h"
+#include "../general/hex.src.h"
+#include "../general/macros.src.h"

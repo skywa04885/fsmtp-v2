@@ -165,6 +165,8 @@ namespace FSMTP
 					_serverType = ServerType::ST_POP3;
 				if (arg.c_Arg == "imap")
 					_serverType = ServerType::ST_IMAP;
+				if (arg.c_Arg == "dns")
+					_serverType = ServerType::ST_DNS;
 			}
 		}
 	}

@@ -102,7 +102,8 @@ typedef enum : uint8_t
 {
 	ST_SMTP = 0,
 	ST_POP3,
-	ST_IMAP
+	ST_IMAP,
+	ST_DNS
 } ServerType;
 
 // Assertion using message

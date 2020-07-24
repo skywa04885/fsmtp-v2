@@ -231,3 +231,5 @@ quit
 |Name|Github|
 |-|-|
 |Luke Rieff|[Click here](https://github.com/skywa04885)|
+
+**Python sucks**

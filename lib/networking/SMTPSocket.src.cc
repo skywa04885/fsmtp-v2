@@ -372,7 +372,10 @@ namespace FSMTP::Networking
 			std::thread t(cb, sAddr, clientSockFD, u);
 			t.detach();
 		}
+
+		// Sets running to false, and gives a short delay
 		*running = false;
+		std::this_thread::sleep_for(std::chrono::milliseconds(120));
 	}
 
 	/**
