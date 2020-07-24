@@ -61,6 +61,14 @@ namespace FSMTP::IMAP
 	{
 	public:
 		/**
+		 * Free's the memory
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		~IMAPCommand(void);
+
+		/**
 		 * Default emty constructor
 		 *
 		 * @Param {void}
@@ -102,6 +110,6 @@ namespace FSMTP::IMAP
 	
 		std::string c_Index;
 		IMAPCommandType c_Type;
-		std::vector<std::unique_ptr<Node>> c_Args;
+		std::vector<Argument> c_Args;
 	};
 }

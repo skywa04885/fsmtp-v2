@@ -42,15 +42,15 @@ namespace FSMTP::IMAP::AUTH_HANDLER
 			throw IMAPBad("Arguments invalid");
 
 		// Checks if the types are valid
-		if ((command.c_Args[0]->n_Type != NT_ATOM && command.c_Args[0]->n_Type != NT_STRING) ||
-			(command.c_Args[1]->n_Type != NT_ATOM && command.c_Args[1]->n_Type != NT_STRING))
+		if ((command.c_Args[0].a_Type != A_TYPE_ATOM && command.c_Args[0].a_Type != A_TYPE_STRING) ||
+			(command.c_Args[1].a_Type != A_TYPE_ATOM && command.c_Args[1].a_Type != A_TYPE_STRING))
 		{
 			throw IMAPBad("Arguments invalid, required ATOM/STRING ATOM/STRING");
 		}
 
 		// Gets the username and password
-		std::string user = command.c_Args[0]->getString();
-		std::string pass = command.c_Args[1]->getString();
+		std::string user = command.c_Args[0].a_String;
+		std::string pass = command.c_Args[1].a_String;
 		removeStringQuotes(user);
 		removeStringQuotes(pass);
 

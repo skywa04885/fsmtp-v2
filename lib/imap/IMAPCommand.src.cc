@@ -227,4 +227,18 @@ namespace FSMTP::IMAP
 			default: this->c_Type = IMAPCommandType::ICT_UNKNOWN;
 		}
 	}
+
+	/**
+	 * Free's the memory
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
+	IMAPCommand::~IMAPCommand(void)
+	{
+		for_each(this->c_Args.begin(), this->c_Args.end(), [=](Argument &a)
+		{
+			a.free();
+		});
+	}
 }

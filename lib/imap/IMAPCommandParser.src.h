@@ -42,16 +42,6 @@ namespace FSMTP::IMAP::CommandParser
 		TT_COLON
 	} TokenType;
 
-	typedef enum : uint8_t
-	{
-		NT_STRING = 0,
-		NT_NUMBER,
-		NT_LIST,
-		NT_SECTION,
-		NT_ATOM,
-		NT_RANGE
-	} NodeType;
-
 	class SyntaxException
 	{
 	public:
@@ -115,80 +105,90 @@ namespace FSMTP::IMAP::CommandParser
 		std::size_t l_Pos;
 		char l_CurrentChar;
 	};
-	class Node
+
+	typedef enum : uint8_t
+	{
+		A_TYPE_STRING = 0,
+		A_TYPE_INT32,
+		A_TYPE_INT64,
+		A_TYPE_CHAR,
+		A_TYPE_ATOM,
+		A_TYPE_SECTION,
+		A_TYPE_LIST,
+		A_TYPE_RANGE
+	} ArgumentType;
+
+	typedef struct
+	{
+		int32_t r_From;
+		int32_t r_To;
+	} Range;
+
+	class Argument
 	{
 	public:
-		Node(const NodeType n_Type);
+		/**
+		 * Default empty constructor
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		explicit Argument(void);
 
-		virtual std::string toString(void) = 0;
+		/**
+		 * Integer argument
+		 *
+		 * @Param {const int32_t} a_Int32
+		 * @Param {const ArgumentType} a_Type
+		 * @Return {void}
+		 */
+		Argument(const int32_t a_Int32, const ArgumentType a_Type);
 
-		virtual std::string getString(void);
-		virtual int32_t getInt32(void);
-		virtual std::pair<int32_t, int32_t> getRange(void);
+		/**
+		 * Integer argument
+		 *
+		 * @Param {const int32_t} a_Int32
+		 * @Param {const ArgumentType} 
+		 * @Return {void}
+		 */
+		Argument(const char a_Char, const ArgumentType a_Type);
 
-		std::vector<std::unique_ptr<Node>> n_Nodes;
-		NodeType n_Type;
-	};
+		/**
+		 * Integer argument
+		 *
+		 * @Param {const Range} a_Range
+		 * @Param {const ArgumentType} 
+		 * @Return {void}
+		 */
+		Argument(const Range a_Range, const ArgumentType a_Type);
 
-	class StringNode : public Node
-	{ // "DATA"
-	public:
-		StringNode(const std::string &n_Value);
+		/**
+		 * Integer argument
+		 *
+		 * @Param {const char *} a_String
+		 * @Param {const ArgumentType} 
+		 * @Return {void}
+		 */
+		Argument(const char *a_String, const ArgumentType a_Type);
 
-		virtual std::string toString(void);
-		virtual std::string getString(void);
+		/**
+		 * Deletes the string if it is there
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		void free(void);
 
-		std::string n_Value;
-	};
+		union
+		{
+			int32_t a_Int32;
+			char *a_String;
+			char a_Char;
+			Range a_Range;
+		};
 
-	class NumberNode : public Node
-	{ // 1234
-	public:
-		NumberNode(const int32_t n_Value);
-
-		virtual std::string toString(void);
-		virtual int32_t getInt32(void);
-
-		int32_t n_Value;
-	};
-
-	class SectionNode : public Node
-	{ // [DATA]
-	public:
-		SectionNode(void);
-
-		virtual std::string toString(void);
-	};
-
-	class ListNode : public Node
-	{ // (DATA, DATA1, DATA2)
-	public:
-		ListNode(void);
-
-		virtual std::string toString(void);
-	};
-
-	class AtomNode : public Node
-	{ // "DATA"
-	public:
-		AtomNode(const std::string &n_Value);
-
-		virtual std::string toString(void);
-
-		virtual std::string getString(void);
-
-		std::string n_Value;
-	};
-	class RangeNode : public Node
-	{ // 1:4
-	public:
-		RangeNode(const int32_t n_From, const int32_t n_To);
-
-		virtual std::string toString(void);
-		virtual std::pair<int32_t, int32_t> getRange(void);
-
-		int32_t n_From;
-		int32_t n_To;
+		std::vector<Argument> a_Children;
+		ArgumentType a_Type;
 	};
 
 	class Parser
@@ -196,7 +196,7 @@ namespace FSMTP::IMAP::CommandParser
 	public:
 		Parser(const std::vector<Token> &p_Tokens);
 
-		void parse(std::vector<std::unique_ptr<Node>> &target);
+		void parse(std::vector<Argument> &target);
 
 		/**
 		 * Analyzes and selects which action to start based
@@ -206,7 +206,7 @@ namespace FSMTP::IMAP::CommandParser
 	 	 * @Param {const bool} head
 		 * @Return {void}
 		 */
-		void analyze(std::vector<std::unique_ptr<Node>> &target, const bool head);
+		void analyze(std::vector<Argument> &target, const bool head);
 
 		/**
 		 * Goes to the next token, and sets the pointer to nullptr
@@ -223,7 +223,7 @@ namespace FSMTP::IMAP::CommandParser
 		 * @Param {std::vector<std::unique_ptr<Node>> &} target
 		 * @Return {bool}
 		 */
-		bool number(std::vector<std::unique_ptr<Node>> &target);
+		bool number(std::vector<Argument> &target);
 
 		/**
 		 * Parses an string and pushes it to the target
@@ -231,7 +231,7 @@ namespace FSMTP::IMAP::CommandParser
 		 * @Param {std::vector<std::unique_ptr<Node>> &} target
 		 * @Return {bool}
 		 */
-		bool string(std::vector<std::unique_ptr<Node>> &target);
+		bool string(std::vector<Argument> &target);
 
 		/**
 		 * Parses an atom and pushes it to the target
@@ -239,7 +239,7 @@ namespace FSMTP::IMAP::CommandParser
 		 * @Param {std::vector<std::unique_ptr<Node>> &} target
 		 * @Return {bool}
 		 */
-		bool other(std::vector<std::unique_ptr<Node>> &target);
+		bool other(std::vector<Argument> &target);
 
 		/**
 		 * Builds an list node in the recursive manner
@@ -247,7 +247,7 @@ namespace FSMTP::IMAP::CommandParser
 		 * @Param {std::vector<std::unique_ptr<Node>> &} target
 		 * @Return {bool}
 		 */
-		bool list(std::vector<std::unique_ptr<Node>> &target);
+		bool list(std::vector<Argument> &target);
 
 		/**
 		 * Builds an section node in the recursive manner
@@ -255,7 +255,7 @@ namespace FSMTP::IMAP::CommandParser
 		 * @Param {std::vector<std::unique_ptr<Node>> &} target
 		 * @Return {bool}
 		 */
-		bool section(std::vector<std::unique_ptr<Node>> &target);
+		bool section(std::vector<Argument> &target);
 
 		/**
 		 * Builds an section node in the recursive manner
@@ -263,7 +263,7 @@ namespace FSMTP::IMAP::CommandParser
 		 * @Param {std::vector<std::unique_ptr<Node>> &} target
 		 * @Return {bool}
 		 */
-		bool range(std::vector<std::unique_ptr<Node>> &target);
+		bool range(std::vector<Argument> &target);
 	private:
 		const Token *p_CurrentToken;
 		char p_CurrentChar;

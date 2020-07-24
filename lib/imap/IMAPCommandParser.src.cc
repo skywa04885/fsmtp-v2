@@ -300,7 +300,7 @@ namespace FSMTP::IMAP::CommandParser
 		p_Tokens(p_Tokens), p_TokenIndex(-1), p_CurrentToken(nullptr)
 	{}
 
-	void Parser::parse(std::vector<std::unique_ptr<Node>> &target)
+	void Parser::parse(std::vector<Argument> &target)
 	{
 		this->advance();
 		this->analyze(target, true);
@@ -314,7 +314,7 @@ namespace FSMTP::IMAP::CommandParser
 	 * @Param {const bool} head
 	 * @Return {void}
 	 */
-	void Parser::analyze(std::vector<std::unique_ptr<Node>> &target, const bool head)
+	void Parser::analyze(std::vector<Argument> &target, const bool head)
 	{
 		switch (this->p_CurrentToken->t_Type)
 		{
@@ -389,7 +389,7 @@ namespace FSMTP::IMAP::CommandParser
 	 * @Param {std::vector<std::unique_ptr<Node>> &} target
 	 * @Return {bool}
 	 */
-	bool Parser::range(std::vector<std::unique_ptr<Node>> &target)
+	bool Parser::range(std::vector<Argument> &target)
 	{
 		// Checks if there are enough numbers for an range
 		if (target.size() < 1)
@@ -416,11 +416,18 @@ namespace FSMTP::IMAP::CommandParser
 		else
 			this->p_Tokens[this->p_TokenIndex - 1].getInt32();
 
+		// Checks what kind of to to create
+		int32_t to;
+		if (this->p_Tokens[this->p_TokenIndex + 1].t_Type == TT_OTHER)
+			to = -1;
+		else
+			to = this->p_Tokens[this->p_TokenIndex + 1].getInt32();
+
 		// Creates the node
-		target.push_back(std::make_unique<RangeNode>(
-			from,
-			this->p_Tokens[this->p_TokenIndex + 1].getInt32()
-		));
+		target.push_back(Argument(Range {
+			from, 
+			to
+		}, ArgumentType::A_TYPE_RANGE));
 
 		// Goes to the next token and returns
 		this->advance();
@@ -433,13 +440,13 @@ namespace FSMTP::IMAP::CommandParser
 	 * @Param {std::vector<std::unique_ptr<Node>> &} target
 	 * @Return {bool}
 	 */
-	bool Parser::number(std::vector<std::unique_ptr<Node>> &target)
+	bool Parser::number(std::vector<Argument> &target)
 	{
 		const Token &token = *this->p_CurrentToken;
 
 		if (token.t_Type == TT_NUMBER)
 		{
-			target.push_back(std::make_unique<NumberNode>(token.getInt32()));
+			target.push_back(Argument(token.getInt32(), ArgumentType::A_TYPE_INT32));
 			return true;
 		} else return false;
 	}
@@ -450,9 +457,9 @@ namespace FSMTP::IMAP::CommandParser
 	 * @Param {std::vector<std::unique_ptr<Node>> &} target
 	 * @Return {bool}
 	 */
-	bool Parser::other(std::vector<std::unique_ptr<Node>> &target)
+	bool Parser::other(std::vector<Argument> &target)
 	{
-		target.push_back(std::make_unique<AtomNode>(this->p_CurrentToken->getString()));
+		target.push_back(Argument(this->p_CurrentToken->getString(), ArgumentType::A_TYPE_ATOM));
 		return true;
 	}
 
@@ -462,7 +469,7 @@ namespace FSMTP::IMAP::CommandParser
 	 * @Param {std::vector<std::unique_ptr<Node>> &} target
 	 * @Return {bool}
 	 */
-	bool Parser::string(std::vector<std::unique_ptr<Node>> &target)
+	bool Parser::string(std::vector<Argument> &target)
 	{
 		std::string content;
 
@@ -478,7 +485,7 @@ namespace FSMTP::IMAP::CommandParser
 			// - break and push the result
 			if (this->p_CurrentToken->t_Type == TT_QUOTE)
 			{
-				target.push_back(std::make_unique<StringNode>(content));
+				target.push_back(Argument(content.c_str(), ArgumentType::A_TYPE_STRING));
 				return true;
 			}
 
@@ -499,10 +506,10 @@ namespace FSMTP::IMAP::CommandParser
 	 * @Param {std::vector<std::unique_ptr<Node>> &target}
 	 * @Return {bool}
 	 */
-	bool Parser::list(std::vector<std::unique_ptr<Node>> &target)
+	bool Parser::list(std::vector<Argument> &target)
 	{
-		target.push_back(std::make_unique<ListNode>());
-		std::unique_ptr<Node> &node = target[target.size() - 1];
+		target.push_back(Argument(0, ArgumentType::A_TYPE_LIST));
+		Argument &arg = target[target.size() - 1];
 
 		while (true)
 		{
@@ -519,7 +526,7 @@ namespace FSMTP::IMAP::CommandParser
 
 			// Performs the action
 			if (this->p_CurrentToken->t_Type == TT_WSP) continue;
-			this->analyze(node->n_Nodes, false);
+			this->analyze(arg.a_Children, false);
 		}
 
 		return false;
@@ -531,10 +538,10 @@ namespace FSMTP::IMAP::CommandParser
 	 * @Param {std::vector<std::unique_ptr<Node>> &} target
 	 * @Return {bool}
 	 */
-	bool Parser::section(std::vector<std::unique_ptr<Node>> &target)
+	bool Parser::section(std::vector<Argument> &target)
 	{
-		target.push_back(std::make_unique<SectionNode>());
-		std::unique_ptr<Node> &node = target[target.size() - 1];
+		target.push_back(Argument(0, ArgumentType::A_TYPE_SECTION));
+		Argument &arg = target[target.size() - 1];
 
 		while (true)
 		{
@@ -551,116 +558,85 @@ namespace FSMTP::IMAP::CommandParser
 
 			// Performs the action
 			if (this->p_CurrentToken->t_Type == TT_WSP) continue;
-			this->analyze(node->n_Nodes, false);
+			this->analyze(arg.a_Children, false);
 		}
 
 		return false;
 	}
 
-	Node::Node(const NodeType n_Type):
-		n_Type(n_Type)
+	/**
+	 * Default empty constructor
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
+	Argument::Argument(void)
 	{}
 
-	std::string Node::getString(void)
-	{
-		throw std::runtime_error("String cannot be accessed");
-	}
-
-	int32_t Node::getInt32(void)
-	{
-		throw std::runtime_error("Int32t cannot be accessed");
-	}
-
-	std::pair<int32_t, int32_t> Node::getRange(void)
-	{
-		throw std::runtime_error("Range cannot be accessed");
-	}
-
-	NumberNode::NumberNode(const int32_t n_Value):
-		n_Value(n_Value), Node(NT_NUMBER)
+	/**
+	 * Integer argument
+	 *
+	 * @Param {const int32_t} a_Int32
+	 * @Param {const ArgumentType} a_Type
+	 * @Return {void}
+	 */
+	Argument::Argument(const int32_t a_Int32, const ArgumentType a_Type):
+		a_Int32(a_Int32), a_Type(a_Type)
 	{}
 
-	int32_t NumberNode::getInt32(void)
-	{
-		throw this->n_Value;
-	}
-
-	SectionNode::SectionNode(void):
-		Node(NT_SECTION)
+	/**
+	 * Integer argument
+	 *
+	 * @Param {const char} a_Char
+	 * @Param {const ArgumentType} 
+	 * @Return {void}
+	 */
+	Argument::Argument(const char a_Char, const ArgumentType a_Type):
+		a_Char(a_Char), a_Type(a_Type)
 	{}
 
-	StringNode::StringNode(const std::string &n_Value):
-		n_Value(n_Value), Node(NT_STRING)
+	/**
+	 * Integer argument
+	 *
+	 * @Param {const Range} a_Range
+	 * @Param {const ArgumentType} 
+	 * @Return {void}
+	 */
+	Argument::Argument(const Range a_Range, const ArgumentType a_Type):
+		a_Range(a_Range), a_Type(a_Type)
 	{}
 
-	std::string StringNode::getString(void)
+	/**
+	 * Integer argument
+	 *
+	 * @Param {const char *} a_String
+	 * @Param {const ArgumentType} 
+	 * @Return {void}
+	 */
+	Argument::Argument(const char *a_String, const ArgumentType a_Type):
+		a_Type(a_Type)
 	{
-		return this->n_Value;
+		std::size_t stringLen = strlen(a_String);
+		++stringLen;
+
+		this->a_String = new char[stringLen];
+		memcpy(this->a_String, a_String, stringLen);
 	}
 
-	AtomNode::AtomNode(const std::string &n_Value):
-		n_Value(n_Value), Node(NT_ATOM)
-	{}
-
-	std::string AtomNode::getString(void)
+	/**
+	 * Deletes the string if it is there
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
+	void Argument::free(void)
 	{
-		return this->n_Value;
-	}
+		if (this->a_Type == A_TYPE_STRING || this->a_Type == A_TYPE_ATOM)
+			delete[] this->a_String;
 
-	ListNode::ListNode(void):
-		Node(NT_LIST)
-	{}
-
-	RangeNode::RangeNode(const int32_t n_From, const int32_t n_To):
-		n_From(n_From), n_To(n_To), Node(NT_RANGE)
-	{}
-
-	std::pair<int32_t, int32_t> RangeNode::getRange(void)
-	{
-		throw std::make_pair(this->n_From, this->n_To);
-	}
-
-	std::string NumberNode::toString(void)
-	{
-		return "NumberNode: " + std::to_string(this->n_Value);
-	}
-
-	std::string StringNode::toString(void)
-	{
-		return "StringNode: " + this->n_Value;
-	}
-
-	std::string AtomNode::toString(void)
-	{
-		return "AtomNode: " + this->n_Value;
-	}
-
-	std::string RangeNode::toString(void)
-	{
-		return "RangeNode: " + std::to_string(this->n_From) + " : " + std::to_string(this->n_To);
-	}
-
-	std::string SectionNode::toString(void)
-	{
-		std::ostringstream os;
-		os << "SectionNode: \n";
-
-		std::size_t i = 0;
-		for (auto &n : this->n_Nodes)
-			os << ++i << ": " << n->toString() << "\n";
-
-		return os.str();
-	}
-
-	std::string ListNode::toString(void)
-	{
-		std::ostringstream os;
-		os << "ListNode: \n";
-
-		std::size_t i = 0;
-		for (auto &n : this->n_Nodes)
-			os << ++i << ": " << n->toString() << "\n";
-
-		return os.str();
+		for_each(this->a_Children.begin(), this->a_Children.end(), [=](Argument &a)
+		{
+			a.free();
+		});
 	}
 }
