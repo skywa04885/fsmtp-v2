@@ -28,20 +28,28 @@ namespace FSMTP::DNS
 
  void DNSServer::acceptorCallback(DNSServerSocket *server, void *u)
  {
- 		DNSHeader header;
+ 		static int32_t clientAddrLen = sizeof(struct sockaddr_in);
+ 		DNSHeader request, response;
  		struct sockaddr_in clientAddr;
- 		int32_t clientAddrLen = sizeof(struct sockaddr_in);
  		int32_t rc;
 
- 		// Reads data from the client, and gets the client address
- 		rc = recvfrom(server->s_SocketFD, reinterpret_cast<char *>(header.d_Buffer), 
- 			sizeof(header.d_Buffer), MSG_WAITALL, 
+ 		// Reads data from the client, and gets the client address,
+ 		// - then we set the length of the buffer
+ 		rc = recvfrom(server->s_SocketFD, reinterpret_cast<char *>(request.d_Buffer), 
+ 			sizeof(request.d_Buffer), MSG_WAITALL, 
  			reinterpret_cast<struct sockaddr *>(&clientAddr),
  			reinterpret_cast<socklen_t *>(&clientAddrLen)
  		);
+ 		request.d_BufferULen = rc;
 
  		if (rc >= 12)
  		{
+ 			// ================================================
+ 			// Prints some stuff
+ 			//
+ 			// Nothing much
+			// ================================================
+
  			// Creates the logger, and prints that the client is connected
 		 	char prefix[128];
 		 	sprintf(prefix, "%s:%s", "DNSCB", inet_ntoa(clientAddr.sin_addr));
@@ -49,7 +57,25 @@ namespace FSMTP::DNS
 		 	logger << "Client connected !" << ENDL;
 
 		 	// Logs the request
-		 	header.log(logger);
+		 	request.log(logger);
+
+			// ================================================
+			// Builds response
+			//
+			// Processes the request, and builds the response
+			// ================================================
+
+			// Parses the questions
+			DNSQuestion question(&request.d_Buffer[12]);
+			question.log(logger);
+
+	 		// Writes the response header
+	 		sendto(server->s_SocketFD, request.d_Buffer, 
+	 			request.d_BufferULen, MSG_CONFIRM, 
+	 			reinterpret_cast<struct sockaddr *>(&clientAddr), clientAddrLen);
+
+ 	 		// Prints that the connection is closed
+	 		logger << "Connection terminated, awaiting next" << ENDL;
  		}
  	}
 }

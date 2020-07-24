@@ -22,6 +22,7 @@
 #include <atomic>
 #include <functional>
 #include <thread>
+#include <tuple>
 
 #include <string.h>
 #include <sys/socket.h>

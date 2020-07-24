@@ -22,21 +22,111 @@ namespace FSMTP::DNS
 {
 	typedef enum : uint8_t
 	{
-		DNS_REQ_TYPE_QUERY = 0,
-		DNS_REQ_TYPE_RESPONSE
-	} QueryType;
-
-	typedef enum : uint8_t
-	{
 		QUERY_OP_STANDARD = 0,
 		QUERY_OP_INVERSE,
 		QUERY_OP_SERVER_STAT_REQ,
 		QUERY_OP_INVALID
 	} QueryOpcode;
 
+	typedef enum : uint8_t
+	{
+		QUERY_RESP_NO_ERR = 0,
+		QUERY_RESP_FORMAT_ERR,
+		QUERY_RESP_SERVER_FAILURE,
+		QUERY_RESP_NAME_ERROR,
+		QUERY_RESP_NOT_IMPLEMENTED,
+		QUERY_RESP_REFUSED,
+		QUERY_RESP_INVALID
+	} ResponseCode;
+
+	typedef enum : uint8_t
+	{
+		QUERY_CLASS_INTERNET = 0,
+		QUERY_CLASS_CSNET,
+		QUERY_CLASS_CHAOS,
+		QUERY_CLASS_HESIOD,
+		QUERY_CLASS_NONE,
+		QUERY_CLASS_ALL,
+		QUERY_CLASS_ANY
+	} QueryClass;
+
+	typedef enum : uint8_t
+	{
+		QUERY_TYPE_QUERY = 0,
+		QUERY_TYPE_IQUERY,
+		QUERY_TYPE_STATUS,
+		QUERY_TYPE_UNKNOWN,
+		QUERY_TYPE_NOTIFY,
+		QUERY_TYPE_UPDATE
+	} QueryType;
+
+	/**
+	 * Returns the string of an query opcode
+	 *
+	 * @Param {const QueryOpcode} opcode
+	 * @Return {const char *}
+	 */
+	const char *opcodeToString(const QueryOpcode opcode);
+
+	/**
+	 * Returns the string version of an response code
+	 *
+	 * @Param {const ResponseCode} code
+	 * @Return {const char *}
+	 */
+	const char *responseCodeString(const ResponseCode code);
+
+	class DNSQuestion
+	{
+	public:
+		/**
+		 * Default empty constructor
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		explicit DNSQuestion(void);
+
+		/**
+		 * The parsing constructor
+		 *
+		 * @Param {const char *} parse
+		 * @Return {void}
+		 */
+		DNSQuestion(const uint8_t *parse);
+
+		/**
+		 * The parse method
+		 *
+		 * @Param {const char *} parse
+		 * @Return {std::tuple<bool, std::size_t>}
+		 */
+		std::tuple<bool, std::size_t> parse(const uint8_t *parse);
+
+		/**
+		 * The log method
+		 *
+		 * @Param {Logger &logger}
+		 * @Return {void}
+		 */
+		void log(Logger &logger);
+
+		std::string d_QName;
+		int16_t d_QClass;
+		int16_t d_QType;
+	};
+
 	class DNSHeader
 	{
 	public:
+		/**
+		 * Default empty constructor
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		explicit DNSHeader(void);
+
 		/**
 		 * Gets the ID from the header
 		 *
@@ -54,12 +144,12 @@ namespace FSMTP::DNS
 		void log(Logger &logger);
 
 		/**
-		 * Gets the query type
+		 * Gets the query type, query = true
 		 *
 		 * @Param {void}
-		 * @Return {QueryType}
+		 * @Return {bool}
 		 */
-		QueryType getType(void);
+		bool getType(void);
 
 		/**
 		 * Gets the query opcode
@@ -69,6 +159,79 @@ namespace FSMTP::DNS
 		 */
 		QueryOpcode getOpcode(void);
 
+		/**
+		 * Checks if this is an authoritive answer
+		 *
+		 * @Param {void}
+		 * @Return {bool}
+		 */
+		bool getAA(void);
+
+		/**
+		 * Checks if the message was truncated
+		 *
+		 * @Param {void}
+		 * @Return {bool}
+		 */
+		bool getTruncated(void);
+
+		/**
+		 * Checks if recursion is desired
+		 *
+		 * @Param {void}
+		 * @Return {bool}
+		 */
+		bool getRecursionDesired(void);
+
+		/**
+		 * Checks if recursion is available
+		 *
+		 * @Param {void}
+		 * @Return {bool}
+		 */
+		bool getRecursionAvailable(void);
+
+		/**
+		 * Gets the response code
+		 *
+		 * @Param {void}
+		 * @Return {ResponseCode}
+		 */
+		ResponseCode getResponseCode(void);
+
+		/**
+		 * Gets the number of questions in the question section
+		 *
+		 * @Param {void}
+		 * @Return {uint16_t}
+		 */
+		uint16_t getQdCount(void);
+
+		/**
+		 * Gets the number of resource records
+		 *
+		 * @Param {void}
+		 * @Return {uint16_t}
+		 */
+		uint16_t getAsCount(void);
+
+		/**
+		 * Gets the number of server resource records
+		 *
+		 * @Param {void}
+		 * @Return {uint16_t}
+		 */
+		uint16_t getNsCount(void);
+
+		/**
+		 * Gets the number of additional records
+		 *
+		 * @Param {void}
+		 * @Return {uint16_t}
+		 */
+		uint16_t getArCount(void);
+
 		uint8_t d_Buffer[768];
+		int32_t d_BufferULen;
 	};
 }
