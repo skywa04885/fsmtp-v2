@@ -35,14 +35,43 @@ namespace FSMTP::DNS
 		REC_TYPE_UNKNOWN
 	} RecordType;
 
+	typedef enum : uint8_t
+	{
+		REC_CLASS_IDK = 0
+	} RecordClass;
+
 	class Record
 	{
 	public:
+		/**
+		 * Default empty constructor of an record
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		explicit Record(void);
+
+		/**
+		 * The constructor for an record
+		 *
+		 * @Param {const char *} r_Data
+		 * @Param {const char *} r_Root
+		 * @Param {const std::size_t} r_DatLen
+		 * @Param {const int32_t} r_TTL,
+		 * @Param {const RecordType} r_Type
+		 * @Param {const RecordClass r_Class}
+		 * @Return {void}
+		 */
+		Record(const char *r_Data, const char *r_Root,
+			const std::size_t r_DataLen, const int32_t r_TTL,
+			const RecordType r_Type, const RecordClass r_Class);
 	private:
-		const char *r_Content;
+		const char *r_Data;
 		const char *r_Root;
-		RecordType r_Type;
+		std::size_t r_DataLen;
 		int32_t r_TTL;
+		RecordType r_Type;
+		RecordClass r_Class;
 	};
 
 	class Domain

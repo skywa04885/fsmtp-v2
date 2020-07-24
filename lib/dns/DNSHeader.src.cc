@@ -159,7 +159,7 @@ namespace FSMTP::DNS
 	 * @Param {char *} buffer [2 octets]
 	 * @return {void}
 	 */
-	void DNSHeader::getID(char *buffer)
+	void DNSHeader::getID(char *buffer) const
 	{
 		memcpy(buffer, this->d_Buffer, sizeof (char) * 2);
 	}
@@ -181,7 +181,7 @@ namespace FSMTP::DNS
 	 * @Param {void}
 	 * @Return {bool}
 	 */
-	bool DNSHeader::getType(void)
+	bool DNSHeader::getType(void) const
 	{
 		if (BINARY_COMPARE(this->d_Buffer[2], 0b10000000))
 			return false;
@@ -207,7 +207,7 @@ namespace FSMTP::DNS
 	 * @Param {void}
 	 * @Return {QueryOpcode}
 	 */
-	QueryOpcode DNSHeader::getOpcode(void)
+	QueryOpcode DNSHeader::getOpcode(void) const
 	{
 		int8_t opcode = this->d_Buffer[2] & 0b01111000;
 		opcode >>= 3;
@@ -270,7 +270,7 @@ namespace FSMTP::DNS
 	 * @Param {void}
 	 * @Return {bool}
 	 */
-	bool DNSHeader::getAA(void)
+	bool DNSHeader::getAA(void) const
 	{
 		if (BINARY_COMPARE(this->d_Buffer[2], 0b00000100)) return true;
 		else return false;
@@ -294,7 +294,7 @@ namespace FSMTP::DNS
 	 * @Param {void}
 	 * @Return {bool}
 	 */
-	bool DNSHeader::getTruncated(void)
+	bool DNSHeader::getTruncated(void) const
 	{
 		if (BINARY_COMPARE(this->d_Buffer[2], 0b00000010)) return true;
 		else return false;
@@ -318,7 +318,7 @@ namespace FSMTP::DNS
 	 * @Param {void}
 	 * @Return {bool}
 	 */
-	bool DNSHeader::getRecursionDesired(void)
+	bool DNSHeader::getRecursionDesired(void) const
 	{
 		if (BINARY_COMPARE(this->d_Buffer[2], 0b00000001)) return true;
 		else return false;
@@ -342,7 +342,7 @@ namespace FSMTP::DNS
 	 * @Param {void}
 	 * @Return {bool}
 	 */
-	bool DNSHeader::getRecursionAvailable(void)
+	bool DNSHeader::getRecursionAvailable(void) const
 	{
 		if (BINARY_COMPARE(this->d_Buffer[3], 0b10000000)) return true;
 		else return false;
@@ -366,7 +366,7 @@ namespace FSMTP::DNS
 	 * @Param {void}
 	 * @Return {ResponseCode}
 	 */
-	ResponseCode DNSHeader::getResponseCode(void)
+	ResponseCode DNSHeader::getResponseCode(void) const
 	{
 		int8_t responseCode =  this->d_Buffer[3] & 0b00001111;
 		switch (responseCode)
@@ -389,7 +389,28 @@ namespace FSMTP::DNS
 	 */
 	void DNSHeader::setResponseCode(const ResponseCode rCode)
 	{
+		int8_t newRespCode = 0x0;
 
+		switch (rCode)
+		{
+			case ResponseCode::QUERY_RESP_NO_ERR:
+			{ newRespCode = 0; break; }
+			case ResponseCode::QUERY_RESP_FORMAT_ERR:
+			{ newRespCode = 1; break; }
+			case ResponseCode::QUERY_RESP_SERVER_FAILURE:
+			{ newRespCode = 2; break; }
+			case ResponseCode::QUERY_RESP_NAME_ERROR:
+			{ newRespCode = 3; break; }
+			case ResponseCode::QUERY_RESP_NOT_IMPLEMENTED:
+			{ newRespCode = 4; break; }
+			case ResponseCode::QUERY_RESP_REFUSED:
+			{ newRespCode = 5; break; }
+			default: case ResponseCode::QUERY_RESP_INVALID:
+			{ newRespCode = 6; break; }
+		}
+
+		this->d_Buffer[3] &= ~0b00001111;
+		this->d_Buffer[3] |= newRespCode;
 	}
 
 	/**
@@ -418,9 +439,21 @@ namespace FSMTP::DNS
 	 * @Param {void}
 	 * @Return {uint16_t}
 	 */
-	uint16_t DNSHeader::getQdCount(void)
+	uint16_t DNSHeader::getQdCount(void) const
 	{
-		return ntohs(*reinterpret_cast<uint16_t *>(&this->d_Buffer[4]));
+		return ntohs(*reinterpret_cast<const uint16_t *>(&this->d_Buffer[4]));
+	}
+
+	/**
+	 * Sets the QD count, number of questions
+	 *
+	 * @Param {const int16_t} c
+	 * @Return {void}
+	 */
+	void DNSHeader::setQdCount(const int16_t c)
+	{
+		int16_t bigEndianData = htons(c);
+		memcpy(&this->d_Buffer[4], &bigEndianData, sizeof(int16_t));
 	}
 
 	/**
@@ -429,9 +462,21 @@ namespace FSMTP::DNS
 	 * @Param {void}
 	 * @Return {uint16_t}
 	 */
-	uint16_t DNSHeader::getAsCount(void)
+	uint16_t DNSHeader::getAsCount(void) const
 	{
-		return ntohs(*reinterpret_cast<uint16_t *>(&this->d_Buffer[6]));
+		return ntohs(*reinterpret_cast<const uint16_t *>(&this->d_Buffer[6]));
+	}
+
+	/**
+	 * Sets the AS count, the number of resource records
+	 *
+	 * @Param {const int16_t} c
+	 * @Return {void}
+	 */
+	void DNSHeader::setAsCount(const int16_t c)
+	{
+		int16_t bigEndianData = htons(c);
+		memcpy(&this->d_Buffer[6], &bigEndianData, sizeof(int16_t));
 	}
 
 	/**
@@ -440,9 +485,21 @@ namespace FSMTP::DNS
 	 * @Param {void}
 	 * @Return {uint16_t}
 	 */
-	uint16_t DNSHeader::getNsCount(void)
+	uint16_t DNSHeader::getNsCount(void) const
 	{
-		return ntohs(*reinterpret_cast<uint16_t *>(&this->d_Buffer[8]));
+		return ntohs(*reinterpret_cast<const uint16_t *>(&this->d_Buffer[8]));
+	}
+
+	/**
+	 * Sets the NS count, the number of server resource records
+	 *
+	 * @Param {const int16_t} c
+	 * @Return {void}
+	 */
+	void DNSHeader::setNsCount(const int16_t c)
+	{
+		int16_t bigEndianData = htons(c);
+		memcpy(&this->d_Buffer[8], &bigEndianData, sizeof(int16_t));
 	}
 
 	/**
@@ -451,9 +508,21 @@ namespace FSMTP::DNS
 	 * @Param {void}
 	 * @Return {uint16_t}
 	 */
-	uint16_t DNSHeader::getArCount(void)
+	uint16_t DNSHeader::getArCount(void) const
 	{
-		return ntohs(*reinterpret_cast<uint16_t *>(&this->d_Buffer[10]));
+		return ntohs(*reinterpret_cast<const uint16_t *>(&this->d_Buffer[10]));
+	}
+
+	/**
+	 * Sets the AR count, the number of aditional records
+	 *
+	 * @Param {const int16_t} c
+	 * @Return {void}
+	 */
+	void DNSHeader::setArCount(const int16_t c)
+	{
+		int16_t bigEndianData = htons(c);
+		memcpy(&this->d_Buffer[10], &bigEndianData, sizeof(int16_t));
 	}
 
 	/**
@@ -513,5 +582,17 @@ namespace FSMTP::DNS
 
 	 	// Sets the logger back to info, and rteturns
 	 	logger << CLASSIC;
+	}
+
+	/**
+	 * Clones another header into the current one
+	 *
+	 * @Param {const DNSHeader &} header
+	 * @Return {void}
+	 */
+	void DNSHeader::clone(const DNSHeader &header)
+	{
+		memcpy(this->d_Buffer, header.d_Buffer, header.d_BufferULen);
+		this->d_BufferULen = header.d_BufferULen;
 	}
 }

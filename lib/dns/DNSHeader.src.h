@@ -133,7 +133,7 @@ namespace FSMTP::DNS
 		 * @Param {char *} buffer [2 octets]
 		 * @return {void}
 		 */
-		void getID(char *buffer);
+		void getID(char *buffer) const;
 
 		/**
 		 * Sets the ID in the header
@@ -157,7 +157,7 @@ namespace FSMTP::DNS
 		 * @Param {void}
 		 * @Return {bool}
 		 */
-		bool getType(void);
+		bool getType(void) const;
 
 		/**
 		 * Sets the query type, true is query
@@ -173,7 +173,7 @@ namespace FSMTP::DNS
 		 * @Param {void}
 		 * @Return {QueryOpcode}
 		 */
-		QueryOpcode getOpcode(void);
+		QueryOpcode getOpcode(void) const;
 
 		/**
 		 * Gets the query opcode
@@ -189,7 +189,7 @@ namespace FSMTP::DNS
 		 * @Param {void}
 		 * @Return {bool}
 		 */
-		bool getAA(void);
+		bool getAA(void) const;
 
 		/**
 		 * Sets this is an authoritive answer
@@ -205,7 +205,7 @@ namespace FSMTP::DNS
 		 * @Param {void}
 		 * @Return {bool}
 		 */
-		bool getTruncated(void);
+		bool getTruncated(void) const;
 
 		/**
 		 * Sets the message was truncated
@@ -221,7 +221,7 @@ namespace FSMTP::DNS
 		 * @Param {void}
 		 * @Return {bool}
 		 */
-		bool getRecursionDesired(void);
+		bool getRecursionDesired(void) const;
 
 		/**
 		 * Checks if recursion is desired
@@ -237,7 +237,7 @@ namespace FSMTP::DNS
 		 * @Param {void}
 		 * @Return {bool}
 		 */
-		bool getRecursionAvailable(void);
+		bool getRecursionAvailable(void) const;
 
 		/**
 		 * Sets if recursion is available
@@ -253,7 +253,7 @@ namespace FSMTP::DNS
 		 * @Param {void}
 		 * @Return {ResponseCode}
 		 */
-		ResponseCode getResponseCode(void);
+		ResponseCode getResponseCode(void) const;
 
 		/**
 		 * Sets the response code
@@ -269,7 +269,15 @@ namespace FSMTP::DNS
 		 * @Param {void}
 		 * @Return {uint16_t}
 		 */
-		uint16_t getQdCount(void);
+		uint16_t getQdCount(void) const;
+
+		/**
+		 * Sets the QD count, number of questions
+		 *
+		 * @Param {const int16_t} c
+		 * @Return {void}
+		 */
+		void setQdCount(const int16_t c);
 
 		/**
 		 * Gets the number of resource records
@@ -277,7 +285,15 @@ namespace FSMTP::DNS
 		 * @Param {void}
 		 * @Return {uint16_t}
 		 */
-		uint16_t getAsCount(void);
+		uint16_t getAsCount(void) const;
+
+		/**
+		 * Sets the QAS count, the number of resource records
+		 *
+		 * @Param {const int16_t} c
+		 * @Return {void}
+		 */
+		void setAsCount(const int16_t c);
 
 		/**
 		 * Gets the number of server resource records
@@ -285,7 +301,15 @@ namespace FSMTP::DNS
 		 * @Param {void}
 		 * @Return {uint16_t}
 		 */
-		uint16_t getNsCount(void);
+		uint16_t getNsCount(void) const;
+
+		/**
+		 * Sets the NS count, the number of server resource records
+		 *
+		 * @Param {const int16_t} c
+		 * @Return {void}
+		 */
+		void setNsCount(const int16_t c);
 
 		/**
 		 * Gets the number of additional records
@@ -293,7 +317,23 @@ namespace FSMTP::DNS
 		 * @Param {void}
 		 * @Return {uint16_t}
 		 */
-		uint16_t getArCount(void);
+		uint16_t getArCount(void) const;
+
+		/**
+		 * Sets the AR count, the number of aditional records
+		 *
+		 * @Param {const int16_t} c
+		 * @Return {void}
+		 */
+		void setArCount(const int16_t c);
+
+		/**
+		 * Clones another header into the current one
+		 *
+		 * @Param {const DNSHeader &} header
+		 * @Return {void}
+		 */
+		void clone(const DNSHeader &header);
 
 		uint8_t d_Buffer[768];
 		int32_t d_BufferULen;

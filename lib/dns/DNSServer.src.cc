@@ -69,9 +69,20 @@ namespace FSMTP::DNS
 			DNSQuestion question(&request.d_Buffer[12]);
 			question.log(logger);
 
+			// Closes the request, and sets the values
+			// - back to the normal / default ones
+			response.clone(request);
+			response.setAA(true);
+			response.setType(false);
+			response.setArCount(0);
+			response.setQdCount(0);
+
+			logger << " - RESPONSE - " << ENDL;
+			response.log(logger);
+
 	 		// Writes the response header
-	 		sendto(server->s_SocketFD, request.d_Buffer, 
-	 			request.d_BufferULen, MSG_CONFIRM, 
+	 		sendto(server->s_SocketFD, response.d_Buffer, 
+	 			response.d_BufferULen, MSG_CONFIRM, 
 	 			reinterpret_cast<struct sockaddr *>(&clientAddr), clientAddrLen);
 
  	 		// Prints that the connection is closed
