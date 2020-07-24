@@ -22,14 +22,6 @@ namespace FSMTP::IMAP::CommandParser
 {
 	typedef enum : uint8_t
 	{
-		TVT_STRING = 0,
-		TVT_CHAR,
-		TVT_INT32,
-		TVT_INT64
-	} TokenValueType;
-
-	typedef enum : uint8_t
-	{
 		TT_LPAREN = 0,
 		TT_RPAREN,
 		TT_QUOTE,
@@ -57,25 +49,84 @@ namespace FSMTP::IMAP::CommandParser
 		std::string e_Message;
 	};
 
+	/**
+	 * Gets the name of an token type
+	 *
+	 * @Param {const TokenType} type
+	 * @Return {const char *}
+	 */
 	const char *tokenTypeString(const TokenType type);
 
 	class Token
 	{
 	public:
-		Token(const TokenType t_Type, const TokenValueType t_ValueType, const void *value);
-		void freeMem(void);
+		/**
+		 * The default empty constructor
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		explicit Token(void);
 
-		const char *getString(void) const;
-		char getChar(void) const;
-		int32_t getInt32(void) const;
-		int64_t getInt64(void) const;
+		/**
+		 * The default empty constructor
+		 *
+		 * @Param {const char *} t_String
+		 * @Param {const TokenType} t_Type
+		 * @Return {void}
+		 */
+		Token(const char *t_String, const TokenType t_Type);
 
+		/**
+		 * The default empty constructor
+		 *
+		 * @Param {const char} t_Char
+		 * @Param {const TokenType} t_Type
+		 * @Return {void}
+		 */
+		Token(const char t_Char, const TokenType t_Type);
+
+		/**
+		 * The default empty constructor
+		 *
+		 * @Param {const int32_t} t_Int32
+		 * @Param {const TokenType} t_Type
+		 * @Return {void}
+		 */
+		Token(const int32_t t_Int32, const TokenType t_Type);
+
+		/**
+		 * The default empty constructor
+		 *
+		 * @Param {const TokenType} t_Type
+		 * @Return {void}
+		 */
+		Token(const TokenType t_Type);
+
+		/**
+		 * Frees the memory, if string
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
+		void free(void);
+
+		/**
+		 * Turns the token into an string, for debug
+		 *
+		 * @param {void}
+		 * @Return {std::string}
+		 */
 		std::string toString(void) const;
 
+		union
+		{
+			char *t_String;
+			int32_t t_Int32;
+			char t_Char;
+		};
+
 		TokenType t_Type;
-	private:
-		void *t_Value;
-		TokenValueType t_ValueType;
 	};
 
 	class Lexer
@@ -93,10 +144,28 @@ namespace FSMTP::IMAP::CommandParser
 		 */
 		void makeTokens(void);
 
+		/**
+		 * Makes an number of a set of tokens
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
 		void makeNumber(void);
 
+		/**
+		 * Makes an string of characters
+		 *
+		 * @Param {void}
+		 * @Return {void}
+		 */
 		void makeOther(void);
 
+		/**
+		 * Default destructor, which free's the memory
+		 * 
+		 * @Param {void}
+		 * @Return {void}
+		 */
 		~Lexer(void);
 
 		std::vector<Token> l_Tokens;
@@ -194,8 +263,21 @@ namespace FSMTP::IMAP::CommandParser
 	class Parser
 	{
 	public:
+		/**
+		 * Default constructor for the parser
+		 *
+		 * @Param {const std::vector<Token> &} p_Tokens
+		 * @Return {void}
+		 */
 		Parser(const std::vector<Token> &p_Tokens);
 
+		/**
+		 * Starts the parsing, and pushes the result to
+		 * - the target
+		 *
+		 * @Param {std::vector<Argument> &} target
+		 * @Return {void}
+		 */
 		void parse(std::vector<Argument> &target);
 
 		/**

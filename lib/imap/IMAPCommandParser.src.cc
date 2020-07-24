@@ -22,65 +22,82 @@ namespace FSMTP::IMAP::CommandParser
 	// Token
 	// ======================================
 
-	Token::Token(const TokenType t_Type, const TokenValueType t_ValueType, const void *value):
-		t_ValueType(t_ValueType), t_Type(t_Type)
+	/**
+	 * The default empty constructor
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
+	Token::Token(void)
+	{}
+
+	/**
+	 * The default empty constructor
+	 *
+	 * @Param {const char *} t_String
+	 * @Param {const TokenType} t_Type
+	 * @Return {void}
+	 */
+	Token::Token(const char *t_String, const TokenType t_Type):
+		t_Type(t_Type)
 	{
-		switch (t_ValueType)
-		{
-			case TVT_STRING:
-			{
-				std::size_t memLen = strlen(reinterpret_cast<const char *>(value));
-				++memLen;
-				this->t_Value = malloc(memLen);
-				memcpy(this->t_Value, value, memLen);
-				break;
-			}
-			case TVT_CHAR:
-			{
-				this->t_Value = malloc(sizeof (char));
-				memcpy(this->t_Value, value, sizeof (char));
-				break;
-			}
-			case TVT_INT32:
-			{
-				this->t_Value = malloc(sizeof (int32_t));
-				memcpy(this->t_Value, value, sizeof (int32_t));
-				break;
-			}
-			case TVT_INT64:
-			{
-				this->t_Value = malloc(sizeof(int64_t));
-				memcpy(this->t_Value, value, sizeof (int64_t));
-				break;
-			}
-		}
+		std::size_t stringLen = strlen(t_String);
+		++stringLen;
+
+		this->t_String = new char[stringLen];
+		memcpy(this->t_String, t_String, stringLen);
 	}
 
-	void Token::freeMem(void)
-	{
-		free(this->t_Value);
-	}
-
-	const char *Token::getString(void) const
-	{
-		return reinterpret_cast<const char *>(this->t_Value);
-	}
+	/**
+	 * The default empty constructor
+	 *
+	 * @Param {const char} t_Char
+	 * @Param {const TokenType} t_Type
+	 * @Return {void}
+	 */
+	Token::Token(const char t_Char, const TokenType t_Type):
+		t_Type(t_Type), t_Char(t_Char)
+	{}
 	
-	char Token::getChar(void) const
+	/**
+	 * The default empty constructor
+	 *
+	 * @Param {const int32_t} t_Int32
+	 * @Param {const TokenType} t_Type
+	 * @Return {void}
+	 */
+	Token::Token(const int32_t t_Int32, const TokenType t_Type):
+		t_Type(t_Type), t_Int32(t_Int32)
+	{}
+
+	/**
+	 * The default empty constructor
+	 *
+	 * @Param {const TokenType} t_Type
+	 * @Return {void}
+	 */
+	Token::Token(const TokenType t_Type):
+		t_Type(t_Type)
+	{}
+
+	/**
+	 * Frees the memory, if string
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
+	void Token::free(void)
 	{
-		return *reinterpret_cast<char *>(this->t_Value);
-	}
-	
-	int32_t Token::getInt32(void) const
-	{
-		return *reinterpret_cast<int32_t *>(this->t_Value);
+		if (this->t_Type == TokenType::TT_OTHER)
+			delete[] this->t_String;
 	}
 
-	int64_t Token::getInt64(void) const
-	{
-		return *reinterpret_cast<int64_t *>(this->t_Value);
-	}
-
+	/**
+	 * Gets the name of an token type
+	 *
+	 * @Param {const TokenType} type
+	 * @Return {const char *}
+	 */
 	const char *tokenTypeString(const TokenType type)
 	{
 		switch (type)
@@ -98,33 +115,70 @@ namespace FSMTP::IMAP::CommandParser
 		}
 	}
 
+	/**
+	 * Turns the token into an string, for debug
+	 *
+	 * @param {void}
+	 * @Return {std::string}
+	 */
 	std::string Token::toString(void) const
 	{
 		std::string ret = tokenTypeString(this->t_Type);
 		ret += ": ";
 
-		switch (this->t_ValueType)
+		switch (this->t_Type)
 		{
-			case TVT_STRING:
+			case TokenType::TT_LPAREN:
 			{
-				ret += this->getString();
+				ret += '(';
 				break;
 			}
-			case TVT_CHAR:
+			case TokenType::TT_RPAREN:
 			{
-				ret += this->getChar();
+				ret += ')';
 				break;
 			}
-			case TVT_INT32:
+			case TokenType::TT_QUOTE:
 			{
-				ret += std::to_string(this->getInt32());
+				ret += '"';
 				break;
 			}
-			case TVT_INT64:
+			case TokenType::TT_OTHER:
 			{
-				ret += std::to_string(this->getInt64());
+				ret += this->t_String;
 				break;
 			}
+			case TokenType::TT_SPACE:
+			{
+				ret += ' ';
+				break;
+			}
+			case TokenType::TT_LBRACKET:
+			{
+				ret += '[';
+				break;
+			}
+			case TokenType::TT_RBRACKET:
+			{
+				ret += ']';
+				break;
+			}
+			case TokenType::TT_NUMBER:
+			{
+				ret += std::to_string(this->t_Int32);
+				break;
+			}
+			case TokenType::TT_WSP:
+			{
+				ret += ' ';
+				break;
+			}
+			case TokenType::TT_COLON:
+			{
+				ret += ':';
+				break;
+			}
+			default: throw std::runtime_error("Not implemented");
 		}
 
 		return ret;
@@ -163,59 +217,31 @@ namespace FSMTP::IMAP::CommandParser
 		{
 			if (this->l_CurrentChar == ')')
 			{ // RPAREN
-				this->l_Tokens.emplace_back(
-					TT_LPAREN,
-					TVT_CHAR, 
-					reinterpret_cast<const void *>(")")
-				);
+				this->l_Tokens.emplace_back(')', TT_LPAREN);
 				this->advance();
 			} else if (this->l_CurrentChar == '(')
 			{ // LPAREN
-				this->l_Tokens.emplace_back(
-					TT_RPAREN,
-					TVT_CHAR, 
-					reinterpret_cast<const void *>("(")
-				);
+				this->l_Tokens.emplace_back('(', TT_RPAREN);
 				this->advance();
 			} else if (this->l_CurrentChar == '"')
 			{ // -> QUOTE
-				this->l_Tokens.emplace_back(
-					TT_QUOTE,
-					TVT_CHAR, 
-					reinterpret_cast<const void *>("\"")
-				);
+				this->l_Tokens.emplace_back('"', TT_QUOTE);
 				this->advance();
 			} else if (this->l_CurrentChar == '[')
 			{ // -> RBRACKET
-				this->l_Tokens.emplace_back(
-					TT_RBRACKET,
-					TVT_CHAR, 
-					reinterpret_cast<const void *>("[")
-				);
+				this->l_Tokens.emplace_back('[', TT_RBRACKET);
 				this->advance();
 			} else if (this->l_CurrentChar == ']')
 			{ // -> LBRACKET
-				this->l_Tokens.emplace_back(
-					TT_LBRACKET,
-					TVT_CHAR, 
-					reinterpret_cast<const void *>("]")
-				);
+				this->l_Tokens.emplace_back(']', TT_LBRACKET);
 				this->advance();
 			} else if (this->l_CurrentChar == ' ')
 			{ // -> WSP
-				this->l_Tokens.emplace_back(
-					TT_WSP,
-					TVT_CHAR, 
-					reinterpret_cast<const void *>(" ")
-				);
+				this->l_Tokens.emplace_back(' ', TT_WSP);
 				this->advance();
 			} else if (this->l_CurrentChar == ':')
 			{ // -> WSP
-				this->l_Tokens.emplace_back(
-					TT_COLON,
-					TVT_CHAR, 
-					reinterpret_cast<const void *>(":")
-				);
+				this->l_Tokens.emplace_back(':', TT_COLON);
 				this->advance();
 			} else if (numbers.find(this->l_CurrentChar) != std::string::npos)
 			{ // - Process the number
@@ -232,13 +258,14 @@ namespace FSMTP::IMAP::CommandParser
 				continue;
 			} else throw SyntaxException(this->l_Pos, "Invalid char");
 		}
-
-		// std::cout << "Parsing process step 1 (LEXER): " << std::endl;
-		// for_each(this->l_Tokens.begin(), this->l_Tokens.end(), [=](const Token &token){
-		// 	std::cout << "- " << token.toString() << std::endl;
-		// });
 	}
 
+	/**
+	 * Makes an string of characters
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
 	void Lexer::makeOther(void)
 	{
 		std::string otherBuf;
@@ -258,12 +285,17 @@ namespace FSMTP::IMAP::CommandParser
 
 		// Puts the number in the tokens
 		this->l_Tokens.emplace_back(
-			TT_OTHER,
-			TVT_STRING, 
-			reinterpret_cast<const void *>(otherBuf.c_str())
+			otherBuf.c_str(),
+			TT_OTHER
 		);
 	}
 
+	/**
+	 * Makes an number of a set of tokens
+	 *
+	 * @Param {void}
+	 * @Return {void}
+	 */
 	void Lexer::makeNumber(void)
 	{
 		std::string numBuf;
@@ -279,16 +311,21 @@ namespace FSMTP::IMAP::CommandParser
 		// Puts the number in the tokens
 		int32_t num = std::stoi(numBuf);
 		this->l_Tokens.emplace_back(
-			TT_NUMBER,
-			TVT_INT32, 
-			reinterpret_cast<const void *>(&num)
+			num,
+			TT_NUMBER
 		);
 	}
 
+	/**
+	 * Default destructor, which free's the memory
+	 * 
+	 * @Param {void}
+	 * @Return {void}
+	 */
 	Lexer::~Lexer(void)
 	{
 		for_each(this->l_Tokens.begin(), this->l_Tokens.end(), [=](Token &token){
-			token.freeMem();
+			token.free();
 		});
 	}
 
@@ -296,10 +333,23 @@ namespace FSMTP::IMAP::CommandParser
 	// Parser
 	// ======================================
 
+	/**
+	 * Default constructor for the parser
+	 *
+	 * @Param {const std::vector<Token> &} p_Tokens
+	 * @Return {void}
+	 */
 	Parser::Parser(const std::vector<Token> &p_Tokens):
 		p_Tokens(p_Tokens), p_TokenIndex(-1), p_CurrentToken(nullptr)
 	{}
 
+	/**
+	 * Starts the parsing, and pushes the result to
+	 * - the target
+	 *
+	 * @Param {std::vector<Argument> &} target
+	 * @Return {void}
+	 */
 	void Parser::parse(std::vector<Argument> &target)
 	{
 		this->advance();
@@ -414,14 +464,14 @@ namespace FSMTP::IMAP::CommandParser
 		if (this->p_Tokens[this->p_TokenIndex + 1].t_Type == TT_OTHER)
 			from = -1;
 		else
-			this->p_Tokens[this->p_TokenIndex - 1].getInt32();
+			from = this->p_Tokens[this->p_TokenIndex - 1].t_Int32;
 
 		// Checks what kind of to to create
 		int32_t to;
 		if (this->p_Tokens[this->p_TokenIndex + 1].t_Type == TT_OTHER)
 			to = -1;
 		else
-			to = this->p_Tokens[this->p_TokenIndex + 1].getInt32();
+			to = this->p_Tokens[this->p_TokenIndex + 1].t_Int32;
 
 		// Creates the node
 		target.push_back(Argument(Range {
@@ -446,7 +496,7 @@ namespace FSMTP::IMAP::CommandParser
 
 		if (token.t_Type == TT_NUMBER)
 		{
-			target.push_back(Argument(token.getInt32(), ArgumentType::A_TYPE_INT32));
+			target.push_back(Argument(token.t_Int32, ArgumentType::A_TYPE_INT32));
 			return true;
 		} else return false;
 	}
@@ -459,7 +509,9 @@ namespace FSMTP::IMAP::CommandParser
 	 */
 	bool Parser::other(std::vector<Argument> &target)
 	{
-		target.push_back(Argument(this->p_CurrentToken->getString(), ArgumentType::A_TYPE_ATOM));
+		const Token &token = *this->p_CurrentToken;
+
+		target.push_back(Argument(token.t_String, ArgumentType::A_TYPE_ATOM));
 		return true;
 	}
 
@@ -492,9 +544,9 @@ namespace FSMTP::IMAP::CommandParser
 			// Gets the token reference, and checks the type
 			// - and appends it to the content
 			const Token &token = *this->p_CurrentToken;
-			if (token.t_Type == TT_OTHER) content += token.getString();
-			else if (token.t_Type == TT_NUMBER) content += std::to_string(token.getInt32());
-			else content += token.getChar();
+			if (token.t_Type == TT_OTHER) content += token.t_String;
+			else if (token.t_Type == TT_NUMBER) content += std::to_string(token.t_Int32);
+			else content += token.t_Char;
 		}
 
 		return false;
