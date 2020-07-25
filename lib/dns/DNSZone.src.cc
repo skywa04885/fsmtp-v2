@@ -23,4 +23,35 @@ namespace FSMTP::DNS
 		// Calculates the data length of the rData field
 		this->r_DataLen = strlen(this->r_Data);
 	}
+
+	/**
+	 * Builds an response record
+	 *
+	 * @Param {char **} ret
+	 * @Return {std::size+t}
+	 */
+	std::size_t Record::build(char **ret)
+	{
+		std::size_t size = 0;
+		std::vector<const char *> parts = {};
+
+		const char *c = this->r_Data;
+		uint8_t prefSize = 0;
+		while (true)
+		{
+			if (*c == '.')
+			{
+				// Allocates space for the section
+				char *section = new char[prefSize + 1];
+				
+
+				prefSize = 0;
+			} else
+			{
+				++prefSize;
+			}
+
+			++size;
+		}
+	}
 }

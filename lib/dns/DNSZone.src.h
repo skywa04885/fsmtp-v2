@@ -65,6 +65,14 @@ namespace FSMTP::DNS
 		Record(const char *r_Data, const char *r_Root,
 			const std::size_t r_DataLen, const int32_t r_TTL,
 			const RecordType r_Type, const RecordClass r_Class);
+
+		/**
+		 * Builds an response record
+		 *
+		 * @Param {char **} ret
+		 * @Return {std::size+t}
+		 */
+		std::size_t build(char **ret);
 	private:
 		const char *r_Data;
 		const char *r_Root;
