@@ -16,13 +16,4 @@ jobs:
   - uses: BSFishy/meson-build@v1.0.1
     with:
       action: test
-  
-  -name: MkBuild
-  -run: meson build
-
-  -name: ChangeDir
-  -run: cd build
-   
-  -name: Build
-  -run: ninja
 .
