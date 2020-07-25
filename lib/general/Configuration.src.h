@@ -16,36 +16,26 @@
 
 #pragma once
 
-#include "P3.src.h"
-#include "P3ServerSocket.src.h"
-#include "P3Commands.src.h"
-#include "P3Response.src.h"
-#include "P3ServerSession.src.h"
+#include <string>
+#include <fstream>
 
-using namespace FSMTP::Connections;
-using namespace FSMTP::Models;
+#include <json/json.h>
+#include <string.h>
 
-namespace FSMTP::POP3
+#include "macros.src.h"
+#include "Logger.src.h"
+
+namespace FSMTP
 {
-	class P3Server
+	class Configuration
 	{
 	public:
-		P3Server(const int32_t port);
-
-		static void acceptorCallback(std::unique_ptr<ClientSocket> client, void *u);
-
 		/**
-		 * Stops the pop3 server
+		 * Reads the configuration file
 		 *
-		 * @Param {void}
+		 * @Param {const char *} filename
 		 * @Return {void}
 		 */
-		void shutdown(void);
-	private:
-		ServerSocket s_Socket;
-		Logger s_Logger;
-		std::atomic<bool> s_Run;
-		std::atomic<bool> s_Running;
-		std::vector<POP3Capability> s_Capabilities;
+		static void read(const char *filename);
 	};
-}
+};

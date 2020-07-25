@@ -16,6 +16,8 @@
 
 #include "SMTPSocket.src.h"
 
+extern Json::Value _config;
+
 namespace FSMTP::Networking
 {
 	// ================================================
@@ -390,7 +392,7 @@ namespace FSMTP::Networking
 
 		// Listens the socket and checks for errors, if there is any error
 		// we will throw it immediately
-		rc = listen(this->s_SocketFD, _SOCKET_MAX_IN_QUEUE);
+		rc = listen(this->s_SocketFD, _config["sockets"]["queue_max"].asInt());
 		if (rc < 0)
 		{
 			std::string error = "listen() failed: ";
@@ -434,7 +436,7 @@ namespace FSMTP::Networking
 	{
 		run = false;
 		std::this_thread::sleep_for(std::chrono::milliseconds(20));
-		while (running) std::this_thread::sleep_for(std::chrono::milliseconds(_SOCKET_THREAD_SHUTDOWN_DELAY));
+		while (running) std::this_thread::sleep_for(std::chrono::milliseconds(120));
 	}
 
 
@@ -655,7 +657,7 @@ namespace FSMTP::Networking
 	{
 		// Reads the file and stores it inside the buffer
 		// - if something goes wrong we simply throw an error
-		FILE *f = fopen(_SMTP_SSL_PASSPHRASE_PATH, "r");
+		FILE *f = fopen(_config["ssl_pass"].asCString(), "r");
 		if (!f)
 		{
 			std::string error = "fopen() failed: ";
@@ -690,14 +692,14 @@ namespace FSMTP::Networking
 		SSL_CTX_set_ecdh_auto(this->s_SSLCtx, 1);
 		SSL_CTX_set_default_passwd_cb(this->s_SSLCtx, &SMTPServerClientSocket::readSSLPassphrase);
 		
-		rc = SSL_CTX_use_certificate_file(this->s_SSLCtx, _SMTP_SSL_CERT_PATH, SSL_FILETYPE_PEM);
+		rc = SSL_CTX_use_certificate_file(this->s_SSLCtx, _config["ssl_cert"].asCString(), SSL_FILETYPE_PEM);
 		if (rc <= 0)
 		{
 			ERR_print_errors_fp(stderr);
 			throw std::runtime_error("Could not read cert !");
 		}
 
-		rc = SSL_CTX_use_PrivateKey_file(this->s_SSLCtx, _SMTP_SSL_KEY_PATH, SSL_FILETYPE_PEM);
+		rc = SSL_CTX_use_PrivateKey_file(this->s_SSLCtx, _config["ssl_key"].asCString(), SSL_FILETYPE_PEM);
 		if (rc <= 0)
 		{
 			ERR_print_errors_fp(stderr);

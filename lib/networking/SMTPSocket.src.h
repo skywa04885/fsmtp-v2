@@ -26,6 +26,7 @@
 #include <atomic>
 #include <thread>
 
+#include <json/json.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netdb.h>
@@ -42,14 +43,6 @@
 #include "../general/macros.src.h"
 #include "../smtp/Command.src.h"
 #include "../smtp/Response.src.h"
-
-#ifndef _SOCKET_MAX_IN_QUEUE
-#define _SOCKET_MAX_IN_QUEUE 40
-#endif
-
-#ifndef _SOCKET_THREAD_SHUTDOWN_DELAY
-#define _SOCKET_THREAD_SHUTDOWN_DELAY 120
-#endif
 
 using namespace FSMTP::SMTP;
 

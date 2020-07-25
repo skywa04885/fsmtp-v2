@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <tuple>
 #include <sstream>
+#include <json/json.h>
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
@@ -52,18 +53,6 @@
 #include "../models/EmailShortcut.src.h"
 #include "../parsers/mime.src.h"
 #include "../general/exceptions.src.h"
-
-#ifndef _POP3_QUEUE_MAX
-#define _POP3_QUEUE_MAX 40
-#endif
-
-#ifndef _POP3_PORT_PLAIN
-#define _POP3_PORT_PLAIN 110
-#endif
-
-#ifndef _POP3_PORT_SECURE
-#define _POP3_PORT_SECURE 995
-#endif
 
 using namespace FSMTP::Cleanup;
 using namespace FSMTP::Parsers;

@@ -7,5 +7,7 @@ sources += files(
     'hex.src.cc',
     'Logger.src.cc',
     'Passwords.src.cc',
-    'Timer.src.cc'
+    'Timer.src.cc',
+    'Configuration.src.cc',
+    'macros.src.cc'
 )

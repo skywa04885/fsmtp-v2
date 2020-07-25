@@ -16,6 +16,8 @@
 
 #include "arg-actions.src.h"
 
+extern Json::Value _config;
+
 namespace FSMTP::ARG_ACTIONS
 {
   /**
@@ -42,7 +44,7 @@ namespace FSMTP::ARG_ACTIONS
     logger << _BASH_UNKNOWN_MARK << "Start van Apache Cassandra || Datastax Enterprise database verbindings test ..." << ENDL;
     std::unique_ptr<CassandraConnection> cassandra;
     try {
-      cassandra = std::make_unique<CassandraConnection>(_CASSANDRA_DATABASE_CONTACT_POINTS);
+      cassandra = std::make_unique<CassandraConnection>(_config["database"]["cassandra_hosts"].asCString());
       logger << _BASH_SUCCESS_MARK << "Verbinding met Apache Cassandra || Datastax Enterprise is geslaagd !" << ENDL;
     }
     catch (const std::runtime_error &e)
@@ -55,7 +57,7 @@ namespace FSMTP::ARG_ACTIONS
     logger << _BASH_UNKNOWN_MARK << "Start van de Redis verbindings test ..." << ENDL;
     std::unique_ptr<RedisConnection> redis;
     try {
-      redis = std::make_unique<RedisConnection>(_REDIS_CONTACT_POINTS, _REDIS_PORT);
+      redis = std::make_unique<RedisConnection>(_config["database"]["redis_hosts"].asCString(), _config["database"]["redis_port"].asInt());
       logger << _BASH_SUCCESS_MARK << "Verbonden met Redis" << ENDL;
     } catch (const std::runtime_error &e)
     {
@@ -142,7 +144,7 @@ namespace FSMTP::ARG_ACTIONS
     logger << _BASH_UNKNOWN_MARK << "Verbinding maken met Apache Cassandra ..." << ENDL;
     std::unique_ptr<CassandraConnection> cassandra;
     try {
-      cassandra = std::make_unique<CassandraConnection>(_CASSANDRA_DATABASE_CONTACT_POINTS);
+      cassandra = std::make_unique<CassandraConnection>(_config["database"]["cassandra_hosts"].asCString());
       logger << _BASH_SUCCESS_MARK << "Verbonden met apache cassandra !" << ENDL;
     } catch (const std::runtime_error &e)
     {
@@ -154,7 +156,7 @@ namespace FSMTP::ARG_ACTIONS
     logger << _BASH_UNKNOWN_MARK << "Verbinding maken met Redis ..." << ENDL;
     std::unique_ptr<RedisConnection> redis;
     try {
-      redis = std::make_unique<RedisConnection>(_REDIS_CONTACT_POINTS, _REDIS_PORT);
+      redis = std::make_unique<RedisConnection>(_config["database"]["redis_hosts"].asCString(), _config["database"]["redis_port"].asInt());
       logger << _BASH_SUCCESS_MARK << "Verbonden met Redis !" << ENDL;
     } catch (const std::runtime_error &e)
     {
@@ -289,7 +291,7 @@ namespace FSMTP::ARG_ACTIONS
 
     logger << "Verbinding maken met Redis ..." << ENDL;
     try {
-      redis = std::make_unique<RedisConnection>(_REDIS_CONTACT_POINTS, _REDIS_PORT);
+      redis = std::make_unique<RedisConnection>(_config["database"]["redis_hosts"].asCString(), _config["database"]["redis_port"].asInt());
     } catch (const std::runtime_error &e)
     {
       logger << FATAL << "Kon geen verbinding met Redis maken: " << e.what() << ENDL;
@@ -303,7 +305,7 @@ namespace FSMTP::ARG_ACTIONS
 
     std::unique_ptr<CassandraConnection> cassandra;
     try {
-      cassandra = std::make_unique<CassandraConnection>(_CASSANDRA_DATABASE_CONTACT_POINTS);
+      cassandra = std::make_unique<CassandraConnection>(_config["database"]["cassandra_hosts"].asCString());
     } catch (const std::runtime_error &e)
     {
       logger << FATAL << "Kon geen verbinding met Cassandra maken: " << e.what() << ENDL;

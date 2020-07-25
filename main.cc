@@ -17,6 +17,7 @@
 #include "main.h"
 
 ServerType _serverType = ServerType::ST_SMTP;
+extern Json::Value _config;
 
 /**
  * Application entry LOL, idiots.. Jk jk
@@ -27,7 +28,8 @@ ServerType _serverType = ServerType::ST_SMTP;
  */
 int main(const int argc, const char **argv)
 {
-	// Initializes OpenSSL stuff
+	// Loads the configuration, and initializes OpenSSL
+	Configuration::read("../config.json");
 	SSL_load_error_strings();
 	OpenSSL_add_ssl_algorithms();
 
@@ -41,7 +43,7 @@ int main(const int argc, const char **argv)
 		{
 			Logger logger("Main", LoggerLevel::INFO);
 			logger << WARN << "Fannst POP3 Server door Luke A.C.A. Rieff, vrij onder de Apache 2.0 license" << ENDL << CLASSIC;
-			POP3::P3Server pop3server(false);
+			POP3::P3Server pop3server(_config["ports"]["pop3_plain"].asInt());
 		
 			for (;;)
 			{
@@ -58,11 +60,11 @@ int main(const int argc, const char **argv)
 			if (!dbWorker->start(nullptr))
 				std::exit(-1);
 			// Runs the transmission worker
-			std::unique_ptr<TransmissionWorker> transWorker = std::make_unique<TransmissionWorker>(_CASSANDRA_DATABASE_CONTACT_POINTS);
+			std::unique_ptr<TransmissionWorker> transWorker = std::make_unique<TransmissionWorker>(_config["database"]["cassandra_hosts"].asCString());
 			if (!transWorker->start(nullptr))
 				std::exit(-1);
 			// Runs the server
-			SMTPServer server(25, true);
+			SMTPServer server(_config["ports"]["smtp_plain"].asInt(), true);
 
 			// Loops forever
 			for (;;)
@@ -75,7 +77,10 @@ int main(const int argc, const char **argv)
 			Logger logger("Main", LoggerLevel::INFO);
 			logger << WARN << "Fannst IMAP Server door Luke A.C.A. Rieff, vrij onder de Apache 2.0 license" << ENDL << CLASSIC;
 
-			IMAP::IMAPServer sock(143, 993);
+			IMAP::IMAPServer sock(
+				_config["ports"]["imap_plain"].asInt(),
+				_config["ports"]["imap_secure"].asInt()
+			);
 
 			for (;;)
 			{
@@ -89,7 +94,7 @@ int main(const int argc, const char **argv)
 			
 			try
 			{
-				DNS::DNSServer dnsServer(53);
+				DNS::DNSServer dnsServer(_config["ports"]["dns_gen"].asInt());
 				
 				for (;;)
 				{

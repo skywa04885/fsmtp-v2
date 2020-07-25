@@ -23,6 +23,8 @@
 #include <string>
 #include <random>
 
+#include <json/json.h>
+
 #include "../../models/Email.src.h"
 #include "../../general/encoding.src.h"
 #include "../../general/macros.src.h"

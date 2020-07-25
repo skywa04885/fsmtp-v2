@@ -16,6 +16,8 @@
 
 #include "IMAPServer.src.h"
 
+extern Json::Value _config;
+
 namespace FSMTP::IMAP
 {
 	IMAPServer::IMAPServer(const int32_t plainPort, const int32_t securePort):
@@ -78,7 +80,7 @@ namespace FSMTP::IMAP
 		try
 		{
 			cassandra = std::make_unique<CassandraConnection>(
-				_CASSANDRA_DATABASE_CONTACT_POINTS);
+				_config["database"]["cassandra_hosts"].asCString());
 		} catch (const std::runtime_error &e)
 		{
 			logger << FATAL << "Could not connect to Cassandra: " << e.what() << ENDL << CLASSIC;
@@ -88,7 +90,7 @@ namespace FSMTP::IMAP
 		try
 		{
 			redis = std::make_unique<RedisConnection>(
-				_REDIS_CONTACT_POINTS, _REDIS_PORT
+				_config["database"]["redis_hosts"].asCString(), _config["database"]["redis_port"].asInt()
 			);
 		} catch (const std::runtime_error &e)
 		{

@@ -22,6 +22,8 @@
 #include <string>
 #include <chrono>
 
+#include <json/json.h>
+
 #include "../general/Logger.src.h"
 
 namespace FSMTP::Workers

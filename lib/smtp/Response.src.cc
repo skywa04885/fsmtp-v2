@@ -16,6 +16,8 @@
 
 #include "Response.src.h"
 
+extern Json::Value _config;
+
 namespace FSMTP::SMTP
 {
 	/**
@@ -72,7 +74,7 @@ namespace FSMTP::SMTP
 			if (this->c_Type != SMTPResponseType::SRC_GREETING)
 			{
 				res += ' ';
-				res += _SMTP_SERVICE_NODE_NAME;
+				res += _config["node_name"].asCString();
 			}
 			res += " - fsmtp\r\n";
 		} else
@@ -106,7 +108,7 @@ namespace FSMTP::SMTP
 				struct tm *timeInfo = nullptr;
 
 				// Builds the standard message
-				std::string ret = _SMTP_SERVICE_NODE_NAME;
+				std::string ret = _config["node_name"].asCString();
 				ret += " Fannst ESMTP Mail service ready at ";
 
 				// Appends the time to the final string
@@ -126,7 +128,7 @@ namespace FSMTP::SMTP
 			case SMTPResponseType::SRC_EHLO:
 			{
 				// Builds the response message and returns it
-				std::string ret = _SMTP_SERVICE_DOMAIN;
+				std::string ret = _config["smtp"]["server"]["domain"].asCString();
 				ret += ", at your service ";
 				ret += DNS::getHostnameByAddress(reinterpret_cast<struct sockaddr_in *>(this->c_U));
 				ret += " [";

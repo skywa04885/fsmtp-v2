@@ -16,6 +16,8 @@
 
 #include "SMTPClient.src.h"
 
+extern Json::Value _config;
+
 namespace FSMTP::Mailer::Client
 {
 	/**
@@ -40,9 +42,9 @@ namespace FSMTP::Mailer::Client
 
 		// Signs the email
 		DKIM::DKIMConfig dkimConfig;
-		dkimConfig.c_KeySelector = "default";
-		dkimConfig.c_Domain = _SMTP_SERVICE_DKIM_DOMAIN;
-		dkimConfig.c_PrivateKeyPath = "../env/keys/dkim-private.pem";
+		dkimConfig.c_KeySelector =  _config["dkim"]["keyselector"].asCString();
+		dkimConfig.c_Domain = _config["dkim"]["domain"].asCString();
+		dkimConfig.c_PrivateKeyPath = _config["dkim"]["dkim_private"].asCString();
 		this->s_TransportMessage = DKIM::sign(message, dkimConfig);
 
 		// Sets the from
@@ -110,9 +112,9 @@ namespace FSMTP::Mailer::Client
 
 		// Signs the email
 		DKIM::DKIMConfig dkimConfig;
-		dkimConfig.c_KeySelector = "default";
-		dkimConfig.c_Domain = _SMTP_SERVICE_DKIM_DOMAIN;
-		dkimConfig.c_PrivateKeyPath = "../env/keys/dkim-private.pem";
+		dkimConfig.c_KeySelector =  _config["dkim"]["keyselector"].asCString();
+		dkimConfig.c_Domain = _config["dkim"]["domain"].asCString();
+		dkimConfig.c_PrivateKeyPath = _config["dkim"]["dkim_private"].asCString();
 		this->s_TransportMessage = DKIM::sign(plain, dkimConfig);
 
 		// Sets the from
@@ -172,11 +174,11 @@ namespace FSMTP::Mailer::Client
 				// Connects to the client and prints it to the console
 				client = std::make_unique<SMTPClientSocket>(
 					target.t_Servers[0].c_str(),
-					25
+					_config["smtp"]["client"]["mailer_port"].asInt()
 				);
 				client->startConnecting();
 				if (!this->s_Silent) this->s_Logger << "Connected to: " 
-					<< target.t_Servers[0] << ":25" << ENDL;
+					<< target.t_Servers[0] << ':' << _config["smtp"]["client"]["mailer_port"].asInt() << ENDL;
 			} catch (const SMTPConnectError &e)
 			{
 				if (!this->s_Silent) this->s_Logger << ERROR << "Kon niet verbinden met server: " << e.what() << ENDL;
@@ -420,7 +422,7 @@ namespace FSMTP::Mailer::Client
 							// Sends the ehlo command
 							client->writeCommand(
 								ClientCommandType::CCT_EHLO,
-								{_SMTP_SERVICE_DOMAIN}
+								{_config["smtp"]["client"]["domain"].asCString()}
 							);
 							DEBUG_ONLY(this->printSent("EHLO [domain]"));
 
@@ -492,7 +494,7 @@ namespace FSMTP::Mailer::Client
 							// Sends the helo command
 							client->writeCommand(
 								ClientCommandType::CCT_HELO,
-								{_SMTP_SERVICE_DOMAIN}
+								{_config["smtp"]["client"]["domain"].asCString()}
 							);
 							DEBUG_ONLY(this->printSent("HELO [domain]"));
 						}

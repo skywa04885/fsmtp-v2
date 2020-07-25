@@ -16,10 +16,12 @@
 
 #include "P3Server.src.h"
 
+extern Json::Value _config;
+
 namespace FSMTP::POP3
 {
-	P3Server::P3Server(const bool secure):
-		s_Socket((secure ? _POP3_PORT_SECURE : _POP3_PORT_PLAIN)),
+	P3Server::P3Server(const int32_t port):
+		s_Socket(port),
 		s_Logger("P3Serv", LoggerLevel::INFO)
 	{
 		// Sets the capabilities
@@ -47,7 +49,7 @@ namespace FSMTP::POP3
 			&P3Server::acceptorCallback,
 			this
 		);
-		this->s_Logger << "Server is gestart op port " << (secure ? 995 : 110) << ENDL;
+		this->s_Logger << "Server is gestart op port " << port << ENDL;
 	}
 
 	void P3Server::acceptorCallback(std::unique_ptr<ClientSocket> client, void *u)
@@ -66,24 +68,24 @@ namespace FSMTP::POP3
 		std::unique_ptr<RedisConnection> redis;
 		std::unique_ptr<CassandraConnection> cassandra;
 		try {
-			redis = std::make_unique<RedisConnection>(_REDIS_CONTACT_POINTS, _REDIS_PORT);
-			DEBUG_ONLY(logger << DEBUG << "Verbonden met redis [" << _REDIS_CONTACT_POINTS
-				<< ':' << _REDIS_PORT << ']' << ENDL << CLASSIC);
+			redis = std::make_unique<RedisConnection>(_config["database"]["redis_hosts"].asCString(), _config["database"]["redis_port"].asInt());
+			DEBUG_ONLY(logger << DEBUG << "Verbonden met redis [" << _config["database"]["redis_hosts"].asCString()
+				<< ':' << _config["database"]["redis_port"].asInt() << ']' << ENDL << CLASSIC);
 		} catch (const std::runtime_error &e)
 		{
-			logger << ERROR << "Kon niet verbinden met Redis [" << _REDIS_CONTACT_POINTS
-				<< ':' << _REDIS_PORT << "]: " << e.what() << ENDL << CLASSIC;
+			logger << ERROR << "Kon niet verbinden met Redis [" << _config["database"]["redis_hosts"].asCString()
+				<< ':' << _config["database"]["redis_port"].asInt() << "]: " << e.what() << ENDL << CLASSIC;
 			goto pop3_session_end;
 		}
 
 		// Connects to cassandra
 		try {
-			cassandra = std::make_unique<CassandraConnection>(_CASSANDRA_DATABASE_CONTACT_POINTS);
+			cassandra = std::make_unique<CassandraConnection>(_config["database"]["cassandra_hosts"].asCString());
 			DEBUG_ONLY(logger << DEBUG << "Verbonden met Cassandra ["
-				<< _CASSANDRA_DATABASE_CONTACT_POINTS << "]" << ENDL << CLASSIC);
+				<< _config["database"]["cassandra_hosts"].asCString() << "]" << ENDL << CLASSIC);
 		} catch (const std::runtime_error &e)
 		{
-			logger << ERROR << "Kon niet verbinden met Cassandra [" << _CASSANDRA_DATABASE_CONTACT_POINTS
+			logger << ERROR << "Kon niet verbinden met Cassandra [" << _config["database"]["cassandra_hosts"].asCString()
 				<< "]: " << e.what() << ENDL << CLASSIC;
 			goto pop3_session_end;
 		}
@@ -363,7 +365,7 @@ namespace FSMTP::POP3
 						} else
 						{
 							command.c_Args[0] += '@';
-							command.c_Args[0] += _SMTP_DEF_DOMAIN;
+							command.c_Args[0] += _config["domain"].asCString();
 							address.parse(command.c_Args[0]);
 						}
 

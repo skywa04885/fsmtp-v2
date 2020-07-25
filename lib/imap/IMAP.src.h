@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <variant>
 
+#include <json/json.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <sys/ioctl.h>

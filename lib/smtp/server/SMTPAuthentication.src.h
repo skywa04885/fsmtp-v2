@@ -23,6 +23,7 @@
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <json/json.h>
 
 #include "../../general/connections.src.h"
 #include "../../general/Passwords.src.h"

@@ -1,0 +1,72 @@
+{
+	"node_name": "LUKERIEFF_MCLUST_A001",
+	"ssl_cert": "../env/keys/cert.pem",
+	"ssl_key": "../env/keys/key.pem",
+	"ssl_pass": "../env/keys/pass.txt",
+	"database": {
+		"cassandra_hosts": "192.168.188.130",
+		"cassandra_native": 9042,
+		"redis_hosts": "192.168.188.130",
+		"redis_port": 6379
+	},
+	"smtp_domain": "smtp.fannst.nl",
+	"domain": "fannst.nl",
+	"dkim": {
+		"domain": "fannst.nl",
+		"keyselector": "default",
+		"dkim_public": "../env/keys/dkim-public.pem",
+		"dkim_private": "../env/keys/dkim-private.pem"
+	},
+	"smtp": {
+		"client": {
+			"mailer_port": 25,
+			"domain": "mailer.fannst.nl"
+		},
+		"server": {
+			"domain": "smtp.fannst.nl"
+		}
+	},
+	"zone": [
+		{
+			"domain": "fannst.nl",
+			"records": {
+				"a": [
+					{
+						"record_data": "86.89.30.158",
+						"record_root": "smtp",
+						"record_ttl": 100
+					},
+					{
+						"record_data": "86.89.30.158",
+						"record_root": "imap",
+						"record_ttl": 100
+					},
+					{
+						"record_data": "86.89.30.158",
+						"record_root": "pop",
+						"record_ttl": 100
+					}
+				],
+				"mx": [
+					{
+						"record_data": "smtp.fannst.nl",
+						"record_root": "@",
+						"record_ttl": 100
+					}
+				]
+			}
+		}
+	],
+	"ports": {
+		"smtp_plain": 25,
+		"smtp_secure": 587,
+		"imap_plain": 143,
+		"imap_secure": 993,
+		"pop3_plain": 110,
+		"pop3_secure": 995,
+		"dns_gen": 53
+	},
+	"sockets": {
+		"queue_max": 400
+	}
+}

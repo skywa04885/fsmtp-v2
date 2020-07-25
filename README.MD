@@ -43,6 +43,7 @@ sudo make install
 
 ```bash
 sudo apt-get install meson ninja
+meson wrap install jsoncpp
 meson build && cd ./build
 ninja
 ./fsmtp

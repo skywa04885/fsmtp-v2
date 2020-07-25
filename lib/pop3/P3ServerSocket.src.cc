@@ -16,6 +16,8 @@
 
 #include "P3ServerSocket.src.h"
 
+extern Json::Value _config;
+
 namespace FSMTP::POP3
 {
 	ServerSocket::ServerSocket(int32_t port):
@@ -91,7 +93,7 @@ namespace FSMTP::POP3
 		int32_t rc;
 
 		// Listens the socket
-		rc = listen(this->s_SocketFD, _POP3_QUEUE_MAX);
+		rc = listen(this->s_SocketFD, _config["sockets"]["queue_max"].asInt());
 		if (rc < 0)
 		{
 			std::string error = "listen() failed: ";

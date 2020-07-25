@@ -16,12 +16,23 @@
 
 #pragma once
 
+#include <sstream>
 #include <iostream>
 
-// Uncomment in production since it will make you 
-// - crazy when the console is being spammed with
-// - all kinds of debug crap
-// #define _SMTP_DEBUG
+// ============================================
+// DEBUG / ERROR stuff
+// ============================================
+
+/**
+ * Adds the line, file and the message into one string
+ *
+ * @Param {const char *} file
+ * @Param {const std::size_t} line
+ * @Param {const std::string &mess}
+ * @Return {std::string}
+ */
+std::string __except_debug(const char *file, 
+	const std::size_t line, const std::string &mess);
 
 #ifdef _SMTP_DEBUG
 #define DEBUG_ONLY(A) A
@@ -35,52 +46,22 @@
 #define DEBUG_PRINT(A, B)
 #endif
 
-#define BINARY_COMPARE(A, B) (A & B) == B
+#ifdef _SMTP_DEBUG
+#define EXCEPT_DEBUG(A) __except_debug(__FILE__, __LINE__, A)
+#else
+#define EXCEPT_DEBUG(A) A
+#endif
 
 #define FATAL_ERROR(A) std::cerr << "\033[32m" << __LINE__ << '@' << __FILE__ << "\033[31m" << ": " << A << "\033[0m" << std::endl
 
-#ifndef _SMTP_SERVICE_DOMAIN
-#define _SMTP_SERVICE_DOMAIN "mail.fannst.nl"
-#endif
+// ============================================
+// Definitions for quick help
+// ============================================
 
-#ifndef _SMTP_SERVICE_DKIM_DOMAIN
-#define _SMTP_SERVICE_DKIM_DOMAIN "fannst.nl"
-#endif
-
-#ifndef _SMTP_DEF_DOMAIN
-#define _SMTP_DEF_DOMAIN "fannst.nl"
-#endif
-
-#ifndef _SMTP_SERVICE_NODE_NAME
-#define _SMTP_SERVICE_NODE_NAME "LUKERIEFF_MCLUST_A001"
-#endif
+#define BINARY_COMPARE(A, B) (A & B) == B
 
 #ifndef _SMTP_RECEIVE_BUFFER_SIZE
 #define _SMTP_RECEIVE_BUFFER_SIZE 32
-#endif
-
-#ifndef _SMTP_SSL_CERT_PATH
-#define _SMTP_SSL_CERT_PATH "../env/keys/cert.pem"
-#endif
-
-#ifndef _SMTP_SSL_KEY_PATH
-#define _SMTP_SSL_KEY_PATH "../env/keys/key.pem"
-#endif
-
-#ifndef _SMTP_SSL_PASSPHRASE_PATH
-#define _SMTP_SSL_PASSPHRASE_PATH "../env/keys/pass.txt"
-#endif
-
-#ifndef _CASSANDRA_DATABASE_CONTACT_POINTS
-#define _CASSANDRA_DATABASE_CONTACT_POINTS "192.168.188.130"
-#endif
-
-#ifndef _REDIS_CONTACT_POINTS
-#define _REDIS_CONTACT_POINTS "192.168.188.130"
-#endif
-
-#ifndef _REDIS_PORT
-#define _REDIS_PORT 6379
 #endif
 
 #define _PREP_TO_STRING(A) #A
@@ -92,12 +73,6 @@
 #define _BASH_FAIL_MARK "\033[31m[\u2717]:\033[0m "
 #define _BASH_UNKNOWN_MARK "\033[35m[?]:\033[0m "
 
-#ifdef _SMTP_DEBUG
-#define EXCEPT_DEBUG(A) std::string(__FILE__) + std::string(": ") + std::to_string(__LINE__) + std::string(": ") + A
-#else
-#define EXCEPT_DEBUG(A) A
-#endif
-
 typedef enum : uint8_t
 {
 	ST_SMTP = 0,
@@ -106,5 +81,4 @@ typedef enum : uint8_t
 	ST_DNS
 } ServerType;
 
-// Assertion using message
 #define assertm(exp, msg) assert(((void)msg, exp))

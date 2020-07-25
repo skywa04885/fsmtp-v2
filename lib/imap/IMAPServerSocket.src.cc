@@ -18,6 +18,8 @@
 
 #include "IMAPServerSocket.src.h"
 
+extern Json::Value _config;
+
 namespace FSMTP::IMAP
 {
 	IMAPServerSocket::IMAPServerSocket(
@@ -194,14 +196,14 @@ namespace FSMTP::IMAP
 
 		// Configures the context
 		SSL_CTX_set_ecdh_auto(this->s_SecureSSLCTX, 0x1);
-		rc = SSL_CTX_use_certificate_file(this->s_SecureSSLCTX, _SMTP_SSL_CERT_PATH, SSL_FILETYPE_PEM);
+		rc = SSL_CTX_use_certificate_file(this->s_SecureSSLCTX, _config["ssl_cert"].asCString(), SSL_FILETYPE_PEM);
 		if (rc <= 0)
 		{
 			ERR_print_errors_fp(stderr);
 			throw SocketInitializationException(EXCEPT_DEBUG("SSL_CTX_use_certificate_file() failed"));	
 		}
 
-		rc = SSL_CTX_use_PrivateKey_file(this->s_SecureSSLCTX, _SMTP_SSL_KEY_PATH, SSL_FILETYPE_PEM);
+		rc = SSL_CTX_use_PrivateKey_file(this->s_SecureSSLCTX, _config["ssl_key"].asCString(), SSL_FILETYPE_PEM);
 		if (rc < 0)
 		{
 			ERR_print_errors_fp(stderr);

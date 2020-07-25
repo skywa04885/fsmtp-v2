@@ -17,6 +17,8 @@
 
 #include "P3ClientSocket.src.h"
 
+extern Json::Value _config;
+
 namespace FSMTP::POP3
 {
 	ClientSocket::ClientSocket(
@@ -157,7 +159,7 @@ namespace FSMTP::POP3
 	{
 		// Reads the file and stores it inside the buffer
 		// - if something goes wrong we simply throw an error
-		FILE *f = fopen(_SMTP_SSL_PASSPHRASE_PATH, "r");
+		FILE *f = fopen(_config["ssl_pass"].asCString(), "r");
 		if (!f)
 		{
 			std::string error = "fopen() failed: ";
@@ -193,14 +195,14 @@ namespace FSMTP::POP3
 		SSL_CTX_set_ecdh_auto(this->s_SSLCtx, 1);
 		SSL_CTX_set_default_passwd_cb(this->s_SSLCtx, &ClientSocket::readSSLPassphrase);
 
-		rc = SSL_CTX_use_certificate_file(this->s_SSLCtx, _SMTP_SSL_CERT_PATH, SSL_FILETYPE_PEM);
+		rc = SSL_CTX_use_certificate_file(this->s_SSLCtx, _config["ssl_cert"].asCString(), SSL_FILETYPE_PEM);
 		if (rc <= 0)
 		{
 			ERR_print_errors_fp(stderr);
 			throw SocketSSLError("Could not read cert");
 		}
 
-		rc = SSL_CTX_use_PrivateKey_file(this->s_SSLCtx, _SMTP_SSL_KEY_PATH, SSL_FILETYPE_PEM);
+		rc = SSL_CTX_use_PrivateKey_file(this->s_SSLCtx, _config["ssl_key"].asCString(), SSL_FILETYPE_PEM);
 		if (rc <= 0)
 		{
 			ERR_print_errors_fp(stderr);

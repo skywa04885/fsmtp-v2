@@ -19,6 +19,7 @@
 
 std::mutex _emailStorageMutex;
 std::vector<std::pair<std::string, FullEmail>> _emailStorageQueue;
+extern Json::Value _config;
 
 namespace FSMTP::Workers
 {
@@ -40,10 +41,10 @@ namespace FSMTP::Workers
 	 */
 	void DatabaseWorker::startupTask(void)
 	{
-		this->d_Cassandra = std::make_unique<CassandraConnection>(_CASSANDRA_DATABASE_CONTACT_POINTS);
+		this->d_Cassandra = std::make_unique<CassandraConnection>(_config["database"]["cassandra_hosts"].asCString());
 		this->w_Logger << "Verbinding met Cassandra is in stand gebracht !" << ENDL;
 
-		this->d_Redis = std::make_unique<RedisConnection>(_REDIS_CONTACT_POINTS, _REDIS_PORT);
+		this->d_Redis = std::make_unique<RedisConnection>(_config["database"]["redis_hosts"].asCString(), _config["database"]["redis_port"].asInt());
 		this->w_Logger << "Verbinding met Redis is in stand gebracht !" << ENDL;
 	}
 

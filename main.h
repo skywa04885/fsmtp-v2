@@ -23,12 +23,15 @@
 #include <vector>
 #include <string>
 
+#include <json/json.h>
+
 #include "lib/general/AES256.src.h"
 #include "lib/args/args.src.h"
 #include "lib/smtp/server/SMTPServer.src.h"
 #include "lib/smtp/client/SMTPClient.src.h"
 #include "lib/workers/DatabaseWorker.src.h"
 #include "lib/workers/TransmissionWorker.src.h"
+#include "lib/general/Configuration.src.h"
 
 #include "lib/pop3/P3Server.src.h"
 #include "lib/imap/IMAPServer.src.h"

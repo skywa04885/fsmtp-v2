@@ -16,6 +16,8 @@
 
 #include "SMTPAuthentication.src.h"
 
+extern Json::Value _config;
+
 namespace FSMTP::Server
 {
 	/**
@@ -77,7 +79,7 @@ namespace FSMTP::Server
 		if (username.find_first_of('@') == std::string::npos)
 		{
 			username += '@';
-			username += _SMTP_DEF_DOMAIN;
+			username += _config["domain"].asCString();
 		}
 		delete[] decoded;
 		BIO_free_all(bio);

@@ -16,6 +16,8 @@
 
 #include "IMAPResponse.src.h"
 
+extern Json::Value _config;
+
 namespace FSMTP::IMAP
 {
 	/**
@@ -245,7 +247,7 @@ namespace FSMTP::IMAP
 						BVT_OK, nullptr
 					},
 					BuildLineSection {
-						BVT_ATOM, reinterpret_cast<const void *>(_SMTP_SERVICE_NODE_NAME)
+						BVT_ATOM, reinterpret_cast<const void *>(_config["node_name"].asCString())
 					},
 					BuildLineSection {
 						BVT_ATOM, reinterpret_cast<const void *>("Fannst IMAP4rev1 service ready - max 1.800.000ms")

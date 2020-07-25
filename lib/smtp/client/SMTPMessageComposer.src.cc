@@ -16,6 +16,8 @@
 
 #include "SMTPMessageComposer.src.h"
 
+extern Json::Value _config;
+
 namespace FSMTP::Mailer::Composer
 {	
 	static char _randomDict[] = {
@@ -86,7 +88,7 @@ namespace FSMTP::Mailer::Composer
 
 		// Appends the domain and closing bracket
 		res += '@';
-		res += _SMTP_SERVICE_DOMAIN;
+		res += _config["smtp"]["client"]["domain"].asCString();
 		res += ">";
 
 		return res;
@@ -143,7 +145,7 @@ namespace FSMTP::Mailer::Composer
 
 		// Prepares the default headers
 		config.m_Headers.push_back(EmailHeader{"X-Mailer", "FSMTP-V2"});
-		config.m_Headers.push_back(EmailHeader{"X-Fannst-NodeID", _SMTP_SERVICE_NODE_NAME});
+		config.m_Headers.push_back(EmailHeader{"X-Fannst-NodeID", _config["node_name"].asCString()});
 		config.m_Headers.push_back(EmailHeader{"X-Made-By", "Luke A.C.A. Rieff"});
 		config.m_Headers.push_back(EmailHeader{"Subject", subject});
 		config.m_Headers.push_back(EmailHeader{"Date",  dateValue});

@@ -16,6 +16,8 @@
 
 #include "P3Response.src.h"
 
+extern Json::Value _config;
+
 namespace FSMTP::POP3
 {
 	P3Response::P3Response(const bool p_Ok, const POP3ResponseType p_Type):
@@ -101,7 +103,7 @@ namespace FSMTP::POP3
 			case POP3ResponseType::PRT_QUIT:
 			{
 				std::string ret = "POP3 server signing off ";
-				ret += _SMTP_SERVICE_NODE_NAME;
+				ret += _config["node_name"].asCString();
 				return ret;
 			}
 			default: throw std::runtime_error(EXCEPT_DEBUG("Message not implemented"));

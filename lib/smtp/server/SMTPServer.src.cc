@@ -19,6 +19,7 @@
 extern std::vector<std::pair<std::string, FullEmail>> _emailStorageQueue;
 extern std::mutex _emailStorageMutex;
 extern std::deque<TransmissionWorkerTask> _transmissionQueue;
+extern Json::Value _config;
 
 namespace FSMTP::Server
 {
@@ -34,9 +35,7 @@ namespace FSMTP::Server
 	):
 		s_Socket(port),
 		s_UseESMTP(s_UseESMTP),
-		s_Logger("SMTPServer", LoggerLevel::INFO),
-		s_RedisPort(s_RedisPort),
-		s_RedisHost(s_RedisHost)
+		s_Logger("SMTPServer", LoggerLevel::INFO)
 	{
 		// Sets some default values and after that
 		// - we start the socket server, and create
@@ -123,8 +122,7 @@ namespace FSMTP::Server
 		try
 		{
 			redis = std::make_unique<RedisConnection>(
-				_REDIS_CONTACT_POINTS,
-				_REDIS_PORT
+				_config["database"]["redis_hosts"].asCString(), _config["database"]["redis_port"].asInt()
 			);
 		} catch (const std::runtime_error &e)
 		{
@@ -472,7 +470,7 @@ namespace FSMTP::Server
 						// Creates an cassandra connection
 						std::unique_ptr<CassandraConnection> cass;
 						try {
-							cass = std::make_unique<CassandraConnection>(_CASSANDRA_DATABASE_CONTACT_POINTS);
+							cass = std::make_unique<CassandraConnection>(_config["database"]["cassandra_hosts"].asCString());
 						} catch (const std::runtime_error &e)
 						{
 							throw FatalException("Could not connect to cassandra");

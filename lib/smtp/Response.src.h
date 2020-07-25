@@ -22,6 +22,7 @@
 #include <tuple>
 #include <ctime>
 
+#include <json/json.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 

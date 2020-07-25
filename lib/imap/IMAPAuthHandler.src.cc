@@ -16,6 +16,8 @@
 
 #include "IMAPAuthHandler.src.h"
 
+extern Json::Value _config;
+
 namespace FSMTP::IMAP::AUTH_HANDLER
 {
 	/**
@@ -59,7 +61,7 @@ namespace FSMTP::IMAP::AUTH_HANDLER
 		if (user.find_first_of('@') == std::string::npos)
 		{
 			user += '@';
-			user += _SMTP_DEF_DOMAIN;
+			user += _config["domain"].asCString();
 		}
 
 		// Parses the email address, and throws error
