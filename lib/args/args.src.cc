@@ -17,7 +17,6 @@
 #include "args.src.h"
 
 extern bool _forceLoggerNCurses;
-extern ServerType _serverType;
 
 namespace FSMTP
 {
@@ -111,18 +110,7 @@ namespace FSMTP
 	 */
 	void handleArguments(const std::vector<std::string> &argList)
 	{
-		Logger logger("ArgHandler", LoggerLevel::INFO);
 		std::vector<CMDArg> arguments = CMDArg::parse(argList);
-
-		// Checks if there are any arguments, and if so
-		// - print them all
-		if (arguments.size() > 0)
-		{
-			logger << "Found " << arguments.size() << " arguments .." << ENDL;
-			std::size_t i = 0;
-			for (const CMDArg &arg : arguments)
-				logger << "Argument [" << i++ << "]: <" << arg.c_Name << "> - <" << arg.c_Arg << '>' << ENDL;
-		}
 
 		// Loops over the arguments and tries to bind
 		// - an action to it, and then call the function
@@ -155,18 +143,6 @@ namespace FSMTP
 				std::cout << "-r, -run=type: " << "\tWelke server er gestart moet worden, 'smtp' of 'pop3'" << std::endl;
 
 				std::exit(0);
-			}
-
-			if (arg.compare("run"))
-			{
-				if (arg.c_Arg == "smtp")
-					_serverType = ServerType::ST_SMTP;
-				if (arg.c_Arg == "pop3")
-					_serverType = ServerType::ST_POP3;
-				if (arg.c_Arg == "imap")
-					_serverType = ServerType::ST_IMAP;
-				if (arg.c_Arg == "dns")
-					_serverType = ServerType::ST_DNS;
 			}
 		}
 	}

@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include <iostream>
-#include <string>
-#include <vector>
-#include <memory>
+#include "../default.h"
+#include "../general/Global.src.h"
+#include "../networking/sockets/SSLContext.src.h"
+#include "../networking/sockets/ServerSocket.src.h"
 
 #include "../models/Email.src.h"
 #include "../models/LocalDomain.src.h"
@@ -38,39 +38,12 @@ using namespace FSMTP::Networking;
 using namespace FSMTP::Server;
 using namespace FSMTP::Mailer::Client;
 using namespace FSMTP::Connections;
+using namespace FSMTP::Sockets;
 
 namespace FSMTP::ARG_ACTIONS
 {
-  /**
-   * Performs an default set of tests, which will check if the Server
-   * - is capable of connecting to the database etcetera
-   *
-   * @Param {void}
-   * @Return {void}
-   */
   void testArgAction(void);
-
-  /**
-   * Adds an user to the database
-   *
-   * @Param {void}
-   * @Return {void}
-   */
   void addUserArgAction(void);
-
-  /**
-   * Syncs cassandra with redis
-   *
-   * @Param {void}
-   * @Return {void}
-   */
   void syncArgAction(void);
-
-  /**
-   * Sends an email custom or default
-   *
-   * @Param {void}
-   * @Return {void}
-   */
   void mailTestArgAction(void);
 }

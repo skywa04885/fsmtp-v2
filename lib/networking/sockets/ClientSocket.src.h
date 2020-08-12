@@ -14,30 +14,29 @@
 	limitations under the License.
 */
 
-#ifndef _LIB_NETWORKING_SOCKETS_SSL_CONTEXT_H
-#define _LIB_NETWORKING_SOCKETS_SSL_CONTEXT_H
+#ifndef _LIB_NETWORKING_SOCKETS_SOCKET_H
+#define _LIB_NETWORKING_SOCKETS_SOCKET_H
 
 #include "../../default.h"
+#include "./SSLContext.src.h"
 #include "../../general/macros.src.h"
 
 namespace FSMTP::Sockets {
-  class SSLContext {
+  class ClientSocket {
   public:
-    SSLContext() noexcept;
-		~SSLContext() noexcept;
+    ClientSocket() noexcept;
+    ~ClientSocket() noexcept;
 
-    SSLContext &read(const char *privateKey, const char *cert);
-		SSLContext &password(const char * );
-		SSLContext &method(const SSL_METHOD *method);
-    
-		static int32_t passwordCallback(
-			char *buffer, int32_t size, 
-			int32_t rwflag, void *u
-		);
+    ClientSocket &upgradeAsServer();
+    ClientSocket &useSSL(SSLContext *ctx);
+    ClientSocket &acceptAsServer(const int32_t server);
+    void write(const char *msg, const size_t len);
 
-    SSL_CTX *p_SSLCtx;
-		const SSL_METHOD *p_SSLMethod;
-		string p_Password;
+  private:
+    struct sockaddr_in s_SocketAddr;
+    SSLContext *s_SSLCtx;
+    SSL *s_SSL;
+    int32_t s_SocketFD;
   };
 }
 

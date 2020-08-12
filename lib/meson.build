@@ -9,3 +9,7 @@ subdir('workers')
 subdir('args')
 subdir('imap')
 subdir('dns')
+
+sources += files (
+  'default.cc'
+)

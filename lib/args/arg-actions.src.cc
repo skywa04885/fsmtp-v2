@@ -20,104 +20,74 @@ extern Json::Value _config;
 
 namespace FSMTP::ARG_ACTIONS
 {
-  /**
-   * Performs an default set of tests, which will check if the Server
-   * - is capable of connecting to the database etcetera
-   *
-   * @Param {void}
-   * @Return {void}
-   */
   void testArgAction(void)
   {
-    std::size_t fail = 0, total = 4;
     Logger logger("test", LoggerLevel::INFO);
-    logger << "FSMTP gaat nu beginnen met testen !" << ENDL;
 
-    // ===================================
-    // Performs database Checks
-    //
-    // Checks if the server can connect
-    // - to redis and cassandra
-    // ===================================
+    size_t successes, failures;
+    successes = failures = 0;
+    
+    auto failure = [&](const string &message, const string &error) {
+      logger << ERROR << _BASH_FAIL_MARK << message << ": " << error << ENDL << CLASSIC;
+      ++failures;
+    };
 
-    // Performs attemt to connect with cassandra
-    logger << _BASH_UNKNOWN_MARK << "Start van Apache Cassandra || Datastax Enterprise database verbindings test ..." << ENDL;
-    std::unique_ptr<CassandraConnection> cassandra;
+    auto success = [&](const string &message) {
+      logger << _BASH_SUCCESS_MARK << message << ENDL;
+      ++successes;
+    };
+
+    // =======================
+    // Database tests
+    // =======================
+
     try {
-      cassandra = std::make_unique<CassandraConnection>(
-        _config["database"]["cassandra_hosts"].asCString(),
-        _config["database"]["cassandra_username"].asCString(),
-        _config["database"]["cassandra_password"].asCString()
-      );
-      logger << _BASH_SUCCESS_MARK << "Verbinding met Apache Cassandra || Datastax Enterprise is geslaagd !" << ENDL;
-    }
-    catch (const std::runtime_error &e)
-    {
-      logger << _BASH_FAIL_MARK << "Verbinding met Cassandra || Datastax Enterprise is niet gelukt" << ENDL;
-      fail++;
+      auto cass = Global::getCassandra();
+      success("Connected to cassandra");
+    } catch (const runtime_error &err) {
+      failure("Could not connect to cassandra", err.what());
     }
 
-    // Creates the redis client
-    logger << _BASH_UNKNOWN_MARK << "Start van de Redis verbindings test ..." << ENDL;
-    std::unique_ptr<RedisConnection> redis;
     try {
-      redis = std::make_unique<RedisConnection>(_config["database"]["redis_hosts"].asCString(), _config["database"]["redis_port"].asInt());
-      logger << _BASH_SUCCESS_MARK << "Verbonden met Redis" << ENDL;
-    } catch (const std::runtime_error &e)
-    {
-      logger << _BASH_FAIL_MARK << "Verbinding met Redis is niet gelukt" << ENDL;
-      fail++;
+      auto redis = Global::getRedis();
+      success("Connected to redis");
+    } catch (const runtime_error &err) {
+      failure("Could not connect to redis", err.what());
     }
 
-    // ===================================
-    // Performs hosting checks
-    //
-    // Checks if the server can listen
-    // - on the specified ports
-    // ===================================
+    // =======================
+    // Socket tests
+    // =======================
 
-    // Performs the check if we may create an socket
-    // - this will throw an error if we're not allowed to do it
-    logger << _BASH_UNKNOWN_MARK << "Start van server socket test ..." << ENDL;
-    std::unique_ptr<SMTPServer> smtpServer;
+    const Json::Value &conf = Global::getConfig();
+    const char *sslKey = conf["ssl_key"].asCString();
+    const char *sslCert = conf["ssl_cert"].asCString();
+    const char *sslPass = conf["ssl_pass"].asCString();
+
+    SSLContext ctx;
     try {
-      smtpServer = std::make_unique<SMTPServer>(25, true);
-      logger << _BASH_SUCCESS_MARK << "SMTPServer successvol" << ENDL;
-      smtpServer->shutdownServer();
-    }
-    catch (const std::runtime_error &e)
-    {
-      logger << _BASH_FAIL_MARK << "Kon SMTP Server niet opstarten:" << e.what() << ENDL;
-      fail++;
+      ctx.method(SSLv23_server_method()).password(sslPass).read(sslKey, sslCert);
+      success("Created new SSLContext");
+    } catch (const runtime_error &err) {
+      failure("Could not create SSLContext", err.what());
     }
 
-    // Performs the check if we may create an pop3 server
-    logger << _BASH_UNKNOWN_MARK << "Start van POP3 Server socket test ..." << ENDL;
-    std::unique_ptr<POP3::P3Server> pop3server;
     try {
-      pop3server = std::make_unique<POP3::P3Server>(false);
-      logger << _BASH_SUCCESS_MARK << "POP3 Server successvol" << ENDL;
-      pop3server->shutdown();
-    } catch (const SocketInitializationException &e)
-    {
-      logger << _BASH_FAIL_MARK << "Kon de POP3 server niet opstarten: " << e.what() << ENDL;
-      fail++;
+      ServerSocket().queue(250).listenServer(25);
+      success("Created plain-text server socket");
+    } catch (const runtime_error &err) {
+      failure("Could not create plain-text server socket", err.what());
     }
 
-    // Prints the errors versus the total
-    if (fail > 0) logger << _BASH_FAIL_MARK << fail << '/' << total << " zijn gefaald, probeer deze op te lossen voordat u de server start." << ENDL;
-    else logger << _BASH_SUCCESS_MARK << total << '/' << total << " zijn geslaagd, u kunt de server starten !" << ENDL;
+    // =======================
+    // Final message
+    // =======================
 
-    // Closes the application since the tests are finished
-    std::exit(0);
+    logger << successes << '/' << successes + failures << " tests completed successfully." << ENDL;
+
+    exit(0);
   }
 
-  /**
-   * Adds an user to the database
-   *
-   * @Param {void}
-   * @Return {void}
-   */
   void addUserArgAction(void)
   {
     Logger logger("AccountCreator", LoggerLevel::INFO);
@@ -273,12 +243,6 @@ namespace FSMTP::ARG_ACTIONS
     std::exit(0);
   }
 
-  /**
-   * Syncs cassandra with redis
-   *
-   * @Param {void}
-   * @Return {void}
-   */
   void syncArgAction(void)
   {
     char uuidBuffer[64];
@@ -483,12 +447,6 @@ namespace FSMTP::ARG_ACTIONS
     std::exit(0);
   }
 
-  /**
-   * Sends an email custom or default
-   *
-   * @Param {void}
-   * @Return {void}
-   */
   void mailTestArgAction(void)
   {
     Logger logger("Mail", LoggerLevel::INFO);

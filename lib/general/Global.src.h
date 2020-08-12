@@ -14,15 +14,26 @@
 	limitations under the License.
 */
 
-#pragma once
+#ifndef _GENERAL_GLOBAL_H
+#define _GENERAL_GLOBAL_H
 
-#include "lib/default.h"
-#include "lib/general/Global.src.h"
-#include "lib/args/args.src.h"
-#include "lib/networking/sockets/SSLContext.src.h"
-#include "lib/networking/sockets/ServerSocket.src.h"
-#include "lib/networking/sockets/ClientSocket.src.h"
+#include "../default.h"
+#include "./connections.src.h"
 
-using namespace FSMTP;
+using namespace FSMTP::Connections;
 
-int main(const int argc, const char **argv);
+namespace FSMTP
+{
+
+  class Global
+  {
+  public:
+    static void configure();
+    static void readConfig(const char *config, const char *fallbackConfig);
+    static Json::Value &getConfig() noexcept;
+    static unique_ptr<CassandraConnection> getCassandra();
+    static unique_ptr<RedisConnection> getRedis();
+  };
+}
+
+#endif

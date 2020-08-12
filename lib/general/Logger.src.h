@@ -48,23 +48,10 @@ namespace FSMTP
 	class Logger
 	{
 	public:
-		/**
-		 * Default constructor for the logger
-		 *
-		 * @Param {const std::string &} l_Prefix
-		 * @Param {const LoggerLevel &} l_Level
-		 * @Return {void}
-		 */
 		Logger(const std::string &l_Prefix, const LoggerLevel &l_Level):
 			l_Prefix(l_Prefix), l_Level(l_Level)
 		{}
 
-		/**
-		 * Appends something to the stream
-		 *
-		 * @Param {T &} a
-		 * @Return {Logger &}
-		 */
 		template<typename T>
 		Logger &append(const T &a)
 		{
@@ -72,12 +59,6 @@ namespace FSMTP
 			return *this;
 		}
 
-		/**
-		 * Changes the logger level
-		 *
-		 * @Param {const LoggerLevel &} a
-		 * @Return {Logger &}
-		 */
 		Logger &append(const LoggerLevel& a)
 		{
 			this->l_Old = this->l_Level;
@@ -86,15 +67,8 @@ namespace FSMTP
 			return *this;
 		}
 
-		/**
-		 * Performs an operation such as print out
-		 *
-		 * @Param {const LoggerOpts &} a
-		 * @Return {Logger &}
-		 */
 		Logger &append(const LoggerOpts &a)
 		{
-			// Checks which option it is
 			switch (a)
 			{
 				case LoggerOpts::CLASSIC:
@@ -105,7 +79,6 @@ namespace FSMTP
 				case LoggerOpts::ENDL:
 				case LoggerOpts::FLUSH:
 				{
-					// Builds the time and appends it to the log entry
 					char dateBuffer[64];
 					std::time_t rawTime;
 					struct tm *timeInfo = nullptr;
@@ -113,36 +86,33 @@ namespace FSMTP
 					time(&rawTime);
 					timeInfo = localtime(&rawTime);
 					strftime(dateBuffer, sizeof (dateBuffer), "%a, %d %b %Y %T", timeInfo);
-
 					std::cout << dateBuffer << "->";
 
-					// Adds the loggerlevel prefix,
-					// and the thread id etcetera
 					switch (this->l_Level)
 					{
 						case LoggerLevel::DEBUG:
 						{
-							std::cout << "\033[36m[debug@" << this->l_Prefix << "]: \033[0m";
+							std::cout << "\033[36m(debug@" << this->l_Prefix << "): \033[0m";
 							break;
 						}
 						case LoggerLevel::PARSER:
 						{
-							std::cout << "\033[34m[parser@" << this->l_Prefix << "]: \033[0m";
+							std::cout << "\033[34m(parser@" << this->l_Prefix << "): \033[0m";
 							break;
 						}
 						case LoggerLevel::INFO:
 						{
-							std::cout << "\033[32m[info@" << this->l_Prefix << "]: \033[0m";
+							std::cout << "\033[32m(info@" << this->l_Prefix << "): \033[0m";
 							break;
 						}
 						case LoggerLevel::WARN:
 						{
-							std::cout << "\033[33m[warn@" << this->l_Prefix << "]: \033[0m";
+							std::cout << "\033[33m(warn@" << this->l_Prefix << "): \033[0m";
 							break;
 						}
 						case LoggerLevel::ERROR:
 						{
-							std::cout << "\033[31m[err@" << this->l_Prefix << "]: \033[0m";
+							std::cout << "\033[31m(err@" << this->l_Prefix << "): \033[0m";
 							break;
 						}
 						case LoggerLevel::FATAL:
@@ -152,9 +122,6 @@ namespace FSMTP
 						}
 					}
 
-
-					// Prints the message to the console
-					// and clears the buffers
 					if (a == LoggerOpts::FLUSH) std::cout << this->l_Stream.str() << std::flush;
 					else std::cout << this->l_Stream.str() << std::endl;
 					this->l_Stream.str("");
@@ -166,12 +133,6 @@ namespace FSMTP
 			return *this;
 		}
 
-		/**
-		 * Performs the operator overloading
-		 *
-		 * @Param {const T &} a
-		 * @Return {Logger &}
-		 */
 		template<typename T>
 		Logger &operator << (const T &a)
 		{

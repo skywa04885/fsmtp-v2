@@ -16,97 +16,30 @@
 
 #include "main.h"
 
-ServerType _serverType = ServerType::ST_SMTP;
-extern Json::Value _config;
+static const char *CONFIG_FILE = "../config.json";
+static const char *FALLBACK_CONFIG_FILE = "../fallback/config.json";
 
-/**
- * Application entry LOL, idiots.. Jk jk
- *
- * @Param {const int} argc
- * @Param {const char **} argv
- * @Return {int}
- */
 int main(const int argc, const char **argv)
 {
-	// Loads the configuration, and initializes OpenSSL
-	Configuration::read("../config.json");
-	SSL_load_error_strings();
-	OpenSSL_add_ssl_algorithms();
+	Global::configure();
+	Global::readConfig(CONFIG_FILE, FALLBACK_CONFIG_FILE);
 
-	// Handles the arguments
-	std::vector<std::string> argList(argv, argv+argc);
-	handleArguments(argList);
+	vector<string> args(argv, argv + argc);
+	handleArguments(args);
 
-	switch (_serverType)
-	{
-		case ServerType::ST_POP3:
-		{
-			Logger logger("Main", LoggerLevel::INFO);
-			logger << WARN << "Fannst POP3 Server door Luke A.C.A. Rieff, vrij onder de Apache 2.0 license" << ENDL << CLASSIC;
-			POP3::P3Server pop3server(_config["ports"]["pop3_plain"].asInt());
-		
-			for (;;)
-			{
-				std::this_thread::sleep_for(std::chrono::milliseconds(120));
-			};
+	auto cb = [](shared_ptr<Sockets::ClientSocket> client) {
+		for (;;) {
+			string message = client->read("\r\n");
+			cout << message << endl;
+			client->write(message.c_str(), message.length());
 		}
-		case ServerType::ST_SMTP:
-		{
-			Logger logger("Main", LoggerLevel::INFO);
-			logger << WARN << "Fannst SMTP/ESMTP Server door Luke A.C.A. Rieff, vrij onder de Apache 2.0 license" << ENDL << CLASSIC;
+	};
 
-			// Creates and starts the database worker
-			std::unique_ptr<DatabaseWorker> dbWorker = std::make_unique<DatabaseWorker>();
-			if (!dbWorker->start(nullptr))
-				std::exit(-1);
-			// Runs the transmission worker
-			std::unique_ptr<TransmissionWorker> transWorker = std::make_unique<TransmissionWorker>();
-			if (!transWorker->start(nullptr))
-				std::exit(-1);
-			// Runs the server
-			SMTPServer server(_config["ports"]["smtp_plain"].asInt(), true);
+	SSLContext context;
+	context.method(SSLv23_server_method()).read("../env/keys/key.pem", "../env/keys/cert.pem");
 
-			// Loops forever
-			for (;;)
-			{
-				std::this_thread::sleep_for(std::chrono::milliseconds(120));\
-			};
-		}
-		case ServerType::ST_IMAP:
-		{
-			Logger logger("Main", LoggerLevel::INFO);
-			logger << WARN << "Fannst IMAP Server door Luke A.C.A. Rieff, vrij onder de Apache 2.0 license" << ENDL << CLASSIC;
-
-			IMAP::IMAPServer sock(
-				_config["ports"]["imap_plain"].asInt(),
-				_config["ports"]["imap_secure"].asInt()
-			);
-
-			for (;;)
-			{
-				std::this_thread::sleep_for(std::chrono::milliseconds(120));
-			};
-		}
-		case ServerType::ST_DNS:
-		{
-			Logger logger("Main", LoggerLevel::INFO);
-			logger << WARN << "Fannst DNS Server door Luke A.C.A. Rieff, vrij onder de Apache 2.0 license" << ENDL << CLASSIC;
-			
-			try
-			{
-				DNS::DNSServer dnsServer(_config["ports"]["dns_gen"].asInt());
-				
-				for (;;)
-				{
-					std::this_thread::sleep_for(std::chrono::milliseconds(120));
-				};
-			} catch (const SocketInitializationException &e)
-			{
-				logger << FATAL << e.what() << ENDL << CLASSIC;
-			}
-		}
-		default: return -1;
-	}
+	Sockets::ServerSocket server;
+	server.queue(250).useSSL(&context).listenServer(25).handler(cb).startAcceptor(false);
 
 	return 0;
 }

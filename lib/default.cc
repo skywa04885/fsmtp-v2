@@ -14,15 +14,20 @@
 	limitations under the License.
 */
 
-#pragma once
+#include "default.h"
 
-#include "lib/default.h"
-#include "lib/general/Global.src.h"
-#include "lib/args/args.src.h"
-#include "lib/networking/sockets/SSLContext.src.h"
-#include "lib/networking/sockets/ServerSocket.src.h"
-#include "lib/networking/sockets/ClientSocket.src.h"
+string __ssl_get_error()
+{
+	BIO *bio = nullptr;
+	char *buffer = nullptr;
+	size_t bufferLen;
 
-using namespace FSMTP;
+	bio = BIO_new(BIO_s_mem());
+	ERR_print_errors(bio);
 
-int main(const int argc, const char **argv);
+	bufferLen = BIO_get_mem_data(bio, &buffer);
+	string error(buffer, bufferLen);
+
+	BIO_free(bio);
+	return error;
+}
