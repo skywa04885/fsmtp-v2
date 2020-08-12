@@ -41,7 +41,12 @@ namespace FSMTP::Workers
 	 */
 	void DatabaseWorker::startupTask(void)
 	{
-		this->d_Cassandra = std::make_unique<CassandraConnection>(_config["database"]["cassandra_hosts"].asCString());
+		const char *cassandraHosts = _config["database"]["cassandra_hosts"].asCString();
+		const char *cassandraUsername = _config["database"]["cassandra_username"].asCString();
+		const char *cassandraPassword = _config["database"]["cassandra_password"].asCString();
+
+		this->d_Cassandra = std::make_unique<CassandraConnection>(cassandraHosts, 
+			cassandraUsername, cassandraPassword);
 		this->w_Logger << "Verbinding met Cassandra is in stand gebracht !" << ENDL;
 
 		this->d_Redis = std::make_unique<RedisConnection>(_config["database"]["redis_hosts"].asCString(), _config["database"]["redis_port"].asInt());
@@ -80,6 +85,7 @@ namespace FSMTP::Workers
 			shortcut.e_EmailUUID = dataPair.second.e_EmailUUID;
 			shortcut.e_Bucket = dataPair.second.e_Bucket;
 			shortcut.e_SizeOctets = dataPair.first.size();
+			shortcut.e_From = dataPair.second.e_From[0].toString();
 
 			RawEmail raw;
 			raw.e_Bucket = dataPair.second.e_Bucket;

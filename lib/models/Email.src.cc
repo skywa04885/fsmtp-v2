@@ -64,9 +64,10 @@ namespace FSMTP::Models
    */
   std::string EmailAddress::toString(void) const
   {
-    std::string res = "\"";
-    res += this->e_Name + "\" <";
-    res += this->e_Address + ">";
+		std::string res;
+		if (!this->e_Name.empty())
+			res += this->e_Name + ' ';
+    res += "<" + this->e_Address + ">";
     return res;
   }
 

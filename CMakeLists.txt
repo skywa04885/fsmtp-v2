@@ -1,5 +1,4 @@
 CMAKE_MINiMUM_REQUIRED(VERSION 3.10)
-# ! IGNORE ! Only used for CLANG
 
 project(fsmtp VERSION 1.0.0)
 
@@ -17,3 +16,5 @@ add_executable(
 	${sources}
 	${headers}
 )
+
+target_link_libraries(${PROJECT_NAME} -lssl -lcassandra -ljsoncpp -lresolv -lcrypto -lhiredis -lpthread)

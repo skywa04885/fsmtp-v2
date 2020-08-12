@@ -24,19 +24,19 @@ namespace FSMTP::Connections
 	 * @Param {const char *} hosts
 	 * @Return {void}
 	 */
-	CassandraConnection::CassandraConnection(const char *hosts)
+	CassandraConnection::CassandraConnection(
+		const char *hosts, const char *username, const char *password
+	)
 	{
 		this->c_Cluster = cass_cluster_new();
 		this->c_ConnectFuture = nullptr;
 		this->c_Session = cass_session_new();
 
-		// Sets the contact points and connects to the
-		// - cassandra server, or datacenter idk
 		cass_cluster_set_contact_points(this->c_Cluster, hosts);
+		if (username != nullptr && password != nullptr)
+			cass_cluster_set_credentials(this->c_Cluster, username, password);
 		this->c_ConnectFuture = cass_session_connect(this->c_Session, this->c_Cluster);
 
-		// Validates the connection and throws error of we
-		// - could not connect to the cluster
 		if (cass_future_error_code(this->c_ConnectFuture) != CASS_OK)
 		{
 			std::string message = "cass_session_connect() failed: ";

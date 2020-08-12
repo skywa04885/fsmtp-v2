@@ -48,10 +48,6 @@ namespace FSMTP::Server
 			{"PLAIN"}
 		});
 		this->s_Services.push_back({
-			"PIPELINING",
-			{}
-		});
-		this->s_Services.push_back({
 			"STARTTLS",
 			{}
 		});
@@ -470,7 +466,11 @@ namespace FSMTP::Server
 						// Creates an cassandra connection
 						std::unique_ptr<CassandraConnection> cass;
 						try {
-							cass = std::make_unique<CassandraConnection>(_config["database"]["cassandra_hosts"].asCString());
+							cass = std::make_unique<CassandraConnection>(
+								_config["database"]["cassandra_hosts"].asCString(),
+								_config["database"]["cassandra_username"].asCString(),
+								_config["database"]["cassandra_password"].asCString()
+							);
 						} catch (const std::runtime_error &e)
 						{
 							throw FatalException("Could not connect to cassandra");

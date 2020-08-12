@@ -60,7 +60,7 @@ int main(const int argc, const char **argv)
 			if (!dbWorker->start(nullptr))
 				std::exit(-1);
 			// Runs the transmission worker
-			std::unique_ptr<TransmissionWorker> transWorker = std::make_unique<TransmissionWorker>();
+			std::unique_ptr<TransmissionWorker> transWorker = std::make_unique<TransmissionWorker>(_config["database"]["cassandra_hosts"].asCString());
 			if (!transWorker->start(nullptr))
 				std::exit(-1);
 			// Runs the server

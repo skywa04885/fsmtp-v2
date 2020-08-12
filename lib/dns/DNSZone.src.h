@@ -17,6 +17,7 @@
 #pragma once
 
 #include "DNS.src.h"
+#include "DNSHeader.src.h"
 
 namespace FSMTP::DNS
 {
@@ -24,23 +25,21 @@ namespace FSMTP::DNS
 	{
 		REC_TYPE_A = 0,
 		REC_TYPE_AAAA,
-		REC_TYPE_ALIAS,
-		REC_TYPE_CNAME,
 		REC_TYPE_MX,
-		REC_TYPE_NS,
-		REC_TYPE_PTR,
 		REC_TYPE_SOA,
-		REC_TYPE_SRV,
 		REC_TYPE_TXT,
 		REC_TYPE_UNKNOWN
-	} RecordType;
+	} ResponseRecordType;
 
-	typedef enum : uint8_t
-	{
-		REC_CLASS_IDK = 0
-	} RecordClass;
+	/**
+	 * Turns an response record type back into an integer
+	 *
+	 * @Param {const ResponseRecordType} type
+	 * @Return {int16_t}
+	 */
+	int16_t responseRecordTypeToInt(const ResponseRecordType type);
 
-	class Record
+	class DNSRecord
 	{
 	public:
 		/**
@@ -49,37 +48,35 @@ namespace FSMTP::DNS
 		 * @Param {void}
 		 * @Return {void}
 		 */
-		explicit Record(void);
+		explicit DNSRecord(void);
 
 		/**
 		 * The constructor for an record
 		 *
-		 * @Param {const char *} r_Data
-		 * @Param {const char *} r_Root
-		 * @Param {const std::size_t} r_DatLen
+		 * @Param {const std::string &} r_Data
+		 * @Param {const std::string &} r_Root
 		 * @Param {const int32_t} r_TTL,
-		 * @Param {const RecordType} r_Type
-		 * @Param {const RecordClass r_Class}
+		 * @Param {const ResponseRecordType} r_Type
+		 * @Param {const QueryClass r_Class}
 		 * @Return {void}
 		 */
-		Record(const char *r_Data, const char *r_Root,
-			const std::size_t r_DataLen, const int32_t r_TTL,
-			const RecordType r_Type, const RecordClass r_Class);
+		DNSRecord(const std::string &r_Data, const std::string &r_Root,
+			const int32_t r_TTL, const ResponseRecordType r_Type, 
+			const QueryClass r_Class);
 
 		/**
 		 * Builds an response record
 		 *
-		 * @Param {char **} ret
-		 * @Return {std::size+t}
+		 * @Param {char *} ret
+		 * @Return {std::size_t}
 		 */
-		std::size_t build(char **ret);
-	private:
-		const char *r_Data;
-		const char *r_Root;
-		std::size_t r_DataLen;
+		std::size_t build(char *ret) const;
+
+		std::string r_Data;
+		std::string r_Root;
 		int32_t r_TTL;
-		RecordType r_Type;
-		RecordClass r_Class;
+		ResponseRecordType r_Type;
+		QueryClass r_Class;
 	};
 
 	class Domain
@@ -92,10 +89,26 @@ namespace FSMTP::DNS
 		 * @Return {void}
 		 */
 		explicit Domain(void);
-	private:
-		const char *d_Domain;
-		std::vector<Record> d_Records;
+
+		/**
+		 * Logs the domain to the console
+		 *
+		 * @Param {Logger &} logger
+		 * @Return {void}
+		 */
+		void log(Logger &logger);
+
+		std::string d_Domain;
+		std::vector<DNSRecord> d_ARecords;
 	};
+
+	/**
+	 * Reads the zone from the config
+	 *
+	 * @Param {void}
+	 * @Return {std::vector<Domain>}
+	 */
+	std::vector<Domain> readConfig(void);
 
 	class Zone
 	{

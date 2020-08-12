@@ -14,27 +14,24 @@
 	limitations under the License.
 */
 
-#pragma once
+#include "SSLContext.src.h";
 
-#include "DNS.src.h"
-#include "DNSServerSocket.src.h"
-#include "DNSHeader.src.h"
-#include "DNSZone.src.h"
+using namespace FSMTP::Sockets;
 
-namespace FSMTP::DNS
+SSLContext::SSLContext(const char *p_KeyPath, const char *p_CertPath) noexcept:
+  p_KeyPath(p_KeyPath), p_CertPath(p_CertPath)
+{}
+
+void SSLContext::read(const SSL_METHOD *method)
 {
-	class DNSServer
-	{
-	public:
-		DNSServer(const int32_t port);
+  SSL_CTX *&ctx= this->p_SSLCtx;
 
-		static void acceptorCallback(DNSServerSocket *server, void *u);
+  ctx = SSL_CTX_new(method);
+  if (!ctx)
+    throw runtime_error(EXCEPT_DEBUG("Could not create SSL Context"));
+  
+  if (SSL_CTX_use_PrivateKey_file(ctx, this->p_KeyPath, SSL_FILETYPE_PEM) <= 0)
+  {
 
-		const Domain &findDomain(const std::string &domain);
-	private:
-		DNSServerSocket s_Socket;
-		std::atomic<bool> s_Run;
-		std::atomic<bool> s_Running;
-		std::vector<Domain> s_Domains;
-	};
+  }
 }

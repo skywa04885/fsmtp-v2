@@ -14,27 +14,25 @@
 	limitations under the License.
 */
 
-#pragma once
+#ifndef _LIB_NETWORKING_SOCKETS_SSL_CONTEXT_H
+#define _LIB_NETWORKING_SOCKETS_SSL_CONTEXT_H
 
-#include "DNS.src.h"
-#include "DNSServerSocket.src.h"
-#include "DNSHeader.src.h"
-#include "DNSZone.src.h"
+#include "../../default.h"
+#include "../../general/macros.src.h"
 
-namespace FSMTP::DNS
+namespace FSMTP::Sockets
 {
-	class DNSServer
-	{
-	public:
-		DNSServer(const int32_t port);
+  class SSLContext
+  {
+  public:
+    SSLContext(const char *p_KeyPath, const char *p_CertPath) noexcept;
 
-		static void acceptorCallback(DNSServerSocket *server, void *u);
-
-		const Domain &findDomain(const std::string &domain);
-	private:
-		DNSServerSocket s_Socket;
-		std::atomic<bool> s_Run;
-		std::atomic<bool> s_Running;
-		std::vector<Domain> s_Domains;
-	};
+    void read(const SSL_METHOD *method);
+    
+    const char *p_KeyPath;
+    const char *p_CertPath;
+    SSL_CTX *p_SSLCtx;
+  };
 }
+
+#endif

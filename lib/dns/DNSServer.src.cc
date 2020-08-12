@@ -24,10 +24,21 @@ namespace FSMTP::DNS
 		// Starts listening
 		this->s_Socket.startAcceptorSync(&this->s_Run, &this->s_Running, 
 			DNSServer::acceptorCallback, this);
+
+		// Reads the zone file
+		this->s_Domains = readConfig();
 	}
 
- void DNSServer::acceptorCallback(DNSServerSocket *server, void *u)
- {
+	const Domain &DNSServer::findDomain(const std::string &domain)
+	{
+		for (const Domain &dRef : this->s_Domains)
+			if (dRef.d_Domain == domain) return dRef;
+		throw std::runtime_error(EXCEPT_DEBUG("Could not find domain"));
+	}
+
+ 	void DNSServer::acceptorCallback(DNSServerSocket *server, void *u)
+ 	{
+ 		DNSServer &dnsServer = *reinterpret_cast<DNSServer *>(u);
  		static int32_t clientAddrLen = sizeof(struct sockaddr_in);
  		DNSHeader request, response;
  		struct sockaddr_in clientAddr;
@@ -66,17 +77,43 @@ namespace FSMTP::DNS
 			// ================================================
 
 			// Parses the questions, TODO: Support multiple query's
-			DNSQuestion question(&request.d_Buffer[12]);
+			bool secondQuery;
+			std::size_t answerEndIndex;
+
+			DNSQuestion question;
+			std::tie(secondQuery, answerEndIndex) = question.parse(&request.d_Buffer[12]);
+			
 			question.log(logger);
 
 			// Closes the request, and sets the values
 			// - back to the normal / default ones
-			response.clone(request);
+			response.clone(request, answerEndIndex + 12);
 			response.setAA(true);
 			response.setType(false);
 			response.setArCount(0);
-			response.setQdCount(0);
 
+			// Reads the zone, so we can check which
+			// - domains we have
+			try {
+				// Gets the domain, and sets the count
+				const Domain &domain = dnsServer.findDomain(question.d_QName);
+				response.setAsCount(domain.d_ARecords.size());
+
+				// Builds the records and appends them
+				for (const DNSRecord &r : domain.d_ARecords)
+				{
+					char ret[256];
+					std::size_t len = r.build(ret);
+
+					memcpy(&response.d_Buffer[response.d_BufferULen+1], ret, len);
+					response.d_BufferULen += len;
+				}
+			} catch (const std::runtime_error &e)
+			{ // TODO: Handle error
+
+			}
+
+			// Prints the response
 			logger << " - RESPONSE - " << ENDL;
 			response.log(logger);
 

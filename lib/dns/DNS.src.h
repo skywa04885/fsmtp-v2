@@ -24,12 +24,14 @@
 #include <thread>
 #include <vector>
 #include <tuple>
+#include <bitset>
 
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <json/json.h>
 #include <memory.h>
 
 #include "../general/Logger.src.h"

@@ -19,17 +19,17 @@
 
 std::mutex _transmissionMutex;
 std::deque<FSMTP::Workers::TransmissionWorkerTask> _transmissionQueue;
+extern Json::Value _config;
 
 namespace FSMTP::Workers
 {
 	/**
 	 * Default constructor for the transmission worker
 	 *
-	 * @Param {const std::string &} d_ContactPoints
 	 * @Return {void}
 	 */
-	TransmissionWorker::TransmissionWorker(const std::string &d_ContactPoints):
-		Worker("TransmissionWorker", 120), d_ContactPoints(d_ContactPoints)
+	TransmissionWorker::TransmissionWorker():
+		Worker("TransmissionWorker", 120)
 	{
 	}
 
@@ -41,8 +41,12 @@ namespace FSMTP::Workers
 	 */
 	void TransmissionWorker::startupTask(void)
 	{
-		this->w_Logger << "Verbinding maken met: " << this->d_ContactPoints << ENDL;
-		this->d_Connection = std::make_unique<CassandraConnection>(this->d_ContactPoints.c_str());
+		const char *hosts = _config["database"]["cassandra_hosts"].asCString();
+		const char *username = _config["database"]["cassandra_username"].asCString();
+		const char *password = _config["database"]["cassandra_password"].asCString();
+
+		this->w_Logger << "Verbinding maken met: " << hosts << ENDL;
+		this->d_Connection = std::make_unique<CassandraConnection>(hosts, username, password);
 		this->w_Logger << "Verbinding met database is in stand gebracht !" << ENDL;
 	}
 

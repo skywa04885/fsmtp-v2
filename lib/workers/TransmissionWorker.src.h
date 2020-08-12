@@ -46,10 +46,9 @@ namespace FSMTP::Workers
 		/**
 		 * Default constructor for the transmission worker
 		 *
-		 * @Param {const std::string &} d_ContactPoints
 		 * @Return {void}
 		 */
-		TransmissionWorker(const std::string &d_ContactPoints);
+		TransmissionWorker();
 
 		/**
 		 * The startup action of the worker
@@ -66,7 +65,6 @@ namespace FSMTP::Workers
 		 */
 		virtual void action(void *u);
 	private:
-		std::string d_ContactPoints;
 		std::unique_ptr<CassandraConnection> d_Connection;
 	};
 }

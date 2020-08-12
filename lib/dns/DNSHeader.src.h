@@ -61,6 +61,14 @@ namespace FSMTP::DNS
 	} QueryType;
 
 	/**
+	 * Turns an query class into an int16_t
+	 *
+	 * @Param {const QueryClass} class
+	 * @Return {int16_t}
+	 */
+	int16_t queryClassToInt(const QueryClass c);
+
+	/**
 	 * Returns the string of an query opcode
 	 *
 	 * @Param {const QueryOpcode} opcode
@@ -331,9 +339,10 @@ namespace FSMTP::DNS
 		 * Clones another header into the current one
 		 *
 		 * @Param {const DNSHeader &} header
+		 * @Param {const std::size_t} to
 		 * @Return {void}
 		 */
-		void clone(const DNSHeader &header);
+		void clone(const DNSHeader &header, const std::size_t to);
 
 		uint8_t d_Buffer[768];
 		int32_t d_BufferULen;

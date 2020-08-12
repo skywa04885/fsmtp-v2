@@ -117,6 +117,7 @@ namespace FSMTP::Models
     std::string e_Domain;
     std::string e_Subject;
     std::string e_Preview;
+    std::string e_From;
     CassUuid e_OwnersUUID;
     CassUuid e_EmailUUID;
     int32_t e_UID;

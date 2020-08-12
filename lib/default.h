@@ -14,27 +14,24 @@
 	limitations under the License.
 */
 
-#pragma once
+#ifndef _LIB_DEFAULT_H
+#define _LIB_DEFAULT_H
 
-#include "DNS.src.h"
-#include "DNSServerSocket.src.h"
-#include "DNSHeader.src.h"
-#include "DNSZone.src.h"
+// ==== STL/C++ Libraries ====
+#include <iostream>
+#include <string>
+#include <vector>
+#include <map>
+#include <sstream>
+#include <cstdint>
+#include <algorithm>
 
-namespace FSMTP::DNS
-{
-	class DNSServer
-	{
-	public:
-		DNSServer(const int32_t port);
+// ==== C Libraries ====
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
 
-		static void acceptorCallback(DNSServerSocket *server, void *u);
+// ==== Using namespaces ====
+using namespace std;
 
-		const Domain &findDomain(const std::string &domain);
-	private:
-		DNSServerSocket s_Socket;
-		std::atomic<bool> s_Run;
-		std::atomic<bool> s_Running;
-		std::vector<Domain> s_Domains;
-	};
-}
+#endif

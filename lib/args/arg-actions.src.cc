@@ -44,7 +44,11 @@ namespace FSMTP::ARG_ACTIONS
     logger << _BASH_UNKNOWN_MARK << "Start van Apache Cassandra || Datastax Enterprise database verbindings test ..." << ENDL;
     std::unique_ptr<CassandraConnection> cassandra;
     try {
-      cassandra = std::make_unique<CassandraConnection>(_config["database"]["cassandra_hosts"].asCString());
+      cassandra = std::make_unique<CassandraConnection>(
+        _config["database"]["cassandra_hosts"].asCString(),
+        _config["database"]["cassandra_username"].asCString(),
+        _config["database"]["cassandra_password"].asCString()
+      );
       logger << _BASH_SUCCESS_MARK << "Verbinding met Apache Cassandra || Datastax Enterprise is geslaagd !" << ENDL;
     }
     catch (const std::runtime_error &e)
@@ -144,7 +148,11 @@ namespace FSMTP::ARG_ACTIONS
     logger << _BASH_UNKNOWN_MARK << "Verbinding maken met Apache Cassandra ..." << ENDL;
     std::unique_ptr<CassandraConnection> cassandra;
     try {
-      cassandra = std::make_unique<CassandraConnection>(_config["database"]["cassandra_hosts"].asCString());
+      cassandra = std::make_unique<CassandraConnection>(
+        _config["database"]["cassandra_hosts"].asCString(),
+        _config["database"]["cassandra_username"].asCString(),
+        _config["database"]["cassandra_password"].asCString()
+      );
       logger << _BASH_SUCCESS_MARK << "Verbonden met apache cassandra !" << ENDL;
     } catch (const std::runtime_error &e)
     {
@@ -305,7 +313,11 @@ namespace FSMTP::ARG_ACTIONS
 
     std::unique_ptr<CassandraConnection> cassandra;
     try {
-      cassandra = std::make_unique<CassandraConnection>(_config["database"]["cassandra_hosts"].asCString());
+      cassandra = std::make_unique<CassandraConnection>(
+        _config["database"]["cassandra_hosts"].asCString(),
+        _config["database"]["cassandra_username"].asCString(),
+        _config["database"]["cassandra_password"].asCString()
+      );
     } catch (const std::runtime_error &e)
     {
       logger << FATAL << "Kon geen verbinding met Cassandra maken: " << e.what() << ENDL;

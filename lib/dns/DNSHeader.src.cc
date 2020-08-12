@@ -43,6 +43,25 @@ namespace FSMTP::DNS
 	}
 
 	/**
+	 * Turns an query class into an int16_t
+	 *
+	 * @Param {const QueryClass} class
+	 * @Return {int16_t}
+	 */
+	int16_t queryClassToInt(const QueryClass c)
+	{
+		switch (c)
+		{
+			case QueryClass::QUERY_CLASS_INTERNET: return 0x0001;
+			case QueryClass::QUERY_CLASS_CHAOS: return 0x0003;
+			case QueryClass::QUERY_CLASS_HESIOD: return 0x0004;
+			case QueryClass::QUERY_CLASS_NONE: return 0x00f2;
+			case QueryClass::QUERY_CLASS_ALL: return 0x00ff;
+			default: case QueryClass::QUERY_CLASS_CSNET: return 0x0002;
+		}
+	}
+
+	/**
 	 * The parse method
 	 *
 	 * @Param {const char *} parse
@@ -77,10 +96,10 @@ namespace FSMTP::DNS
 		++byteOffset;
 
 		// Gets the request type, and name
-		int32_t queryType = ntohs(*reinterpret_cast<const int16_t *>(&parse[byteOffset]));
-		byteOffset += 2;
-		int32_t queryClass = ntohs(*reinterpret_cast<const int16_t *>(&parse[byteOffset]));
-		byteOffset += 2;
+		int16_t queryType = ntohs(*reinterpret_cast<const int16_t *>(&parse[byteOffset]));
+		byteOffset += sizeof (int16_t);
+		int16_t queryClass = ntohs(*reinterpret_cast<const int16_t *>(&parse[byteOffset]));
+		byteOffset += sizeof (int16_t);
 
 		// Sets the query type
 		switch (queryType)
@@ -588,11 +607,12 @@ namespace FSMTP::DNS
 	 * Clones another header into the current one
 	 *
 	 * @Param {const DNSHeader &} header
+	 * @Param {const std::size_t} to
 	 * @Return {void}
 	 */
-	void DNSHeader::clone(const DNSHeader &header)
+	void DNSHeader::clone(const DNSHeader &header, const std::size_t to)
 	{
-		memcpy(this->d_Buffer, header.d_Buffer, header.d_BufferULen);
-		this->d_BufferULen = header.d_BufferULen;
+		memcpy(this->d_Buffer, header.d_Buffer, to);
+		this->d_BufferULen = to;
 	}
 }

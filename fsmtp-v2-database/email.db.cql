@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS fannst.email_shortcuts (
     e_bucket BIGINT,
     e_size_octets BIGINT,
     e_uid INT,
+    e_from VARCHAR,
     e_flags INT,
     e_mailbox VARCHAR,
     PRIMARY KEY((e_domain), e_owners_uuid, e_mailbox, e_email_uuid)

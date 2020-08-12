@@ -27,7 +27,6 @@ namespace FSMTP::SMTP
 	ClientCommand::ClientCommand():
 		c_CommandType(ClientCommandType::CCT_UNKNOWN), c_Arguments()
 	{
-
 	}
 
 	/**

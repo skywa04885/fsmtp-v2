@@ -24,7 +24,8 @@ namespace FSMTP::Models
    * @Param {void}
    * @Return {void}
    */
-  EmailShortcut::EmailShortcut(void)
+  EmailShortcut::EmailShortcut(void):
+    e_Flags(0)
   {}
 
   /**
@@ -39,12 +40,12 @@ namespace FSMTP::Models
       e_domain, e_subject, e_preview,
       e_owners_uuid, e_email_uuid, e_bucket,
       e_mailbox, e_size_octets, e_uid,
-      e_flags
+      e_flags, e_from
     ) VALUES (
       ?, ?, ?,
       ?, ?, ?,
       ?, ?, ?,
-      ?
+      ?, ?
     ))";
     CassStatement *statement = nullptr;
     CassFuture *future = nullptr;
@@ -52,8 +53,7 @@ namespace FSMTP::Models
 
     // Creates the statement and query, then binds
     // - the values
-    std::cout << this->e_Domain.c_str() << std::endl;
-    statement = cass_statement_new(query, 10);
+    statement = cass_statement_new(query, 11);
     cass_statement_bind_string(statement, 0, this->e_Domain.c_str());
     cass_statement_bind_string(statement, 1, this->e_Subject.c_str());
     cass_statement_bind_string(statement, 2, this->e_Preview.c_str());
@@ -64,6 +64,7 @@ namespace FSMTP::Models
     cass_statement_bind_int64(statement, 7, this->e_SizeOctets);
     cass_statement_bind_int32(statement, 8, this->e_UID);
     cass_statement_bind_int32(statement, 9, this->e_Flags);
+    cass_statement_bind_string(statement, 10, this->e_From.c_str());
 
     // Executes the query and checks for errors
     future = cass_session_execute(cassandra->c_Session, statement);
@@ -164,6 +165,8 @@ namespace FSMTP::Models
       std::size_t previewLen;
       const char *mailbox = nullptr;
       std::size_t mailboxLen;
+      const char *from;
+      size_t fromLen;
       EmailShortcut shortcut;
 
       // Gets the values
@@ -210,12 +213,17 @@ namespace FSMTP::Models
         cass_row_get_column_by_name(row, "e_Flags"),
         &shortcut.e_Flags
       );
+      cass_value_get_string(
+        cass_row_get_column_by_name(row, "e_from"),
+        &from, &fromLen
+      );
 
       // Stores the strings
       shortcut.e_Domain.append(domain, domainLen);
       shortcut.e_Preview.append(preview, previewLen);
       shortcut.e_Subject.append(subject, subjectLen);
       shortcut.e_Mailbox.append(mailbox, mailboxLen);
+      shortcut.e_From.append(from, fromLen);
 
       // Free's the memory and pushes the result
       ret.push_back(shortcut);

@@ -165,14 +165,12 @@ namespace FSMTP::Models
     CassFuture *future = nullptr;
     CassError rc;
 
-    // Creates the statement and binds the values
     statement = cass_statement_new(query, 4);
     cass_statement_bind_int64(statement, 0, bucket);
     cass_statement_bind_string(statement, 1, domain.c_str());
     cass_statement_bind_uuid(statement, 2, ownersUuid);
     cass_statement_bind_uuid(statement, 3, emailUuid);
 
-    // Executes the query and checks for errors
     future = cass_session_execute(cassandra->c_Session, statement);
     cass_future_wait(future);
 

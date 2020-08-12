@@ -49,15 +49,7 @@ namespace FSMTP::Parsers::MIME
 				// Splits the header, and verifies
 				// - if the header is in the correct format
 				std::size_t colonPos = token.find_first_of(':');
-				if (colonPos == std::string::npos)
-				{
-					std::string error = "Syntax error on line ";
-					error += std::to_string(lineIndex);
-					error += " no colon found: '";
-					error += token;
-					error += '\''; 
-					throw std::runtime_error(EXCEPT_DEBUG(error));
-				}
+				if (colonPos == std::string::npos) continue;
 				std::string key = token.substr(0, colonPos);
 				std::string value = token.substr(colonPos+1);
 				removeFirstAndLastWhite(value);

@@ -80,7 +80,11 @@ namespace FSMTP::POP3
 
 		// Connects to cassandra
 		try {
-			cassandra = std::make_unique<CassandraConnection>(_config["database"]["cassandra_hosts"].asCString());
+			cassandra = std::make_unique<CassandraConnection>(
+				_config["database"]["cassandra_hosts"].asCString(),
+        _config["database"]["cassandra_username"].asCString(),
+        _config["database"]["cassandra_password"].asCString()
+			);
 			DEBUG_ONLY(logger << DEBUG << "Verbonden met Cassandra ["
 				<< _config["database"]["cassandra_hosts"].asCString() << "]" << ENDL << CLASSIC);
 		} catch (const std::runtime_error &e)

@@ -42,7 +42,9 @@ namespace FSMTP::Connections
 		 * @Param {const char *} hosts
 		 * @Return {void}
 		 */
-		explicit CassandraConnection(const char *hosts);
+		explicit CassandraConnection(
+			const char *hosts, const char *username, const char *password
+		);
 
 		/**
 		 * Default destructor which closes the connection

@@ -80,7 +80,10 @@ namespace FSMTP::IMAP
 		try
 		{
 			cassandra = std::make_unique<CassandraConnection>(
-				_config["database"]["cassandra_hosts"].asCString());
+				_config["database"]["cassandra_hosts"].asCString(),
+        _config["database"]["cassandra_username"].asCString(),
+        _config["database"]["cassandra_password"].asCString()
+			);
 		} catch (const std::runtime_error &e)
 		{
 			logger << FATAL << "Could not connect to Cassandra: " << e.what() << ENDL << CLASSIC;

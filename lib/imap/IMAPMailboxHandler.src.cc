@@ -31,7 +31,7 @@ namespace FSMTP::IMAP::MAILBOX_HANDLER
 	{
 		// Checks the type, and if we need to go more in depth
 		if (arg1[0] == '*')
-			return listQuery{ListQueryType::LQT_ALL, 0};
+			return listQuery{ListQueryType::LQT_ALL};
 		else if (arg1[0] == '%')
 		{
 			std::size_t depth = 0;
