@@ -27,19 +27,8 @@ int main(const int argc, const char **argv)
 	vector<string> args(argv, argv + argc);
 	handleArguments(args);
 
-	auto cb = [](shared_ptr<Sockets::ClientSocket> client) {
-		for (;;) {
-			string message = client->read("\r\n");
-			cout << message << endl;
-			client->write(message.c_str(), message.length());
-		}
-	};
-
-	SSLContext context;
-	context.method(SSLv23_server_method()).read("../env/keys/key.pem", "../env/keys/cert.pem");
-
-	Sockets::ServerSocket server;
-	server.queue(250).useSSL(&context).listenServer(25).handler(cb).startAcceptor(false);
-
+	SMTPServer server;
+	server.createContext().listenServer().startHandler(false);
+	
 	return 0;
 }

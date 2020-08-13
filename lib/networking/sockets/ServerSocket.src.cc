@@ -18,7 +18,9 @@
 
 using namespace FSMTP::Sockets;
 
-ServerSocket::ServerSocket() noexcept {}
+ServerSocket::ServerSocket() noexcept:
+  s_SSLContext(nullptr)
+{}
 
 ServerSocket::~ServerSocket() noexcept {
   shutdown(this->s_SocketFD, SHUT_RDWR);
@@ -89,6 +91,11 @@ ServerSocket &ServerSocket::startAcceptor(const bool newThread)
       }
     }
   };
+
+  // If the newThread boolean is set, we want to create an
+  //  separate thread with the acceptor, if this is not the
+  //  case we just call the lambda, and run the code in the
+  //  current thread
 
   if (!newThread) {
     acceptor();

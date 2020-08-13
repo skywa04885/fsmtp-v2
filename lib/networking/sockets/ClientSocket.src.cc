@@ -57,6 +57,11 @@ ClientSocket &ClientSocket::acceptAsServer(const int32_t server) {
   struct sockaddr_in &addr = this->s_SocketAddr;
   socklen_t len = sizeof(addr);
 
+  // Attempts to accept an client, if this fails we wait for some
+  //  time and then jump back to the accept phase. When this is
+  //  done we check if the SSLCtx is not null, if this is true
+  //  we know that we use ssl, and want to upgrade first
+
   _accept_client:
   if ((fd = accept(server, reinterpret_cast<struct sockaddr *>(&addr), &len)) == -1) {
     this_thread::sleep_for(milliseconds(1));
@@ -67,19 +72,95 @@ ClientSocket &ClientSocket::acceptAsServer(const int32_t server) {
   else return this->upgradeAsServer();
 }
 
-void ClientSocket::write(const char *msg, const size_t len) {
+int32_t ClientSocket::write(const char *msg, const size_t len) {
+  int32_t rc;
+
   if (this->s_SSLCtx) {
-    if (SSL_write(this->s_SSL, msg, len) <= 0) {
+    if ((rc = SSL_write(this->s_SSL, msg, len)) < 0) {
       throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
     }
   } else {
-    if (send(this->s_SocketFD, msg, len, 0) == -1) {
+    if ((rc = send(this->s_SocketFD, msg, len, 0)) == -1) {
       throw runtime_error(EXCEPT_DEBUG(strerror(errno)));
     }
   }
+
+  return rc;
+}
+
+int32_t ClientSocket::write(const std::string &msg) {
+  return this->write(msg.c_str(), msg.length());
+}
+
+int32_t ClientSocket::read(char *buffer, const size_t bufferSize) {
+  int32_t rc;
+
+  if (this->s_SSLCtx) {
+    if ((rc = SSL_read(this->s_SSL, buffer, bufferSize)) <= 0) {
+      throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
+    }
+  } else {
+    if ((rc = recv(this->s_SocketFD, buffer, bufferSize, 0)) == -1) {
+      throw runtime_error(EXCEPT_DEBUG(strerror(errno)));
+    }
+  }
+
+  return rc;
+}
+
+int32_t ClientSocket::peek(char *buffer, const size_t bufferSize) {
+  int32_t rc;
+
+  if (this->s_SSLCtx) {
+    if ((rc = SSL_peek(this->s_SSL, buffer, bufferSize)) <= 0) {
+      throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
+    }
+  } else {
+    if ((rc = recv(this->s_SocketFD, buffer, bufferSize, MSG_PEEK)) <= 0) {
+      throw runtime_error(EXCEPT_DEBUG(strerror(errno)));
+    }
+  }
+
+  return rc;
 }
 
 #define _CLIENT_SOCKET_RBUF_LEN 255
-string read(const char *delim) {
+string ClientSocket::readToDelim(const char *delim) {
   char buffer[_CLIENT_SOCKET_RBUF_LEN];
+  bool endFound = false;
+  int32_t readLen;
+  size_t delimSize = strlen(delim), searchIndex;
+  string result;
+
+  // Keeps reading from the client untill delimiter is reached
+  //  then we return from the method. We use peek so we can
+  //  later use pipelining. When finally adding the buffer to the
+  //  string, we subtract the delimiter sice ( ony when end reached )
+
+  while (endFound == false) {
+    readLen = this->peek(buffer, sizeof(buffer));
+
+    string searchString;
+    if (result.length() > delimSize) {
+      searchString += result.substr(result.length() - delimSize);
+    }
+
+    searchString.append(buffer, readLen);
+    if ((searchIndex = searchString.find(delim)) != string::npos) {
+      endFound = true;
+    }
+
+    readLen = this->read(buffer, readLen);
+    result.append(buffer, readLen);
+  }
+
+  return result.substr(0, result.length() - delimSize);
+}
+
+bool ClientSocket::usingSSL() {
+  return this->s_SSLCtx != nullptr;
+}
+
+string ClientSocket::getPrefix() {
+  return inet_ntoa(this->s_SocketAddr.sin_addr);
 }

@@ -85,76 +85,66 @@ namespace FSMTP::SMTP
 		switch (command[0])
 		{
 			case 'h':
-			{
-				if (command.substr(0, 4) == "helo")
+				if (command == "helo") {
 					this->c_CommandType = ClientCommandType::CCT_HELO;
-				else if (command.substr(0, 4) == "help")
+				} else if (command == "help") {
 					this->c_CommandType = ClientCommandType::CCT_HELP;
-				else 
+				} else { 
 					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
+				}
 				break;
-			}
 			case 'e':
-			{
-				if (command.substr(0, 4) == "ehlo")
+				if (command == "ehlo") {
 					this->c_CommandType = ClientCommandType::CCT_EHLO;
-				else 
+				} else { 
 					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
+				}
 				break;
-			}
 			case 's':
-			{
-				if (command.substr(0, 8) == "starttls")
+				if (command == "starttls") {
 					this->c_CommandType = ClientCommandType::CCT_START_TLS;
-				else 
+				} else {
 					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
+				}
 				break;
-			}
 			case 'm':
-			{
-				if (command.substr(0, 9) == "mail from")
+				if (command == "mail from") {
 					this->c_CommandType = ClientCommandType::CCT_MAIL_FROM;
-				else 
+				} else {
 					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
+				}
 				break;
-			}
 			case 'r':
-			{
-				if (command.substr(0, 8) == "rcpt to")
+				if (command == "rcpt to") {
 					this->c_CommandType = ClientCommandType::CCT_RCPT_TO;
-				else 
+				} else {
 					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
+				}
 				break;
-			}
 			case 'd':
-			{
-				if (command.substr(0, 4) == "data")
+				if (command == "data") {
 					this->c_CommandType = ClientCommandType::CCT_DATA;
-				else 
+				} else { 
 					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
+				}
 				break;
-			}
 			case 'q':
-			{
-				if (command.substr(0, 4) == "quit")
+				if (command == "quit") {
 					this->c_CommandType = ClientCommandType::CCT_QUIT;
-				else 
+				} else { 
 					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
+				}
 				break;
-			}
 			case 'a':
-			{
-				if (command.substr(0, 4) == "auth")
+				if (command == "auth") {
 					this->c_CommandType = ClientCommandType::CCT_AUTH;
-				else 
+				} else { 
 					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
+				}
 				break;
-			}
 			default:
-			{
 				this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
 				break;
-			}
 		}
 
 		// Checks if we may have arguments, if so it will start parsing

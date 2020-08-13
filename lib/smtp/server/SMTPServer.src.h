@@ -16,20 +16,10 @@
 
 #pragma once
 
-#include <iostream>
-#include <string>
-#include <atomic>
-#include <vector>
-#include <stdexcept>
-#include <utility>
-#include <bitset>
-#include <mutex>
-
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
+#include "../../default.h"
+#include "../../networking/sockets/ServerSocket.src.h"
+#include "../../networking/sockets/SSLContext.src.h"
+#include "../../general/Global.src.h"
 
 #include "../Response.src.h"
 #include "../Command.src.h"
@@ -43,72 +33,33 @@
 #include "../../models/LocalDomain.src.h"
 #include "../../workers/TransmissionWorker.src.h"
 
-#define _SERVER_OPT_ENABLE_AUTH 0x1
-#define _SERVER_OPT_ENABLE_TLS 0x2
-#define _SERVER_OPT_ENABLE_ENCHANCED_STATUS_CODES 0x4
-#define _SERVER_OPT_ENABLE_PIPELINING 0x8
-
-#define _SERVER_OPT_ENABLE_HELP 0xF
-
 using namespace FSMTP::Parsers;
 using namespace FSMTP;
 using namespace FSMTP::SMTP;
-using namespace FSMTP::Networking;
 using namespace FSMTP::Models;
 using namespace FSMTP::Networking;
 using namespace FSMTP::Workers;
+using namespace Sockets;
 
 namespace FSMTP::Server
 {
 	class SMTPServer
 	{
 	public:
-		/**
-		 * Default constructor for the SMTPServer
-		 *
-		 * @Param {const int32_t} port
-		 * @Param {const bool} s_UseESMTP
-		 */
-		SMTPServer(
-			const int32_t port,
-			const bool s_UseESMTP
-		);
+		SMTPServer() noexcept;
+		~SMTPServer() noexcept;
 
-		/**
-		 * Gets the socket
-		 *
-		 * @Param {void}
-		 * @Return {SMTPSocket &} socket
-		 */
-		SMTPSocket &getSocket(void);
+		SMTPServer &listenServer();
+		SMTPServer &createContext();
+		SMTPServer &startHandler(const bool newThread);
 
-		/**
-		 * The method which gets called when an client
-		 * - has connected
-		 *
-		 * @Param {struct sockaddr_in *} sockaddr
-		 * @Param {int32_t} fd
-		 * @Param {void *} u
-		 * @Return {void}
-		 */
-		static void onClientSync(struct sockaddr_in *sockaddr, int32_t fd, void *u);
-
-		/**
-		 * Closes the SMTP Server
-		 *
-		 * @Param {void}
-		 * @Return {void}
-		 */
-		void shutdownServer(void);
+		bool handleCommand(shared_ptr<ClientSocket> client, const ClientCommand &command, SMTPServerSession &session);
 
 		std::vector<SMTPServiceFunction> s_Services;
-		bool s_UseESMTP;
 	private:
-		SMTPSocket s_Socket;
-		std::atomic<bool> s_IsRunning;
-		std::atomic<bool> s_ShouldBeRunning;
+		unique_ptr<ServerSocket> s_SSLSocket;
+		unique_ptr<ServerSocket> s_PlainSocket;
+		unique_ptr<SSLContext> s_SSLContext;
 		Logger s_Logger;
-		int32_t s_RedisPort;
-		std::string s_RedisHost;
 	};
 }

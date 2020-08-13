@@ -30,8 +30,13 @@ namespace FSMTP::Sockets {
     ClientSocket &upgradeAsServer();
     ClientSocket &useSSL(SSLContext *ctx);
     ClientSocket &acceptAsServer(const int32_t server);
-    void write(const char *msg, const size_t len);
-
+    string getPrefix();
+    int32_t write(const char *msg, const size_t len);
+    int32_t write(const std::string &msg);
+    string readToDelim(const char *delim);
+    int32_t read(char *buffer, const size_t bufferSize);
+    int32_t peek(char *buffer, const size_t bufferSize);
+    bool usingSSL();
   private:
     struct sockaddr_in s_SocketAddr;
     SSLContext *s_SSLCtx;

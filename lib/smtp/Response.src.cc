@@ -16,102 +16,80 @@
 
 #include "Response.src.h"
 
-extern Json::Value _config;
-
 namespace FSMTP::SMTP
 {
-	/**
-	 * The default constructor for the response
-	 * - this will generate the text, and do everything
-	 * - automatically
-	 *
-	 * @Param {const SMTPResponseType} c_Type
-	 * @Return {void}
-	 */
 	ServerResponse::ServerResponse(const SMTPResponseType c_Type):
 		c_Type(c_Type), c_Services(nullptr)
 	{}
 
-	/**
-	 * The default constructor, but then with the services
-	 * - pointer, currently only for EHLO command
-	 *
-	 * @Param {const SMTPResponseType} c_Type
-	 * @Param {const std::string &} c_Message
-	 * @Param {void *} c_U
-	 * @Param {const std::vector<SMTPServiceFunction *} c_Services
-	 * @Return {void}
-	 */
 	ServerResponse::ServerResponse(
 		const SMTPResponseType c_Type,
-		const std::string &c_Message, 
-		void *c_U,
-		std::vector<SMTPServiceFunction> *c_Services
+		const string &c_Message, 
+		const void *c_U,
+		vector<SMTPServiceFunction> *c_Services
 	):
 		c_Type(c_Type), c_Services(c_Services), c_Message(c_Message),
 		c_U(c_U)
 	{}
 
-	/**
-	 * Builds the response message
-	 *
-	 * @Param {void}
-	 * @Return {std::string}
-	 */
-	std::string ServerResponse::build(void)
-	{
-		std::string res;
+	string ServerResponse::build(void) {
 		int32_t code = ServerResponse::getCode(this->c_Type);
+		auto &conf = Global::getConfig();
+		ostringstream stream;
 
-		// Checks if we need to generate
-		// - an normal message
-		if (this->c_Services == nullptr)
-		{
-			res += std::to_string(code);
-			res += ' ';
-			res += this->getMessage(this->c_Type);
-
-			if (this->c_Type != SMTPResponseType::SRC_GREETING)
-			{
-				res += ' ';
-				res += _config["node_name"].asCString();
-			}
-			res += " - fsmtp\r\n";
-		} else
-		{
-			res += std::to_string(code);
-			res += '-';
-			res += this->getMessage(this->c_Type);
-			res += "\r\n";
-			res += ServerResponse::buildServices(code, this->c_Services);
+		if (this->c_Services == nullptr) {
+			stream << std::to_string(code) << ' ' << this->getMessage(this->c_Type);
+			stream << " - fsmtp\r\n";
+		} else {
+			stream << std::to_string(code) << '-' << this->getMessage(this->c_Type) << "\r\n";
+			stream << ServerResponse::buildServices(code, this->c_Services);
 		}
 
-		return res;
+		return stream.str();
 	}
 
-	/**
-	 * Gets the message for an specific response type
-	 *
-	 * @Param {const SMTPResponseType} c_Type
-	 * @Return {std::string}
-	 */
-	std::string ServerResponse::getMessage(const SMTPResponseType c_Type)
-	{
-		if (!this->c_Message.empty()) return this->c_Message;
+	string ServerResponse::getMessage(const SMTPResponseType c_Type) {
+		auto &conf = Global::getConfig();
 
-		switch (c_Type)
-		{
-			case SMTPResponseType::SRC_GREETING:
-			{
+		if (!this->c_Message.empty()) return this->c_Message;
+		ostringstream stream;
+
+		switch (c_Type) {
+			case SMTPResponseType::SRC_AUTH_NOT_ALLOWED:
+				stream << "Mail from different then authenticated email";
+				break;
+			case SMTPResponseType::SRC_DATA_START:
+				stream << "End data with <CR><LF>.<CR><LF>";
+				break;
+			case SMTPResponseType::SRC_ORDER_ERR:
+				stream << "Invalid order, why: [unknown]";
+				break;
+			case SMTPResponseType::SRC_INVALID_COMMAND:
+				stream << "unrecognized command.";
+				break;
+			case SMTPResponseType::SRC_START_TLS:
+				stream << "Ready to start TLS";
+				break;
+			case SMTPResponseType::SRC_QUIT_GOODBYE:
+				stream << "Closing connection";
+				break;
+			case SMTPResponseType::SRC_AUTH_SUCCESS:
+				stream << "Authentication successfull, welcome back.";
+				break;
+			case SMTPResponseType::SRC_AUTH_FAIL:
+				stream << "Authentication failed, closing transmission channel.";
+				break;
+			case SMTPResponseType::SRC_RELAY_FAIL:
+				stream << "Relay denied.";
+				break;
+			case SMTPResponseType::SRC_HELP_RESP:
+				stream << "Fannst ESMTP server https://github.com/skywa04885/fsmtp-v2";
+				break;
+			case SMTPResponseType::SRC_GREETING: {
+				struct tm *timeInfo = nullptr;
 				char dateBuffer[128];
 				std::time_t rawTime;
-				struct tm *timeInfo = nullptr;
 
-				// Builds the standard message
-				std::string ret = _config["node_name"].asCString();
-				ret += " Fannst ESMTP Mail service ready at ";
-
-				// Appends the time to the final string
 				time(&rawTime);
 				timeInfo = localtime(&rawTime);
 				strftime(
@@ -120,67 +98,37 @@ namespace FSMTP::SMTP
 					"%a, %d %b %Y %T %Z",
 					timeInfo
 				);
-				ret += dateBuffer;
-				
-				return ret;
+
+				stream << conf["node_name"].asCString();
+				stream << " Fannst ESMTP Mail service ready at " << dateBuffer;
+				break;
 			}
 			case SMTPResponseType::SRC_HELO:
-			case SMTPResponseType::SRC_EHLO:
-			{
-				// Builds the response message and returns it
-				std::string ret = _config["smtp"]["server"]["domain"].asCString();
-				ret += ", at your service ";
-				ret += DNS::getHostnameByAddress(reinterpret_cast<struct sockaddr_in *>(this->c_U));
-				ret += " [";
-				ret += inet_ntoa(reinterpret_cast<struct sockaddr_in *>(this->c_U)->sin_addr);
-				ret += "] - max 15.000ms";
-				return ret;
+			case SMTPResponseType::SRC_EHLO: {
+				stream << conf["smtp"]["server"]["domain"].asCString() << ", at your service ";
+				stream << DNS::getHostnameByAddress(reinterpret_cast<const struct sockaddr_in *>(this->c_U));
+				stream << " [" << inet_ntoa(reinterpret_cast<const struct sockaddr_in *>(this->c_U)->sin_addr) << ']';
+				break;
 			}
 			case SMTPResponseType::SRC_MAIL_FROM:
 			case SMTPResponseType::SRC_RCPT_TO:
-			{
-				std::string ret = "OK, proceed [";
-				ret += reinterpret_cast<const char *>(this->c_U);
-				ret += ']';
-				return ret;;
-			}
-			case SMTPResponseType::SRC_AUTH_NOT_ALLOWED: return "Mail from different then authenticated email";
-			case SMTPResponseType::SRC_DATA_START: return "End data with <CR><LF>.<CR><LF>";
-			case SMTPResponseType::SRC_ORDER_ERR: return "Invalid order, why: [unknown].";
-			case SMTPResponseType::SRC_INVALID_COMMAND: return "unrecognized command.";
-			case SMTPResponseType::SRC_START_TLS: return "Ready to start TLS.";
-			case SMTPResponseType::SRC_QUIT_GOODBYE: return "Closing connection";
-			case SMTPResponseType::SRC_AUTH_SUCCESS: return "Authentication successfull, welcome back.";
-			case SMTPResponseType::SRC_AUTH_FAIL: return "Authentication failed, closing transmission channel.";
-			case SMTPResponseType::SRC_RELAY_FAIL: return "Relay denied.";
-			case SMTPResponseType::SRC_HELP_RESP: return "Fannst ESMTP server https://github.com/skywa04885/fsmtp-v2";
+				stream << "OK, proceed [" << reinterpret_cast<const char *>(this->c_U) << ']';
+				break;
 			case SMTPResponseType::SRC_REC_NOT_LOCAL:
-			{
-				std::string ret = "User [";
-				ret += reinterpret_cast<const char *>(this->c_U);
-				ret += "] not local, closing transmission channel.";
-				return ret;
-			}
+				stream << "User [" << reinterpret_cast<const char *>(this->c_U);
+				stream << "] not local, closing transmission channel.";
+				break;
 			case SMTPResponseType::SRC_DATA_END:
-			{
-				std::string ret = "OK, message queued ";
-				ret += reinterpret_cast<const char *>(this->c_U); // ( MESSAGE ID )
-				return ret;
-			}
+				stream << "OK, message queued " << reinterpret_cast<const char *>(this->c_U);
+				break;
 			default: throw std::runtime_error("getMessage() invalid type");
 		}
+
+		return stream.str();
 	}
 
-	/**
-	 * Gets the code for response type
-	 *
-	 * @Param {const SMTPResponseType} c_Type
-	 * @Return {int32_t}
-	 */
-	int32_t ServerResponse::getCode(const SMTPResponseType c_Type)
-	{
-		switch (c_Type)
-		{
+	int32_t ServerResponse::getCode(const SMTPResponseType c_Type) {
+		switch (c_Type) {
 			case SMTPResponseType::SRC_GREETING: return 220;
 			case SMTPResponseType::SRC_EHLO: return 250;
 			case SMTPResponseType::SRC_HELO: return 250;
@@ -203,64 +151,35 @@ namespace FSMTP::SMTP
 		}
 	}
 
-	/**
-	 * Builds the services list
-	 *
-	 * @Param {const int32_t} code
-	 * @Param {std::vector<SMTPServiceFunction> *} c_Services
-	 */
-	std::string ServerResponse::buildServices(
+	string ServerResponse::buildServices(
 		const int32_t code,
-		std::vector<SMTPServiceFunction> *c_Services
-	)
-	{
-		std::string res;
+		vector<SMTPServiceFunction> *c_Services
+	) {
+		size_t index = 0, total = c_Services->size();
+		ostringstream stream;
 
-		std::size_t index = 0, total = c_Services->size();
-		for (const SMTPServiceFunction service  : *c_Services)
-		{
-			// Appends the code with the
-			// - required separator and name
-			res += std::to_string(code);
-			if (++index == total)
-				res += ' ';
-			else
-				res += '-';
-			res += service.s_Name;
+		for_each(c_Services->begin(), c_Services->end(), [&](auto &service) {
+			stream << code << (++index == total ? ' ' : '-') << service.s_Name;
 
-			// Appends the space with the sub arguments
-			// - to the result
-			for (const char *arg : service.s_SubArgs)
-			{
-				res += ' ';
-				res += arg;
-			}
+			for_each(service.s_SubArgs.begin(), service.s_SubArgs.end(), [&](auto &arg) {
+				stream << ' ' << arg;
+			});
 
-			// Appends the newline
-			res += "\r\n";
-		}
+			stream << "\r\n";
+		});
 
-		return res;
+		return stream.str();
 	}
 
-	/**
-	 * Parses an server response into an string and code
-	 *
-	 * @Param {const std::string &} raw
-	 * @Return {int32_t}
-	 * @Return {std::string}
-	 */
-	std::tuple<int32_t, std::string> ServerResponse::parseResponse(const std::string &raw)
-	{
-		std::string clean;
+	tuple<int32_t, string> ServerResponse::parseResponse(const string &raw) {
+		string clean;
 		reduceWhitespace(raw, clean);
 
-		std::size_t index = clean.find_first_of(' ');
-		if (index == std::string::npos)
-			return std::make_pair(std::stoi(clean), "");
-		else return std::make_pair(
-			std::stoi(clean.substr(0, index)),
-			clean.substr(index + 1)
-		);
+		size_t index = clean.find_first_of(' ');
+		if (index == string::npos)
+			return make_pair(stoi(clean), "");
+		else {
+			return make_pair(stoi(clean.substr(0, index)), clean.substr(index + 1));
+		}
 	}
 }

@@ -19,6 +19,12 @@
 		"dkim_public": "../env/keys/dkim-public.pem",
 		"dkim_private": "../env/keys/dkim-private.pem"
 	},
+	"servers": {
+		"esmtp": {
+			"secure": 587,
+			"plain": 25
+		}
+	},
 	"smtp": {
 		"client": {
 			"mailer_port": 25,

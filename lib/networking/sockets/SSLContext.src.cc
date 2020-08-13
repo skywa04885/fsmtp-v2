@@ -37,11 +37,12 @@ SSLContext &SSLContext::read(const char *privateKey, const char *cert) {
 
 	// Sets the password callback with the user data for the current
 	//  ssl context, this will basically read the password from the
-	//  current instance, when this is requested by openssl
+	//  current instance, when this is requested by openssl. After
+	//  this we set the key and cert file.
+
 	SSL_CTX_set_default_passwd_cb(ctx, SSLContext::passwordCallback);
 	SSL_CTX_set_default_passwd_cb_userdata(ctx, this);
 
-	// Reads the public and private key file
   if (SSL_CTX_use_PrivateKey_file(ctx, privateKey, SSL_FILETYPE_PEM) <= 0) {
 		throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
   } else if (SSL_CTX_use_certificate_file(ctx, cert, SSL_FILETYPE_PEM) <= 0) {

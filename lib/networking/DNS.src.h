@@ -74,5 +74,5 @@ namespace FSMTP::DNS
 	 * @Param {struct sockaddr_in *addr} addr
 	 * @Return {std::string}
 	 */
-	std::string getHostnameByAddress(struct sockaddr_in *addr);
+	std::string getHostnameByAddress(const struct sockaddr_in *addr);
 }

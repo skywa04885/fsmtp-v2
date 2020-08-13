@@ -74,9 +74,32 @@ namespace FSMTP::ARG_ACTIONS
 
     try {
       ServerSocket().queue(250).listenServer(25);
-      success("Created plain-text server socket");
+      success("Created plain server socket");
     } catch (const runtime_error &err) {
-      failure("Could not create plain-text server socket", err.what());
+      failure("Could not create plain server socket", err.what());
+    }
+
+    try {
+      ServerSocket().useSSL(&ctx).queue(250).listenServer(587);
+      success("Created SSL socket server socket");
+    } catch (const runtime_error &err) {
+      failure("Could not create SSL server socket", err.what());
+    }
+
+    int32_t ports[] = {25, 587, 110, 143, 995, 993};
+    for (int32_t port : ports) {
+      string message = "port ";
+      message += to_string(port);
+      
+      try {
+        ServerSocket().queue(250).listenServer(25);
+        
+        message += " is available";
+        success(message);
+      } catch (const runtime_error &err) {
+        message += " is not available";
+        failure(message, err.what());
+      }
     }
 
     // =======================
