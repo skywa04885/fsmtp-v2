@@ -23,12 +23,17 @@ vector<pair<string, FullEmail>> _emailStorageQueue;
 namespace FSMTP::Workers
 {
 	DatabaseWorker::DatabaseWorker(void):
-		Worker("DatabaseWorker", 900)
+		Worker("FSMTP-V2/STORAGE", 900)
 	{}
 
 	void DatabaseWorker::startupTask(void) {
+		auto &logger = this->w_Logger;
+
 		this->d_Cassandra = Global::getCassandra();
+		logger << _BASH_SUCCESS_MARK << "Connected to cassandra" << ENDL;
+
 		this->d_Redis = Global::getRedis();
+		logger << _BASH_SUCCESS_MARK << "Connected to redis" << ENDL;
 	}
 
 	void DatabaseWorker::action(void *u) {
@@ -98,8 +103,12 @@ namespace FSMTP::Workers
 			);
 
 			// Stores the shit
-			raw.save(this->d_Cassandra.get());
-			shortcut.save(this->d_Cassandra.get());
+			try {
+				raw.save(this->d_Cassandra.get());
+				shortcut.save(this->d_Cassandra.get());
+			} catch (const DatabaseException &e) {
+				this->w_Logger << FATAL << "Could not store message: " << e.what() << ENDL << CLASSIC;
+			}
 		}
 		this->w_Logger << "Stored " << _emailStorageQueue.size() << " emails, clearing vector" << ENDL;
 		_emailStorageQueue.clear();

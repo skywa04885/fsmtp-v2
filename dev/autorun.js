@@ -11,7 +11,6 @@ const run = () => {
   if (running) {
     proc.kill('SIGKILL');
     while (!proc.killed) continue;
-
     running = false;
   }
 

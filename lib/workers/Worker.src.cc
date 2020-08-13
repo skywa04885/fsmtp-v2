@@ -33,57 +33,67 @@ namespace FSMTP::Workers
 	}
 
 	bool Worker::start(void *u) {
+		auto &logger = this->w_Logger;
+
 		// Starts the worker by setting the
-		// - should run to true, and creating
-		// - the worker thread, and detaching
-		// - it, since we're otherwise going to wait
-		this->w_Logger << "Worker wordt opgestart" << ENDL;
-		this->w_Logger << "Worker opstart opdracht wordt uitgevoerd" << ENDL;
+		//  should run to true, and creating
+		//  the worker thread, and detaching
+		//  it, since we're otherwise going to wait
+
+		logger << "Worker wordt opgestart" << ENDL;
+		logger << "Worker opstart opdracht wordt uitgevoerd" << ENDL;
 		try {
 			this->startupTask();
 		} catch (const runtime_error &e) {
 			this->w_Logger << ERROR << "Worker kon niet worden gestart: " << e.what() << ENDL << CLASSIC;
 			return false;
 		}
-		this->w_Logger << "Worker opstart opdracht is uitgevoerd !" << ENDL;
+		logger << "Worker opstart opdracht is uitgevoerd !" << ENDL;
 
 		this->w_ShouldRun = true;
-		thread t(&Worker::run, this, u);
-		t.detach();
+		thread(&Worker::run, this, u).detach();
 
-		this->w_Logger << "Worker opgestart !" << ENDL;
+		logger << "Worker opgestart !" << ENDL;
 		return true;
 	}
 
 	void Worker::stop(void) {
+		auto &logger = this->w_Logger;
+
 		// Shuts the worker down by
-		// - setting the should run to false
-		// - and waiting for the isRunning
-		// - to be set to false, next to
-		// - that we keep track of the
-		// - shutdown time
-		this->w_Logger << "Worker wordt afgesloten ..." << ENDL;
+		//  setting the should run to false
+		//  and waiting for the isRunning
+		//  to be set to false, next to
+		//  that we keep track of the
+		//  shutdown time
+
+		logger << "Worker wordt afgesloten ..." << ENDL;
 		int64_t startTime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();
 
 		this->w_ShouldRun = false;
-		while (this->w_IsRunning)
-			this_thread::sleep_for(std::chrono::milliseconds(40));
+		while (this->w_IsRunning) {
+			this_thread::sleep_for(milliseconds(40));
+		}
 
 		int64_t endTime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();
-		this->w_Logger << "Worker afgesloten in " << endTime - startTime << " milliseconden !" << ENDL;
+		logger << "Worker afgesloten in " << endTime - startTime << " milliseconden !" << ENDL;
 	}
 
 	void Worker::run(void *u) {
+		auto &isRunning = this->w_IsRunning;
+		auto &shouldRun = this->w_ShouldRun;
+
 		// Sets running to true,
-		// - and keeps running as long
-		// - as we do not stop, and if we stop
-		// - we set running to false
-		this->w_IsRunning = true;
-		while(this->w_ShouldRun) {
+		//  and keeps running as long
+		//  as we do not stop, and if we stop
+		//  we set running to false
+
+		isRunning = true;
+		while(isRunning) {
 			this->action(u);
 			this_thread::sleep_for(milliseconds(this->w_Interval));
 		}
-		this->w_IsRunning = false;
+		isRunning = false;
 	}
 
 	void Worker::action(void *u) {

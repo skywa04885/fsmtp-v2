@@ -22,6 +22,7 @@
 #include <deque>
 
 #include "../models/Email.src.h"
+#include "../models/Account.src.h"
 #include "../models/EmailShortcut.src.h"
 #include "../smtp/client/SMTPClient.src.h"
 #include "./Worker.src.h"
@@ -38,6 +39,7 @@ namespace FSMTP::Workers
 		vector<EmailAddress> t_From;
 		vector<EmailAddress> t_To;
 		string t_Content;
+		AccountShortcut t_Account;
 	} TransmissionWorkerTask;
 
 	class TransmissionWorker : public Worker {

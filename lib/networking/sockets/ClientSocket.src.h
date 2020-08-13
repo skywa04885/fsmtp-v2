@@ -33,6 +33,7 @@ namespace FSMTP::Sockets {
     ClientSocket &acceptAsServer(const int32_t server);
     ClientSocket &connectAsClient(const char *host, const int32_t port);
     string getPrefix();
+    struct sockaddr_in *getAddress();
     int32_t write(const char *msg, const size_t len);
     int32_t write(const std::string &msg);
     string readToDelim(const char *delim);

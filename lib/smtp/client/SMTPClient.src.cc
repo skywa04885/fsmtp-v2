@@ -23,7 +23,7 @@ SMTPClient::SMTPClient(bool s_Silent): s_Logger("SMTPClient", LoggerLevel::INFO)
 	if (!s_Silent) this->s_Logger << "SMTPClient initialized !" << ENDL;
 }
 
-void SMTPClient::prepare(
+SMTPClient &SMTPClient::prepare(
 	const vector<EmailAddress> to,
 	const vector<EmailAddress> from,
 	const string &message
@@ -40,9 +40,16 @@ void SMTPClient::prepare(
 	this->s_MailFrom = from[0];
 
 	this->configureRecipients(to);
+
+	return *this;
 }
 
-void SMTPClient::configureRecipients(const vector<EmailAddress> &addresses) {
+SMTPClient &SMTPClient::reset() {
+	this->s_ErrorLog.clear();
+	this->s_ErrorCount = 0;
+}
+
+SMTPClient &SMTPClient::configureRecipients(const vector<EmailAddress> &addresses) {
 	// Resolves the hostnames and sets the status if it
 	// - could not be found
 	for (const EmailAddress &address : addresses) {
@@ -71,9 +78,11 @@ void SMTPClient::configureRecipients(const vector<EmailAddress> &addresses) {
 			this->addError(address.toString(), message);	
 		}
 	}
+
+	return *this;
 }
 
-void SMTPClient::prepare(MailComposerConfig &config) {
+SMTPClient &SMTPClient::prepare(MailComposerConfig &config) {
 	auto &conf = Global::getConfig();
 
 	if (!s_Silent) this->s_Logger << "Voorbereiden ..." << ENDL;
@@ -88,9 +97,11 @@ void SMTPClient::prepare(MailComposerConfig &config) {
 	this->s_MailFrom = config.m_From[0];
 
 	this->configureRecipients(config.m_To);
+
+	return *this;
 }
 
-void SMTPClient::addError(
+SMTPClient &SMTPClient::addError(
 	const string &address,
 	const string &message
 ) {
@@ -99,9 +110,11 @@ void SMTPClient::addError(
 		address,
 		message
 	});
+
+	return *this;
 }
 
-void SMTPClient::beSocial(void) {
+SMTPClient &SMTPClient::beSocial(void) {
 	unique_ptr<SSLContext> sslCtx = make_unique<SSLContext>();
 	sslCtx->method(SSLv23_client_method()).justCreate();
 	auto &conf = Global::getConfig();
@@ -446,13 +459,16 @@ void SMTPClient::beSocial(void) {
 	if (!this->s_Silent) {
 		this->s_Logger << "Handled " << this->s_Targets.size() << " emails" << ENDL;
 	}
+
+	return *this;
 }
 
-void SMTPClient::printReceived(const int32_t code, const string &args) {
-	this->s_Logger << DEBUG << "S->[code:" 
-		<< code << "]: " << args << ENDL << CLASSIC;
+SMTPClient &SMTPClient::printReceived(const int32_t code, const string &args) {
+	this->s_Logger << DEBUG << "S->[code:" << code << "]: " << args << ENDL << CLASSIC;
+	return *this;
 }
 
-void SMTPClient::printSent(const string &mess) {
+SMTPClient &SMTPClient::printSent(const string &mess) {
 	this->s_Logger << DEBUG << "C->RESP: " << mess << ENDL << CLASSIC;
+	return *this;
 }

@@ -169,6 +169,10 @@ string ClientSocket::getPrefix() {
   return inet_ntoa(this->s_SocketAddr.sin_addr);
 }
 
+struct sockaddr_in *ClientSocket::getAddress() {
+  return &this->s_SocketAddr;
+}
+
 ClientSocket &ClientSocket::connectAsClient(const char *host, const int32_t port) {
   auto &fd = this->s_SocketFD;
   auto &addr = this->s_SocketAddr;

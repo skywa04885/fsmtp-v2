@@ -18,21 +18,35 @@
 #include "TransmissionWorker.src.h"
 
 mutex _transmissionMutex;
+extern mutex _emailStorageMutex;
+extern vector<pair<string, FullEmail>> _emailStorageQueue;
 deque<FSMTP::Workers::TransmissionWorkerTask> _transmissionQueue;
 
 namespace FSMTP::Workers
 {
 	TransmissionWorker::TransmissionWorker():
-		Worker("TransmissionWorker", 120)
+		Worker("TRANSMITTER", 120)
 	{}
 
 	void TransmissionWorker::startupTask(void) {
+		auto &logger = this->w_Logger;
+
 		this->d_Connection = Global::getCassandra();
+		logger << _BASH_SUCCESS_MARK << "Connected to cassandra" << ENDL;
 	}
 
 	void TransmissionWorker::action(void *u) {
 		if (_transmissionQueue.size() >= 1) {
+
+			// Gets the first task in the list, the task will tell the
+			//  transmitter where to transmit the message to
+
+			_transmissionMutex.lock();
 			TransmissionWorkerTask& task = _transmissionQueue.front();
+			_transmissionMutex.unlock();
+
+			// Attempts to send the message to the client/clients, if this fails
+			//  we will send an error notice to the transmitters mailbox
 
 			try {
 				#ifdef _SMTP_DEBUG
@@ -41,8 +55,7 @@ namespace FSMTP::Workers
 				SMTPClient client(true);
 				#endif
 
-				client.prepare(task.t_To, task.t_From, task.t_Content);
-				client.beSocial();
+				client.prepare(task.t_To, task.t_From, task.t_Content).beSocial();
 			} catch (const runtime_error &e) {
 				this->w_Logger << FATAL << "Could not send email: " << e.what() << ENDL << CLASSIC;
 			}

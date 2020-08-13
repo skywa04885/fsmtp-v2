@@ -20,7 +20,6 @@ extern vector<pair<string, FullEmail>> _emailStorageQueue;
 extern mutex _emailStorageMutex;
 extern mutex _transmissionMutex;
 extern deque<TransmissionWorkerTask> _transmissionQueue;
-extern Json::Value _config;
 
 using namespace Server;
 
@@ -555,7 +554,8 @@ bool SMTPServer::handleCommand(
 				_transmissionQueue.push_back({
 					{session.s_TransportMessage.e_TransportFrom},
 					relayTasks,
-					body
+					body,
+					session.s_SendingAccount
 				});
 				_transmissionMutex.unlock();
 			}

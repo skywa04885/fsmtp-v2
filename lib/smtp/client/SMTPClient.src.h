@@ -58,18 +58,18 @@ namespace FSMTP::Mailer::Client {
 	public:
 		explicit SMTPClient(bool s_Silent);
 
-		void prepare(
+		SMTPClient &prepare(
 			const vector<EmailAddress> to,
 			const vector<EmailAddress> from,
 			const string &message
 		);
-
-		void prepare(MailComposerConfig &config);
-		void beSocial(void);
-		void configureRecipients(const vector<EmailAddress> &addresses);
-		void addError(const string &address, const string &message);
-		void printReceived(const int32_t code, const string &args);
-		void printSent(const string &mess);
+		SMTPClient &prepare(MailComposerConfig &config);
+		SMTPClient &beSocial(void);
+		SMTPClient &configureRecipients(const vector<EmailAddress> &addresses);
+		SMTPClient &addError(const string &address, const string &message);
+		SMTPClient &printReceived(const int32_t code, const string &args);
+		SMTPClient &printSent(const string &mess);
+		SMTPClient &reset();
 
 		bool s_Silent;
 		Logger s_Logger;
