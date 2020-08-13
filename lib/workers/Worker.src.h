@@ -16,14 +16,7 @@
 
 #pragma once
 
-#include <vector>
-#include <thread>
-#include <atomic>
-#include <string>
-#include <chrono>
-
-#include <json/json.h>
-
+#include "../default.h"
 #include "../general/Logger.src.h"
 
 namespace FSMTP::Workers
@@ -31,62 +24,18 @@ namespace FSMTP::Workers
 	class Worker
 	{
 	public:
-		/**
-		 * Default constructor for the worker
-		 *
-		 * @Param {const std::string &} workerName
-		 * @Param {const std::size_t &} w_Interval
-		 * @Return {void}
-		 */
-		Worker(const std::string &workerName, const std::size_t w_Interval);
-
-		/**
-		 * Starts the worker, u is used for some user
-		 * - data, which is sometimes required
-		 *
-		 * @Param {void *} u
-		 * @Return {void}
-		 */
+		Worker(const string &workerName, const size_t w_Interval);
+		virtual ~Worker();
 		bool start(void *u);
-
-		/**
-		 * Stops the worker
-		 *
-		 * @Param {void}
-		 * @Return {void}
-		 */
 		void stop(void);
-
-		/**
-		 * Creates and runs the thread
-		 *
-		 * @Param {void *} u
-		 * @Return {void}
-		 */
 		virtual void run(void *u);
-
-		/**
-		 * The action which needs to perform at the
-		 * - specified interval
-		 *
-		 * @Param {void *} u
-		 * @Return {void}
-		 */
 		virtual void action(void *u);
-
-		/**
-		 * An task which needs to be performed at
-		 * - the start of the worker
-		 *
-		 * @Param {void}
-		 * @Return {void}
-		 */
 		virtual void startupTask(void);
 
 		Logger w_Logger;
 	private:
-		std::atomic<bool> w_ShouldRun;
-		std::atomic<bool> w_IsRunning;
-		std::size_t w_Interval;
+		atomic<bool> w_ShouldRun;
+		atomic<bool> w_IsRunning;
+		size_t w_Interval;
 	};
 }

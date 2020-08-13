@@ -16,54 +16,12 @@
 
 #pragma once
 
-#include <string>
-#include <stdexcept>
+#include "../../default.h"
 
 namespace FSMTP::Server
 {
-	class SyntaxException : public std::exception
-	{
-	public:
-		SyntaxException(const std::string &e_Message):
-			e_Message(e_Message)
-		{}
-
-		const char *what() const throw()
-    {
-    	return this->e_Message.c_str();
-    }
-
-	private:
-		std::string e_Message;
-	};
-
-	class CommandOrderException : public std::exception
-	{
-	public:
-		CommandOrderException(const std::string &e_Message):
-			e_Message(e_Message)
-		{}
-
-		const char *what() const throw()
-    {
-    	return this->e_Message.c_str();
-    }
-	private:
-		std::string e_Message;
-	};
-
-	class FatalException : public std::exception
-	{
-	public:
-		FatalException(const std::string &e_Message):
-			e_Message(e_Message)
-		{}
-
-		const char *what() const throw()
-    {
-    	return this->e_Message.c_str();
-    }
-	private:
-		std::string e_Message;
-	};
+	CUSTOM_EXCEPTION(SMTPSyntaxException)
+	CUSTOM_EXCEPTION(SMTPOrderException)
+	CUSTOM_EXCEPTION(SMTPFatalException)
+	CUSTOM_EXCEPTION(SMTPInvalidCommand);
 }

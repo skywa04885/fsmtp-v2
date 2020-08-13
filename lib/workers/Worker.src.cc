@@ -18,14 +18,7 @@
 
 namespace FSMTP::Workers
 {
-	/**
-	 * Default constructor for the worker
-	 *
-	 * @Param {const std::string &} workerName
-	 * @Param {const std::size_t &} w_Interval
-	 * @Return {void}
-	 */
-	Worker::Worker(const std::string &workerName, const std::size_t w_Interval):
+	Worker::Worker(const string &workerName, const size_t w_Interval):
 		w_ShouldRun(false), w_IsRunning(false),
 		w_Logger(workerName, LoggerLevel::INFO),
 		w_Interval(w_Interval)
@@ -33,47 +26,36 @@ namespace FSMTP::Workers
 		this->w_Logger << "Worker aangemaakt" << ENDL;
 	}
 
-	/**
-	 * Starts the worker, u is used for some user
-	 * - data, which is sometimes required
-	 *
-	 * @Param {void *} u
-	 * @Return {void}
-	 */
-	bool Worker::start(void *u)
-	{
+	Worker::~Worker() {
+		if (this->w_IsRunning) {
+			this->stop();
+		}
+	}
+
+	bool Worker::start(void *u) {
 		// Starts the worker by setting the
 		// - should run to true, and creating
 		// - the worker thread, and detaching
 		// - it, since we're otherwise going to wait
-		this->w_Logger << "Worker wordt opgestart ... " << ENDL;
-		this->w_Logger << "Worker opstart opdracht wordt uitgevoerd ..." << ENDL;
+		this->w_Logger << "Worker wordt opgestart" << ENDL;
+		this->w_Logger << "Worker opstart opdracht wordt uitgevoerd" << ENDL;
 		try {
 			this->startupTask();
-		}
-		catch (const std::runtime_error &e)
-		{
+		} catch (const runtime_error &e) {
 			this->w_Logger << ERROR << "Worker kon niet worden gestart: " << e.what() << ENDL << CLASSIC;
 			return false;
 		}
 		this->w_Logger << "Worker opstart opdracht is uitgevoerd !" << ENDL;
 
 		this->w_ShouldRun = true;
-		std::thread t(&Worker::run, this, u);
+		thread t(&Worker::run, this, u);
 		t.detach();
 
 		this->w_Logger << "Worker opgestart !" << ENDL;
 		return true;
 	}
 
-	/**
-	 * Stops the worker
-	 *
-	 * @Param {void}
-	 * @Return {void}
-	 */
-	void Worker::stop(void)
-	{
+	void Worker::stop(void) {
 		// Shuts the worker down by
 		// - setting the should run to false
 		// - and waiting for the isRunning
@@ -81,62 +63,34 @@ namespace FSMTP::Workers
 		// - that we keep track of the
 		// - shutdown time
 		this->w_Logger << "Worker wordt afgesloten ..." << ENDL;
-		int64_t startTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-			std::chrono::high_resolution_clock::now().time_since_epoch()
-		).count();
+		int64_t startTime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();
 
 		this->w_ShouldRun = false;
 		while (this->w_IsRunning)
-			std::this_thread::sleep_for(std::chrono::milliseconds(40));
+			this_thread::sleep_for(std::chrono::milliseconds(40));
 
-		int64_t endTime = std::chrono::duration_cast<std::chrono::milliseconds>(
-			std::chrono::high_resolution_clock::now().time_since_epoch()
-		).count();
+		int64_t endTime = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();
 		this->w_Logger << "Worker afgesloten in " << endTime - startTime << " milliseconden !" << ENDL;
 	}
 
-	/**
-	 * Creates and runs the thread
-	 *
-	 * @Param {void *} u
-	 * @Return {void}
-	 */
-	void Worker::run(void *u)
-	{
+	void Worker::run(void *u) {
 		// Sets running to true,
 		// - and keeps running as long
 		// - as we do not stop, and if we stop
 		// - we set running to false
 		this->w_IsRunning = true;
-		while(this->w_ShouldRun)
-		{
+		while(this->w_ShouldRun) {
 			this->action(u);
-			std::this_thread::sleep_for(std::chrono::milliseconds(this->w_Interval));
+			this_thread::sleep_for(milliseconds(this->w_Interval));
 		}
 		this->w_IsRunning = false;
 	}
 
-	/**
-	 * The action which needs to perform at the
-	 * - specified interval
-	 *
-	 * @Param {void *} u
-	 * @Return {void}
-	 */
-	void Worker::action(void *u)
-	{
-		std::cout << "Worker::action() is not implemented !" << std::endl;
+	void Worker::action(void *u) {
+		cout << "Worker::action() is not implemented !" << endl;
 	}
 
-	/**
-	 * An task which needs to be performed at
-	 * - the start of the worker
-	 *
-	 * @Param {void}
-	 * @Return {void}
-	 */
-	void Worker::startupTask(void)
-	{
-		std::cout << "Worker::startupTask() is not implemented !" << std::endl;
+	void Worker::startupTask(void) {
+		cout << "Worker::startupTask() is not implemented !" << endl;
 	}
 }

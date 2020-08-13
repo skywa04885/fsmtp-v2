@@ -23,7 +23,6 @@
 
 #include "../Response.src.h"
 #include "../Command.src.h"
-#include "../../networking/SMTPSocket.src.h"
 #include "../../general/Logger.src.h"
 #include "../../general/macros.src.h"
 #include "SMTPServerSession.src.h"
@@ -37,7 +36,6 @@ using namespace FSMTP::Parsers;
 using namespace FSMTP;
 using namespace FSMTP::SMTP;
 using namespace FSMTP::Models;
-using namespace FSMTP::Networking;
 using namespace FSMTP::Workers;
 using namespace Sockets;
 
@@ -51,15 +49,21 @@ namespace FSMTP::Server
 
 		SMTPServer &listenServer();
 		SMTPServer &createContext();
+		SMTPServer &connectDatabases();
 		SMTPServer &startHandler(const bool newThread);
 
-		bool handleCommand(shared_ptr<ClientSocket> client, const ClientCommand &command, SMTPServerSession &session);
+		bool handleCommand(
+			shared_ptr<ClientSocket> client, const ClientCommand &command, SMTPServerSession &session,
+			Logger &clogger
+		);
 
 		std::vector<SMTPServiceFunction> s_Services;
 	private:
 		unique_ptr<ServerSocket> s_SSLSocket;
 		unique_ptr<ServerSocket> s_PlainSocket;
 		unique_ptr<SSLContext> s_SSLContext;
+		unique_ptr<CassandraConnection> s_Cassandra;
+		unique_ptr<RedisConnection> s_Redis;
 		Logger s_Logger;
 	};
 }

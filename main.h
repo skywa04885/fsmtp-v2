@@ -22,6 +22,8 @@
 #include "lib/networking/sockets/SSLContext.src.h"
 #include "lib/networking/sockets/ServerSocket.src.h"
 #include "lib/networking/sockets/ClientSocket.src.h"
+#include "lib/workers/DatabaseWorker.src.h"
+#include "lib/workers/TransmissionWorker.src.h"
 
 using namespace FSMTP;
 

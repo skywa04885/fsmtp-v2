@@ -16,14 +16,7 @@
 
 #pragma once
 
-#include <iostream>
-#include <cstdint>
-#include <string>
-#include <sstream>
-#include <vector>
-#include <algorithm>
-#include <cctype>
-
+#include "../default.h"
 #include "../general/cleanup.src.h"
 
 using namespace FSMTP::Cleanup;
@@ -43,46 +36,14 @@ namespace FSMTP::SMTP
 		CCT_HELP
 	} ClientCommandType;
 
-	class ClientCommand
-	{
+	class ClientCommand {
 	public:
-		/**
-		 * Default constructor for the ClientCommand
-		 *
-		 * @Param {ClientCommandType &} c_CommandType
-		 * @Param {std::vector<std::string> &} c_Arguments
-		 * @Return void
-		 */
-		ClientCommand(
-			const ClientCommandType &c_CommandType,
-			const std::vector<std::string> &c_Arguments);
-
-		/**
-		 * Default empty constructor for the ClientCommand
-		 *
-		 * @Param void
-		 * @Return void
-		 */
+		ClientCommand(const ClientCommandType c_CommandType, const vector<string> &c_Arguments);
 		ClientCommand();
-
-		/**
-		 * Default constructor which actually
-		 * - parses an existing command
-		 *
-		 * @Param {std::string &} raw
-		 * @Return void
-		 */
-		ClientCommand(const std::string &raw);
-
-		/**
-		 * Builds the client command
-		 *
-		 * @Param {void}
-		 * @Return {std::string}
-		 */
-		std::string build(void);
+		ClientCommand(const string &raw);
+		string build(void);
 		
 		ClientCommandType c_CommandType;
-		std::vector<std::string> c_Arguments;
+		vector<string> c_Arguments;
 	};
 }

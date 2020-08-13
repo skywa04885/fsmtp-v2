@@ -18,53 +18,29 @@
 
 namespace FSMTP::SMTP
 {
-	/**
-	 * Default empty constructor for the ClientCommand
-	 *
-	 * @Param void
-	 * @Return void
-	 */
 	ClientCommand::ClientCommand():
 		c_CommandType(ClientCommandType::CCT_UNKNOWN), c_Arguments()
-	{
-	}
+	{}
 
-	/**
-	 * Default constructor for the ClientCommand
-	 *
-	 * @Param {ClientCommandType &} c_CommandType
-	 * @Param {std::vector<std::string> &} c_Arguments
-	 * @Return void
-	 */
-	ClientCommand::ClientCommand(const ClientCommandType &c_CommandType, const std::vector<std::string> &c_Arguments):
+	ClientCommand::ClientCommand(const ClientCommandType c_CommandType, const vector<string> &c_Arguments):
 		c_CommandType(c_CommandType), c_Arguments(c_Arguments)
-	{
-
-	}
+	{}
 	
-	/**
-	 * Default constructor which actually
-	 * - parses an existing command
-	 *
-	 * @Param {std::string &} raw
-	 * @Return void
-	 */
-	ClientCommand::ClientCommand(const std::string &raw)
-	{
+	ClientCommand::ClientCommand(const string &raw) {
 		// Parses the command from the raw message
 		// - Sometimes it does not contain an ':' and then
 		// - we search for an space
-		std::size_t index = raw.find_first_of(':');
-		std::string command;
+		size_t index = raw.find_first_of(':');
+		string command;
 		bool containsArgs = false;
-		if (index != std::string::npos)
+		if (index != string::npos)
 		{
 			containsArgs = true;
 			command = raw.substr(0, index);
 		} else
 		{
 			index = raw.find_first_of(' ');
-			if (index == std::string::npos) command = raw;
+			if (index == string::npos) command = raw;
 			else
 			{
 				containsArgs = true;
@@ -75,64 +51,65 @@ namespace FSMTP::SMTP
 		// Converts the command copy to an lower string
 		// - so nothing can go wrong when comparing it
 		auto funcToLower = [](unsigned char c){
-			return std::tolower(c);
+			return tolower(c);
 		};
-		std::transform(command.begin(), command.end(), command.begin(), funcToLower);
+		transform(command.begin(), command.end(), command.begin(), funcToLower);
 
 		// Checks which command it is, and due to performance
 		// - we first switch the initial character, and then perform
 		// - specific compare operations
+		auto &type = this->c_CommandType;
 		switch (command[0])
 		{
 			case 'h':
 				if (command == "helo") {
-					this->c_CommandType = ClientCommandType::CCT_HELO;
+					type = ClientCommandType::CCT_HELO;
 				} else if (command == "help") {
-					this->c_CommandType = ClientCommandType::CCT_HELP;
+					type = ClientCommandType::CCT_HELP;
 				} else { 
-					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
+					type = ClientCommandType::CCT_UNKNOWN;
 				}
 				break;
 			case 'e':
 				if (command == "ehlo") {
-					this->c_CommandType = ClientCommandType::CCT_EHLO;
+					type = ClientCommandType::CCT_EHLO;
 				} else { 
-					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
+					type = ClientCommandType::CCT_UNKNOWN;
 				}
 				break;
 			case 's':
 				if (command == "starttls") {
-					this->c_CommandType = ClientCommandType::CCT_START_TLS;
+					type = ClientCommandType::CCT_START_TLS;
 				} else {
-					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
+					type = ClientCommandType::CCT_UNKNOWN;
 				}
 				break;
 			case 'm':
 				if (command == "mail from") {
-					this->c_CommandType = ClientCommandType::CCT_MAIL_FROM;
+					type = ClientCommandType::CCT_MAIL_FROM;
 				} else {
-					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
+					type = ClientCommandType::CCT_UNKNOWN;
 				}
 				break;
 			case 'r':
 				if (command == "rcpt to") {
-					this->c_CommandType = ClientCommandType::CCT_RCPT_TO;
+					type = ClientCommandType::CCT_RCPT_TO;
 				} else {
-					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
+					type = ClientCommandType::CCT_UNKNOWN;
 				}
 				break;
 			case 'd':
 				if (command == "data") {
-					this->c_CommandType = ClientCommandType::CCT_DATA;
+					type = ClientCommandType::CCT_DATA;
 				} else { 
-					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
+					type = ClientCommandType::CCT_UNKNOWN;
 				}
 				break;
 			case 'q':
 				if (command == "quit") {
-					this->c_CommandType = ClientCommandType::CCT_QUIT;
+					type = ClientCommandType::CCT_QUIT;
 				} else { 
-					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
+					type = ClientCommandType::CCT_UNKNOWN;
 				}
 				break;
 			case 'a':
@@ -151,94 +128,65 @@ namespace FSMTP::SMTP
 		// - them, maybe with a custom parser if required.. After that
 		// - we remove all the double whitespace, to make it more easy
 		// - for later processing
-		if (containsArgs == false) return;
-		std::string argsRaw = raw.substr(++index);
-		std::string ret;
+		if (containsArgs == false) {
+			return;
+		}
+		string argsRaw = raw.substr(++index);
+		string ret;
 		reduceWhitespace(argsRaw, ret);
-		if (!ret.empty())
-		{
-			std::stringstream stream(ret);
-			std::string arg;
-			while (std::getline(stream, arg, ' '))
-			{
+		if (!ret.empty()) {
+			stringstream stream(ret);
+			string arg;
+			while (getline(stream, arg, ' ')) {
 				this->c_Arguments.push_back(arg);
 			}
 		}
 	}
 
+	string ClientCommand::build(void) {
+		ostringstream stream;
 
-	/**
-	 * Builds the client command
-	 *
-	 * @Param {void}
-	 * @Return {std::string}
-	 */
-	std::string ClientCommand::build(void)
-	{
-		std::string res;
-
-		// Adds the command name and later the parameters
-		switch (this->c_CommandType)
-		{
+		switch (this->c_CommandType) {
 			case ClientCommandType::CCT_HELO:
-			{
-				res += "HELO";
+				stream << "HELO";
 				break;
-			}
 			case ClientCommandType::CCT_EHLO:
-			{
-				res += "EHLO";
+				stream << "EHLO";
 				break;
-			}
 			case ClientCommandType::CCT_START_TLS:
-			{
-				res += "STARTTLS";
+				stream << "STARTTLS";
 				break;
-			}
 			case ClientCommandType::CCT_MAIL_FROM:
-			{
-				res += "MAIL FROM";
+				stream << "MAIL FROM";
 				break;
-			}
 			case ClientCommandType::CCT_RCPT_TO:
-			{
-				res += "RCPT TO";
+				stream << "RCPT TO";
 				break;
-			}
 			case ClientCommandType::CCT_DATA:
-			{
-				res += "DATA";
+				stream << "DATA";
 				break;
-			}
 			case ClientCommandType::CCT_QUIT:
-			{
-				res += "QUIT";
+				stream << "QUIT";
 				break;
-			}
 			case ClientCommandType::CCT_AUTH:
-			{
-				res += "AUTH";
+				stream << "AUTH";
 				break;
-			}
 			case ClientCommandType::CCT_HELP:
-			{
-				res += "HELP";
+				stream << "HELP";
 				break;
-			}
 		}
 
-		if (
-			this->c_CommandType == ClientCommandType::CCT_MAIL_FROM ||
-			this->c_CommandType == ClientCommandType::CCT_RCPT_TO
-		) res += ':';
-
-		for (const std::string &s : this->c_Arguments)
-		{
-			res += ' ';
-			res += s;
+		auto &type = this->c_CommandType;
+		if (type == ClientCommandType::CCT_MAIL_FROM || type == ClientCommandType::CCT_RCPT_TO) {
+			stream << ':';
 		}
-		res += "\r\n";
 
-		return res;
+		auto &args = this->c_Arguments;
+		for_each(args.begin(), args.end(), [&](auto &arg) {
+			stream << ' ' << arg;
+		});
+		stream << "\r\n";
+
+		return stream.str();
 	}
 }

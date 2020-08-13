@@ -26,6 +26,7 @@ namespace FSMTP::Sockets {
     SSLContext() noexcept;
 		~SSLContext() noexcept;
 
+		SSLContext &justCreate();
     SSLContext &read(const char *privateKey, const char *cert);
 		SSLContext &password(const char * );
 		SSLContext &method(const SSL_METHOD *method);

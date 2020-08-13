@@ -16,13 +16,10 @@
 
 #pragma once
 
-#include <cstdint>
-#include <string>
-#include <iostream>
-#include <chrono>
-#include <functional>
+#include "../../default.h"
+#include "../../general/Global.src.h"
 
-#include "../../networking/SMTPSocket.src.h"
+#include "../../networking/sockets/ClientSocket.src.h"
 #include "../../models/Email.src.h"
 #include "../../general/Logger.src.h"
 #include "../../networking/DNS.src.h"
@@ -32,15 +29,13 @@
 #include "SMTPMessageComposer.src.h"
 #include "SMTPClientSession.src.h"
 
-using namespace FSMTP::Networking;
+using namespace FSMTP::Sockets;
 using namespace FSMTP::Models;
 using namespace FSMTP::SMTP;
 using namespace FSMTP::Mailer::Composer;
 
-namespace FSMTP::Mailer::Client
-{
-	typedef enum : uint32_t
-	{
+namespace FSMTP::Mailer::Client {
+	typedef enum : uint32_t {
 		SAT_HELO,
 		SAT_START_TLS,
 		SAT_EHLO,
@@ -49,97 +44,39 @@ namespace FSMTP::Mailer::Client
 		SAT_DATA
 	} SMTPClientActionType;
 
-	typedef struct
-	{
-		std::string s_Address;
-		std::string s_Message;
+	typedef struct {
+		string s_Address;
+		string s_Message;
 	} SMTPClientError;
 
-	typedef struct
-	{
-		std::vector<std::string> t_Servers;
+	typedef struct {
+		vector<string> t_Servers;
 		EmailAddress t_Address;
 	} SMTPClientTarget;
 
-	class SMTPClient
-	{
+	class SMTPClient {
 	public:
-		/**
-		 * Default constructor for the SMTPClient
-		 *
-		 * @Param {bool} s_Silent
-		 * @Return {void}
-		 */
 		explicit SMTPClient(bool s_Silent);
 
 		void prepare(
-			const std::vector<EmailAddress> to,
-			const std::vector<EmailAddress> from,
-			const std::string &message
+			const vector<EmailAddress> to,
+			const vector<EmailAddress> from,
+			const string &message
 		);
 
-		/**
-		 * Composes the email message, and sets some options
-		 * - inside of the class, such as the message and targets
-		 * 
-		 * @Param {MailComposerConfig &} config
-		 * @Return {void}
-		 */
 		void prepare(MailComposerConfig &config);
-
-		/**
-		 * ( May take a while )
-		 * Orders the computer to talk with the other
-		 * - servers and transmit the message
-		 *
-		 * @Param {void}
-		 * @Return {void}
-		 */
 		void beSocial(void);
-
-		/**
-		 * Resolves the recipients servers
-		 *
-		 * @Param {const std::vector<EmailAddress> &} addresses
-		 * @Return {void}
-		 */
-		void configureRecipients(const std::vector<EmailAddress> &addresses);
-
-		/**
-		 * Adds an error to the error log
-		 *
-		 * @Param {const std::string &} address
-		 * @Param {const std::string &} message
-		 * @Return {void}
-		 */
-		void addError(
-			const std::string &address,
-			const std::string &message
-		);
-
-		/**
-		 * Prints something we recieved from the client
-		 *
-		 * @Param {const int32_t} code
-		 * @Param {const std::string &} args\
-		 * @Return {void}
-		 */
-		void printReceived(const int32_t code, const std::string &args);
-
-		/**
-		 * Prints something we sent to the console
-		 *
-		 * @Param {const std::string &} mess
-		 * @Return {void}
-		 */
-		void printSent(const std::string &mess);
+		void configureRecipients(const vector<EmailAddress> &addresses);
+		void addError(const string &address, const string &message);
+		void printReceived(const int32_t code, const string &args);
+		void printSent(const string &mess);
 
 		bool s_Silent;
 		Logger s_Logger;
-		std::string s_TransportMessage;
-		std::vector<SMTPClientTarget> s_Targets;
-		std::vector<SMTPClientError> s_ErrorLog;
+		string s_TransportMessage;
+		vector<SMTPClientTarget> s_Targets;
+		vector<SMTPClientError> s_ErrorLog;
 		EmailAddress s_MailFrom;
-		std::size_t s_ErrorCount;
+		size_t s_ErrorCount;
 	};
 }

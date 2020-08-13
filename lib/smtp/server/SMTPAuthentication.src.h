@@ -16,14 +16,8 @@
 
 #pragma once
 
-#include <tuple>
-#include <string>
-#include <iostream>
-
-#include <openssl/bio.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <json/json.h>
+#include "../../default.h"
+#include "../../general/Global.src.h"
 
 #include "../../general/connections.src.h"
 #include "../../general/Passwords.src.h"
@@ -37,32 +31,15 @@ using namespace FSMTP::Models;
 
 namespace FSMTP::Server
 {
-	/**
-	 * Parses the username and password from the base64 hash
-	 *
-	 * @Param {const std::string &} hash
-	 * @Return {std::string}
-	 * @Return {std::string}
-	 */
-	std::tuple<std::string, std::string> getUserAndPassB64(
-		const std::string &hash
+	tuple<string, string> getUserAndPassB64(
+		const string &hash
 	);
 
-	/**
-	 * Verifies an authentication entry
-	 *
-	 * @Param {RedisConnection *} redis
-	 * @Param {CassandraConnection *} cassandra
-	 * @Param {const std::string &} user
-	 * @Param {const std::string &} password
-	 * @Param {AccountShortut &} shortcutTarget
-	 * @Return {bool}
-	 */
 	bool authVerify(
 		RedisConnection *redis,
 		CassandraConnection *cassandra,
-		const std::string &user,
-		const std::string &password,
+		const string &user,
+		const string &password,
 		AccountShortcut &shortcutTarget
 	);
 }

@@ -16,9 +16,10 @@
 
 #include "SMTPServer.src.h"
 
-extern std::vector<std::pair<std::string, FullEmail>> _emailStorageQueue;
-extern std::mutex _emailStorageMutex;
-extern std::deque<TransmissionWorkerTask> _transmissionQueue;
+extern vector<pair<string, FullEmail>> _emailStorageQueue;
+extern mutex _emailStorageMutex;
+extern mutex _transmissionMutex;
+extern deque<TransmissionWorkerTask> _transmissionQueue;
 extern Json::Value _config;
 
 using namespace Server;
@@ -58,6 +59,27 @@ SMTPServer &SMTPServer::createContext() {
 	return *this;
 }
 
+SMTPServer &SMTPServer::connectDatabases() {
+	auto &logger = this->s_Logger;
+	auto &cass = this->s_Cassandra;
+
+	try {
+		cass = Global::getCassandra();
+		logger << _BASH_SUCCESS_MARK << "Connected to cassandra" << ENDL;
+	} catch (const runtime_error &err) {
+		throw runtime_error(EXCEPT_DEBUG(CassandraConnection::getError(cass->c_ConnectFuture)));
+	}
+
+	try {
+		this->s_Redis = Global::getRedis();
+		logger << _BASH_SUCCESS_MARK << "Connected to redis" << ENDL;
+	} catch (const runtime_error &err) {
+		throw runtime_error(EXCEPT_DEBUG(err.what()));
+	}
+
+	return *this;
+}
+
 SMTPServer &SMTPServer::listenServer() {
 	auto &config = Global::getConfig();
 	auto &logger = this->s_Logger;
@@ -84,6 +106,7 @@ SMTPServer &SMTPServer::startHandler(const bool newThread) {
 	auto &plainSocket = this->s_PlainSocket;
 
 	auto handler = [&](shared_ptr<ClientSocket> client) {
+		size_t start = duration_cast<milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
 		SMTPServerSession session;
 		if (client->usingSSL()) {
 			session.setFlag(_SMTP_SERV_SESSION_SSL_FLAG);
@@ -104,16 +127,32 @@ SMTPServer &SMTPServer::startHandler(const bool newThread) {
 				string raw = client->readToDelim("\r\n");
 				ClientCommand command(raw);
 
-				if (this->handleCommand(client, command, session)) {
+				if (this->handleCommand(client, command, session, clogger)) {
 					break;
 				}
-			} catch (const runtime_error &e) {
-				clogger << ERROR << "An error occured: " << e.what() << ENDL << CLASSIC;
+			} catch (const SMTPOrderException &err) {
+				ServerResponse response(SMTPResponseType::SRC_ORDER_ERR, err.what(), nullptr, nullptr);
+				client->write(response.build());
+			} catch (const SMTPSyntaxException &err) {
+				ServerResponse response(SMTPResponseType::SRC_SYNTAX_ERR, err.what(), nullptr, nullptr);
+				client->write(response.build());
+			} catch (const SMTPInvalidCommand &err) {
+				ServerResponse response(SMTPResponseType::SRC_INVALID_COMMAND, err.what(), nullptr, nullptr);
+				client->write(response.build());
+			} catch (const SMTPFatalException &err) {
+				clogger << FATAL << "An error occured: " << err.what() << ENDL << CLASSIC;
+				break;
+			} catch (const runtime_error &err) {
+				clogger << ERROR << "An error occured: " << err.what() << ENDL << CLASSIC;
+				break;
+			} catch (...) {
+				clogger << ERROR << "An other error occured, breaking ..." << ENDL << CLASSIC;
 				break;
 			}
 		}
 
-		clogger << "Client disconnected" << ENDL;
+		size_t end = duration_cast<milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
+		clogger << "Client disconnected, transmission in: " << end - start << " milliseconds" << ENDL;
 	};
 
 	// Checks if we need to start the acceptor in the same thread
@@ -130,9 +169,16 @@ SMTPServer &SMTPServer::startHandler(const bool newThread) {
 		sslSocket->handler(handler).startAcceptor(true);
 		plainSocket->handler(handler).startAcceptor(true);
 	}
+
+	return *this;
 }
 
-bool SMTPServer::handleCommand(shared_ptr<ClientSocket> client, const ClientCommand &command, SMTPServerSession &session) {
+bool SMTPServer::handleCommand(
+	shared_ptr<ClientSocket> client, const ClientCommand &command, SMTPServerSession &session,
+	Logger &clogger
+) {
+	auto *redis = this->s_Redis.get();
+	auto *cass = this->s_Cassandra.get();
 	auto sendResponse = [&](const SMTPResponseType type) {
 		ServerResponse response(type);
 		client->write(response.build());
@@ -165,24 +211,13 @@ bool SMTPServer::handleCommand(shared_ptr<ClientSocket> client, const ClientComm
 		//
 		// Initializes connection
 		// ========================================
-		case ClientCommandType::CCT_HELO:
-		{ // ( Simple hello command )
-			// Checks we should handle the hello command
-			// - this is always possible, except when the
-			// - hello command was already transmitted
-			if (session.getAction(_SMTP_SERV_PA_HELO))
-				throw CommandOrderException("EHLO/HELO already sent.");
-			
-			// Checks if there are arguments, else throw syntax
-			// - error because the server domain is required
-			if (command.c_Arguments.size() < 1)
-				throw SyntaxException("Empty HELO command not allowed");
+		case ClientCommandType::CCT_HELO: {
+			if (session.getAction(_SMTP_SERV_PA_HELO)) {
+				throw SMTPOrderException("EHLO/HELO already sent.");
+			} else if (command.c_Arguments.size() < 1) {
+				throw SMTPSyntaxException("Empty HELO command not allowed");
+			}
 
-			// Sets the action flag so we can not allow
-			// - hello again
-			session.setAction(_SMTP_SERV_PA_HELO);
-
-			// Writes the response to the client
 			string prefix = client->getPrefix();
 			ServerResponse response(
 				SMTPResponseType::SRC_HELO, "",
@@ -190,6 +225,7 @@ bool SMTPServer::handleCommand(shared_ptr<ClientSocket> client, const ClientComm
 			);
 			client->write(response.build());
 
+			session.setAction(_SMTP_SERV_PA_HELO);
 			break;
 		}
 		// ========================================
@@ -197,24 +233,13 @@ bool SMTPServer::handleCommand(shared_ptr<ClientSocket> client, const ClientComm
 		//
 		// Sends the server capabilities
 		// ========================================
-		case ClientCommandType::CCT_EHLO:
-		{ // ( Extended Hello command )
-			// Checks if we should handle the hello command
-			// - since it is only allowed when we've not sent it
-			// - or starttls is called
-			if (session.getAction(_SMTP_SERV_PA_HELO))
-				throw CommandOrderException("EHLO/HELO already sent.");
+		case ClientCommandType::CCT_EHLO: {
+			if (session.getAction(_SMTP_SERV_PA_HELO)) {
+				throw SMTPOrderException("EHLO/HELO already sent.");
+			} else if (command.c_Arguments.size() < 1) {
+				throw SMTPSyntaxException("Empty HELO command not allowed");
+			}
 
-			// Checks if there are arguments, else throw syntax
-			// - error because the server domain is required
-			if (command.c_Arguments.size() < 1)
-				throw SyntaxException("Empty HELO command not allowed");
-
-			// Sets the action flag so we can not allow
-			// - hello again
-			session.setAction(_SMTP_SERV_PA_HELO);
-
-			// Writes the response to the client
 			string prefix = client->getPrefix();
 			ServerResponse response(
 				SMTPResponseType::SRC_EHLO,
@@ -224,542 +249,323 @@ bool SMTPServer::handleCommand(shared_ptr<ClientSocket> client, const ClientComm
 			);
 			client->write(response.build());
 
+			session.setAction(_SMTP_SERV_PA_HELO);
 			break;
+		}
+		// ========================================
+		// Handles the 'STARTTLS' command
+		//
+		// Upgrades the connection to SSL
+		// ========================================
+		case ClientCommandType::CCT_START_TLS: {
+			if (!session.getAction(_SMTP_SERV_PA_HELO))
+				throw SMTPOrderException("EHLO/HELO first.");
+			else if (session.getFlag(_SMTP_SERV_SESSION_SSL_FLAG))
+				throw SMTPOrderException("Connection already secured");
+
+			sendResponse(SMTPResponseType::SRC_START_TLS);
+			client->useSSL(this->s_SSLContext.get()).upgradeAsServer();
+
+			clogger << "Upgraded to TLS" << ENDL;
+
+			session.setFlag(_SMTP_SERV_SESSION_SSL_FLAG);
+			session.clearAction(_SMTP_SERV_PA_HELO);
+			break;
+		}
+		// ========================================
+		// Handles the 'MAIL FROM' command
+		//
+		// Sets the senders address
+		// ========================================
+		case ClientCommandType::CCT_MAIL_FROM: {
+			auto &sessMess = session.s_TransportMessage;
+			auto &sendingAccount = session.s_SendingAccount;
+			EmailAddress from;
+
+			// Checks if the command is allowed, before this
+			//  the client needs to introduce herself, and then
+			//  the client is also required to have not sent MAIL FROM
+			//  before in this session. After this we attempt to parse
+			//  the message.
+
+			if (session.getAction(_SMTP_SERV_PA_MAIL_FROM)) {
+				throw SMTPOrderException("MAIL FROM already sent");
+			} else if (!session.getAction(_SMTP_SERV_PA_HELO)) {
+				throw SMTPOrderException("EHLO/HELO first");
+			} else if (command.c_Arguments.size() < 1) {
+				throw SMTPSyntaxException("MAIL FROM requires arguments.");
+			}
+
+			try {
+				from.parse(command.c_Arguments[0]);
+			} catch (const runtime_error &err) {
+				throw SMTPSyntaxException(string("Invalid email address: ") + err.what());
+			}
+
+			// Checks if the message is from an different server, or if the message
+			//  comes from one of this servers domains. If it is one from our server
+			//  we want to require the user to authenticate first.
+
+			string domain = from.getDomain();
+			try {
+				// Attempts to find the domain in redis, this check makes sure
+				//  that the sending domain is from us, or somebody else. If this
+				//  succeeds, and the client is not authenticated, send error.
+				
+				LocalDomain localDomain = LocalDomain::findRedis(domain, redis);
+				if (!session.getFlag(_SMTP_SERV_SESSION_AUTH_FLAG)) {
+					throw SMTPOrderException("AUTH first");
+				}
+
+				// Since a authenticated user is only allowed to send from his own address, we 
+				//  check if the senders domain equals the sending accounts domain. If this
+				//  is not true, we tell the client that the transaction is not allowed. If
+				//  the transaction is allowed, we set the from local flag. Which indicates
+				//  that we possibly need to use the SMTP client.
+
+				if (from.getDomain() != sendingAccount.a_Domain || from.getUsername() != sendingAccount.a_Username) {
+					sendResponse(SMTPResponseType::SRC_AUTH_NOT_ALLOWED);
+					return true;
+				}
+
+				session.setFlag(_SMTP_SERV_SESSION_FROM_LOCAL);
+			} catch (const EmptyQuery &e) {}
+
+			// Writes the proceed message to the client, which indicates that everything is fine
+			//  and we're ready for further transport
+
+			ServerResponse response(
+				SMTPResponseType::SRC_MAIL_FROM, "",
+				reinterpret_cast<const void *>(sessMess.e_TransportFrom.e_Address.c_str()),
+				nullptr
+			);
+			client->write(response.build());
+
+			// Sets the from email address in the sessions message, after that
+			//  we tell that the mail from action has been used.
+
+			sessMess.e_TransportFrom = from;
+			session.setAction(_SMTP_SERV_PA_MAIL_FROM);
+			break;
+		}
+		// ========================================
+		// Handles the 'RCPT TO' command
+		//
+		// Sets the receivers address
+		// ========================================
+		case ClientCommandType::CCT_RCPT_TO:
+		{
+			AccountShortcut receivingAccount;
+			EmailAddress to;
+
+			// Checks if we're allowed to perform this command, this command
+			//  requires the user to sent helo, and performed the mail from command
+			//  if this is not the case we will send an error.
+
+			if (!session.getAction(_SMTP_SERV_PA_HELO)) {
+				throw SMTPOrderException("EHLO/HELLO first.");
+			} else if (!session.getAction(_SMTP_SERV_PA_MAIL_FROM)) {
+				throw SMTPOrderException("MAIL FROM first.");
+			} else if (command.c_Arguments.size() < 1) {
+				throw SMTPSyntaxException("RCPT TO requires arguments.");
+			}
+
+			try {
+				to.parse(command.c_Arguments[0]);
+			} catch (const std::runtime_error &err) {
+				throw SMTPSyntaxException(string("Invalid email address: ") + err.what());
+			}
+
+			// Checks if the receiver is local, if this is not the case
+			//  we will set the relay flag, which will basically trigger the client
+			//  later on in the process.
+
+			bool relay = false;
+			try {
+				LocalDomain localDomain = LocalDomain::findRedis(to.getDomain(), redis);
+			} catch (const EmptyQuery &e) {
+				if (session.getFlag(_SMTP_SERV_SESSION_FROM_LOCAL)) {
+					relay = true;
+				}
+			}
+
+			// Checks if we're relaying, if this is not the case
+			//  we want to check if the target user is local, since we need
+			//  to send the message to his mailbox. If the user is not local
+			//  we will send an error message, because he is not local.
+
+			if (!relay) {
+
+				// Checks if the user is local, if this is not the case
+				//  we will send an error, and return from the current command.
+
+				try {
+					receivingAccount = AccountShortcut::findRedis(redis, to.getDomain(), to.getUsername());
+				} catch (const EmptyQuery &e) {
+					ServerResponse response(
+						SMTPResponseType::SRC_REC_NOT_LOCAL, "",
+						reinterpret_cast<const void *>(to.e_Address.c_str()), nullptr
+					);
+					client->write(response.build());
+
+					return false;
+				}
+			}
+
+			// Since all tests succeeded, and relaying is allowed or the user
+			//  is local, we will send the success response, and add the to address
+			//  to the vector of receivers
+
+			ServerResponse response(
+				SMTPResponseType::SRC_RCPT_TO, "", 
+				reinterpret_cast<const void *>(to.e_Address.c_str()), nullptr
+			);
+			client->write(response.build());
+
+			if (!relay) {
+				session.s_StorageTasks.push_back(receivingAccount);
+			} else {
+				session.s_RelayTasks.push_back(to);
+			}
+
+			session.setAction(_SMTP_SERV_PA_RCPT_TO);
+			break;
+		}
+		// ========================================
+		// Handles the 'AUTH' command
+		//
+		// Authenticates the user
+		// ========================================
+		case ClientCommandType::CCT_AUTH:
+		{
+			// Checks if we're allowed to perform this command, it may
+			//  only be done if not authenticated already, and the client
+			//  introduced herself.
+
+			if (session.getAction(_SMTP_SERV_PA_AUTH_PERF)) {
+				throw SMTPOrderException("AUTH already done.");						
+			} else if (!session.getAction(_SMTP_SERV_PA_HELO)) {
+				throw SMTPOrderException("EHLO/HELLO first.");
+			} else if (command.c_Arguments.size() < 2) {
+				throw SMTPSyntaxException("Specify type, and hash.");
+			}
+
+			// =======================================
+			// Validates the entry
+			//
+			// Checks if the password etcetera is
+			// - correct, if not throw err
+			// =======================================
+
+			// Gets the username and password from the base64 string
+			//  this will later be used to check if the passwords match
+
+			string user, pass;
+			try {
+				tie(user, pass) = getUserAndPassB64(command.c_Arguments[1]);
+			} catch (const runtime_error &err) {
+				throw SMTPSyntaxException(err.what());
+			}
+
+			// Checks if the passwords match, if this is not case we will send an
+			//  error message, and close the transmission channel.
+
+			if (!authVerify(redis, cass, user, pass, session.s_SendingAccount)) {
+				sendResponse(SMTPResponseType::SRC_AUTH_FAIL);
+				return true;
+			} else {
+				sendResponse(SMTPResponseType::SRC_AUTH_SUCCESS);
+			}
+			
+			session.setAction(_SMTP_SERV_PA_AUTH_PERF);
+			session.setFlag(_SMTP_SERV_SESSION_AUTH_FLAG);
+			break;
+		}
+		// ========================================
+		// Handles the 'DATA' command
+		//
+		// Receives and parses the body
+		// ========================================
+		case ClientCommandType::CCT_DATA:
+		{
+			// Checks if we're allowed to perform the data command
+			//  this may only happen when data not sent already, and the
+			//  user performed the previously required steps
+
+			if (session.getAction(_SMTP_SERV_PA_DATA_START)) {
+				throw SMTPOrderException("DATA already received.");
+			} if (!session.getAction(_SMTP_SERV_PA_HELO)) {
+				throw SMTPOrderException("EHLO/HELLO first.");
+			} if (!session.getAction(_SMTP_SERV_PA_MAIL_FROM)) {
+				throw SMTPOrderException("MAIL FROM first.");
+			} if (!session.getAction(_SMTP_SERV_PA_RCPT_TO)) {
+				throw SMTPOrderException("RCPT TO first.");
+			}
+
+			// Writes the proceed to the client, and sets the data start flag
+			//  this will tell the client that we're ready to receive data
+
+			sendResponse(SMTPResponseType::SRC_DATA_START);
+			session.setAction(_SMTP_SERV_PA_DATA_START);
+
+			// Reads the body and starts parsing it, if any error occurs
+			//  we write an syntax error, when this process is done
+			//  we add the message to the correct queue, and send the 
+			//  success message to the client.
+
+			string body = client->readToDelim("\r\n.\r\n");
+
+			try {
+				auto &message = session.s_TransportMessage;
+				MIME::parseRecursive(body, message, 0);
+				FullEmail::print(message, clogger);
+			} catch (const runtime_error &e) {
+				throw SMTPSyntaxException(string("Parsing failed: ") + e.what());
+			}
+
+			ServerResponse response (
+				SMTPResponseType::SRC_DATA_END, "",
+				reinterpret_cast<const void *>(session.s_TransportMessage.e_MessageID.c_str()), nullptr
+			);
+			client->write(response.build());
+
+			// Handles the storage requests, before adding them to the queue
+			//  we insert the account data and get the bucket / generate the id.
+
+			auto &storageTasks = session.s_StorageTasks;
+			auto &tmess = session.s_TransportMessage;
+			for_each(storageTasks.begin(), storageTasks.end(), [&](AccountShortcut &acc) {
+				tmess.e_OwnersBucket = acc.a_Bucket;
+				tmess.e_OwnersDomain = acc.a_Domain;
+				tmess.e_OwnersUUID = acc.a_UUID;
+				tmess.e_Type = EmailType::ET_INCOMMING;
+				tmess.generateMessageUUID();
+				tmess.e_Bucket = FullEmail::getBucket();
+				
+				_emailStorageMutex.lock();
+				_emailStorageQueue.push_back(make_pair(body, session.s_TransportMessage));
+				_emailStorageMutex.unlock();
+			});
+
+			// Checks if there is anything to relay, if so add it to the relay queue
+
+			auto &relayTasks = session.s_RelayTasks;
+			if (relayTasks.size() > 0) {
+				_transmissionMutex.lock();
+				_transmissionQueue.push_back({
+					{session.s_TransportMessage.e_TransportFrom},
+					relayTasks,
+					body
+				});
+				_transmissionMutex.unlock();
+			}
+
+			break;
+		}
+		default: {
+			throw SMTPInvalidCommand("Invalid command");
 		}
 	}
 
 	return false;
 }
-
-/*
-void SMTPServer::handleCommand(shared_ptr<ClientSocket> client, void *u) {
-	SMTPServer &server = *reinterpret_cast<SMTPServer *>(u);
-	SMTPServerSession session;
-
-	// Creates the logger with the clients address
-	// - so we can get awesome debug messages
-	std::string prefix = "SMTPClient:";
-	prefix += inet_ntoa(sAddr->sin_addr);
-	Logger logger(prefix, LoggerLevel::INFO);
-	SMTPServerClientSocket client(fd, *sAddr, logger);
-
-	// =================================
-	// Connects to redis
-	//
-	// Creates the connection to the
-	// - redis server, which we will
-	// - later use to get users and
-	// - the domains
-	// =================================
-
-	std::unique_ptr<RedisConnection> redis;
-	try
-	{
-		redis = std::make_unique<RedisConnection>(
-			_config["database"]["redis_hosts"].asCString(), _config["database"]["redis_port"].asInt()
-		);
-	} catch (const std::runtime_error &e)
-	{
-		logger << FATAL << "Kon geen verbinding met Redis maken, verbinding wordt gesloten !" << ENDL << CLASSIC;
-		goto smtp_server_close_conn;
-	}
-
-	// Sends the initial message
-	client.sendResponse(SMTPResponseType::SRC_GREETING);
-
-	// Starts the infinite reading and writing loop
-	// - in here we will handle commands and send responses
-	while (true)
-	{
-		try
-		{
-			// Reads the command, parses it
-			// - and quits when an error is thrown
-			ClientCommand command = ClientCommand(client.readUntillNewline(false));
-
-			// Checks how we should respond to the command
-			switch (command.c_CommandType)
-			{
-				// ========================================
-				// Handles the 'HELP' command
-				//
-				// Sends information about the server
-				// ========================================
-				case ClientCommandType::CCT_HELP:
-				{
-					client.sendResponse(SMTPResponseType::SRC_HELP_RESP);
-					break;
-				}
-				// ========================================
-				// Handles the 'QUIT' command
-				//
-				// Closes the connection
-				// ========================================
-				case ClientCommandType::CCT_QUIT:
-				{
-					// Writes the goodbye message, and closes the connection
-					client.sendResponse(SMTPResponseType::SRC_QUIT_GOODBYE);
-					goto smtp_server_close_conn;
-				}
-				// ========================================
-				// Handles the 'HELO' command
-				//
-				// Initializes connection
-				// ========================================
-				case ClientCommandType::CCT_HELO:
-				{ // ( Simple hello command )
-					// Checks we should handle the hello command
-					// - this is always possible, except when the
-					// - hello command was already transmitted
-					if (session.getAction(_SMTP_SERV_PA_HELO))
-						throw CommandOrderException("EHLO/HELO already sent.");
-					
-					// Checks if there are arguments, else throw syntax
-					// - error because the server domain is required
-					if (command.c_Arguments.size() < 1)
-						throw SyntaxException("Empty HELO command not allowed");
-
-					// Sets the action flag so we can not allow
-					// - hello again
-					session.setAction(_SMTP_SERV_PA_HELO);
-
-					// Writes the response to the client
-					client.sendResponse(
-						SMTPResponseType::SRC_HELO,
-						"",
-						reinterpret_cast<void *>(sAddr),
-						nullptr
-					);
-
-					// Continues to the next round
-					continue;
-				}
-				// ========================================
-				// Handles the 'EHLO' command
-				//
-				// Sends the server capabilities
-				// ========================================
-				case ClientCommandType::CCT_EHLO:
-				{ // ( Extended Hello command )
-					// Checks if we should handle the hello command
-					// - since it is only allowed when we've not sent it
-					// - or starttls is called
-					if (session.getAction(_SMTP_SERV_PA_HELO))
-						throw CommandOrderException("EHLO/HELO already sent.");
-
-					// Checks if there are arguments, else throw syntax
-					// - error because the server domain is required
-					if (command.c_Arguments.size() < 1)
-						throw SyntaxException("Empty HELO command not allowed");
-
-					// Sets the action flag so we can not allow
-					// - hello again
-					session.setAction(_SMTP_SERV_PA_HELO);
-
-					// Writes the response to the client
-					client.sendResponse(
-						SMTPResponseType::SRC_EHLO,
-						"",
-						reinterpret_cast<void *>(sAddr),
-						&server.s_Services
-					);
-
-					// Continues to the next round
-					continue;
-				}
-				// ========================================
-				// Handles the 'STARTTLS' command
-				//
-				// Upgrades the connection to SSL
-				// ========================================
-				case ClientCommandType::CCT_START_TLS:
-				{ // ( StartTLS command )
-
-					// Checks if we're allowed to do this, this needs to happen
-					// - after the hello message
-					if (!session.getAction(_SMTP_SERV_PA_HELO))
-						throw CommandOrderException("EHLO/HELO first.");
-
-					// Sends the proceed command to the client
-					// - and upgrades the socket
-					client.sendResponse(SMTPResponseType::SRC_START_TLS);
-					client.upgrade();
-
-					// Clears the hello action since hello is now allowed
-					// - to be sent again
-					session.clearAction(_SMTP_SERV_PA_HELO);
-					continue;
-				}
-				// ========================================
-				// Handles the 'MAIL FROM' command
-				//
-				// Sets the senders address
-				// ========================================
-				case ClientCommandType::CCT_MAIL_FROM:
-				{
-					// Checks if the mail from command is allowed, this is
-					// - only possible if the initial greeting was performed
-					if (session.getAction(_SMTP_SERV_PA_MAIL_FROM))
-						throw CommandOrderException("MAIL FROM already sent.");
-
-					// Checks if we're allowed to perform the mail from
-					// - command, if not throw exception
-					if (!session.getAction(_SMTP_SERV_PA_HELO))
-						throw CommandOrderException("EHLO/HELO first.");
-
-					// Checks the argument count
-					if (command.c_Arguments.size() < 1)
-						throw SyntaxException("MAIL FROM requires arguments.");
-
-					// Parses the mail address, if this fails
-					// - throw syntax exception
-					try {
-						session.s_TransportMessage.e_TransportFrom.parse(
-							command.c_Arguments[0]);
-					}
-					catch (const std::runtime_error &e)
-					{
-						std::string message = "Invalid email address: ";
-						message += e.what();
-						message += '.';
-						throw SyntaxException(message);
-					}
-
-					// Parses the domain and finds if the domain
-					// - is local on our server
-					std::string domain = session.s_TransportMessage.e_TransportFrom.getDomain();
-					try {
-						// Gets the domain from redis and checks if the auth flag is set
-						// - if not we throw command order exception, since relaying
-						// - requires authentication
-						LocalDomain localDomain = LocalDomain::findRedis(domain, redis.get());
-						if (!session.getFlag(_SMTP_SERV_SESSION_AUTH_FLAG))
-							throw CommandOrderException("AUTH first.");
-
-						// Compares the domain and username to the authenticated ones
-						// - if different throw error
-						if (
-							session.s_TransportMessage.e_TransportFrom.getDomain() != session.s_SendingAccount.a_Domain ||
-							session.s_TransportMessage.e_TransportFrom.getUsername() != session.s_SendingAccount.a_Username
-						)
-						{
-							client.sendResponse(SRC_AUTH_NOT_ALLOWED);
-							goto smtp_server_close_conn;
-						}
-
-						// Sets the from local
-						session.setFlag(_SMTP_SERV_SESSION_FROM_LOCAL);
-					}
-					catch (const EmptyQuery &e)
-
-					// Sends the response and sets the
-					// - action flag
-					client.sendResponse(
-						SMTPResponseType::SRC_MAIL_FROM,
-						"",
-						reinterpret_cast<void *>(
-							const_cast<char *>(
-								session.s_TransportMessage.e_TransportFrom.e_Address.c_str()
-							)
-						),
-						nullptr
-					);
-					session.setAction(_SMTP_SERV_PA_MAIL_FROM);
-					continue;
-				}
-				// ========================================
-				// Handles the 'RCPT TO' command
-				//
-				// Sets the receivers address
-				// ========================================
-				case ClientCommandType::CCT_RCPT_TO:
-				{
-					// Checks if we're allowed to perform the rcpt to command,
-					// - this is only allowed if mail from is sent, and hello performed
-					if (session.getAction(_SMTP_SERV_PA_RCPT_TO))
-						throw CommandOrderException("RCPT TO already sent.");						
-					
-					// Checks if we're allowed to perform it, else
-					// - throws order error
-					if (!session.getAction(_SMTP_SERV_PA_HELO))
-						throw CommandOrderException("EHLO/HELLO first.");
-					if (!session.getAction(_SMTP_SERV_PA_MAIL_FROM))
-						throw CommandOrderException("MAIL FROM first.");
-
-					// Checks the arguments
-					if (command.c_Arguments.size() < 1)
-						throw SyntaxException("RCPT TO requires arguments.");
-
-					// Parses the mail address, if this fails
-					// - throw syntax exception
-					try {
-						session.s_TransportMessage.e_TransportTo.parse(
-							command.c_Arguments[0]);
-					}
-					catch (const std::runtime_error &e)
-					{
-						std::string message = "Invalid email address: ";
-						message += e.what();
-						message += '.';
-						throw SyntaxException(message);
-					}
-
-					// Checks if the domain is local, if not set relay
-					// - flag, because we then do not have to find
-					// - the receiving user
-					try {
-						LocalDomain localDomain = LocalDomain::findRedis(
-							session.s_TransportMessage.e_TransportTo.getDomain(),
-							redis.get()
-						);
-					} catch (const EmptyQuery &e)
-					{
-						if (session.getFlag(_SMTP_SERV_SESSION_FROM_LOCAL)) session.setFlag(_SMTP_SERV_SESSION_RELAY_FLAG);
-					}
-
-					// Checks if we're relaying, and if not if the user
-					// - is inside of the database
-					if (!session.getFlag(_SMTP_SERV_SESSION_RELAY_FLAG))
-					{
-						try {
-							// Finds the user shortcut
-							session.s_ReceivingAccount = AccountShortcut::findRedis(
-								redis.get(),
-								session.s_TransportMessage.e_TransportTo.getDomain(),
-								session.s_TransportMessage.e_TransportTo.getUsername()
-							);
-						} catch (const EmptyQuery &e)
-						{
-							// Sends the not found error to the client
-							client.sendResponse(
-								SMTPResponseType::SRC_REC_NOT_LOCAL,
-								"",
-								reinterpret_cast<void *>(
-									const_cast<char *>(
-										session.s_TransportMessage.e_TransportTo.e_Address.c_str()
-									)
-								),
-								nullptr
-							);
-							goto smtp_server_close_conn;
-						}
-					}
-
-					// Sends the response and sets the
-					// - action flag
-					client.sendResponse(
-						SMTPResponseType::SRC_RCPT_TO,
-						"",
-						reinterpret_cast<void *>(
-							const_cast<char *>(
-								session.s_TransportMessage.e_TransportTo.e_Address.c_str()
-							)
-						),
-						nullptr
-					);
-					session.setAction(_SMTP_SERV_PA_RCPT_TO);
-					continue;
-				}
-				// ========================================
-				// Handles the 'AUTH' command
-				//
-				// Authenticates the user
-				// ========================================
-				case ClientCommandType::CCT_AUTH:
-				{
-					// Checks if we're allowed to do this, actually only possible
-					// - only possible after helo
-					if (session.getAction(_SMTP_SERV_PA_AUTH_PERF))
-						throw CommandOrderException("AUTH already done.");						
-					
-					// Checks if we're allowed to perform this command
-					// - based on the command order
-					if (!session.getAction(_SMTP_SERV_PA_HELO))
-						throw CommandOrderException("EHLO/HELLO first.");
-
-					// Checks if the argument count is valid
-					if (command.c_Arguments.size() < 2)
-						throw SyntaxException("Specify type, and hash.");
-
-					// =======================================
-					// Validates the entry
-					//
-					// Checks if the password etcetera is
-					// - correct, if not throw err
-					// =======================================
-
-					// Gets the username and password from the auth
-					// - hash
-					std::string user, password;
-					try {
-						std::tie(user, password ) = getUserAndPassB64(
-							command.c_Arguments[1]
-						);								
-					} catch (const std::runtime_error &e)
-					{
-						throw SyntaxException(e.what());
-					}
-
-					// Creates an cassandra connection
-					std::unique_ptr<CassandraConnection> cass;
-					try {
-						cass = std::make_unique<CassandraConnection>(
-							_config["database"]["cassandra_hosts"].asCString(),
-							_config["database"]["cassandra_username"].asCString(),
-							_config["database"]["cassandra_password"].asCString()
-						);
-					} catch (const std::runtime_error &e)
-					{
-						throw FatalException("Could not connect to cassandra");
-					}
-
-					if (!authVerify(redis.get(), cass.get(), user, password, session.s_SendingAccount))
-					{
-						client.sendResponse(SRC_AUTH_FAIL);
-						goto smtp_server_close_conn;
-					}
-					// Sets the flag and sends the success command
-					session.setAction(_SMTP_SERV_PA_AUTH_PERF);
-					session.setFlag(_SMTP_SERV_SESSION_AUTH_FLAG);
-					client.sendResponse(SRC_AUTH_SUCCESS);
-					continue;
-				}
-				// ========================================
-				// Handles the 'DATA' command
-				//
-				// Receives and parses the body
-				// ========================================
-				case ClientCommandType::CCT_DATA:
-				{
-					// Checks if we're allowed to perform this command
-					if (session.getAction(_SMTP_SERV_PA_DATA_START))
-						throw CommandOrderException("DATA already received.");
-
-					// Checks if we're allowed to perform this command
-					// - based on the command order
-					if (!session.getAction(_SMTP_SERV_PA_HELO))
-						throw CommandOrderException("EHLO/HELLO first.");
-					if (!session.getAction(_SMTP_SERV_PA_MAIL_FROM))
-						throw CommandOrderException("MAIL FROM first.");
-					if (!session.getAction(_SMTP_SERV_PA_RCPT_TO))
-						throw CommandOrderException("RCPT TO first.");
-
-					// Sets the data start flag
-					session.setAction(_SMTP_SERV_PA_DATA_START);
-
-					// Sends the data start command,
-					// - and starts receiving the body
-					client.sendResponse(SMTPResponseType::SRC_DATA_START);
-					std::string rawTransportmessage = client.readUntillNewline(true);
-
-					// Joins the message lines and starts the recursive parser
-					MIME::parseRecursive(rawTransportmessage, session.s_TransportMessage, 0);
-
-					// Checks if we need to add it to the relay queue, or
-					// - the normal storage queue
-
-					if (
-						!session.getFlag(_SMTP_SERV_SESSION_RELAY_FLAG) ||
-						(session.getFlag(_SMTP_SERV_SESSION_FROM_LOCAL) && !session.getFlag(_SMTP_SERV_SESSION_RELAY_FLAG))
-					)
-					{
-						// Adds the user information to the transport message
-						session.s_TransportMessage.e_OwnersDomain = session.s_ReceivingAccount.a_Domain;
-						session.s_TransportMessage.e_OwnersUUID = session.s_ReceivingAccount.a_UUID;
-						session.s_TransportMessage.e_OwnersBucket = session.s_ReceivingAccount.a_Bucket;
-						session.s_TransportMessage.generateMessageUUID();
-						session.s_TransportMessage.e_Bucket = FullEmail::getBucket();
-						session.s_TransportMessage.e_Type = EmailType::ET_INCOMMING;
-
-						// Pushes the email to the storage queue
-						_emailStorageMutex.lock();
-						_emailStorageQueue.push_back(std::make_pair(rawTransportmessage, session.s_TransportMessage));
-						_emailStorageMutex.unlock();
-					} else
-					{
-						// Prepares the email for storage
-						session.s_TransportMessage.e_OwnersDomain = session.s_SendingAccount.a_Domain;
-						session.s_TransportMessage.e_OwnersUUID = session.s_SendingAccount.a_UUID;
-						session.s_TransportMessage.e_OwnersBucket = session.s_SendingAccount.a_Bucket;
-						session.s_TransportMessage.generateMessageUUID();
-						session.s_TransportMessage.e_Bucket = FullEmail::getBucket();
-						session.s_TransportMessage.e_Type = EmailType::ET_RELAY_OUTGOING;
-
-						// Pushes message to transmission worker queue
-						_transmissionQueue.push_back(TransmissionWorkerTask{
-							session.s_TransportMessage.e_From,
-							session.s_TransportMessage.e_To,
-							rawTransportmessage
-						});
-
-						// Pushesht the email to the storage queue
-						_emailStorageMutex.lock();
-						_emailStorageQueue.push_back(std::make_pair(rawTransportmessage, session.s_TransportMessage));
-						_emailStorageMutex.unlock();
-					}
-
-					// Sends the response and sets the
-					// - action flag
-					client.sendResponse(
-						SMTPResponseType::SRC_DATA_END,
-						"",
-						reinterpret_cast<void *>(
-							const_cast<char *>(
-								session.s_TransportMessage.e_MessageID.c_str()
-							)
-						),
-						nullptr
-					);
-					session.setAction(_SMTP_SERV_PA_DATA_END);
-
-					// Prints that the email is received to the console
-					logger << "Email received: " << session.s_TransportMessage.e_MessageID << ENDL;
-				continue;
-				}
-				case ClientCommandType::CCT_UNKNOWN:
-				default:
-				{
-					client.sendResponse(SMTPResponseType::SRC_INVALID_COMMAND);
-					break;
-				}
-			}
-		} catch (const CommandOrderException &e)
-		{
-			logger << FATAL << "Command order error: " << e.what() << ENDL << CLASSIC;
-			client.sendResponse(
-				SMTPResponseType::SRC_ORDER_ERR,
-				e.what(),
-				nullptr,
-				nullptr
-			);
-		} catch (const SMTPTransmissionError &e)
-		{
-			logger << FATAL << "Transmission error: " << e.what() << ENDL << CLASSIC;
-			break;
-		} catch (const SyntaxException &e)
-		{
-			// Prints the error to the console and sends the syntax error
-			logger << ERROR << "Syntax error: " << e.what() << ENDL << CLASSIC;
-			std::string error = "Syntax Error: ";
-			error += e.what();
-			client.sendResponse(
-				SMTPResponseType::SRC_SYNTAX_ERR,
-				error,
-				nullptr,
-				nullptr
-			);
-		} catch (const FatalException &e)
-		{
-			logger << FATAL << "Fatal exception: " << e.what() << ENDL << CLASSIC;
-			break;
-		} catch (const std::runtime_error &e)
-		{
-			logger << FATAL << "Fatal exception ( runtime ): " << e.what() << ENDL << CLASSIC;
-			break;
-		}
-	}
-
-smtp_server_close_conn:
-	delete sAddr;
-}
-*/

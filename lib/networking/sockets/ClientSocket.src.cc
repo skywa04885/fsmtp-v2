@@ -38,8 +38,11 @@ ClientSocket &ClientSocket::useSSL(SSLContext *ctx) {
 ClientSocket &ClientSocket::upgradeAsServer() {
   SSL *&ssl = this->s_SSL;
   int32_t &fd = this->s_SocketFD;
+  auto *&ctx = this->s_SSLCtx;
 
-  ssl = SSL_new(this->s_SSLCtx->p_SSLCtx);
+  assert(("SSLContext does not exist", ctx != nullptr));
+
+  ssl = SSL_new(ctx->p_SSLCtx);
   if (!ssl) {
     throw runtime_error(EXCEPT_DEBUG(strerror(errno)));
   }
@@ -80,7 +83,7 @@ int32_t ClientSocket::write(const char *msg, const size_t len) {
       throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
     }
   } else {
-    if ((rc = send(this->s_SocketFD, msg, len, 0)) == -1) {
+    if ((rc = send(this->s_SocketFD, msg, len, 0)) < 0) {
       throw runtime_error(EXCEPT_DEBUG(strerror(errno)));
     }
   }
@@ -124,12 +127,12 @@ int32_t ClientSocket::peek(char *buffer, const size_t bufferSize) {
   return rc;
 }
 
-#define _CLIENT_SOCKET_RBUF_LEN 255
 string ClientSocket::readToDelim(const char *delim) {
-  char buffer[_CLIENT_SOCKET_RBUF_LEN];
+  size_t delimSize = strlen(delim), searchIndex;
+  size_t bufferSize = delimSize + 255;
+  char *buffer = new char[bufferSize];
   bool endFound = false;
   int32_t readLen;
-  size_t delimSize = strlen(delim), searchIndex;
   string result;
 
   // Keeps reading from the client untill delimiter is reached
@@ -138,7 +141,7 @@ string ClientSocket::readToDelim(const char *delim) {
   //  string, we subtract the delimiter sice ( ony when end reached )
 
   while (endFound == false) {
-    readLen = this->peek(buffer, sizeof(buffer));
+    readLen = this->peek(buffer, bufferSize);
 
     string searchString;
     if (result.length() > delimSize) {
@@ -150,10 +153,11 @@ string ClientSocket::readToDelim(const char *delim) {
       endFound = true;
     }
 
-    readLen = this->read(buffer, readLen);
+    readLen = this->read(buffer, searchIndex + delimSize);
     result.append(buffer, readLen);
   }
 
+  delete[] buffer;
   return result.substr(0, result.length() - delimSize);
 }
 
@@ -163,4 +167,45 @@ bool ClientSocket::usingSSL() {
 
 string ClientSocket::getPrefix() {
   return inet_ntoa(this->s_SocketAddr.sin_addr);
+}
+
+ClientSocket &ClientSocket::connectAsClient(const char *host, const int32_t port) {
+  auto &fd = this->s_SocketFD;
+  auto &addr = this->s_SocketAddr;
+
+  fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (fd == -1) {
+    throw runtime_error(EXCEPT_DEBUG(strerror(errno)));
+  }
+
+  memset(&addr, 0, sizeof (addr));
+  addr.sin_addr.s_addr = inet_addr(host);
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons(port);
+
+  if (connect(fd, reinterpret_cast<struct sockaddr *>(&addr), sizeof (addr)) == -1) {
+    throw runtime_error(EXCEPT_DEBUG(strerror(errno)));
+  }
+
+  return *this;
+}
+
+ClientSocket &ClientSocket::upgradeAsClient() {
+  auto *&ssl = this->s_SSL;
+  auto *&ctx = this->s_SSLCtx;
+  auto &fd = this->s_SocketFD;
+
+  assert(("SSLContext does not exist", ctx != nullptr));
+
+  ssl = SSL_new(ctx->p_SSLCtx);
+  if (ssl <= 0) {
+    throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
+  }
+
+  SSL_set_fd(ssl, fd);
+  if (SSL_connect(ssl) <= 0) {
+    throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
+  }
+
+  return *this;
 }

@@ -27,8 +27,18 @@ int main(const int argc, const char **argv)
 	vector<string> args(argv, argv + argc);
 	handleArguments(args);
 
+	TransmissionWorker transmissionWorker;
+	transmissionWorker.start(nullptr);
+	
+	DatabaseWorker databaseWorker;
+	databaseWorker.start(nullptr);
+
 	SMTPServer server;
-	server.createContext().listenServer().startHandler(false);
+	server
+		.createContext()
+		.connectDatabases()
+		.listenServer()
+		.startHandler(false);
 	
 	return 0;
 }

@@ -57,24 +57,16 @@ namespace FSMTP::SMTP
 	{
 	public:
 		ServerResponse(const SMTPResponseType c_Type);
-
 		ServerResponse(
-			const SMTPResponseType c_Type,
-			const string &c_Message,
-			const void *c_U,
-			vector<SMTPServiceFunction> *c_Services
+			const SMTPResponseType c_Type, const string &c_Message,
+			const void *c_U, vector<SMTPServiceFunction> *c_Services
 		);
 
 		string build(void);
 		string getMessage(const SMTPResponseType c_Type);
 
 		static int32_t getCode(const SMTPResponseType c_Type);
-
-		static string buildServices(
-			const int32_t code,
-			vector<SMTPServiceFunction> *c_Services
-		);
-
+		static string buildServices(const int32_t code, vector<SMTPServiceFunction> *c_Services);
 		static tuple<int32_t, string> parseResponse(const std::string &raw);
 	private:
 		SMTPResponseType c_Type;

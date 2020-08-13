@@ -16,15 +16,8 @@
 
 #pragma once
 
-#include <vector>
-#include <ctime>
-#include <cstdint>
-#include <regex>
-#include <string>
-#include <random>
-
-#include <json/json.h>
-
+#include "../../default.h"
+#include "../../general/Global.src.h"
 #include "../../models/Email.src.h"
 #include "../../general/encoding.src.h"
 #include "../../general/macros.src.h"
@@ -36,8 +29,7 @@ using namespace FSMTP::Models;
 using namespace FSMTP::Cleanup;
 using namespace FSMTP::Encoding;
 
-namespace FSMTP::Mailer::Composer
-{
+namespace FSMTP::Mailer::Composer {
 	/*
 		The configuration for the mail composer, this will be used to compose an
 		- MIME message we will later transmit using the client
@@ -51,80 +43,19 @@ namespace FSMTP::Mailer::Composer
 		std::string m_Subject;
 	} MailComposerConfig;
 
-	/**
-	 * Composes an MIME message using specified configuration
-	 *
-	 * @Param {const MailComposerConfig &} config
-	 * @Return {std::string}
-	 */
 	std::string compose(MailComposerConfig &config);
-
-	/**
-	 * Generates an MessageID
-	 *
-	 * @Param {void}
-	 * @Return {std::string}
-	 */
 	std::string generateMessageID(void);
-
-	/**
-	 * Turns an HTML message into an text message
-	 *
-	 * @Param {const std::string &} raw
-	 * @Return {std::string}
-	 */
 	std::string generateTextFromHTML(const std::string &raw);
-
-	/**
-	 * Turns an vector of email headers into valid headers
-	 *
-	 * @Param {const std::vector<EmailHeader> &} headers
-	 * @Return {std::string}
-	 */
 	std::string generateHeaders(const std::vector<EmailHeader> &headers);
-
-	/**
-	 * Encodes an message body
-	 *
-	 * @Param {const std::string &} raw
-	 * @Param {const EmailTransferEncoding} encoding
-	 * @Return {std::string}
-	 */
 	std::string encodeMessageBody(
 		const std::string &raw, 
 		const EmailTransferEncoding encoding
 	);
-
-	/**
-	 * Generates an body section
-	 *
-	 * @Param {const std::string &} body
-	 * @Param {const EmailTransferEncoding} encoding
-	 * @Param {const std::vector<EmailHeader> &} headers
-	 * @Return {std::string}
-	 */
 	std::string generateBodySection(
 		const std::string &body,
 		const EmailTransferEncoding encoding,
 		const std::vector<EmailHeader> &headers
 	);
-
-	/**
-	 * Generates an random boundary
-	 *
-	 * @Param {void}
-	 * @Return {std::string}
-	 */
 	std::string generateBoundary(void);
-
-	/**
-	 * Normalizes an message body, feature set:
-	 * 1. Remove duplicated whitespace
-	 * 2. Remove whitespace at the start and end of lines
-	 * 3. Turn "\n" into "\r\n" ( required after encoding quoted-printable )
-	 *
-	 * @Param {const std::string &} raw
-	 * @return {std::string}
-	 */
 	std::string normalizeMessageBody(const std::string &raw);
 }

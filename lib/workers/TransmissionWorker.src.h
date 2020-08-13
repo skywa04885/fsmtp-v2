@@ -35,36 +35,17 @@ namespace FSMTP::Workers
 {
 	typedef struct
 	{
-		std::vector<EmailAddress> t_From;
-		std::vector<EmailAddress> t_To;
-		std::string t_Content;
+		vector<EmailAddress> t_From;
+		vector<EmailAddress> t_To;
+		string t_Content;
 	} TransmissionWorkerTask;
 
-	class TransmissionWorker : public Worker
-	{
+	class TransmissionWorker : public Worker {
 	public:
-		/**
-		 * Default constructor for the transmission worker
-		 *
-		 * @Return {void}
-		 */
 		TransmissionWorker();
-
-		/**
-		 * The startup action of the worker
-		 *
-		 * @Param {void}
-		 * @Return {void *} u
-		 */
 		virtual void startupTask(void);
-
-		/**
-		 * The action that gets performed at interval
-		 *
-		 * @Param {void *} u
-		 */
 		virtual void action(void *u);
 	private:
-		std::unique_ptr<CassandraConnection> d_Connection;
+		unique_ptr<CassandraConnection> d_Connection;
 	};
 }

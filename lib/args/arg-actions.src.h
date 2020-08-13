@@ -24,7 +24,6 @@
 #include "../models/Email.src.h"
 #include "../models/LocalDomain.src.h"
 #include "../general/connections.src.h"
-#include "../networking/SMTPSocket.src.h"
 #include "../pop3/P3Server.src.h"
 #include "../general/Logger.src.h"
 #include "../general/macros.src.h"
@@ -34,7 +33,6 @@
 #include "../smtp/client/SMTPClient.src.h"
 #include "../models/Mailbox.src.h"
 
-using namespace FSMTP::Networking;
 using namespace FSMTP::Server;
 using namespace FSMTP::Mailer::Client;
 using namespace FSMTP::Connections;

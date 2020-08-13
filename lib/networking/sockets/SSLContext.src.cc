@@ -74,3 +74,13 @@ int32_t SSLContext::passwordCallback(
 	strncpy(buffer, sslCtx->p_Password.c_str(), sslCtx->p_Password.length() + 1);
 	return sslCtx->p_Password.length();
 }
+
+SSLContext &SSLContext::justCreate() {
+	SSL_CTX *&ctx= this->p_SSLCtx;
+	const SSL_METHOD *&method = this->p_SSLMethod;
+
+  ctx = SSL_CTX_new(method);
+  if (!ctx) {
+    throw runtime_error(EXCEPT_DEBUG("Could not create SSL Context"));
+	}
+}

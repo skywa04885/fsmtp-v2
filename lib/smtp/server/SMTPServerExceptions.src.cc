@@ -16,6 +16,4 @@
 
 #include "SMTPServerExceptions.src.h"
 
-namespace FSMTP::Server
-{
-}
+using namespace FSMTP::Server;

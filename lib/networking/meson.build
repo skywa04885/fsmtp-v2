@@ -1,6 +1,5 @@
 subdir('sockets')
 
 sources += files(
-    'DNS.src.cc',
-    'SMTPSocket.src.cc'
+    'DNS.src.cc'
 )

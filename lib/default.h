@@ -27,10 +27,13 @@
 #include <functional>
 #include <filesystem>
 #include <fstream>
+#include <tuple>
 #include <algorithm>
 #include <memory>
 #include <thread>
+#include <atomic>
 #include <chrono>
+#include <random>
 
 // ==== Other C++ Library's ====
 #include <json/json.h>
@@ -45,6 +48,7 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <string.h>
+#include <assert.h>
 
 // ==== Using namespaces ====
 using namespace std;
@@ -75,5 +79,13 @@ Defer<T> __defer_func(T cb)
 #define DEFER(code) auto DEFER_3(_defer_) = __defer_func([&](){code;})
 
 #define SSL_STRERROR __ssl_get_error()
+
+#define CUSTOM_EXCEPTION(name) \
+class name : public exception { \
+public: \
+	name(const string &err): err(err) {} \
+	const char *what() const throw() { return this->err.c_str(); } \
+private: string err; \
+};
 
 #endif

@@ -16,16 +16,9 @@
 
 #include "SMTPSpamDetection.src.h"
 
-namespace FSMTP::Server::SpamDetection
-{
-	/**
-	 * Checks spamhaus with the specified ip
-	 *
-	 * @Param {std::string} ip
-	 * @Return {bool}
-	 */
-	bool checkSpamhaus(std::string ip)
-	{
+using namespace FSMTP::Server::SpamDetection;
 
-	}
+bool checkSpamhaus(std::string ip)
+{
+
 }

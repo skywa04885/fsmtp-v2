@@ -17,49 +17,21 @@
 
 #include "DatabaseWorker.src.h"
 
-std::mutex _emailStorageMutex;
-std::vector<std::pair<std::string, FullEmail>> _emailStorageQueue;
-extern Json::Value _config;
+mutex _emailStorageMutex;
+vector<pair<string, FullEmail>> _emailStorageQueue;
 
 namespace FSMTP::Workers
 {
-	/**
-	 * Default constructor for the database worker
-	 *
-	 * @Param {void{}
-	 * @Return {void}
-	 */
 	DatabaseWorker::DatabaseWorker(void):
 		Worker("DatabaseWorker", 900)
 	{}
 
-	/**
-	 * The startup action of the worker
-	 *
-	 * @Param {void}
-	 * @Return {void *} u
-	 */
-	void DatabaseWorker::startupTask(void)
-	{
-		const char *cassandraHosts = _config["database"]["cassandra_hosts"].asCString();
-		const char *cassandraUsername = _config["database"]["cassandra_username"].asCString();
-		const char *cassandraPassword = _config["database"]["cassandra_password"].asCString();
-
-		this->d_Cassandra = std::make_unique<CassandraConnection>(cassandraHosts, 
-			cassandraUsername, cassandraPassword);
-		this->w_Logger << "Verbinding met Cassandra is in stand gebracht !" << ENDL;
-
-		this->d_Redis = std::make_unique<RedisConnection>(_config["database"]["redis_hosts"].asCString(), _config["database"]["redis_port"].asInt());
-		this->w_Logger << "Verbinding met Redis is in stand gebracht !" << ENDL;
+	void DatabaseWorker::startupTask(void) {
+		this->d_Cassandra = Global::getCassandra();
+		this->d_Redis = Global::getRedis();
 	}
 
-	/**
-	 * The action that gets performed at interval
-	 *
-	 * @Param {void *} u
-	 */
-	void DatabaseWorker::action(void *u)
-	{
+	void DatabaseWorker::action(void *u) {
 		// ==================================
 		// Starts storing the emails
 		//
@@ -75,8 +47,7 @@ namespace FSMTP::Workers
 		// TODO: Add batch
 		_emailStorageMutex.lock();
 		this->w_Logger << "Started storing " << _emailStorageQueue.size() << " emails !" << ENDL;
-		for (std::pair<std::string, FullEmail>& dataPair : _emailStorageQueue)
-		{
+		for (pair<string, FullEmail>& dataPair : _emailStorageQueue) {
 			// Generates the stuff like the shortcuts and raw messages
 			EmailShortcut shortcut;
 			shortcut.e_Domain = dataPair.second.e_OwnersDomain;
@@ -92,13 +63,11 @@ namespace FSMTP::Workers
 			raw.e_Domain = dataPair.second.e_OwnersDomain;
 			raw.e_OwnersUUID = dataPair.second.e_OwnersUUID;
 			raw.e_EmailUUID = dataPair.second.e_EmailUUID;
-			raw.e_Content = std::move(dataPair.first);
+			raw.e_Content = move(dataPair.first);
 
 			// Finds an text section if not we will have no preview
-			for (const EmailBodySection &section : dataPair.second.e_BodySections)
-			{
-				if (section.e_Type == EmailContentType::ECT_TEXT_PLAIN)
-				{
+			for (const EmailBodySection &section : dataPair.second.e_BodySections) {
+				if (section.e_Type == EmailContentType::ECT_TEXT_PLAIN) {
 					shortcut.e_Preview = section.e_Content.substr(
 						0,
 						(section.e_Content.size() > 255 ? 255 : section.e_Content.size())
@@ -107,17 +76,14 @@ namespace FSMTP::Workers
 			}
 
 			// Checks in which folder the message belongs
-			if (dataPair.second.e_Type == EmailType::ET_INCOMMING)
-			{
+			if (dataPair.second.e_Type == EmailType::ET_INCOMMING) {
 				shortcut.e_Mailbox = "INBOX";
-			} else if (dataPair.second.e_Type == EmailType::ET_INCOMMING_SPAM)
-			{
+			} else if (dataPair.second.e_Type == EmailType::ET_INCOMMING_SPAM) {
 				shortcut.e_Mailbox = "INBOX.Spam";
 			} else if (
 				dataPair.second.e_Type == EmailType::ET_OUTGOING ||
 				dataPair.second.e_Type == EmailType::ET_RELAY_OUTGOING
-			)
-			{
+			) {
 				shortcut.e_Mailbox = "INBOX.Sent";
 			}
 

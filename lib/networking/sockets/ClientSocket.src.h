@@ -28,8 +28,10 @@ namespace FSMTP::Sockets {
     ~ClientSocket() noexcept;
 
     ClientSocket &upgradeAsServer();
+    ClientSocket &upgradeAsClient();
     ClientSocket &useSSL(SSLContext *ctx);
     ClientSocket &acceptAsServer(const int32_t server);
+    ClientSocket &connectAsClient(const char *host, const int32_t port);
     string getPrefix();
     int32_t write(const char *msg, const size_t len);
     int32_t write(const std::string &msg);

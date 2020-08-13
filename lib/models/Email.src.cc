@@ -276,7 +276,10 @@ namespace FSMTP::Models
   	// Prints the already finished variables
   	logger << "FullEmail:" << ENDL;
   	logger << " - Transport From: " << email.e_TransportFrom.e_Name << '<' << email.e_TransportFrom.e_Address << '>' << ENDL;
-  	logger << " - Transport To: " << email.e_TransportTo.e_Name << '<' << email.e_TransportTo.e_Address << '>' << ENDL;
+  	logger << " - Transport To: " << ENDL;
+		for_each(email.e_TransportTo.begin(), email.e_TransportTo.end(), [&](auto &to) {
+			logger << "\t - \"" << to.e_Name << "\" <" << to.e_Address << '>' << ENDL;
+		});
   	logger << " - Subject: " << email.e_Subject << ENDL;
   	logger << " - Date: " << email.e_Date << ENDL;
   	logger << " - Message ID: " << email.e_MessageID << ENDL;
@@ -351,12 +354,7 @@ namespace FSMTP::Models
   	return now / 1000 / 1000 / 10;
   }
 
-  /**
-   * Saves an email into the database
-   *
-   * @Param {CassandraConnection *} conn
-   * @Return {void}
-   */
+	/* ! DEPRECATED !
   void FullEmail::save(CassandraConnection *conn)
   {
   	const CassDataType *udtEmailAddress = nullptr;
@@ -576,6 +574,7 @@ namespace FSMTP::Models
   	// Frees the memory ( if no error )
   	cass_future_free(future);
   }
+	*/
 
   /**
    * Generates an UUID for the current message

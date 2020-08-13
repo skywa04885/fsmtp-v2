@@ -23,11 +23,5 @@
 
 namespace FSMTP::Server::SpamDetection
 {
-	/**
-	 * Checks spamhaus with the specified ip
-	 *
-	 * @Param {std::string} ip
-	 * @Return {bool}
-	 */
 	bool checkSpamhaus(std::string ip);
 }

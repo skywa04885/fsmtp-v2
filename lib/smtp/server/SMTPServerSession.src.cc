@@ -16,76 +16,36 @@
 
 #include "SMTPServerSession.src.h"
 
-namespace FSMTP::Server
-{
-	/**
-	 * Default constructor for the SMTPServerSession
-	 * - basically zeros the flags
-	 * 
-	 * @Param {void}
-	 * @Return {void}
-	 */
-	SMTPServerSession::SMTPServerSession():
-		s_Flags(0x0), s_PerformedActions(0x0)
-	{}
+using namespace FSMTP::Server;
 
+SMTPServerSession::SMTPServerSession():
+	s_Flags(0x0), s_PerformedActions(0x0)
+{}
 
-	/**
-	 * Sets an session flag
-	 *
-	 * @Param {int64_t} mask
-	 * @Return {void}
-	 */
-	void SMTPServerSession::setFlag(int64_t mask)
-	{
-		this->s_Flags |= mask;
+void SMTPServerSession::setFlag(int64_t mask) {
+	this->s_Flags |= mask;
+}
+
+bool SMTPServerSession::getFlag(int64_t mask) {
+	if (BINARY_COMPARE(this->s_Flags, mask)) {
+		return true;
+	} else {
+		return false;
 	}
+}
 
-	/**
-	 * Gets an flag
-	 *
-	 * @Param {int64_t} mask
-	 * @Return {bool}
-	 */
-	bool SMTPServerSession::getFlag(int64_t mask)
-	{
-		if (BINARY_COMPARE(this->s_Flags, mask))
-			return true;
-		else return false;
-	}
+void SMTPServerSession::setAction(int64_t mask) {
+	this->s_PerformedActions |= mask;
+}
 
-	/**
-	 * Sets an action as performed in the register
-	 *
-	 * @Param {int64_t} mask
-	 * @Return {void}
-	 */
-	void SMTPServerSession::setAction(int64_t mask)
-	{
-		this->s_PerformedActions |= mask;
-	}
+void SMTPServerSession::clearAction(int64_t mask) {
+	this->s_PerformedActions &= ~mask;
+}
 
-	/**
-	 * Clears an action
-	 *
-	 * @Param {int64_t} mask
-	 * @Return {void}
-	 */
-	void SMTPServerSession::clearAction(int64_t mask)
-	{
-		this->s_PerformedActions &= ~mask;
-	}
-
-	/**
-	 * Checks if an action is performed and returns bool
-	 *
-	 * @Param {int64_t} mask
-	 * @Return {void}
-	 */
-	bool SMTPServerSession::getAction(int64_t mask)
-	{
-		if (BINARY_COMPARE(this->s_PerformedActions, mask))
-			return true;
-		else return false;
+bool SMTPServerSession::getAction(int64_t mask) {
+	if (BINARY_COMPARE(this->s_PerformedActions, mask)) {
+		return true;
+	} else {
+		return false;
 	}
 }

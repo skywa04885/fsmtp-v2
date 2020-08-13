@@ -16,8 +16,6 @@
 
 #include "SMTPMessageComposer.src.h"
 
-extern Json::Value _config;
-
 namespace FSMTP::Mailer::Composer
 {	
 	static char _randomDict[] = {
@@ -40,75 +38,50 @@ namespace FSMTP::Mailer::Composer
 		'9','0'
 	};
 
-	/**
-	 * Generates an random boundary
-	 *
-	 * @Param {void}
-	 * @Return {std::string}
-	 */
-	std::string generateBoundary(void)
-	{
-		std::string res = "--";
+	string generateBoundary(void) {
+		string res = "--";
 		
 		// Prepares the random engine and then generates the random strings
-		std::random_device rd;
-		std::mt19937 re(rd());
-		std::uniform_int_distribution<int> dict(0, sizeof (_boundaryDict) - 1);
+		random_device rd;
+		mt19937 re(rd());
+		uniform_int_distribution<int> dict(0, sizeof (_boundaryDict) - 1);
 
 		// Generates the MessageID random part
-		for (std::size_t i = 0; i < 38; i++)
-		{
+		for (size_t i = 0; i < 38; i++) {
 			res += _boundaryDict[dict(re)];
 		}
 
 		return res;
 	}
 
-	/**
-	 * Generates an MessageID
-	 *
-	 * @Param {void}
-	 * @Return {std::string}
-	 */
-	std::string generateMessageID(void)
-	{
-		std::string res = "<";
+	string generateMessageID(void) {
+		auto &conf = Global::getConfig();
+		string res = "<";
 
-		// Prepares the random engine and then generates the random strings
-		// - which will be appended with the domain
-		std::random_device rd;
-		std::mt19937 re(rd());
-		std::uniform_int_distribution<int> dict(0, sizeof (_randomDict) - 1);
+		random_device rd;
+		mt19937 re(rd());
+		uniform_int_distribution<int> dict(0, sizeof (_randomDict) - 1);
 
-		// Generates the MessageID random part
-		for (std::size_t i = 0; i < 64; i++)
-		{
+		for (size_t i = 0; i < 64; i++) {
 			res += _randomDict[dict(re)];
 		}
 
-		// Appends the domain and closing bracket
 		res += '@';
-		res += _config["smtp"]["client"]["domain"].asCString();
+		res += conf["smtp"]["client"]["domain"].asCString();
 		res += ">";
 
 		return res;
 	}
 
-	/**
-	 * Composes an MIME message using specified configuration
-	 *
-	 * @Param {const MailComposerConfig &} config
-	 * @Return {std::string}
-	 */
-	std::string compose(MailComposerConfig &config)
-	{
+	string compose(MailComposerConfig &config) {
 		#ifdef _SMTP_DEBUG
 		Logger logger("MailComposer", LoggerLevel::DEBUG);
 		Timer t("MessageComposer", logger);
 		logger << "Begonnen met opbouw van MIME Message" << ENDL;
 		#endif
 
-		std::string res;
+		auto &conf = Global::getConfig();
+		string res;
 
 		// ======================================
 		// Prepares the default variables
@@ -119,9 +92,9 @@ namespace FSMTP::Mailer::Composer
 
 		// Gets the current date and turns it into an string
 		char dateBuffer[64];
-		std::time_t rawTime;
+		time_t rawTime;
 		struct tm *timeInfo = nullptr;
-		std::string dateValue;
+		string dateValue;
 
 		time(&rawTime);
 		timeInfo = localtime(&rawTime);
@@ -130,22 +103,22 @@ namespace FSMTP::Mailer::Composer
 		DEBUG_ONLY(logger << "Verwerkings datum: " << dateValue << ENDL);
 
 		// Generates the message id
-		std::string messageID = generateMessageID();
+		string messageID = generateMessageID();
 		DEBUG_ONLY(logger << "Bericht ID: " << messageID << ENDL);
 
 		// Generates the to and from
-		std::string messageTo = EmailAddress::addressListToString(config.m_To);
-		std::string messageFrom = EmailAddress::addressListToString(config.m_From);
+		string messageTo = EmailAddress::addressListToString(config.m_To);
+		string messageFrom = EmailAddress::addressListToString(config.m_From);
 		DEBUG_ONLY(logger << "Van: " << messageFrom << ENDL);
 		DEBUG_ONLY(logger << "Naar: " << messageTo << ENDL);
 
 		// Reduces the whitespace
-		std::string subject;
+		string subject;
 		reduceWhitespace(config.m_Subject, subject);
 
 		// Prepares the default headers
 		config.m_Headers.push_back(EmailHeader{"X-Mailer", "FSMTP-V2"});
-		config.m_Headers.push_back(EmailHeader{"X-Fannst-NodeID", _config["node_name"].asCString()});
+		config.m_Headers.push_back(EmailHeader{"X-Fannst-NodeID", conf["node_name"].asCString()});
 		config.m_Headers.push_back(EmailHeader{"X-Made-By", "Luke A.C.A. Rieff"});
 		config.m_Headers.push_back(EmailHeader{"Subject", subject});
 		config.m_Headers.push_back(EmailHeader{"Date",  dateValue});
@@ -161,8 +134,7 @@ namespace FSMTP::Mailer::Composer
 		// ======================================
 
 		// Checks if default message needs to be specified
-		if (config.m_BodySections.size() == 0)
-		{
+		if (config.m_BodySections.size() == 0) {
 			DEBUG_ONLY(logger << "sections.size() == 0, generating default one ..." << ENDL);
 
 			// Creates the default message body, since someone did not
@@ -180,8 +152,7 @@ namespace FSMTP::Mailer::Composer
 			});
 		}
 
-		if (config.m_BodySections.size() == 1)
-		{
+		if (config.m_BodySections.size() == 1) {
 			// Checks the content type, if it is html we just want to turn it into
 			// - plain text and make an new section for i
 			if (config.m_BodySections[0].e_Type == EmailContentType::ECT_TEXT_HTML)
@@ -197,8 +168,6 @@ namespace FSMTP::Mailer::Composer
 			}
 		}
 
-
-
 		// ======================================
 		// Generates the MIME message
 		//
@@ -209,8 +178,8 @@ namespace FSMTP::Mailer::Composer
 		// Checks if we just want to generate text only
 		if (
 			config.m_BodySections.size() == 1 &&
-			config.m_BodySections[0].e_Type == EmailContentType::ECT_TEXT_PLAIN)
-		{
+			config.m_BodySections[0].e_Type == EmailContentType::ECT_TEXT_PLAIN
+		) {
 			DEBUG_ONLY(logger << "Text only detected, generating headers ..." << ENDL);
 
 			// Generates the content type, and appends the body
@@ -223,11 +192,10 @@ namespace FSMTP::Mailer::Composer
 				config.m_BodySections[0].e_TransferEncoding,
 				config.m_Headers
 			);
-		} else
-		{
+		} else {
 			// Generates the boundary and sets the content type
-			std::string boundary = generateBoundary();
-			std::string contentType = contentTypeToString(EmailContentType::ECT_MULTIPART_ALTERNATIVE);
+			string boundary = generateBoundary();
+			string contentType = contentTypeToString(EmailContentType::ECT_MULTIPART_ALTERNATIVE);
 			contentType += "; boundary=\"" + boundary + '\"';
 
 			config.m_Headers.emplace_back(EmailHeader{
@@ -241,12 +209,10 @@ namespace FSMTP::Mailer::Composer
 
 			// Starts looping over the sections and appends them
 			// - the result, with the top boundary
-			for (EmailBodySection &section : config.m_BodySections)
-			{
+			for (EmailBodySection &section : config.m_BodySections) {
 				// Generates the headers, if they're not there yet
-				if (section.e_Headers.size() == 0)
-				{
-					std::string contentType = contentTypeToString(section.e_Type);
+				if (section.e_Headers.size() == 0) {
+					string contentType = contentTypeToString(section.e_Type);
 					contentType += "; charset=\"utf-8\"";
 					section.e_Headers.push_back(EmailHeader{
 						"Content-Type",
@@ -275,90 +241,54 @@ namespace FSMTP::Mailer::Composer
 		return res;
 	}
 
-	/**
-	 * Turns an HTML message into an text message
-	 *
-	 * @Param {const std::string &} raw
-	 * @Return {std::string}
-	 */
-	std::string generateTextFromHTML(const std::string &raw)
-	{
-		std::regex htmlRegex("<[^<]*>");
-		std::string res;
+	string generateTextFromHTML(const string &raw) {
+		regex htmlRegex("<[^<]*>");
+		string res;
 		res.reserve(raw.size());
 
 		// Replaces the stuff
-		std::regex_replace(std::back_inserter(res), raw.begin(), raw.end(), htmlRegex, "");
+		regex_replace(back_inserter(res), raw.begin(), raw.end(), htmlRegex, "");
 
 		return res;
 	}
 
-	/**
-	 * Turns an vector of email headers into valid headers
-	 *
-	 * @Param {const std::vector<EmailHeader> &} headers
-	 * @Return {std::string}
-	 */
-	// TODO: Add header length limit and then newline shit
-	std::string generateHeaders(const std::vector<EmailHeader> &headers)
-	{
-		std::string res;
+	string generateHeaders(const vector<EmailHeader> &headers) {
+		string res;
 		for (const EmailHeader &header : headers)
 			res += header.e_Key + ": " + header.e_Value + "\r\n";
 		return res;
 	}
 
-	/**
-	 * Encodes an message body
-	 *
-	 * @Param {const std::string &} raw
-	 * @Param {const EmailTransferEncoding} encoding
-	 * @Return {std::string}
-	 */
-	std::string encodeMessageBody(
-		const std::string &raw, 
+	string encodeMessageBody(
+		const string &raw, 
 		const EmailTransferEncoding encoding
-	)
-	{
-		std::string normalized = normalizeMessageBody(raw);
-		std::string res;
+	) {
+		string normalized = normalizeMessageBody(raw);
+		string res;
 
 		// Checks which encoding to use
 		switch (encoding)
 		{
-			case EmailTransferEncoding::ETE_QUOTED_PRINTABLE:
-			{
+			case EmailTransferEncoding::ETE_QUOTED_PRINTABLE: {
 				// Starts encoding the message, and the specific chars
 				// - to hex
 				res = encodeQuotedPrintable(normalized);
 				break;
 			}
-			default:
-			{
+			default: {
 				res = normalized;
 			}
 		}
 
-		// Replaces the '\n' with '\r\n'
-
 		return res;
 	}
 
-	/**
-	 * Generates an body section
-	 *
-	 * @Param {const std::string &} body
-	 * @Param {const EmailTransferEncoding} encoding
-	 * @Param {const std::vector<EmailHeader> &} headers
-	 * @Return {std::string}
-	 */
-	std::string generateBodySection(
-		const std::string &body,
+	string generateBodySection(
+		const string &body,
 		const EmailTransferEncoding encoding,
-		const std::vector<EmailHeader> &headers
-	)
-	{
-		std::string res;
+		const vector<EmailHeader> &headers
+	) {
+		string res;
 
 		// Generates the headers
 		res += generateHeaders(headers);
@@ -373,19 +303,9 @@ namespace FSMTP::Mailer::Composer
 		return res;
 	}
 
-
-	/**
-	 * Normalizes an message body, feature set:
-	 * 1. Remove duplicated whitespace
-	 * 2. Remove whitespace at the start and end of lines
-	 *
-	 * @Param {const std::string &} raw
-	 * @return {std::string}
-	 */
-	std::string normalizeMessageBody(const std::string &raw)
-	{
-		std::string res;
-		std::string temp;
+	string normalizeMessageBody(const string &raw) {
+		string res;
+		string temp;
 		temp.reserve(raw.size());
 
 		// Removes duplicated whitespace
@@ -393,18 +313,16 @@ namespace FSMTP::Mailer::Composer
 
 		// Loops over the lines, and removes the prefix
 		// - and suffix whitespace
-		std::stringstream stream(temp);
-		std::string token;
+		stringstream stream(temp);
+		string token;
 		bool previousLineWasEmpty = true;
-		while (std::getline(stream, token, '\n'))
-		{
+		while (getline(stream, token, '\n')) {
 			// Removes the '\r' if there
 			if (!token.empty() && token[token.size() - 1] == '\r') token.pop_back();
 
 			// Checks if there are two empty lines, if so
 			// - remove the second one
-			if (token.empty())
-			{
+			if (token.empty()) {
 				if (previousLineWasEmpty)
 					continue;
 				previousLineWasEmpty = true;

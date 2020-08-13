@@ -16,14 +16,7 @@
 
 #pragma once
 
-#include <stdexcept>
-#include <string>
-#include <vector>
-#include <iostream>
-#include <cstdint>
-
-#include <cassandra.h>
-
+#include "../default.h"
 #include "../general/cleanup.src.h"
 #include "../general/Logger.src.h"
 #include "../general/connections.src.h"
@@ -221,24 +214,6 @@ namespace FSMTP::Models
      */
     static int64_t getBucket(void);
 
-	  /**
-	   * Saves an email into the database
-	   *
-	   * @Param {CassandraConnection *} conn
-	   * @Return {void}
-	   */
-	  void save(CassandraConnection *conn);
-
-    /**
-     * Deletes one email from the database
-     *
-     * @Param {CassandraConnection *} cassandra
-     * @Param {const std::string &} domain
-     * @Param {const CassUuid &} ownersUuid
-     * @Param {const CassUuid &} emailUuid;
-     * @Param {const int64_t} bucket
-     * @Return {void} 
-     */
     static void deleteOne(
       CassandraConnection *cassandra,
       const std::string &domain,
@@ -256,7 +231,7 @@ namespace FSMTP::Models
     void generateMessageUUID(void);
 
     EmailAddress e_TransportFrom;
-		EmailAddress e_TransportTo;
+		vector<EmailAddress> e_TransportTo;
 		std::string e_Subject;
 		std::string e_MessageID;
 		std::vector<EmailBodySection> e_BodySections;
