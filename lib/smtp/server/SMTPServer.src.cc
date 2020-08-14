@@ -520,7 +520,7 @@ bool SMTPServer::handleCommand(
 			try {
 				auto &message = session->s_TransportMessage;
 				MIME::parseRecursive(session->s_RawBody, message, 0);
-				FullEmail::print(message, clogger);
+				DEBUG_ONLY(FullEmail::print(message, clogger));
 			} catch (const runtime_error &e) {
 				throw SMTPSyntaxException(string("Parsing failed: ") + e.what());
 			}

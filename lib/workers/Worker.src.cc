@@ -90,7 +90,7 @@ namespace FSMTP::Workers
 		//  we set running to false
 
 		isRunning = true;
-		while(isRunning) {
+		while(shouldRun) {
 			try {
 				this->action(u);
 			} catch (const EmptyQuery &e) {

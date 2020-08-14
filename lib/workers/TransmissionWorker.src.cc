@@ -40,7 +40,7 @@ namespace FSMTP::Workers
 	}
 
 	void TransmissionWorker::action(void *u) {
-		if (queue.size() >= 1) {
+		while (queue.size() > 0) {
 
 			// Gets the first task in the list, the task will tell the
 			//  transmitter where to transmit the message to

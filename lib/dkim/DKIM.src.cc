@@ -169,7 +169,7 @@ namespace FSMTP::DKIM
 
 			// Removes the whitespace at start and end, and pushes it to
 			// - the result
-			if (token[token.size() - 1] == ' ') token.pop_back();
+			if (!token.empty() && token[token.size() - 1] == ' ') token.pop_back();
 			temp += token + "\r\n";
 
 			// Increments the index
