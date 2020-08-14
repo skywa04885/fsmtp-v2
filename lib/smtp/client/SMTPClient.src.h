@@ -45,11 +45,6 @@ namespace FSMTP::Mailer::Client {
 	} SMTPClientActionType;
 
 	typedef struct {
-		string s_Address;
-		string s_Message;
-	} SMTPClientError;
-
-	typedef struct {
 		vector<string> t_Servers;
 		EmailAddress t_Address;
 	} SMTPClientTarget;
@@ -75,7 +70,7 @@ namespace FSMTP::Mailer::Client {
 		Logger s_Logger;
 		string s_TransportMessage;
 		vector<SMTPClientTarget> s_Targets;
-		vector<SMTPClientError> s_ErrorLog;
+		json s_ErrorLog;
 		EmailAddress s_MailFrom;
 		size_t s_ErrorCount;
 	};

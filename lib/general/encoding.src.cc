@@ -18,32 +18,22 @@
 
 namespace FSMTP::Encoding
 {
-	/**
-	 * Decodes 7 bit message
-	 *
-	 * @Param {const std::string &} raw
-	 * @Return {std::string}
-	 */
 	// TODO: Improve Quoted-Printable decoder
-	std::string decodeQuotedPrintable(const std::string &raw)
-	{
-		std::string res;
+	string decodeQuotedPrintable(const string &raw) {
+		string res;
 
 		bool hexStarted = false;
-		std::string hex;
-		for (const char c : raw)
-		{
+		string hex;
+		for (const char c : raw) {
 			// Checks if an command started,
 			// - if so set the command started boolean to
 			// - true so we can start parsing
-			if (c == '=')
-			{
+			if (c == '=') {
 				hexStarted = true;
 				continue;
 			}
 
-			if (hexStarted)
-			{
+			if (hexStarted) {
 				hex += c;
 
 				if (hex.size() == 2)
@@ -52,7 +42,7 @@ namespace FSMTP::Encoding
 					// - the decode process, which appends it
 					// - back to the result, after this we clear
 					// - the result and set hex started to false
-					std::cout << hex << std::endl;
+					cout << hex << endl;
 					Encoding::HEX::decode(hex, res);
 					
 					hex.clear();
@@ -64,67 +54,90 @@ namespace FSMTP::Encoding
 		return res;
 	}
 
-	/**
-	 * Encodes message to quoted printable
-	 *
-	 * @Param {const std::string &} raw
-	 * @Return {std::string}
-	 */
-	std::string encodeQuotedPrintable(const std::string &raw)
+	string encodeQuotedPrintable(const string &raw)
 	{
-		std::string res;
+		string res;
+		res.reserve(raw.length());
 
-		// Loops over the chars and checks if they need to be
-		// - encoded
-		std::size_t i = 0;
-		std::size_t lineLength = 0;
-		for (const char c : raw)
-		{
-			i++;
+		auto encodeLine = [&](const string &line) {
+			string temp;
 
-			// Checks if it is the end of an line
-			// - if so set the line length to zero,
-			// - else we just increment it
-			if (c == '\n')
-			{
-				lineLength = 0;
-			}
-			else
-				lineLength++;
+			bool end = false;
+			size_t index = 0;
+			for (const char c : line) {
+				if (++index == line.length()) {
+					end = true;
+				}
 
-			// Checks if we need to start an new line, remove one because
-			// - the ending will be an soft line break
-			if (lineLength >= 74)
-			{
-				lineLength = 0;
-				res += "=\n";
-			}
-
-			// Checks if we should not encode the current
-			// - char
-			if (c >= 33 && c <= 126 && c != '=')
-			{
-				res += c;
-				continue;
-			}
-
-			// Checks if we need to encode the current
-			// - character due to an line ending thats
-			// - nearby
-			if (c >= 9 && c <= 32)
-			{
-				if (raw[i] != '\n')
-				{
-					res += c;
-					continue;
+				if (
+					(c > 33 && c < 126 && c != '=') ||
+					((c == 9 || c == 32) && !end)
+				) {
+					temp += c;
+				} else if (((c == 9 || c == 32) && end)) {
+					// Since it is a space or tab at the end, we follow it by a
+					//  soft line break
+					temp += c;
+					temp += '=';
+				} else {
+					temp += '=';
+					HEX::encode(c, temp);
 				}
 			}
 
-			// Everything else will be encoded, since
-			// - it was not specified it may be raw
-			res += '=';
-			HEX::encode(c, res);
-			lineLength += 3;
+			return temp;
+		};
+
+		stringstream stream(raw);
+		string line;
+		while (getline(stream, line, '\n')) {
+			if (!line.empty() && line[line.length() - 1] == '\r') {
+				line.pop_back();
+			}
+			
+			if (!line.empty()) {
+				string temp = encodeLine(line);
+
+				size_t left = temp.length(), total = 0;
+				while (left > 76) {
+					string substr = temp.substr(total, 75);
+					left -= substr.length();
+					total += substr.length();
+					res += substr + "=\r\n";
+				}
+
+				if (left > 0) {
+					res += temp.substr(total) + "\r\n";
+				}
+			}
+		}
+
+		return res;
+	}
+
+	string escapeHTML(const string &raw) {
+		string res;
+		res.reserve(raw.length());
+
+		for (const char c : raw) {
+			switch (c) {
+				case '&':
+					res += "&amp;";
+					break;
+				case '\"':
+					res += "&quot;";
+					break;
+				case '\'':
+					res += "&apos;";
+					break;
+				case '<':
+					res += "&lt;";
+					break;
+				case '>':
+					res += "&gt;";
+					break;
+				default: res += c;
+			}
 		}
 
 		return res;

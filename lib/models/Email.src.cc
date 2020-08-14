@@ -65,8 +65,10 @@ namespace FSMTP::Models
   std::string EmailAddress::toString(void) const
   {
 		std::string res;
-		if (!this->e_Name.empty())
-			res += this->e_Name + ' ';
+		if (!this->e_Name.empty()) {
+			res += this->e_Name;
+			res += ' ';
+		}
     res += "<" + this->e_Address + ">";
     return res;
   }
@@ -83,18 +85,22 @@ namespace FSMTP::Models
 		// - be multiple formats, and we need to parse it
 		// - in the correct way
 		std::size_t openBracket = raw.find_first_of('<'), closeBracket = raw.find_first_of('>');
-		if (openBracket != std::string::npos && closeBracket != std::string::npos)
-		{
+		if (openBracket != std::string::npos && closeBracket != std::string::npos) {
+			
 			this->e_Address = raw.substr(openBracket + 1, closeBracket - openBracket - 1);
 			this->e_Name = raw.substr(0, openBracket);
+
 			removeFirstAndLastWhite(this->e_Name);
+			removeStringQuotes(this->e_Name);
 		} else if (
 			openBracket == std::string::npos && closeBracket != std::string::npos ||
 			openBracket != std::string::npos && closeBracket == std::string::npos
-		)
-			throw std::runtime_error("Only one bracket found, address "
-				"should contain both opening and closing.");
-		else this->e_Address = raw;
+		) {
+			throw std::runtime_error("Only one bracket found, address ""should contain both opening and closing.");
+		}
+		else {
+			this->e_Address = raw;
+		}
 
 		// Validates the email address by checking for the at symbol
 		if (raw.find_first_of('@') == std::string::npos)

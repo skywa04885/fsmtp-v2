@@ -10,3 +10,4 @@ env/*
 cmake-build-debug/*
 cmake-build-release/*
 subprojects/*
+dependencies/*

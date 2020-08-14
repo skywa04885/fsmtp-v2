@@ -1,0 +1,35 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    {% include "../head.html" %}
+    <style>
+      .errl{padding:0;margin:0}
+      .errl>li{list-style:none;}
+      .errl>li{background-color: #f0f0f0;border:1px solid #c7c7c7;border-radius:0.2rem;padding:0.8rem;display:block;}
+      .errl>li{margin-bottom:0.5rem;}
+      .errl>li>p{margin:0;padding:0;margin-bottom:1rem;}
+      .errl>li>p>strong{color:#0875a7;font-size:1rem;font-weight:bold;}
+      .errl>li>em{padding:0.5rem;border-radius:0.2rem;background-color:#1b1b1b;color:#88ff00;text-align: left;font-size: 0.9rem;}
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      {% include "../header.html" %}
+      <div class="wrap__ctnt">
+        <h1>Delivery failure</h1>
+        <p>The FSMTP-V2 Nodes failed to deliver your message.</p>
+        <p>For the geeks out there, we've logged the events bellow.</p>
+        <hr />
+        <ul class="errl">
+          {% for error in errors %}
+          <li>
+            <p><strong>{{ error.address }}</strong>: </p>
+            <em>{{ error.message }}</em>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% include "../footer.html" %}
+    </div>
+  </body>
+</html>

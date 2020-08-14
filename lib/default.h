@@ -23,6 +23,7 @@
 #include <vector>
 #include <map>
 #include <sstream>
+#include <regex>
 #include <cstdint>
 #include <functional>
 #include <filesystem>
@@ -38,6 +39,8 @@
 // ==== Other C++ Library's ====
 #include <json/json.h>
 #include <cassandra.h>
+#include <inja/inja.hpp>
+#include <nlohmann/json.hpp>
 
 // ==== C Libraries ====
 #include <sys/socket.h>
@@ -53,6 +56,7 @@
 // ==== Using namespaces ====
 using namespace std;
 using namespace chrono;
+using namespace nlohmann;
 
 // ==== Global functions/classes ====
 string __ssl_get_error();

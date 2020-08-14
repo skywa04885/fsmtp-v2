@@ -18,7 +18,7 @@
 #include "TransmissionWorker.src.h"
 
 static mutex queueMutex;
-static deque<shared_ptr<SMTPServerSession>> queue;
+static deque<shared_ptr<SMTPServerSession>> transmissionQueue;
 
 namespace FSMTP::Workers
 {
@@ -35,18 +35,43 @@ namespace FSMTP::Workers
 
 	void TransmissionWorker::push(shared_ptr<SMTPServerSession> session) {
 		queueMutex.lock();
-		queue.push_back(session);
+		transmissionQueue.push_back(session);
 		queueMutex.unlock();
 	}
 
+	static inja::Environment env;
+	static inja::Template errorTemplate = env.parse_template("../templates/mailer/error.html");
+	void TransmissionWorker::sendErrorsToSender(const SMTPClient &client) {
+		json data = json::object();
+		data["subject"] = "SMTP Delivery failure";
+		data["errors"] = client.s_ErrorLog;
+
+		string result = env.render(errorTemplate, data);
+
+		MailComposerConfig composeConfig;
+		composeConfig.m_BodySections.push_back(EmailBodySection {
+			result, EmailContentType::ECT_TEXT_HTML,
+			{}, 0, EmailTransferEncoding::ETE_QUOTED_PRINTABLE
+		});
+		composeConfig.m_From.push_back(EmailAddress(
+			"FSMTP Delivery", 
+			"test@gmail.com"
+		));
+		composeConfig.m_To.push_back(client.s_MailFrom);
+		composeConfig.m_Subject = "SMTP Delivery failure";
+		
+		SMTPClient mailer(true);
+		mailer.prepare(composeConfig).beSocial();
+	}
+
 	void TransmissionWorker::action(void *u) {
-		while (queue.size() > 0) {
+		while (transmissionQueue.size() > 0) {
 
 			// Gets the first task in the list, the task will tell the
 			//  transmitter where to transmit the message to
 
 			queueMutex.lock();
-			shared_ptr<SMTPServerSession> task = queue.front();
+			shared_ptr<SMTPServerSession> task = transmissionQueue.front();
 			queueMutex.unlock();
 
 			// Attempts to send the message to the client/clients, if this fails
@@ -64,11 +89,15 @@ namespace FSMTP::Workers
 				#endif
 
 				client.prepare(to, { from }, content).beSocial();
+
+				if (client.s_ErrorCount > 0) {
+					sendErrorsToSender(client);
+				}
 			} catch (const runtime_error &e) {
 				this->w_Logger << FATAL << "Could not send email: " << e.what() << ENDL << CLASSIC;
 			}
 
-			queue.pop_front();
+			transmissionQueue.pop_front();
 		}
 	}
 }

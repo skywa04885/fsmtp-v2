@@ -3,7 +3,7 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 
 const ROOT = path.join(__dirname, '../');
-const IGNORE_DIRS = ['build', '.vscode', '.idea', 'subprojects'].map(dir => path.join(ROOT, dir));
+const IGNORE_DIRS = ['build', '.vscode', '.idea', 'dependencies'].map(dir => path.join(ROOT, dir));
 
 let running = false;
 let proc = undefined;

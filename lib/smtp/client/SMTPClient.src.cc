@@ -19,7 +19,7 @@
 using namespace FSMTP::Mailer::Client;
 
 
-SMTPClient::SMTPClient(bool s_Silent): s_Logger("SMTPClient", LoggerLevel::INFO), s_ErrorCount(0) {
+SMTPClient::SMTPClient(bool s_Silent): s_Logger("SMTPClient", LoggerLevel::INFO), s_ErrorCount(0), s_ErrorLog(json::array()) {
 	if (!s_Silent) this->s_Logger << "SMTPClient initialized !" << ENDL;
 }
 
@@ -105,12 +105,13 @@ SMTPClient &SMTPClient::addError(
 	const string &address,
 	const string &message
 ) {
-	s_ErrorCount++;
-	this->s_ErrorLog.push_back(SMTPClientError{
-		address,
-		message
-	});
 
+	json error;
+	error["address"] = escapeHTML(address);
+	error["message"] = message;
+	this->s_ErrorLog.push_back(error);
+
+	s_ErrorCount++;
 	return *this;
 }
 

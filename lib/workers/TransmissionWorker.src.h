@@ -16,10 +16,7 @@
 
 #pragma once
 
-#include <vector>
-#include <thread>
-#include <mutex>
-#include <deque>
+#include "../default.h"
 
 #include "../models/Email.src.h"
 #include "../models/Account.src.h"
@@ -41,6 +38,8 @@ namespace FSMTP::Workers
 		TransmissionWorker();
 		virtual void startupTask(void);
 		virtual void action(void *u);
+
+		static void sendErrorsToSender(const SMTPClient &client);
 		static void push(shared_ptr<SMTPServerSession> session);
 	private:
 		unique_ptr<CassandraConnection> d_Connection;

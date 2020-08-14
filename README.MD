@@ -27,23 +27,20 @@ kunnen worden uit andere applicaties.
 
 ## Wat bibliotheken heb ik nodig ?
 
+1. JSON [Github](https://github.com/nlohmann/json)
+1. Hayai [Github](https://github.com/nickbruun/hayai)
+1. Doctest [Github](https://github.com/onqtam/doctest)
 1. HiRedis [Github](https://github.com/redis/hiredis)
 1. DataStax CQL Client [Github](https://github.com/datastax/cpp-driver)
-
-Van beide is de installatie best makkelijk:
-```bash
-mkdir build
-cd ./build
-cmake ..
-make -j [CORES]
-sudo make install
-```
+1. Inja Template Engine [Github](https://github.com/pantor/inja)
+1. JSONCPP [Github](https://github.com/open-source-parsers/jsoncpp)
 
 ## Hoe installeer ik het ?
 
 ```bash
 sudo apt-get install meson ninja
-meson wrap install jsoncpp
+chmod +x ./install.sh
+./install.sh
 meson build && cd ./build
 ninja
 ./fsmtp

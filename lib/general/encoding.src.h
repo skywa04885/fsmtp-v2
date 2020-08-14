@@ -16,27 +16,12 @@
 
 #pragma once
 
-#include <string>
-#include <iostream>
-#include <regex>
-
+#include "../default.h"
 #include "hex.src.h"
 
 namespace FSMTP::Encoding
 {
-	/**
-	 * Decodes 7 bit message
-	 *
-	 * @Param {const std::string &} raw
-	 * @Return {std::string}
-	 */
-	std::string decodeQuotedPrintable(const std::string &raw);
-
-	/**
-	 * Encodes message to quoted printable
-	 *
-	 * @Param {const std::string &} raw
-	 * @Return {std::string}
-	 */
-	std::string encodeQuotedPrintable(const std::string &raw);
+	string decodeQuotedPrintable(const string &raw);
+	string encodeQuotedPrintable(const string &raw);
+	string escapeHTML(const string &raw);
 }
