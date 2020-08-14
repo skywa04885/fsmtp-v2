@@ -20,7 +20,7 @@
 #include "../../networking/sockets/ServerSocket.src.h"
 #include "../../networking/sockets/SSLContext.src.h"
 #include "../../general/Global.src.h"
-
+#include "../../workers/DatabaseWorker.src.h"
 #include "../Response.src.h"
 #include "../Command.src.h"
 #include "../../general/Logger.src.h"
@@ -53,8 +53,8 @@ namespace FSMTP::Server
 		SMTPServer &startHandler(const bool newThread);
 
 		bool handleCommand(
-			shared_ptr<ClientSocket> client, const ClientCommand &command, SMTPServerSession &session,
-			Logger &clogger
+			shared_ptr<ClientSocket> client, const ClientCommand &command,
+			shared_ptr<SMTPServerSession> session, Logger &clogger
 		);
 
 		std::vector<SMTPServiceFunction> s_Services;

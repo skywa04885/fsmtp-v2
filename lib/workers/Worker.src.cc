@@ -80,6 +80,7 @@ namespace FSMTP::Workers
 	}
 
 	void Worker::run(void *u) {
+		auto &logger = this->w_Logger;
 		auto &isRunning = this->w_IsRunning;
 		auto &shouldRun = this->w_ShouldRun;
 
@@ -90,7 +91,14 @@ namespace FSMTP::Workers
 
 		isRunning = true;
 		while(isRunning) {
-			this->action(u);
+			try {
+				this->action(u);
+			} catch (const EmptyQuery &e) {
+				logger << ERROR << "Execution failed: " << e.what() << ENDL << CLASSIC;
+			} catch (...) {
+				logger << ERROR << "Execution failed with unknown error !" << ENDL << CLASSIC;
+			}
+
 			this_thread::sleep_for(milliseconds(this->w_Interval));
 		}
 		isRunning = false;

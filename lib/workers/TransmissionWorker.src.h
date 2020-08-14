@@ -27,26 +27,21 @@
 #include "../smtp/client/SMTPClient.src.h"
 #include "./Worker.src.h"
 #include "../general/connections.src.h"
+#include "../smtp/server/SMTPServerSession.src.h"
 
 using namespace FSMTP::Models;
 using namespace FSMTP::Connections;
 using namespace FSMTP::Mailer::Client;
+using namespace FSMTP::Server;
 
 namespace FSMTP::Workers
 {
-	typedef struct
-	{
-		vector<EmailAddress> t_From;
-		vector<EmailAddress> t_To;
-		string t_Content;
-		AccountShortcut t_Account;
-	} TransmissionWorkerTask;
-
 	class TransmissionWorker : public Worker {
 	public:
 		TransmissionWorker();
 		virtual void startupTask(void);
 		virtual void action(void *u);
+		static void push(shared_ptr<SMTPServerSession> session);
 	private:
 		unique_ptr<CassandraConnection> d_Connection;
 	};

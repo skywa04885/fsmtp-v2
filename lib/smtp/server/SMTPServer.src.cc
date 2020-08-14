@@ -16,11 +16,6 @@
 
 #include "SMTPServer.src.h"
 
-extern vector<pair<string, FullEmail>> _emailStorageQueue;
-extern mutex _emailStorageMutex;
-extern mutex _transmissionMutex;
-extern deque<TransmissionWorkerTask> _transmissionQueue;
-
 using namespace Server;
 
 SMTPServer::SMTPServer() noexcept: s_Logger("FSMTP-V2/ESMTP", LoggerLevel::INFO) {
@@ -106,9 +101,9 @@ SMTPServer &SMTPServer::startHandler(const bool newThread) {
 
 	auto handler = [&](shared_ptr<ClientSocket> client) {
 		size_t start = duration_cast<milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
-		SMTPServerSession session;
+		shared_ptr<SMTPServerSession> session = make_shared<SMTPServerSession>();
 		if (client->usingSSL()) {
-			session.setFlag(_SMTP_SERV_SESSION_SSL_FLAG);
+			session->setFlag(_SMTP_SERV_SESSION_SSL_FLAG);
 		}
 
 		// Creates the logger and prints the initial information to the console
@@ -173,8 +168,8 @@ SMTPServer &SMTPServer::startHandler(const bool newThread) {
 }
 
 bool SMTPServer::handleCommand(
-	shared_ptr<ClientSocket> client, const ClientCommand &command, SMTPServerSession &session,
-	Logger &clogger
+	shared_ptr<ClientSocket> client, const ClientCommand &command,
+	shared_ptr<SMTPServerSession> session, Logger &clogger
 ) {
 	auto *redis = this->s_Redis.get();
 	auto *cass = this->s_Cassandra.get();
@@ -211,7 +206,7 @@ bool SMTPServer::handleCommand(
 		// Initializes connection
 		// ========================================
 		case ClientCommandType::CCT_HELO: {
-			if (session.getAction(_SMTP_SERV_PA_HELO)) {
+			if (session->getAction(_SMTP_SERV_PA_HELO)) {
 				throw SMTPOrderException("EHLO/HELO already sent.");
 			} else if (command.c_Arguments.size() < 1) {
 				throw SMTPSyntaxException("Empty HELO command not allowed");
@@ -224,7 +219,7 @@ bool SMTPServer::handleCommand(
 			);
 			client->write(response.build());
 
-			session.setAction(_SMTP_SERV_PA_HELO);
+			session->setAction(_SMTP_SERV_PA_HELO);
 			break;
 		}
 		// ========================================
@@ -233,7 +228,7 @@ bool SMTPServer::handleCommand(
 		// Sends the server capabilities
 		// ========================================
 		case ClientCommandType::CCT_EHLO: {
-			if (session.getAction(_SMTP_SERV_PA_HELO)) {
+			if (session->getAction(_SMTP_SERV_PA_HELO)) {
 				throw SMTPOrderException("EHLO/HELO already sent.");
 			} else if (command.c_Arguments.size() < 1) {
 				throw SMTPSyntaxException("Empty HELO command not allowed");
@@ -248,7 +243,7 @@ bool SMTPServer::handleCommand(
 			);
 			client->write(response.build());
 
-			session.setAction(_SMTP_SERV_PA_HELO);
+			session->setAction(_SMTP_SERV_PA_HELO);
 			break;
 		}
 		// ========================================
@@ -257,9 +252,9 @@ bool SMTPServer::handleCommand(
 		// Upgrades the connection to SSL
 		// ========================================
 		case ClientCommandType::CCT_START_TLS: {
-			if (!session.getAction(_SMTP_SERV_PA_HELO))
+			if (!session->getAction(_SMTP_SERV_PA_HELO))
 				throw SMTPOrderException("EHLO/HELO first.");
-			else if (session.getFlag(_SMTP_SERV_SESSION_SSL_FLAG))
+			else if (session->getFlag(_SMTP_SERV_SESSION_SSL_FLAG))
 				throw SMTPOrderException("Connection already secured");
 
 			sendResponse(SMTPResponseType::SRC_START_TLS);
@@ -267,8 +262,8 @@ bool SMTPServer::handleCommand(
 
 			clogger << "Upgraded to TLS" << ENDL;
 
-			session.setFlag(_SMTP_SERV_SESSION_SSL_FLAG);
-			session.clearAction(_SMTP_SERV_PA_HELO);
+			session->setFlag(_SMTP_SERV_SESSION_SSL_FLAG);
+			session->clearAction(_SMTP_SERV_PA_HELO);
 			break;
 		}
 		// ========================================
@@ -277,8 +272,8 @@ bool SMTPServer::handleCommand(
 		// Sets the senders address
 		// ========================================
 		case ClientCommandType::CCT_MAIL_FROM: {
-			auto &sessMess = session.s_TransportMessage;
-			auto &sendingAccount = session.s_SendingAccount;
+			auto &sessMess = session->s_TransportMessage;
+			auto &sendingAccount = session->s_SendingAccount;
 			EmailAddress from;
 
 			// Checks if the command is allowed, before this
@@ -287,9 +282,9 @@ bool SMTPServer::handleCommand(
 			//  before in this session. After this we attempt to parse
 			//  the message.
 
-			if (session.getAction(_SMTP_SERV_PA_MAIL_FROM)) {
+			if (session->getAction(_SMTP_SERV_PA_MAIL_FROM)) {
 				throw SMTPOrderException("MAIL FROM already sent");
-			} else if (!session.getAction(_SMTP_SERV_PA_HELO)) {
+			} else if (!session->getAction(_SMTP_SERV_PA_HELO)) {
 				throw SMTPOrderException("EHLO/HELO first");
 			} else if (command.c_Arguments.size() < 1) {
 				throw SMTPSyntaxException("MAIL FROM requires arguments.");
@@ -312,7 +307,7 @@ bool SMTPServer::handleCommand(
 				//  succeeds, and the client is not authenticated, send error.
 				
 				LocalDomain localDomain = LocalDomain::findRedis(domain, redis);
-				if (!session.getFlag(_SMTP_SERV_SESSION_AUTH_FLAG)) {
+				if (!session->getFlag(_SMTP_SERV_SESSION_AUTH_FLAG)) {
 					throw SMTPOrderException("AUTH first");
 				}
 
@@ -327,7 +322,7 @@ bool SMTPServer::handleCommand(
 					return true;
 				}
 
-				session.setFlag(_SMTP_SERV_SESSION_FROM_LOCAL);
+				session->setFlag(_SMTP_SERV_SESSION_FROM_LOCAL);
 			} catch (const EmptyQuery &e) {}
 
 			// Writes the proceed message to the client, which indicates that everything is fine
@@ -344,7 +339,7 @@ bool SMTPServer::handleCommand(
 			//  we tell that the mail from action has been used.
 
 			sessMess.e_TransportFrom = from;
-			session.setAction(_SMTP_SERV_PA_MAIL_FROM);
+			session->setAction(_SMTP_SERV_PA_MAIL_FROM);
 			break;
 		}
 		// ========================================
@@ -361,9 +356,9 @@ bool SMTPServer::handleCommand(
 			//  requires the user to sent helo, and performed the mail from command
 			//  if this is not the case we will send an error.
 
-			if (!session.getAction(_SMTP_SERV_PA_HELO)) {
+			if (!session->getAction(_SMTP_SERV_PA_HELO)) {
 				throw SMTPOrderException("EHLO/HELLO first.");
-			} else if (!session.getAction(_SMTP_SERV_PA_MAIL_FROM)) {
+			} else if (!session->getAction(_SMTP_SERV_PA_MAIL_FROM)) {
 				throw SMTPOrderException("MAIL FROM first.");
 			} else if (command.c_Arguments.size() < 1) {
 				throw SMTPSyntaxException("RCPT TO requires arguments.");
@@ -383,7 +378,7 @@ bool SMTPServer::handleCommand(
 			try {
 				LocalDomain localDomain = LocalDomain::findRedis(to.getDomain(), redis);
 			} catch (const EmptyQuery &e) {
-				if (session.getFlag(_SMTP_SERV_SESSION_FROM_LOCAL)) {
+				if (session->getFlag(_SMTP_SERV_SESSION_FROM_LOCAL)) {
 					relay = true;
 				}
 			}
@@ -422,12 +417,20 @@ bool SMTPServer::handleCommand(
 			client->write(response.build());
 
 			if (!relay) {
-				session.s_StorageTasks.push_back(receivingAccount);
+				session->s_StorageTasks.push_back(receivingAccount);
 			} else {
-				session.s_RelayTasks.push_back(to);
+				session->s_RelayTasks.push_back(to);
+
+				// Checks if we've already set the relay flag, if this is the case
+				//  do nothing, else set the relay flag and push the sent email
+				//  to the storage tasks
+				if (!session->getFlag(_SMTP_SERV_SESSION_RELAY)) {
+					session->setFlag(_SMTP_SERV_SESSION_RELAY);
+					session->s_StorageTasks.push_back(session->s_SendingAccount);
+				}
 			}
 
-			session.setAction(_SMTP_SERV_PA_RCPT_TO);
+			session->setAction(_SMTP_SERV_PA_RCPT_TO);
 			break;
 		}
 		// ========================================
@@ -441,9 +444,9 @@ bool SMTPServer::handleCommand(
 			//  only be done if not authenticated already, and the client
 			//  introduced herself.
 
-			if (session.getAction(_SMTP_SERV_PA_AUTH_PERF)) {
+			if (session->getAction(_SMTP_SERV_PA_AUTH_PERF)) {
 				throw SMTPOrderException("AUTH already done.");						
-			} else if (!session.getAction(_SMTP_SERV_PA_HELO)) {
+			} else if (!session->getAction(_SMTP_SERV_PA_HELO)) {
 				throw SMTPOrderException("EHLO/HELLO first.");
 			} else if (command.c_Arguments.size() < 2) {
 				throw SMTPSyntaxException("Specify type, and hash.");
@@ -469,15 +472,15 @@ bool SMTPServer::handleCommand(
 			// Checks if the passwords match, if this is not case we will send an
 			//  error message, and close the transmission channel.
 
-			if (!authVerify(redis, cass, user, pass, session.s_SendingAccount)) {
+			if (!authVerify(redis, cass, user, pass, session->s_SendingAccount)) {
 				sendResponse(SMTPResponseType::SRC_AUTH_FAIL);
 				return true;
 			} else {
 				sendResponse(SMTPResponseType::SRC_AUTH_SUCCESS);
 			}
 			
-			session.setAction(_SMTP_SERV_PA_AUTH_PERF);
-			session.setFlag(_SMTP_SERV_SESSION_AUTH_FLAG);
+			session->setAction(_SMTP_SERV_PA_AUTH_PERF);
+			session->setFlag(_SMTP_SERV_SESSION_AUTH_FLAG);
 			break;
 		}
 		// ========================================
@@ -491,13 +494,13 @@ bool SMTPServer::handleCommand(
 			//  this may only happen when data not sent already, and the
 			//  user performed the previously required steps
 
-			if (session.getAction(_SMTP_SERV_PA_DATA_START)) {
+			if (session->getAction(_SMTP_SERV_PA_DATA_START)) {
 				throw SMTPOrderException("DATA already received.");
-			} if (!session.getAction(_SMTP_SERV_PA_HELO)) {
+			} if (!session->getAction(_SMTP_SERV_PA_HELO)) {
 				throw SMTPOrderException("EHLO/HELLO first.");
-			} if (!session.getAction(_SMTP_SERV_PA_MAIL_FROM)) {
+			} if (!session->getAction(_SMTP_SERV_PA_MAIL_FROM)) {
 				throw SMTPOrderException("MAIL FROM first.");
-			} if (!session.getAction(_SMTP_SERV_PA_RCPT_TO)) {
+			} if (!session->getAction(_SMTP_SERV_PA_RCPT_TO)) {
 				throw SMTPOrderException("RCPT TO first.");
 			}
 
@@ -505,60 +508,36 @@ bool SMTPServer::handleCommand(
 			//  this will tell the client that we're ready to receive data
 
 			sendResponse(SMTPResponseType::SRC_DATA_START);
-			session.setAction(_SMTP_SERV_PA_DATA_START);
+			session->setAction(_SMTP_SERV_PA_DATA_START);
 
 			// Reads the body and starts parsing it, if any error occurs
 			//  we write an syntax error, when this process is done
 			//  we add the message to the correct queue, and send the 
 			//  success message to the client.
 
-			string body = client->readToDelim("\r\n.\r\n");
+			session->s_RawBody = client->readToDelim("\r\n.\r\n");
 
 			try {
-				auto &message = session.s_TransportMessage;
-				MIME::parseRecursive(body, message, 0);
+				auto &message = session->s_TransportMessage;
+				MIME::parseRecursive(session->s_RawBody, message, 0);
 				FullEmail::print(message, clogger);
 			} catch (const runtime_error &e) {
 				throw SMTPSyntaxException(string("Parsing failed: ") + e.what());
 			}
 
+			// Builds and sends the final response
+
 			ServerResponse response (
 				SMTPResponseType::SRC_DATA_END, "",
-				reinterpret_cast<const void *>(session.s_TransportMessage.e_MessageID.c_str()), nullptr
+				reinterpret_cast<const void *>(session->s_TransportMessage.e_MessageID.c_str()), nullptr
 			);
 			client->write(response.build());
 
-			// Handles the storage requests, before adding them to the queue
-			//  we insert the account data and get the bucket / generate the id.
+			// Adds the message to the specified queue's these will either store
+			//  or transmit the message.
 
-			auto &storageTasks = session.s_StorageTasks;
-			auto &tmess = session.s_TransportMessage;
-			for_each(storageTasks.begin(), storageTasks.end(), [&](AccountShortcut &acc) {
-				tmess.e_OwnersBucket = acc.a_Bucket;
-				tmess.e_OwnersDomain = acc.a_Domain;
-				tmess.e_OwnersUUID = acc.a_UUID;
-				tmess.e_Type = EmailType::ET_INCOMMING;
-				tmess.generateMessageUUID();
-				tmess.e_Bucket = FullEmail::getBucket();
-				
-				_emailStorageMutex.lock();
-				_emailStorageQueue.push_back(make_pair(body, session.s_TransportMessage));
-				_emailStorageMutex.unlock();
-			});
-
-			// Checks if there is anything to relay, if so add it to the relay queue
-
-			auto &relayTasks = session.s_RelayTasks;
-			if (relayTasks.size() > 0) {
-				_transmissionMutex.lock();
-				_transmissionQueue.push_back({
-					{session.s_TransportMessage.e_TransportFrom},
-					relayTasks,
-					body,
-					session.s_SendingAccount
-				});
-				_transmissionMutex.unlock();
-			}
+			if (session->s_StorageTasks.size() > 0) DatabaseWorker::push(session);
+			if (session->s_RelayTasks.size() > 0) TransmissionWorker::push(session);
 
 			break;
 		}

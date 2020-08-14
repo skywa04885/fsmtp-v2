@@ -17,8 +17,8 @@
 
 #include "DatabaseWorker.src.h"
 
-mutex _emailStorageMutex;
-vector<pair<string, FullEmail>> _emailStorageQueue;
+mutex databaseMutex;
+vector<shared_ptr<SMTPServerSession>> databaseQueue;
 
 namespace FSMTP::Workers
 {
@@ -36,82 +36,104 @@ namespace FSMTP::Workers
 		logger << _BASH_SUCCESS_MARK << "Connected to redis" << ENDL;
 	}
 
+	void DatabaseWorker::push(shared_ptr<SMTPServerSession> session) {
+		databaseMutex.lock();
+		databaseQueue.push_back(session);
+		databaseMutex.unlock();
+	}
+
 	void DatabaseWorker::action(void *u) {
-		// ==================================
-		// Starts storing the emails
-		//
-		// Checks if there are any emails
-		// - and if so, send them
-		// ==================================
+		auto *cass = this->d_Cassandra.get();
+		auto *redis = this->d_Redis.get();
+		auto &logger = this->w_Logger;
 
 		// Checks if there are any emails
-		// - which needs to be stored
-		if (_emailStorageQueue.size() <= 0) return;
+		//  which needs to be stored
+		if (databaseQueue.size() <= 0) return;
 
-		// Starts looping over the emails and storing them,
-		// TODO: Add batch
-		_emailStorageMutex.lock();
-		this->w_Logger << "Started storing " << _emailStorageQueue.size() << " emails !" << ENDL;
-		for (pair<string, FullEmail>& dataPair : _emailStorageQueue) {
-			// Generates the stuff like the shortcuts and raw messages
-			EmailShortcut shortcut;
-			shortcut.e_Domain = dataPair.second.e_OwnersDomain;
-			shortcut.e_Subject = dataPair.second.e_Subject;
-			shortcut.e_OwnersUUID = dataPair.second.e_OwnersUUID;
-			shortcut.e_EmailUUID = dataPair.second.e_EmailUUID;
-			shortcut.e_Bucket = dataPair.second.e_Bucket;
-			shortcut.e_SizeOctets = dataPair.first.size();
-			shortcut.e_From = dataPair.second.e_From[0].toString();
+		databaseMutex.lock();
+		auto &session = databaseQueue.front();
+		databaseMutex.unlock();
 
-			RawEmail raw;
-			raw.e_Bucket = dataPair.second.e_Bucket;
-			raw.e_Domain = dataPair.second.e_OwnersDomain;
-			raw.e_OwnersUUID = dataPair.second.e_OwnersUUID;
-			raw.e_EmailUUID = dataPair.second.e_EmailUUID;
-			raw.e_Content = move(dataPair.first);
+		auto &fullEmail = session->s_TransportMessage;
+	
+		// Generates the email shortcut, this will be used
+		//  for quick message access in front-end applications
 
-			// Finds an text section if not we will have no preview
-			for (const EmailBodySection &section : dataPair.second.e_BodySections) {
-				if (section.e_Type == EmailContentType::ECT_TEXT_PLAIN) {
-					shortcut.e_Preview = section.e_Content.substr(
-						0,
-						(section.e_Content.size() > 255 ? 255 : section.e_Content.size())
-					);
-				}
-			}
+		EmailShortcut shortcut;
+		shortcut.e_Subject = fullEmail.e_Subject;
+		shortcut.e_SizeOctets = session->s_RawBody.size();
+		shortcut.e_From = fullEmail.e_From[0].toString();
 
-			// Checks in which folder the message belongs
-			if (dataPair.second.e_Type == EmailType::ET_INCOMMING) {
-				shortcut.e_Mailbox = "INBOX";
-			} else if (dataPair.second.e_Type == EmailType::ET_INCOMMING_SPAM) {
-				shortcut.e_Mailbox = "INBOX.Spam";
-			} else if (
-				dataPair.second.e_Type == EmailType::ET_OUTGOING ||
-				dataPair.second.e_Type == EmailType::ET_RELAY_OUTGOING
-			) {
-				shortcut.e_Mailbox = "INBOX.Sent";
-			}
+		// Generates the raw message, this will be used
+		//  for raw access, basically by all the apps, and will parse them.
 
-			// Updates the folder
-			shortcut.e_UID = MailboxStatus::addOneMessage(
-				this->d_Redis.get(),
-				this->d_Cassandra.get(),
-				dataPair.second.e_OwnersBucket,
-				dataPair.second.e_OwnersDomain,
-				dataPair.second.e_OwnersUUID,
-				shortcut.e_Mailbox
-			);
+		RawEmail raw;
+		raw.e_Content = session->s_RawBody;
 
-			// Stores the shit
-			try {
-				raw.save(this->d_Cassandra.get());
-				shortcut.save(this->d_Cassandra.get());
-			} catch (const DatabaseException &e) {
-				this->w_Logger << FATAL << "Could not store message: " << e.what() << ENDL << CLASSIC;
+		// Checks if we can generate an preview, if the preview ends up empty
+		//  we will put a 'No preview' string
+
+		for (const EmailBodySection &section : fullEmail.e_BodySections) {
+			if (section.e_Type == EmailContentType::ECT_TEXT_PLAIN) {
+				shortcut.e_Preview = section.e_Content.substr(
+					0,
+					(section.e_Content.size() > 255 ? 255 : section.e_Content.size())
+				);
 			}
 		}
-		this->w_Logger << "Stored " << _emailStorageQueue.size() << " emails, clearing vector" << ENDL;
-		_emailStorageQueue.clear();
-		_emailStorageMutex.unlock();
+
+		if (shortcut.e_Preview.empty()) {
+			shortcut.e_Preview = "No preview available";
+		}
+
+		auto &username = session->s_SendingAccount.a_Username;
+		auto &domain  = session->s_SendingAccount.a_Domain;
+		if (username + '@' + domain	== fullEmail.e_TransportFrom.e_Address) {
+			shortcut.e_Mailbox = "INBOX.Sent";
+		} else {
+			shortcut.e_Mailbox = "INBOX";
+		}
+
+		// Updates the folder status, and gets the new
+		//  uid, which will be stored in the shortcut. 
+		//  the uid is used in POP3
+
+		for_each(session->s_StorageTasks.begin(), session->s_StorageTasks.end(), [&](AccountShortcut &acc) {
+			int64_t bucket = FullEmail::getBucket();
+			CassUuid uuid = FullEmail::generateMessageUUID();
+
+			shortcut.e_OwnersUUID = acc.a_UUID;
+			shortcut.e_Domain = acc.a_Domain;
+			shortcut.e_Bucket = bucket;
+			shortcut.e_EmailUUID = uuid;
+
+			raw.e_Domain = acc.a_Domain;
+			raw.e_OwnersUUID = acc.a_UUID;
+			raw.e_Bucket = bucket;
+			raw.e_EmailUUID = uuid;
+			
+			try {
+				shortcut.e_UID = MailboxStatus::addOneMessage(
+					redis, cass, acc.a_Bucket, acc.a_Domain,
+					acc.a_UUID, shortcut.e_Mailbox
+				);
+
+				raw.save(cass);
+				shortcut.save(cass);
+
+				databaseMutex.lock();
+				databaseQueue.pop_back();
+				databaseMutex.unlock();
+			} catch (const runtime_error &e) {
+				logger << FATAL << "Could not store message: " << e.what() << ENDL << CLASSIC;
+			} catch (const EmptyQuery &e) {
+				logger << FATAL << "Could not store message: " << e.what() << ENDL << CLASSIC;
+			} catch (const DatabaseException &e) {
+				logger << FATAL << "Could not store message: " << e.what() << ENDL << CLASSIC;
+			} catch (...) {
+				logger << FATAL << "Could not store message, error unknown !" << ENDL << CLASSIC;
+			}
+		});
 	}
 }

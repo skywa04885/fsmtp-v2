@@ -17,10 +17,8 @@
 
 #include "TransmissionWorker.src.h"
 
-mutex _transmissionMutex;
-extern mutex _emailStorageMutex;
-extern vector<pair<string, FullEmail>> _emailStorageQueue;
-deque<FSMTP::Workers::TransmissionWorkerTask> _transmissionQueue;
+static mutex queueMutex;
+static deque<shared_ptr<SMTPServerSession>> queue;
 
 namespace FSMTP::Workers
 {
@@ -35,18 +33,28 @@ namespace FSMTP::Workers
 		logger << _BASH_SUCCESS_MARK << "Connected to cassandra" << ENDL;
 	}
 
+	void TransmissionWorker::push(shared_ptr<SMTPServerSession> session) {
+		queueMutex.lock();
+		queue.push_back(session);
+		queueMutex.unlock();
+	}
+
 	void TransmissionWorker::action(void *u) {
-		if (_transmissionQueue.size() >= 1) {
+		if (queue.size() >= 1) {
 
 			// Gets the first task in the list, the task will tell the
 			//  transmitter where to transmit the message to
 
-			_transmissionMutex.lock();
-			TransmissionWorkerTask& task = _transmissionQueue.front();
-			_transmissionMutex.unlock();
+			queueMutex.lock();
+			shared_ptr<SMTPServerSession> task = queue.front();
+			queueMutex.unlock();
 
 			// Attempts to send the message to the client/clients, if this fails
 			//  we will send an error notice to the transmitters mailbox
+
+			auto &to = task->s_RelayTasks;
+			auto &from = task->s_TransportMessage.e_TransportFrom;
+			auto &content = task->s_RawBody;
 
 			try {
 				#ifdef _SMTP_DEBUG
@@ -55,12 +63,12 @@ namespace FSMTP::Workers
 				SMTPClient client(true);
 				#endif
 
-				client.prepare(task.t_To, task.t_From, task.t_Content).beSocial();
+				client.prepare(to, { from }, content).beSocial();
 			} catch (const runtime_error &e) {
 				this->w_Logger << FATAL << "Could not send email: " << e.what() << ENDL << CLASSIC;
 			}
 
-			_transmissionQueue.pop_front();
+			queue.pop_front();
 		}
 	}
 }

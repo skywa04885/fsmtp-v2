@@ -18,6 +18,7 @@
 
 #include "../default.h"
 #include "../general/Logger.src.h"
+#include "../general/exceptions.src.h"
 
 namespace FSMTP::Workers
 {

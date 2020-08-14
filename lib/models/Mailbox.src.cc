@@ -240,6 +240,8 @@ namespace FSMTP::Models
 		const std::string &mailboxPath
 	)
 	{
+		std::cout << mailboxPath << ", " << domain << "," << bucket << std::endl;
+
 		Mailbox res;
 		const char *query = R"(SELECT e_mailbox_stand, e_subscribed, e_flags, e_message_count 
 		FROM fannst.mailboxes

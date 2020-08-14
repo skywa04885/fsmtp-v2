@@ -222,13 +222,7 @@ namespace FSMTP::Models
       const int64_t bucket
     );
 
-    /**
-     * Generates an UUID for the current message
-     *
-     * @Param {void}
-     * @Return {void}
-     */
-    void generateMessageUUID(void);
+    static CassUuid generateMessageUUID(void);
 
     EmailAddress e_TransportFrom;
 		vector<EmailAddress> e_TransportTo;
@@ -238,14 +232,6 @@ namespace FSMTP::Models
 		std::vector<EmailAddress> e_From;
 		std::vector<EmailAddress> e_To;
 		std::vector<EmailHeader> e_Headers;
-
-		bool e_Encryped;
 		std::size_t e_Date;
-		int64_t e_Bucket;
-		std::string e_OwnersDomain;
-		CassUuid e_OwnersUUID;
-		CassUuid e_EmailUUID;
-		int64_t e_OwnersBucket;
-		EmailType e_Type;
 	};
 }

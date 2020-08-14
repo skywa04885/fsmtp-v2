@@ -25,8 +25,10 @@
 #include "./Worker.src.h"
 #include "../general/connections.src.h"
 #include "../models/MailboxStatus.src.h"
+#include "../smtp/server/SMTPServerSession.src.h"
 
 using namespace FSMTP::Models;
+using namespace FSMTP::Server;
 using namespace FSMTP::Connections;
 
 namespace FSMTP::Workers
@@ -37,6 +39,8 @@ namespace FSMTP::Workers
 		DatabaseWorker(void);
 		virtual void startupTask(void);
 		virtual void action(void *u);
+
+		static void push(shared_ptr<SMTPServerSession> session);
 	private:
 		unique_ptr<CassandraConnection> d_Cassandra;
 		unique_ptr<RedisConnection> d_Redis;

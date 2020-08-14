@@ -283,17 +283,6 @@ namespace FSMTP::Models
   	logger << " - Subject: " << email.e_Subject << ENDL;
   	logger << " - Date: " << email.e_Date << ENDL;
   	logger << " - Message ID: " << email.e_MessageID << ENDL;
-  	logger << " - Bucket: " << email.e_Bucket << ENDL;
-  	logger << " - Type: " << email.e_Type << ENDL;
-  	logger << " - Encrypted: " << (email.e_Encryped ? "Yea" : "Fuck no") << ENDL;
-
-  	// Turns the user uuid into an string
-  	// - and then prints it
-  	char buffer[64];
-  	cass_uuid_string(email.e_OwnersUUID, buffer);
-  	logger << " - Owners UUID: " << buffer << ENDL;
-  	cass_uuid_string(email.e_EmailUUID, buffer);
-  	logger << " - Email UUID: " << buffer << ENDL;
   	logger << " - Headers (Without Microsoft Bullshit): " << ENDL;
 
   	// ========================================
@@ -582,13 +571,13 @@ namespace FSMTP::Models
    * @Param {void}
    * @Return {void}
    */
-  void FullEmail::generateMessageUUID(void)
+  CassUuid FullEmail::generateMessageUUID(void)
   {
-    // Creates the user uuid gen, and then generates the
-    // - message user id
+		CassUuid uuid;
     CassUuidGen *gen = cass_uuid_gen_new();
-    cass_uuid_gen_time(gen, &this->e_EmailUUID);
+    cass_uuid_gen_time(gen, &uuid);
     cass_uuid_gen_free(gen);
+		return uuid;
   }
 
   /**
