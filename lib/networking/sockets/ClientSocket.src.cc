@@ -202,7 +202,7 @@ ClientSocket &ClientSocket::upgradeAsClient() {
   assert(("SSLContext does not exist", ctx != nullptr));
 
   ssl = SSL_new(ctx->p_SSLCtx);
-  if (ssl <= 0) {
+  if (!ssl) {
     throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
   }
 
