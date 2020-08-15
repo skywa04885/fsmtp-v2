@@ -21,25 +21,50 @@ static const char *FALLBACK_CONFIG_FILE = "../fallback/config.json";
 
 int main(const int argc, const char **argv)
 {
+	Logger logger("MAIN", LoggerLevel::INFO);
+
 	Global::configure();
 	Global::readConfig(CONFIG_FILE, FALLBACK_CONFIG_FILE);
 
 	vector<string> args(argv, argv + argc);
 	handleArguments(args);
 
-	TransmissionWorker transmissionWorker;
+	// ==================================
+	// Starts the services
+	// ==================================
+	Server::SMTPServer smtpServer;
+	POP3::P3Server pop3Server;
+	Workers::TransmissionWorker transmissionWorker;
+	Workers::DatabaseWorker databaseWorker;
+
+	try {
+		pop3Server
+			.createContext()
+			.connectDatabases()
+			.listenServer()
+			.startHandler(true);
+	} catch (const runtime_error  &e) {
+		logger << FATAL << "Could not start service POP3 server";
+		logger << ", error: " << e.what() << ENDL << CLASSIC;
+	}
+
+	try {
+		smtpServer
+			.createContext()
+			.connectDatabases()
+			.listenServer()
+			.startHandler(true);
+	} catch (const runtime_error  &e) {
+		logger << FATAL << "Could not start service ESMTP server";
+		logger << ", error: " << e.what() << ENDL << CLASSIC;
+	}
+
 	transmissionWorker.start(nullptr);
-	
-	DatabaseWorker databaseWorker;
 	databaseWorker.start(nullptr);
 
-	SMTPServer server;
-	server
-		.createContext()
-		.connectDatabases()
-		.listenServer()
-		.startHandler(false);
-
+	for (;;) {
+		this_thread::sleep_for(seconds(1));
+	}
 
 	return 0;
 }

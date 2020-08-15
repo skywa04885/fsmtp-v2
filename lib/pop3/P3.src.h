@@ -16,30 +16,11 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
-#include <stdexcept>
-#include <iostream>
-#include <cstdint>
-#include <cstring>
-#include <functional>
-#include <memory>
-#include <atomic>
-#include <algorithm>
-#include <tuple>
-#include <sstream>
-#include <json/json.h>
-
-#include <openssl/err.h>
-#include <openssl/ssl.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <string.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <memory.h>
-#include <sys/sysinfo.h>
-
+#include "../default.h"
+#include "../networking/sockets/ServerSocket.src.h"
+#include "../networking/sockets/ClientSocket.src.h"
+#include "../networking/sockets/SSLContext.src.h"
+#include "../general/Global.src.h"
 #include "../networking/DNS.src.h"
 #include "../general/Logger.src.h"
 #include "../general/macros.src.h"
@@ -53,6 +34,7 @@
 #include "../models/EmailShortcut.src.h"
 #include "../parsers/mime.src.h"
 #include "../general/exceptions.src.h"
+#include "./P3Exceptions.src.h"
 
 using namespace FSMTP::Cleanup;
 using namespace FSMTP::Parsers;

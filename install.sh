@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Installs the python dependencies
+
+pip install pyOpenSSL
+pip install cassandra-driver
+
+# Installs the C++ dependencies
+
 CMAKE_ARGS="-DCMAKE_INSTALL_PREFIX:PATH=/usr"
 MAKE_ARGS="-j 12"
 

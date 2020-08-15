@@ -17,32 +17,36 @@
 #pragma once
 
 #include "P3.src.h"
-#include "P3ServerSocket.src.h"
 #include "P3Commands.src.h"
 #include "P3Response.src.h"
 #include "P3ServerSession.src.h"
 
 using namespace FSMTP::Connections;
 using namespace FSMTP::Models;
+using namespace FSMTP::Sockets;
 
 namespace FSMTP::POP3
 {
 	class P3Server
 	{
 	public:
-		P3Server(const int32_t port);
+		P3Server();
 
-		static void acceptorCallback(std::unique_ptr<ClientSocket> client, void *u);
+		P3Server &listenServer();
+		P3Server &connectDatabases();
+		P3Server &createContext();
+		P3Server &startHandler(const bool newThread);
 
-		/**
-		 * Stops the pop3 server
-		 *
-		 * @Param {void}
-		 * @Return {void}
-		 */
-		void shutdown(void);
+		bool handleCommand(
+			shared_ptr<ClientSocket> client, P3Command &command,
+			P3ServerSession &session, Logger &clogger
+		);
 	private:
-		ServerSocket s_Socket;
+		unique_ptr<RedisConnection> s_Redis;
+		unique_ptr<CassandraConnection> s_Cassandra;
+		unique_ptr<ServerSocket> s_SSLSocket;
+		unique_ptr<ServerSocket> s_PlainSocket;
+		unique_ptr<SSLContext> s_SSLContext;
 		Logger s_Logger;
 		std::atomic<bool> s_Run;
 		std::atomic<bool> s_Running;

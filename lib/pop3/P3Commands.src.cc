@@ -18,6 +18,10 @@
 
 namespace FSMTP::POP3
 {
+	P3Command::P3Command(const std::string &raw) {
+		this->parse(raw);
+	}
+
 	void P3Command::parse(const std::string &raw)
 	{
 		// Cleans the message, so it's easier to work with

@@ -120,12 +120,6 @@ namespace FSMTP
 			if (arg.compare("test"))
 				ARG_ACTIONS::testArgAction();
 
-			if (arg.compare("adduser"))
-				ARG_ACTIONS::addUserArgAction();
-
-			if (arg.compare("sync"))
-				ARG_ACTIONS::syncArgAction();
-
 			if (arg.compare("mailtest"))
 				ARG_ACTIONS::mailTestArgAction();
 

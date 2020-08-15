@@ -52,6 +52,8 @@
 #include <openssl/pem.h>
 #include <string.h>
 #include <assert.h>
+#include <sys/sysinfo.h>
+#include <sys/ioctl.h>
 
 // ==== Using namespaces ====
 using namespace std;

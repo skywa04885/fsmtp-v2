@@ -92,32 +92,32 @@ namespace FSMTP
 					{
 						case LoggerLevel::DEBUG:
 						{
-							std::cout << "\033[36m(debug@" << this->l_Prefix << "): \033[0m";
+							std::cout << "\033[36m(DEBUG@" << this->l_Prefix << "): \033[0m";
 							break;
 						}
 						case LoggerLevel::PARSER:
 						{
-							std::cout << "\033[34m(parser@" << this->l_Prefix << "): \033[0m";
+							std::cout << "\033[34m(PARSER@" << this->l_Prefix << "): \033[0m";
 							break;
 						}
 						case LoggerLevel::INFO:
 						{
-							std::cout << "\033[32m(info@" << this->l_Prefix << "): \033[0m";
+							std::cout << "\033[32m(INFO@" << this->l_Prefix << "): \033[0m";
 							break;
 						}
 						case LoggerLevel::WARN:
 						{
-							std::cout << "\033[33m(warn@" << this->l_Prefix << "): \033[0m";
+							std::cout << "\033[33m(WARN@" << this->l_Prefix << "): \033[0m";
 							break;
 						}
 						case LoggerLevel::ERROR:
 						{
-							std::cout << "\033[31m(err@" << this->l_Prefix << "): \033[0m";
+							std::cout << "\033[31m(ERR@" << this->l_Prefix << "): \033[0m";
 							break;
 						}
 						case LoggerLevel::FATAL:
 						{
-							std::cout << "\033[31m[fatal@" << this->l_Prefix << "]: \033[0m";
+							std::cout << "\033[31m[FATAL@" << this->l_Prefix << "]: \033[0m";
 							break;
 						}
 					}

@@ -41,7 +41,5 @@ using namespace FSMTP::Sockets;
 namespace FSMTP::ARG_ACTIONS
 {
   void testArgAction(void);
-  void addUserArgAction(void);
-  void syncArgAction(void);
   void mailTestArgAction(void);
 }

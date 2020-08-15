@@ -24,6 +24,7 @@
 #include "lib/networking/sockets/ClientSocket.src.h"
 #include "lib/workers/DatabaseWorker.src.h"
 #include "lib/workers/TransmissionWorker.src.h"
+#include "lib/pop3/P3Server.src.h"
 
 using namespace FSMTP;
 

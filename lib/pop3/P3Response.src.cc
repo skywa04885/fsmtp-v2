@@ -16,8 +16,6 @@
 
 #include "P3Response.src.h"
 
-extern Json::Value _config;
-
 namespace FSMTP::POP3
 {
 	P3Response::P3Response(const bool p_Ok, const POP3ResponseType p_Type):
@@ -49,6 +47,8 @@ namespace FSMTP::POP3
 
 	std::string P3Response::getMessage(void)
 	{
+		auto &conf = Global::getConfig();
+
 		if (!this->p_Message.empty()) return this->p_Message;
 
 		switch (this->p_Type)
@@ -72,7 +72,7 @@ namespace FSMTP::POP3
 			{
 				std::string ret = "Fannst POP3 Server ready, ";
 				ret += '[';
-				ret += inet_ntoa(reinterpret_cast<struct sockaddr_in *>(this->p_U)->sin_addr);
+				ret += inet_ntoa(reinterpret_cast<const struct sockaddr_in *>(this->p_U)->sin_addr);
 				ret += ']';
 				return ret;
 			}
@@ -84,7 +84,7 @@ namespace FSMTP::POP3
 			}
 			case POP3ResponseType::PRT_RETR:
 			{
-				std::string ret = std::to_string(*reinterpret_cast<int64_t *>(this->p_U));
+				std::string ret = std::to_string(*reinterpret_cast<const int64_t *>(this->p_U));
 				ret += " octets";
 				return ret;
 			}
@@ -103,7 +103,7 @@ namespace FSMTP::POP3
 			case POP3ResponseType::PRT_QUIT:
 			{
 				std::string ret = "POP3 server signing off ";
-				ret += _config["node_name"].asCString();
+				ret += conf["node_name"].asCString();
 				return ret;
 			}
 			default: throw std::runtime_error(EXCEPT_DEBUG("Message not implemented"));
@@ -173,7 +173,7 @@ namespace FSMTP::POP3
 		const std::string &p_Message,
 		std::vector<POP3Capability> *p_Capabilities,
 		std::vector<POP3ListElement> *p_ListElements,
-		void *p_U
+		const void *p_U
 	):
 		p_Ok(p_Ok), p_Type(p_Type), p_Message(p_Message),
 		p_Capabilities(p_Capabilities), p_U(p_U),

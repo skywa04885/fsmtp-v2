@@ -16,13 +16,10 @@
 
 #include "P3Server.src.h"
 
-extern Json::Value _config;
-
 namespace FSMTP::POP3
 {
-	P3Server::P3Server(const int32_t port):
-		s_Socket(port),
-		s_Logger("P3Serv", LoggerLevel::INFO)
+	P3Server::P3Server():
+		s_Logger("POP3", LoggerLevel::INFO)
 	{
 		// Sets the capabilities
 		this->s_Capabilities.push_back(POP3Capability{
@@ -30,6 +27,7 @@ namespace FSMTP::POP3
 			{"NEVER"}
 		});
 		this->s_Capabilities.push_back(POP3Capability{
+
 			"LOGIN-DELAY",
 			{"0"}
 		});
@@ -39,685 +37,674 @@ namespace FSMTP::POP3
 		this->s_Capabilities.push_back(POP3Capability{"UIDL", {}});
 		this->s_Capabilities.push_back(POP3Capability{"RESP-CODES", {}});
 		this->s_Capabilities.push_back(POP3Capability{"AUTH-RESP-CODE", {}});
-		this->s_Capabilities.push_back(POP3Capability{"IMPLEMENTATION", {}});
-
-		// Starts listenign
-		this->s_Logger << "Server wordt gestart ..." << ENDL;
-		this->s_Socket.startListening(
-			&this->s_Running,
-			&this->s_Run,
-			&P3Server::acceptorCallback,
-			this
-		);
-		this->s_Logger << "Server is gestart op port " << port << ENDL;
+		this->s_Capabilities.push_back(POP3Capability{"IMPLEMENTATION", {}});	
 	}
 
-	void P3Server::acceptorCallback(std::unique_ptr<ClientSocket> client, void *u)
-	{
-		std::string prefix = "P3ServThread:";
-		prefix += inet_ntoa(client->s_SocketAddr.sin_addr);
-		Logger logger(prefix, LoggerLevel::INFO);
+	P3Server &P3Server::connectDatabases() {
+		auto &logger = this->s_Logger;
+		auto &redis = this->s_Redis;
+		auto &cassandra = this->s_Cassandra;
 
-		P3Server &server = *reinterpret_cast<P3Server *>(u);
-		P3ServerSession session;
+		cassandra = Global::getCassandra();
+		logger << _BASH_SUCCESS_MARK << "Connected to cassandra" << ENDL;
 
-		// Sends the initial greeting message
-		client->sendResponse(true, POP3ResponseType::PRT_GREETING);
+		redis = Global::getRedis();
+		logger << _BASH_SUCCESS_MARK << "Connected to redis" << ENDL;
 
-		// Attemts to connect to redis
-		std::unique_ptr<RedisConnection> redis;
-		std::unique_ptr<CassandraConnection> cassandra;
-		try {
-			redis = std::make_unique<RedisConnection>(_config["database"]["redis_hosts"].asCString(), _config["database"]["redis_port"].asInt());
-			DEBUG_ONLY(logger << DEBUG << "Verbonden met redis [" << _config["database"]["redis_hosts"].asCString()
-				<< ':' << _config["database"]["redis_port"].asInt() << ']' << ENDL << CLASSIC);
-		} catch (const std::runtime_error &e)
-		{
-			logger << ERROR << "Kon niet verbinden met Redis [" << _config["database"]["redis_hosts"].asCString()
-				<< ':' << _config["database"]["redis_port"].asInt() << "]: " << e.what() << ENDL << CLASSIC;
-			goto pop3_session_end;
-		}
+		return *this;
+	}
 
-		// Connects to cassandra
-		try {
-			cassandra = std::make_unique<CassandraConnection>(
-				_config["database"]["cassandra_hosts"].asCString(),
-        _config["database"]["cassandra_username"].asCString(),
-        _config["database"]["cassandra_password"].asCString()
-			);
-			DEBUG_ONLY(logger << DEBUG << "Verbonden met Cassandra ["
-				<< _config["database"]["cassandra_hosts"].asCString() << "]" << ENDL << CLASSIC);
-		} catch (const std::runtime_error &e)
-		{
-			logger << ERROR << "Kon niet verbinden met Cassandra [" << _config["database"]["cassandra_hosts"].asCString()
-				<< "]: " << e.what() << ENDL << CLASSIC;
-			goto pop3_session_end;
-		}
+	P3Server &P3Server::createContext() {
+		auto &config = Global::getConfig();
+		auto &sslCtx = this->s_SSLContext;
 
-		// ================================================
-		// Starts the read/write loop
-		//
-		// This will be the communication with the client
-		// ================================================
+		const char *pass = config["ssl_pass"].asCString();
+		const char *key = config["ssl_key"].asCString();
+		const char *cert = config["ssl_cert"].asCString();
 
-		for (;;)
-		{
-			P3Command command;
+		sslCtx = make_unique<SSLContext>();
+		sslCtx->method(SSLv23_server_method()).password(pass).read(key, cert);
 
-			// Parses the command and breaks when an
-			// - read exception occurs
-			try {
-				std::string raw = client->readUntillCRLF();
-				command.parse(raw);
-			} catch (const SocketReadException &e)
-			{
-				break;
+		return *this;
+	}
+
+	P3Server &P3Server::listenServer() {
+		auto &sslCtx = this->s_SSLContext;
+		auto &logger = this->s_Logger;
+		auto &sslSocket = this->s_SSLSocket;
+		auto &plainSocket = this->s_PlainSocket;
+
+		sslSocket = make_unique<ServerSocket>();
+		plainSocket = make_unique<ServerSocket>();
+
+		sslSocket->queue(250).useSSL(sslCtx.get()).listenServer(995);
+		plainSocket->queue(250).listenServer(110);
+
+		logger << "listening on SSL:995, PLAIN:110" << ENDL;
+
+		return *this;
+	}
+
+	P3Server &P3Server::startHandler(const bool newThread) {
+		auto *cassandra = this->s_Cassandra.get();
+
+		auto handler = [&](shared_ptr<ClientSocket> client) {
+			P3ServerSession session;
+			Logger clogger(client->getPrefix(), LoggerLevel::DEBUG);
+			clogger << "Client connected" << ENDL;
+
+			client->write(P3Response(
+				true, POP3ResponseType::PRT_GREETING, 
+				"", nullptr, nullptr,
+				reinterpret_cast<void *>(client->getAddress())
+			).build());
+			
+
+			// Performs the infinite read/write loop.. In here we parse
+			//  the client command and send the according response. 
+			//  If anything goes wrong we print the error, and exit
+			//  on an fatal exception.		
+		
+			for (;;) {
+				try {
+					P3Command command(client->readToDelim("\r\n"));
+
+					if (P3Server::handleCommand(client, command, session, clogger)) {
+						break;
+					}
+				} catch (const P3FatalException &e) {
+					clogger << FATAL << "An fatal exception occured, message: " << e.what() << ENDL;
+					break;
+				} catch (const P3SyntaxException &e) {
+					client->write(P3Response(
+						false, POP3ResponseType::PRT_SYNTAX_ERROR, "",
+						nullptr, nullptr, reinterpret_cast<const void *>(e.what())
+					).build());
+				} catch (const P3InvalidCommand &e) {
+					client->write(P3Response(
+						false, POP3ResponseType::PRT_COMMAND_INVALID, "",
+						nullptr, nullptr, reinterpret_cast<const void *>(e.what())
+					).build());
+				} catch (const P3OrderException &e) {
+					client->write(P3Response(
+						false, POP3ResponseType::PRT_ORDER_ERROR, "",
+						nullptr, nullptr, reinterpret_cast<const void *>(e.what())
+					).build());
+				}  catch (const runtime_error &e) {
+					clogger << ERROR << "An runtime error occured, message: " << e.what() << ENDL << CLASSIC;
+				} catch (const exception &e) {
+					clogger << ERROR << "An error occured, message: " << e.what() << ENDL << CLASSIC;
+				} catch (...) {
+					clogger << ERROR << "An error occured, message: unknown." << ENDL << CLASSIC;
+				}
 			}
 
-			// Checks how to respond to the command from
-			// - the client
-			try {
-				switch (command.c_Type)
+
+			// Burries the death after the session clossed
+			if (session.s_Graveyard.size() > 0) {
+				DEBUG_ONLY(clogger << WARN << "Deleting " << session.s_Graveyard.size() << " emails !" << ENDL);
+				for (const std::size_t i : session.s_Graveyard)
 				{
-					case POP3CommandType::PCT_IMPLEMENTATION:
+					// Deletes the the raw email, shortcut and parsed email
+					const CassUuid &uuid = std::get<0>(session.s_References[i]);
+					const int64_t &bucket = std::get<2>(session.s_References[i]);
+
+					// Deletes the emails
+					EmailShortcut::deleteOne(
+						cassandra,
+						session.s_Account.a_Domain,
+						session.s_Account.a_UUID,
+						uuid
+					);
+					FullEmail::deleteOne(
+						cassandra,
+						session.s_Account.a_Domain,
+						session.s_Account.a_UUID,
+						uuid,
+						bucket
+					);
+					RawEmail::deleteOne(
+						cassandra,
+						session.s_Account.a_Domain,
+						session.s_Account.a_UUID,
+						uuid,
+						bucket
+					);
+				}
+			}
+
+			clogger << "Client disconnected" << ENDL;
+		};
+
+		if (!newThread) {
+			this->s_SSLSocket->handler(handler).startAcceptor(true);
+			this->s_PlainSocket->handler(handler).startAcceptor(false);
+		} else {
+			this->s_SSLSocket->handler(handler).startAcceptor(true);
+			this->s_PlainSocket->handler(handler).startAcceptor(true);
+		}
+
+		return *this;
+	}
+
+	
+	bool P3Server::handleCommand(
+		shared_ptr<ClientSocket> client, P3Command &command,
+		P3ServerSession &session, Logger &clogger
+	) {
+		auto &conf = Global::getConfig();
+		auto *cassandra = this->s_Cassandra.get();
+		auto *redis = this->s_Redis.get();
+
+		switch (command.c_Type) {
+			case POP3CommandType::PCT_IMPLEMENTATION: {
+				client->write(P3Response(true, POP3ResponseType::PRT_IMPLEMENTATION).build());
+				break;
+			}
+			// =========================================
+			// Handles the 'TOP' command
+			//
+			// Gets the headers and peeks the message
+			// =========================================
+			case POP3CommandType::PCT_TOP:
+			{
+				// Checks if we're authenticated
+				if (!session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
+					throw P3OrderException("USER/PASS First.");
+
+				// Checks if there are enough arguments
+				if (command.c_Args.size() < 2)
+					throw P3SyntaxException("TOP requires two arguments.");
+
+				// Parses the arguments, and throws syntax error when
+				// - wrong entered
+				std::size_t i, line;
+				try {
+					i = stol(command.c_Args[0]);
+					--i;
+				} catch (const std::invalid_argument& e)
+				{
+					throw P3SyntaxException("TOP invalid index");
+				}
+
+				try {
+					line = stol(command.c_Args[1]);
+				} catch (const std::invalid_argument& e)
+				{
+					throw P3SyntaxException("TOP invalid line");
+				}
+
+				// Gets the UUID from the specified message, and then
+				// - query's the raw message
+				std::cout << i << std::endl;
+				const CassUuid &uuid = std::get<0>(session.s_References[i]);
+				RawEmail raw = RawEmail::get(
+					cassandra, 
+					session.s_Account.a_Domain,
+					session.s_Account.a_UUID,
+					uuid,
+					std::get<2>(session.s_References[i])
+				);
+
+				// Prepares the email contents, and splits the message
+				// - into the headers and body
+				std::string headers, body;
+				MIME::splitHeadersAndBody(raw.e_Content, headers, body);
+
+				// Checks how we should return the data
+				if (line > 0)
+				{
+					headers += "\r\n";
+					std::stringstream stream(body);
+					std::string token;
+					std::size_t cLine = 0;
+					while (std::getline(stream, token, '\n'))
 					{
-						client->sendResponse(true, POP3ResponseType::PRT_IMPLEMENTATION);
-						continue;
-					}
-					// =========================================
-					// Handles the 'TOP' command
-					//
-					// Gets the headers and peeks the message
-					// =========================================
-					case POP3CommandType::PCT_TOP:
-					{
-						// Checks if we're authenticated
-						if (!session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
-							throw OrderError("USER/PASS First.");
-
-						// Checks if there are enough arguments
-						if (command.c_Args.size() < 2)
-							throw SyntaxError("TOP requires two arguments.");
-
-						// Parses the arguments, and throws syntax error when
-						// - wrong entered
-						std::size_t i, line;
-						try {
-							i = stol(command.c_Args[0]);
-							--i;
-						} catch (const std::invalid_argument& e)
-						{
-							throw SyntaxError("TOP invalid index");
-						}
-
-						try {
-							line = stol(command.c_Args[1]);
-						} catch (const std::invalid_argument& e)
-						{
-							throw SyntaxError("TOP invalid line");
-						}
-
-						// Gets the UUID from the specified message, and then
-						// - query's the raw message
-						std::cout << i << std::endl;
-						const CassUuid &uuid = std::get<0>(session.s_References[i]);
-						RawEmail raw = RawEmail::get(
-							cassandra.get(), 
-							session.s_Account.a_Domain,
-							session.s_Account.a_UUID,
-							uuid,
-							std::get<2>(session.s_References[i])
-						);
-
-						// Prepares the email contents, and splits the message
-						// - into the headers and body
-						std::string headers, body;
-						MIME::splitHeadersAndBody(raw.e_Content, headers, body);
-
-						// Checks how we should return the data
-						if (line > 0)
-						{
-							headers += "\r\n";
-							std::stringstream stream(body);
-							std::string token;
-							std::size_t cLine = 0;
-							while (std::getline(stream, token, '\n'))
-							{
-								if (token[token.size() - 1] == '\r') token.pop_back();
-								if (i++ > line) break;
-								headers += token;
-								headers += "\r\n";
-							}
-						}
-
-						if (headers[headers.size() - 1] != '\n' && headers[headers.size() - 2] != '\r')
-							headers += "\r\n";
-						headers += ".\r\n";
-
-
-						// Writes the response
-						client->sendResponse(
-							true,
-							POP3ResponseType::PRT_TOP,
-							"",
-							nullptr, nullptr,
-							reinterpret_cast<void *>(&std::get<1>(session.s_References[i]))
-						);
-						client->sendString(headers);
-
-						break;
-					}
-					// =========================================
-					// Handles the 'STLS' command
-					//
-					// Secures the connection with the client
-					// - using SSL
-					// =========================================
-					case POP3CommandType::PCT_STLS:
-					{
-						client->sendResponse(
-							true,
-							POP3ResponseType::PRT_STLS_START,
-							"", nullptr, nullptr,
-							reinterpret_cast<void *>(&client->s_SocketAddr)
-						);
-						client->upgrade();
-						break;
-					}
-					// =========================================
-					// Handles the 'QUIT' command
-					//
-					// Closes the connection with the client
-					// =========================================
-					case POP3CommandType::PCT_QUIT:
-					{
-						client->sendResponse(true, PRT_QUIT);
-						goto pop3_session_end;
-					}
-					// =========================================
-					// Handles the 'PASS' command
-					//
-					// The second phase of the auth process
-					// - where the password is verified
-					// =========================================
-					case POP3CommandType::PCT_PASS:
-					{
-						// Checks if we're allowed to perform this command
-						// - this is only possible if we're not authenticated
-						// - and the client has sent the password
-						if (session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
-							throw OrderError("Client already authenticated.");
-						if (!session.getAction(_P3_SERVER_SESS_ACTION_USER))
-							throw OrderError("USER first.");
-
-						// Checks if the command is not empty
-						if (command.c_Args.size() < 1)
-						{
-							throw SyntaxError("PASS requires one argument");
-							continue;
-						}
-
-						// Gets the user password from the database
-						std::string publicKey, password;
-						try {
-							std::tie(password, publicKey) = Account::getPassAndPublicKey(
-								cassandra.get(),
-								session.s_Account.a_Domain,
-								session.s_Account.a_Bucket,
-								session.s_Account.a_UUID
-							);
-						} catch (const EmptyQuery &e)
-						{
-							// Constructs the error
-							std::string error = "user [";
-							error += session.s_Account.a_Username;
-							error += '@';
-							error += session.s_Account.a_Domain;
-							error += "] was not found in cassandra.";
-
-							// Sends the error response
-							client->sendResponse(
-								false,
-								POP3ResponseType::PRT_AUTH_FAIL,
-								"",
-								nullptr, nullptr,
-								reinterpret_cast<void *>(const_cast<char *>(error.c_str()))
-							);
-							continue;
-						}
-
-						// Compares the passwords to check if it realy is the user
-						if (!passwordVerify(command.c_Args[0], password))
-						{
-							client->sendResponse(
-								false,
-								POP3ResponseType::PRT_AUTH_FAIL,
-								"",
-								nullptr, nullptr,
-								reinterpret_cast<void *>(const_cast<char *>("invalid password"))
-							);
-							continue;
-						}
-
-						// Gets the emails available
-						session.s_References = EmailShortcut::gatherAllReferencesWithSize(
-							cassandra.get(),
-							0,
-							120,
-							session.s_Account.a_Domain,
-							"~/inbox",
-							session.s_Account.a_UUID
-						);
-
-						// Stores the password in the session, sets the flag and sends
-						// - the continue response
-						session.s_Pass = command.c_Args[0];
-						session.setAction(_P3_SERVER_SESS_ACTION_PASS);
-						session.setFlag(_P3_SERVER_SESS_FLAG_AUTH);
-						client->sendResponse(true, POP3ResponseType::PRT_AUTH_SUCCESS);
-						break;
-					}
-					// =========================================
-					// Handles the 'USER' command
-					//
-					// The first stage of the login process
-					// - after this the password is needed
-					// =========================================
-					case POP3CommandType::PCT_USER:
-					{
-						EmailAddress address;
-
-						// Checks if we're allowed to perform this command,
-						// - this may only happen when the user has not
-						// - authenticated yet
-						if (session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
-							throw OrderError("Client already authenticated.");
-
-						// Checks if the command is not empty
-						if (command.c_Args.size() < 1)
-						{
-							throw SyntaxError("USER requires one argument");
-						}
-
-						// Checks if there is an domain, if not
-						// - ignore this step and append the default one
-						if (command.c_Args[0].find_first_of('@') != std::string::npos)
-						{
-							address.parse(command.c_Args[0]);
-
-							// Searches the database for the local domain, so we
-							// - know if the users domain is on this server
-							try {
-								LocalDomain domain = LocalDomain::findRedis(address.getDomain(), redis.get());
-							} catch (const EmptyQuery &e)
-							{
-								// Constructs the error
-								std::string error = "domain [";
-								error += address.getDomain();
-								error += "] was not found on this server.";
-
-								// Sends the error response
-								client->sendResponse(
-									false,
-									POP3ResponseType::PRT_AUTH_FAIL,
-									"",
-									nullptr, nullptr,
-									reinterpret_cast<void *>(const_cast<char *>(error.c_str()))
-								);
-								continue;
-							}
-						} else
-						{
-							command.c_Args[0] += '@';
-							command.c_Args[0] += _config["domain"].asCString();
-							address.parse(command.c_Args[0]);
-						}
-
-						// Checks if the username with the domain is found
-						// - in our redis database
-						try {
-							session.s_Account = AccountShortcut::findRedis(redis.get(), address.getDomain(), address.getUsername());
-						} catch (const EmptyQuery &e)
-						{
-							// Constructs the error
-							std::string error = "user [";
-							error += address.e_Address;
-							error += "] was not found on this server.";
-
-							// Sends the error response
-							client->sendResponse(
-								false,
-								POP3ResponseType::PRT_AUTH_FAIL,
-								"",
-								nullptr, nullptr,
-								reinterpret_cast<void *>(const_cast<char *>(error.c_str()))
-							);
-							continue;
-						}
-
-						// Prints the debug message
-						#ifdef _SMTP_DEBUG
-						char uuidBuffer[64];
-						cass_uuid_string(session.s_Account.a_UUID, uuidBuffer);
-						logger << DEBUG << "Identified as " << session.s_Account.a_Bucket << '@' << uuidBuffer << ENDL << CLASSIC;
-						#endif
-
-						// Stores the user in the session, sets the flag and sends
-						// - the continue response
-						session.s_User = command.c_Args[0];
-						session.setAction(_P3_SERVER_SESS_ACTION_USER);
-						client->sendResponse(true, POP3ResponseType::PRT_USER_DONE);
-						continue;
-					}
-					// =========================================
-					// Handles the 'CAPA' command
-					//
-					// Lists the servers capabilities
-					// =========================================
-					case POP3CommandType::PCT_CAPA:
-					{
-						// Sends the list of capabilities
-						client->sendResponse(
-							true,
-							POP3ResponseType::PRT_CAPA,
-							"",
-							&server.s_Capabilities,
-							nullptr, nullptr
-						);
-						continue;
-					}
-					// =========================================
-					// Handles the 'STATI' command
-					//
-					// Gets the status, the count of emails
-					// - and their summed size
-					// =========================================
-					case POP3CommandType::PCT_STAT:
-					{
-						// Checks if we're authenticated
-						if (!session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
-							throw OrderError("USER/PASS First.");
-
-						// Gets the data and builds the response
-						int64_t octets = 0;
-						for (const std::tuple<CassUuid, int64_t, int64_t> &pair : session.s_References)
-							octets += std::get<1>(pair);
-
-						std::string response = std::to_string(session.s_References.size());
-						response += ' ';
-						response += std::to_string(octets);
-
-						// Sends the stat response
-						client->sendResponse(
-							true,
-							POP3ResponseType::PRT_STAT,
-							response, nullptr, nullptr, nullptr
-						);
-						continue;
-					}
-					// =========================================
-					// Handles the 'UIDL' command
-					//
-					// Lists the messages with the number version
-					// - of their timeuuid
-					// =========================================
-					case POP3CommandType::PCT_UIDL:
-					{
-						// Checks if we're authenticated
-						if (!session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
-							throw OrderError("USER/PASS First.");
-
-						std::vector<POP3ListElement> list = {};
-
-						std::size_t i = 0;
-						for (const std::tuple<CassUuid, int64_t, int64_t> &ref : session.s_References)
-							list.push_back(POP3ListElement{
-								++i,
-								std::to_string(cass_uuid_timestamp(std::get<0>(ref)))
-							});
-
-						// Sends the response
-						client->sendResponse(
-							true,
-							POP3ResponseType::PRT_UIDL,
-							"", nullptr, &list, nullptr
-						);
-
-						break;
-					}
-					// =========================================
-					// Handles the 'LIST' command
-					//
-					// this will list all the messages, with the
-					// - assigned size in octets
-					// =========================================
-					case POP3CommandType::PCT_LIST:
-					{
-						// Checks if we're authenticated
-						if (!session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
-							throw OrderError("USER/PASS First.");
-
-						std::vector<POP3ListElement> list = {};
-
-						std::size_t i = 0;
-						for (const std::tuple<CassUuid, int64_t, int64_t> &ref : session.s_References)
-							list.push_back(POP3ListElement{
-								++i,
-								std::to_string(std::get<1>(ref))
-							});
-
-						// Sends the response
-						client->sendResponse(
-							true,
-							POP3ResponseType::PRT_LIST,
-							"", nullptr, &list, nullptr
-						);
-
-						break;
-					}
-					// =========================================
-					// Handles the 'RETR' command
-					//
-					// this will send an email back to the client
-					// =========================================
-					case POP3CommandType::PCT_RETR:
-					{
-						// Checks if we're authenticated
-						if (!session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
-							throw OrderError("USER/PASS First.");
-
-						// Checks if there is an argument
-						if (command.c_Args.size() < 1)
-							throw SyntaxError("RETR requires one argument.");
-
-						// Tries to parse the argument, and checks if the index is too
-						// - large by comparing it to the vector
-						std::size_t i;
-						try {
-							i = std::stol(command.c_Args[0]);
-							--i;
-						} catch (const std::invalid_argument &e)
-						{
-							throw SyntaxError("Invalid index for RETR");
-						}
-						if (i > session.s_References.size())
-						{
-							std::string error = "Max index ";
-							error += std::to_string(session.s_References.size());
-							throw SyntaxError(error);
-						}
-
-						// Gets the UUID from the specified message, and then
-						// - query's the raw message
-						const CassUuid &uuid = std::get<0>(session.s_References[i]);
-						RawEmail raw = RawEmail::get(
-							cassandra.get(), 
-							session.s_Account.a_Domain,
-							session.s_Account.a_UUID,
-							uuid,
-							std::get<2>(session.s_References[i])
-						);
-
-						// Prepares the email contents
-						if (raw.e_Content[raw.e_Content.size() - 1] != '\n' && raw.e_Content[raw.e_Content.size() - 2] != '\r')
-							raw.e_Content += "\r\n";
-						raw.e_Content += ".\r\n";
-
-						// Sends the email contents
-						client->sendResponse(
-							true,
-							POP3ResponseType::PRT_RETR,
-							"",
-							nullptr, nullptr,
-							reinterpret_cast<void *>(&std::get<1>(session.s_References[i]))
-						);
-						client->sendString(raw.e_Content);
-
-						continue;
-					}
-					// =========================================
-					// Handles the 'RSET' command
-					//
-					// Resets the email
-					// =========================================
-					case POP3CommandType::PCT_RSET:
-					{
-						session.s_Graveyard.clear();
-						client->sendResponse(true, POP3ResponseType::PRT_RSET);
-						continue;
-					}
-					// =========================================
-					// Handles the 'DELE' command
-					//
-					// this will delete an email from the server
-					// =========================================
-					case POP3CommandType::PCT_DELE:
-					{
-						// Checks if we're authenticated
-						if (!session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
-							throw OrderError("USER/PASS First.");
-
-						// Checks if there are any arguments, if not throw
-						// - syntax error
-						if (command.c_Args.size() < 1)
-							throw SyntaxError("DELE requires one argument.");
-
-						// Parses the index, if it is too large send error
-						std::size_t i;
-						try {
-							i = std::stol(command.c_Args[0]);
-							--i;
-						} catch (const std::invalid_argument &e)
-						{
-							throw SyntaxError("Invalid index for DELE");
-						}
-						if (i > session.s_References.size())
-						{
-							std::string error = "Max index ";
-							error += std::to_string(session.s_References.size());
-							throw SyntaxError(error);
-						}
-
-						// Pushes the index to the graveyard
-						session.s_Graveyard.push_back(i);
-
-						// Sends the confirmation
-						client->sendResponse(true, POP3ResponseType::PRT_DELE_SUCCESS);
-						continue;
-					}
-					case POP3CommandType::PCT_UNKNOWN:
-					{
-						throw InvalidCommand("Command not found");
+						if (token[token.size() - 1] == '\r') token.pop_back();
+						if (i++ > line) break;
+						headers += token;
+						headers += "\r\n";
 					}
 				}
-			} catch (const InvalidCommand& e)
-			{
-				client->sendResponse(false, POP3ResponseType::PRT_COMMAND_INVALID);
-			} catch (const SyntaxError& e)
-			{
-				client->sendResponse(
-					false,
-					POP3ResponseType::PRT_SYNTAX_ERROR,
+
+				if (headers[headers.size() - 1] != '\n' && headers[headers.size() - 2] != '\r')
+					headers += "\r\n";
+				headers += ".\r\n";
+
+
+				// Writes the response
+				client->write(P3Response(
+					true,
+					POP3ResponseType::PRT_TOP,
 					"",
 					nullptr, nullptr,
-					reinterpret_cast<void *>(const_cast<char *>(e.what()))
-				);
-			} catch (const SocketSSLError& e)
-			{
-				logger << FATAL << "SSL Error occured: " << e.what() << ENDL << CLASSIC;
+					reinterpret_cast<void *>(&std::get<1>(session.s_References[i]))
+				).build());
+				client->write(headers);
+
 				break;
-			} catch (const DatabaseException &e)
-			{
-				logger << FATAL << "Database Error occured: " << e.what() << ENDL << CLASSIC;
-				break;
-			} catch (const OrderError &e)
-			{
-				client->sendResponse(
-					false,
-					POP3ResponseType::PRT_ORDER_ERROR,
-					"",
-					nullptr, nullptr,
-					reinterpret_cast<void *>(const_cast<char *>(e.what()))
-				);
 			}
-		}
-
-	pop3_session_end:
-
-		// Burries the death after the session clossed
-		if (session.s_Graveyard.size() > 0)
-		{
-			DEBUG_ONLY(logger << WARN << "Deleting " << session.s_Graveyard.size() << " emails !" << ENDL);
-			for (const std::size_t i : session.s_Graveyard)
+			// =========================================
+			// Handles the 'STLS' command
+			//
+			// Secures the connection with the client
+			// - using SSL
+			// =========================================
+			case POP3CommandType::PCT_STLS:
 			{
-				// Deletes the the raw email, shortcut and parsed email
+				client->write(P3Response(
+					true,
+					POP3ResponseType::PRT_STLS_START,
+					"", nullptr, nullptr,
+					reinterpret_cast<void *>(client->getAddress())
+				).build());
+				client->useSSL(this->s_SSLContext.get()).upgradeAsServer();
+				break;
+			}
+			// =========================================
+			// Handles the 'QUIT' command
+			//
+			// Closes the connection with the client
+			// =========================================
+			case POP3CommandType::PCT_QUIT:
+			{
+				client->write(P3Response(true, PRT_QUIT).build());
+				return true;
+			}
+			// =========================================
+			// Handles the 'PASS' command
+			//
+			// The second phase of the auth process
+			// - where the password is verified
+			// =========================================
+			case POP3CommandType::PCT_PASS:
+			{
+				// Checks if we're allowed to perform this command
+				// - this is only possible if we're not authenticated
+				// - and the client has sent the password
+				if (session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
+					throw P3OrderException("Client already authenticated.");
+				if (!session.getAction(_P3_SERVER_SESS_ACTION_USER))
+					throw P3OrderException("USER first.");
+
+				// Checks if the command is not empty
+				if (command.c_Args.size() < 1) {
+					throw P3SyntaxException("PASS requires one argument");
+				}
+
+				// Gets the user password from the database
+				std::string publicKey, password;
+				try {
+					std::tie(password, publicKey) = Account::getPassAndPublicKey(
+						cassandra,
+						session.s_Account.a_Domain,
+						session.s_Account.a_Bucket,
+						session.s_Account.a_UUID
+					);
+				} catch (const EmptyQuery &e)
+				{
+					// Constructs the error
+					std::string error = "user [";
+					error += session.s_Account.a_Username;
+					error += '@';
+					error += session.s_Account.a_Domain;
+					error += "] was not found in cassandra.";
+
+					// Sends the error response
+					client->write(P3Response(
+						false,
+						POP3ResponseType::PRT_AUTH_FAIL,
+						"",
+						nullptr, nullptr,
+						reinterpret_cast<void *>(const_cast<char *>(error.c_str()))
+					).build());
+					break;
+				}
+
+				// Compares the passwords to check if it realy is the user
+				if (!passwordVerify(command.c_Args[0], password))
+				{
+					client->write(P3Response(
+						false,
+						POP3ResponseType::PRT_AUTH_FAIL,
+						"",
+						nullptr, nullptr,
+						reinterpret_cast<void *>(const_cast<char *>("invalid password"))
+					).build());
+					break;
+				}
+
+				// Gets the emails available
+				session.s_References = EmailShortcut::gatherAllReferencesWithSize(
+					cassandra,
+					0,
+					120,
+					session.s_Account.a_Domain,
+					"~/inbox",
+					session.s_Account.a_UUID
+				);
+
+				// Stores the password in the session, sets the flag and sends
+				// - the continue response
+				session.s_Pass = command.c_Args[0];
+				session.setAction(_P3_SERVER_SESS_ACTION_PASS);
+				session.setFlag(_P3_SERVER_SESS_FLAG_AUTH);
+				client->write(P3Response(true, POP3ResponseType::PRT_AUTH_SUCCESS).build());
+				break;
+			}
+			// =========================================
+			// Handles the 'USER' command
+			//
+			// The first stage of the login process
+			// - after this the password is needed
+			// =========================================
+			case POP3CommandType::PCT_USER:
+			{
+				EmailAddress address;
+
+				// Checks if we're allowed to perform this command,
+				// - this may only happen when the user has not
+				// - authenticated yet
+				if (session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
+					throw P3OrderException("Client already authenticated.");
+
+				// Checks if the command is not empty
+				if (command.c_Args.size() < 1)
+				{
+					throw P3SyntaxException("USER requires one argument");
+				}
+
+				// Checks if there is an domain, if not
+				// - ignore this step and append the default one
+				if (command.c_Args[0].find_first_of('@') != std::string::npos) {
+					address.parse(command.c_Args[0]);
+
+					// Searches the database for the local domain, so we
+					// - know if the users domain is on this server
+					try {
+						LocalDomain domain = LocalDomain::findRedis(address.getDomain(), redis);
+					} catch (const EmptyQuery &e) {
+						// Constructs the error
+						std::string error = "domain [";
+						error += address.getDomain();
+						error += "] was not found on this server.";
+
+						// Sends the error response
+						client->write(P3Response(
+							false,
+							POP3ResponseType::PRT_AUTH_FAIL,
+							"",
+							nullptr, nullptr,
+							reinterpret_cast<void *>(const_cast<char *>(error.c_str()))
+						).build());
+					}
+				} else {
+					command.c_Args[0] += '@';
+					command.c_Args[0] += conf["domain"].asCString();
+					address.parse(command.c_Args[0]);
+				}
+
+				// Checks if the username with the domain is found
+				// - in our redis database
+				try {
+					session.s_Account = AccountShortcut::findRedis(redis, address.getDomain(), address.getUsername());
+				} catch (const EmptyQuery &e) {
+					// Constructs the error
+					std::string error = "user [";
+					error += address.e_Address;
+					error += "] was not found on this server.";
+
+					// Sends the error response
+					client->write(P3Response(
+						false,
+						POP3ResponseType::PRT_AUTH_FAIL,
+						"",
+						nullptr, nullptr,
+						reinterpret_cast<void *>(const_cast<char *>(error.c_str()))
+					).build());
+					
+					return false;
+				}
+
+				// Prints the debug message
+				#ifdef _SMTP_DEBUG
+				char uuidBuffer[64];
+				cass_uuid_string(session.s_Account.a_UUID, uuidBuffer);
+				clogger << DEBUG << "Identified as " << session.s_Account.a_Bucket << '@' << uuidBuffer << ENDL << CLASSIC;
+				#endif
+
+				// Stores the user in the session, sets the flag and sends
+				// - the continue response
+				session.s_User = command.c_Args[0];
+				session.setAction(_P3_SERVER_SESS_ACTION_USER);
+				client->write(P3Response(true, POP3ResponseType::PRT_USER_DONE).build());
+				break;
+			}
+			// =========================================
+			// Handles the 'CAPA' command
+			//
+			// Lists the servers capabilities
+			// =========================================
+			case POP3CommandType::PCT_CAPA:
+			{
+				// Sends the list of capabilities
+				client->write(P3Response(
+					true,
+					POP3ResponseType::PRT_CAPA,
+					"",
+					&this->s_Capabilities,
+					nullptr, nullptr
+				).buildCapabilities());
+				break;
+			}
+			// =========================================
+			// Handles the 'STATI' command
+			//
+			// Gets the status, the count of emails
+			// - and their summed size
+			// =========================================
+			case POP3CommandType::PCT_STAT:
+			{
+				// Checks if we're authenticated
+				if (!session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
+					throw P3OrderException("USER/PASS First.");
+
+				// Gets the data and builds the response
+				int64_t octets = 0;
+				for (const std::tuple<CassUuid, int64_t, int64_t> &pair : session.s_References)
+					octets += std::get<1>(pair);
+
+				std::string response = std::to_string(session.s_References.size());
+				response += ' ';
+				response += std::to_string(octets);
+
+				// Sends the stat response
+				client->write(P3Response(
+					true,
+					POP3ResponseType::PRT_STAT,
+					response, nullptr, nullptr, nullptr
+				).build());
+				break;
+			}
+			// =========================================
+			// Handles the 'UIDL' command
+			//
+			// Lists the messages with the number version
+			// - of their timeuuid
+			// =========================================
+			case POP3CommandType::PCT_UIDL:
+			{
+				// Checks if we're authenticated
+				if (!session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
+					throw P3OrderException("USER/PASS First.");
+
+				std::vector<POP3ListElement> list = {};
+
+				std::size_t i = 0;
+				for (const std::tuple<CassUuid, int64_t, int64_t> &ref : session.s_References)
+					list.push_back(POP3ListElement{
+						++i,
+						std::to_string(cass_uuid_timestamp(std::get<0>(ref)))
+					});
+
+				// Sends the response
+				client->write(P3Response(
+					true,
+					POP3ResponseType::PRT_UIDL,
+					"", nullptr, &list, nullptr
+				).build());
+
+				break;
+			}
+			// =========================================
+			// Handles the 'LIST' command
+			//
+			// this will list all the messages, with the
+			// - assigned size in octets
+			// =========================================
+			case POP3CommandType::PCT_LIST:
+			{
+				// Checks if we're authenticated
+				if (!session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
+					throw P3OrderException("USER/PASS First.");
+
+				std::vector<POP3ListElement> list = {};
+
+				std::size_t i = 0;
+				for (const std::tuple<CassUuid, int64_t, int64_t> &ref : session.s_References)
+					list.push_back(POP3ListElement{
+						++i,
+						std::to_string(std::get<1>(ref))
+					});
+
+				// Sends the response
+				client->write(P3Response(
+					true,
+					POP3ResponseType::PRT_LIST,
+					"", nullptr, &list, nullptr
+				).build());
+
+				break;
+			}
+			// =========================================
+			// Handles the 'RETR' command
+			//
+			// this will send an email back to the client
+			// =========================================
+			case POP3CommandType::PCT_RETR:
+			{
+				// Checks if we're authenticated
+				if (!session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
+					throw P3OrderException("USER/PASS First.");
+
+				// Checks if there is an argument
+				if (command.c_Args.size() < 1)
+					throw P3SyntaxException("RETR requires one argument.");
+
+				// Tries to parse the argument, and checks if the index is too
+				// - large by comparing it to the vector
+				std::size_t i;
+				try {
+					i = std::stol(command.c_Args[0]);
+					--i;
+				} catch (const std::invalid_argument &e) {
+					throw P3SyntaxException("Invalid index for RETR");
+				}
+				
+				if (i > session.s_References.size()) {
+					std::string error = "Max index ";
+					error += std::to_string(session.s_References.size());
+					throw P3SyntaxException(error);
+				}
+
+				// Gets the UUID from the specified message, and then
+				// - query's the raw message
 				const CassUuid &uuid = std::get<0>(session.s_References[i]);
-				const int64_t &bucket = std::get<2>(session.s_References[i]);
+				RawEmail raw = RawEmail::get(
+					cassandra, 
+					session.s_Account.a_Domain,
+					session.s_Account.a_UUID,
+					uuid,
+					std::get<2>(session.s_References[i])
+				);
 
-				// Deletes the emails
-				EmailShortcut::deleteOne(
-					cassandra.get(),
-					session.s_Account.a_Domain,
-					session.s_Account.a_UUID,
-					uuid
-				);
-				FullEmail::deleteOne(
-					cassandra.get(),
-					session.s_Account.a_Domain,
-					session.s_Account.a_UUID,
-					uuid,
-					bucket
-				);
-				RawEmail::deleteOne(
-					cassandra.get(),
-					session.s_Account.a_Domain,
-					session.s_Account.a_UUID,
-					uuid,
-					bucket
-				);
+				// Prepares the email contents
+				if (raw.e_Content[raw.e_Content.size() - 1] != '\n' && 
+						raw.e_Content[raw.e_Content.size() - 2] != '\r') {
+					raw.e_Content += "\r\n";
+				}
+
+				raw.e_Content += ".\r\n";
+
+				// Sends the email contents
+				client->write(P3Response(
+					true,
+					POP3ResponseType::PRT_RETR,
+					"",
+					nullptr, nullptr,
+					reinterpret_cast<void *>(&std::get<1>(session.s_References[i]))
+				).build());
+				client->write(raw.e_Content);
+
+				break;
+			}
+			// =========================================
+			// Handles the 'RSET' command
+			//
+			// Resets the email
+			// =========================================
+			case POP3CommandType::PCT_RSET:
+			{
+				session.s_Graveyard.clear();
+				client->write(P3Response(true, POP3ResponseType::PRT_RSET).build());
+				break;
+			}
+			// =========================================
+			// Handles the 'DELE' command
+			//
+			// this will delete an email from the server
+			// =========================================
+			case POP3CommandType::PCT_DELE: {
+				// Checks if we're authenticated
+				if (!session.getFlag(_P3_SERVER_SESS_FLAG_AUTH)) {
+					throw P3OrderException("USER/PASS First.");
+				}
+
+				// Checks if there are any arguments, if not throw
+				// - syntax error
+				if (command.c_Args.size() < 1) {
+					throw P3SyntaxException("DELE requires one argument.");
+				}
+
+				// Parses the index, if it is too large send error
+				std::size_t i;
+				try {
+					i = std::stol(command.c_Args[0]);
+					--i;
+				} catch (const std::invalid_argument &e) {
+					throw P3SyntaxException("Invalid index for DELE");
+				}
+
+				if (i > session.s_References.size()) {
+					std::string error = "Max index ";
+					error += std::to_string(session.s_References.size());
+					throw P3SyntaxException(error);
+				}
+
+				// Pushes the index to the graveyard
+				session.s_Graveyard.push_back(i);
+
+				// Sends the confirmation
+				client->write(P3Response(true, POP3ResponseType::PRT_DELE_SUCCESS).build());
+				break;
+			}
+			case POP3CommandType::PCT_UNKNOWN:
+			{
+				throw P3InvalidCommand("Command not found");
+				break;
 			}
 		}
-		return;
-	}
 
-	/**
-	 * Stops the pop3 server
-	 *
-	 * @Param {void}
-	 * @Return {void}
-	 */
-	void P3Server::shutdown(void)
-	{
-		Logger &logger = this->s_Logger;
-
-		logger << "POP3 Server wordt afgesloten ..." << ENDL;
-		int64_t start = std::chrono::duration_cast<std::chrono::milliseconds>(
-			std::chrono::high_resolution_clock::now().time_since_epoch()
-		).count();
-		this->s_Socket.shutdown(&this->s_Running, &this->s_Run);
-		int64_t end = std::chrono::duration_cast<std::chrono::milliseconds>(
-			std::chrono::high_resolution_clock::now().time_since_epoch()
-		).count();
-		logger << "POP3 Server afgesloten in " << end - start << " milliseconden" << ENDL;
+		return false;
 	}
 }

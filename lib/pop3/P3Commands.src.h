@@ -41,6 +41,7 @@ namespace FSMTP::POP3
 	class P3Command
 	{
 	public:
+		P3Command(const std::string &raw);
 		void parse(const std::string &raw);
 
 		POP3CommandType c_Type;
