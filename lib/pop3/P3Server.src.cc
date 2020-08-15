@@ -235,7 +235,6 @@ namespace FSMTP::POP3
 
 				// Gets the UUID from the specified message, and then
 				// - query's the raw message
-				std::cout << i << std::endl;
 				const CassUuid &uuid = std::get<0>(session.s_References[i]);
 				RawEmail raw = RawEmail::get(
 					cassandra, 
@@ -253,10 +252,10 @@ namespace FSMTP::POP3
 				// Checks how we should return the data
 				if (line > 0)
 				{
+					i = 0;
 					headers += "\r\n";
 					std::stringstream stream(body);
 					std::string token;
-					std::size_t cLine = 0;
 					while (std::getline(stream, token, '\n'))
 					{
 						if (token[token.size() - 1] == '\r') token.pop_back();
