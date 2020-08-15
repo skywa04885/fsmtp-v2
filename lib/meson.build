@@ -7,7 +7,6 @@ subdir('pop3')
 subdir('smtp')
 subdir('workers')
 subdir('args')
-subdir('imap')
 subdir('dns')
 
 sources += files (

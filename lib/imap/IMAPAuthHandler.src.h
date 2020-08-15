@@ -17,7 +17,6 @@
 #pragma once
 
 #include "IMAP.src.h"
-#include "IMAPClientSocket.src.h"
 #include "IMAPCommand.src.h"
 #include "IMAPServerSession.src.h"
 

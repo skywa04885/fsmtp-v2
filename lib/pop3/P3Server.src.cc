@@ -552,7 +552,7 @@ namespace FSMTP::POP3
 					true,
 					POP3ResponseType::PRT_UIDL,
 					"", nullptr, &list, nullptr
-				).build());
+				).buildList());
 
 				break;
 			}
@@ -582,7 +582,7 @@ namespace FSMTP::POP3
 					true,
 					POP3ResponseType::PRT_LIST,
 					"", nullptr, &list, nullptr
-				).build());
+				).buildList());
 
 				break;
 			}

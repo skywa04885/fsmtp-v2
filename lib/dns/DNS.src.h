@@ -16,23 +16,7 @@
 
 #pragma once
 
-#include <string>
-#include <iostream>
-#include <cstdint>
-#include <atomic>
-#include <functional>
-#include <thread>
-#include <vector>
-#include <tuple>
-#include <bitset>
-
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <json/json.h>
-#include <memory.h>
+#include "../default.h"
 
 #include "../general/Logger.src.h"
 #include "../general/exceptions.src.h"

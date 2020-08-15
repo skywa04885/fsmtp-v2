@@ -35,7 +35,7 @@ namespace FSMTP::DNS
 		{
 			std::string error = "socket() failed: ";
 			error += strerror(errno);
-			throw SocketInitializationException(error);
+			throw runtime_error(error);
 		}
 
 		// Sets the socket to reuse the old address
@@ -58,7 +58,7 @@ namespace FSMTP::DNS
 		{
 			std::string error = "bind() failed: ";
 			error += strerror(errno);
-			throw SocketInitializationException(error);
+			throw runtime_error(error);
 		}
 	}
 

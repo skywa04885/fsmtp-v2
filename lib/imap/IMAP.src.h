@@ -16,28 +16,7 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
-#include <cassert>
-#include <cstdint>
-#include <atomic>
-#include <memory>
-#include <functional>
-#include <regex>
-#include <thread>
-#include <cctype>
-#include <algorithm>
-#include <variant>
-
-#include <json/json.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
-#include <sys/ioctl.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <strings.h>
+#include "../default.h"
 
 #include "../general/Logger.src.h"
 #include "../general/macros.src.h"
@@ -52,9 +31,13 @@
 #include "../models/Mailbox.src.h"
 #include "../general/Passwords.src.h"
 #include "../models/MailboxStatus.src.h"
+#include "../networking/sockets/SSLContext.src.h"
+#include "../networking/sockets/ClientSocket.src.h"
+#include "../networking/sockets/ServerSocket.src.h"
 
 using namespace FSMTP::Cleanup;
 using namespace FSMTP::Models;
+using namespace FSMTP::Sockets;
 using namespace FSMTP::Connections;
 
 class IMAPBad : std::exception
