@@ -132,10 +132,13 @@ namespace FSMTP::POP3
 					).build());
 				}  catch (const runtime_error &e) {
 					clogger << ERROR << "An runtime error occured, message: " << e.what() << ENDL << CLASSIC;
+					break;
 				} catch (const exception &e) {
 					clogger << ERROR << "An error occured, message: " << e.what() << ENDL << CLASSIC;
+					break;
 				} catch (...) {
 					clogger << ERROR << "An error occured, message: unknown." << ENDL << CLASSIC;
+					break;
 				}
 			}
 
@@ -252,7 +255,7 @@ namespace FSMTP::POP3
 
 				// Checks how we should return the data
 				size_t currentLine = 0;
-				if (line > 0) {
+				if (line > 0){
 					headers += "\r\n";
 					std::stringstream stream(body);
 					std::string token;
