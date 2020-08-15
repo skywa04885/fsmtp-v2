@@ -16,12 +16,9 @@
 
 #include "arg-actions.src.h"
 
-extern Json::Value _config;
-
-namespace FSMTP::ARG_ACTIONS
-{
-  void testArgAction(void)
-  {
+namespace FSMTP::ARG_ACTIONS {
+  void testArgAction(void) {
+    const Json::Value &conf = Global::getConfig();
     Logger logger("test", LoggerLevel::INFO);
 
     size_t successes, failures;
@@ -59,7 +56,6 @@ namespace FSMTP::ARG_ACTIONS
     // Socket tests
     // =======================
 
-    const Json::Value &conf = Global::getConfig();
     const char *sslKey = conf["ssl_key"].asCString();
     const char *sslCert = conf["ssl_cert"].asCString();
     const char *sslPass = conf["ssl_pass"].asCString();
@@ -111,28 +107,25 @@ namespace FSMTP::ARG_ACTIONS
     exit(0);
   }
 
-  void mailTestArgAction(void)
-  {
+  void mailTestArgAction(void) {
     Logger logger("Mail", LoggerLevel::INFO);
     MailComposerConfig mailComposerConfig;
 
-    // ==================================
-    // Gets the user input
-    //
-    // Stuff like subject and target
-    // ==================================
+    // Gets the user inputs for the from, to etcetera.
+    //  after this we put default values if the user specified
+    //  the default option
 
-    std::string type, from, to, subject;
+    string type, from, to, subject;
 
     logger << "Enter type [c: custom, d: default]: " << FLUSH;
-    std::getline(std::cin, type);
+    getline(cin, type);
     if (type[0] != 'd') {
       logger << "Enter subject: " << FLUSH;
-      std::getline(std::cin, subject);
+      getline(cin, subject);
       logger << "Enter from: " << FLUSH;
-      std::getline(std::cin, from);
+      getline(cin, from);
       logger << "Enter to: " << FLUSH;
-      std::getline(std::cin, to);
+      getline(cin, to);
 
       mailComposerConfig.m_To.push_back(EmailAddress(to));
       mailComposerConfig.m_From.push_back(EmailAddress(from));
@@ -143,12 +136,8 @@ namespace FSMTP::ARG_ACTIONS
       mailComposerConfig.m_Subject = "Test email";
     }
 
-    // ==================================
-    // Sends the email
-    //
-    // Sends the email with the signature
-    // - etcetra
-    // ==================================
+    // Sends the email to the target server, if this fails
+    //  we print an error message to the console
 
     try {
       SMTPClient(true).prepare(mailComposerConfig).beSocial();
@@ -156,6 +145,6 @@ namespace FSMTP::ARG_ACTIONS
       logger << FATAL << "Could not send email: " << e.what() << ENDL << CLASSIC;
     }
 
-    std::exit(0);
+    exit(0);
   }
 }

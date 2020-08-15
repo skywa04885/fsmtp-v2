@@ -90,7 +90,7 @@ namespace FSMTP::POP3
 
 		auto handler = [&](shared_ptr<ClientSocket> client) {
 			P3ServerSession session;
-			Logger clogger(client->getPrefix(), LoggerLevel::DEBUG);
+			Logger clogger("POP3" + client->getPrefix(), LoggerLevel::DEBUG);
 			clogger << "Client connected" << ENDL;
 
 			client->write(P3Response(
