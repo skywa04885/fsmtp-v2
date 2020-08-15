@@ -87,7 +87,7 @@ namespace FSMTP::Server
 		//  fails we know that the user is not local, and throw error
 
 		try {
-			domain = LocalDomain::findRedis(address.getDomain(), redis);
+			domain = LocalDomain::get(address.getDomain(), cassandra, redis);
 		} catch (const EmptyQuery &e) {
 			throw runtime_error("Domain not local");
 		}

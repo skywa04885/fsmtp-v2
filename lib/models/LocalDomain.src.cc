@@ -55,7 +55,7 @@ namespace FSMTP::Models
 	 */
 	LocalDomain LocalDomain::getByDomain(
 		const std::string &l_Domain,
-		std::unique_ptr<CassandraConnection>& database
+		CassandraConnection *database
 	)
 	{
 		LocalDomain res;
@@ -227,5 +227,17 @@ namespace FSMTP::Models
 		cass_iterator_free(iterator);
 		cass_statement_free(statement);
 		return res;
+	}
+
+	 LocalDomain LocalDomain::get(
+		const string &l_Domain,
+		CassandraConnection *cass,
+		RedisConnection *redis
+	) {
+		try {
+			return LocalDomain::findRedis(l_Domain, redis);
+		} catch (const EmptyQuery &e) {
+			return LocalDomain::getByDomain(l_Domain, cass);
+		}
 	}
 }

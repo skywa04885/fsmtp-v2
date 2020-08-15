@@ -306,7 +306,7 @@ bool SMTPServer::handleCommand(
 				//  that the sending domain is from us, or somebody else. If this
 				//  succeeds, and the client is not authenticated, send error.
 				
-				LocalDomain localDomain = LocalDomain::findRedis(domain, redis);
+				LocalDomain localDomain = LocalDomain::get(domain, cass, redis);
 				if (!session->getFlag(_SMTP_SERV_SESSION_AUTH_FLAG)) {
 					throw SMTPOrderException("AUTH first");
 				}
@@ -376,7 +376,7 @@ bool SMTPServer::handleCommand(
 
 			bool relay = false;
 			try {
-				LocalDomain localDomain = LocalDomain::findRedis(to.getDomain(), redis);
+				LocalDomain localDomain = LocalDomain::get(to.getDomain(), cass, redis);
 			} catch (const EmptyQuery &e) {
 				if (session->getFlag(_SMTP_SERV_SESSION_FROM_LOCAL)) {
 					relay = true;

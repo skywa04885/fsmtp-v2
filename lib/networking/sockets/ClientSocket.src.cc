@@ -79,7 +79,7 @@ int32_t ClientSocket::write(const char *msg, const size_t len) {
   int32_t rc;
 
   if (this->s_SSLCtx) {
-    if ((rc = SSL_write(this->s_SSL, msg, len)) < 0) {
+    if ((rc = SSL_write(this->s_SSL, msg, len)) <= 0) {
       throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
     }
   } else {
@@ -119,7 +119,7 @@ int32_t ClientSocket::peek(char *buffer, const size_t bufferSize) {
       throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
     }
   } else {
-    if ((rc = recv(this->s_SocketFD, buffer, bufferSize, MSG_PEEK)) <= 0) {
+    if ((rc = recv(this->s_SocketFD, buffer, bufferSize, MSG_PEEK)) == -1) {
       throw runtime_error(EXCEPT_DEBUG(strerror(errno)));
     }
   }

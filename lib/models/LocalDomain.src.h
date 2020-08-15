@@ -16,13 +16,7 @@
 
 #pragma once
 
-#include <memory>
-#include <iostream>
-#include <vector>
-#include <string>
-
-#include <hiredis/hiredis.h>
-#include <cassandra.h>
+#include "../default.h"
 
 #include "../general/connections.src.h"
 #include "../general/exceptions.src.h"
@@ -59,7 +53,7 @@ namespace FSMTP::Models
 		 * @Param {std::unique_ptr<CassandraConnection> &} database
 		 * @Return void
 		 */
-		static LocalDomain getByDomain(const std::string &l_Domain, std::unique_ptr<CassandraConnection>& database);
+		static LocalDomain getByDomain(const std::string &l_Domain, CassandraConnection *database);
 
 		/**
 		 * Finds an domain and its uuid in the redis db
@@ -70,6 +64,12 @@ namespace FSMTP::Models
 		 */
 		static LocalDomain findRedis(
 			const std::string &l_Domain,
+			RedisConnection *redis
+		);
+
+		static LocalDomain get(
+			const string &l_Domain,
+			CassandraConnection *cass,
 			RedisConnection *redis
 		);
 

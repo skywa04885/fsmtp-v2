@@ -423,7 +423,7 @@ namespace FSMTP::POP3
 					// Searches the database for the local domain, so we
 					// - know if the users domain is on this server
 					try {
-						LocalDomain domain = LocalDomain::findRedis(address.getDomain(), redis);
+						LocalDomain domain = LocalDomain::get(address.getDomain(), cassandra, redis);
 					} catch (const EmptyQuery &e) {
 						// Constructs the error
 						std::string error = "domain [";
