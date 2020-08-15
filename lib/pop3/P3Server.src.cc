@@ -229,8 +229,7 @@ namespace FSMTP::POP3
 
 				try {
 					line = stol(command.c_Args[1]);
-				} catch (const std::invalid_argument& e)
-				{
+				} catch (const std::invalid_argument& e) {
 					throw P3SyntaxException("TOP invalid line");
 				}
 
@@ -380,7 +379,7 @@ namespace FSMTP::POP3
 					0,
 					120,
 					session.s_Account.a_Domain,
-					"~/inbox",
+					"INBOX",
 					session.s_Account.a_UUID
 				);
 
