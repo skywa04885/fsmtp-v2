@@ -28,62 +28,23 @@ namespace FSMTP::Models
 	class LocalDomain
 	{
 	public:
-		/**
-		 * Creates an new local domain and generates
-		 * the uuid automatically for it
-		 * 
-		 * @Param {std::string} l_Domain
-		 * @Return void
-		 */
 		LocalDomain(const std::string &l_Domain);
+		LocalDomain();
 
-		/**
-		 * Empty constructor, will just initialize the values
-		 
-		 * @Param void
-		 * @Return void
-		 */
-		LocalDomain(void);
+		void saveRedis(RedisConnection *redis);
 
-		/**
-		 * Searches in the database for an domain with that
-		 * specific ID
-		 *
-		 * @Param {const std::string &} l_Domain
-		 * @Param {std::unique_ptr<CassandraConnection> &} database
-		 * @Return void
-		 */
-		static LocalDomain getByDomain(const std::string &l_Domain, CassandraConnection *database);
+		static void getPrefix(const string &l_Domain, char *buffer);
 
-		/**
-		 * Finds an domain and its uuid in the redis db
-		 *
-		 * @Param {const std::string &} l_Domain
-		 * @Param {RedisConnection *} redis
-		 * @Return {LocalDomain}
-		 */
-		static LocalDomain findRedis(
-			const std::string &l_Domain,
-			RedisConnection *redis
-		);
+		static LocalDomain getByDomain(const string &l_Domain, CassandraConnection *database);
+		static LocalDomain findRedis(const string &l_Domain, RedisConnection *redis);
+		static vector<LocalDomain> findAllCassandra(CassandraConnection *cass);
 
 		static LocalDomain get(
-			const string &l_Domain,
-			CassandraConnection *cass,
+			const string &l_Domain, CassandraConnection *cass,
 			RedisConnection *redis
 		);
 
-		/**
-		 * Gets all the domains from the cassandra database
-		 *
-		 * @Param {CassandraConnection *} cass
-		 * @Return {std::vector<LocalDomain>}
-		 */
-		static std::vector<LocalDomain> findAllCassandra(
-			CassandraConnection *cass
-		);
-
-		std::string l_Domain;
+		string l_Domain;
 		CassUuid l_UUID;
 	};
 }

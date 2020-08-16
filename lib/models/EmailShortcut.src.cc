@@ -22,8 +22,7 @@ namespace FSMTP::Models
     e_Flags(0)
   {}
 
-  void EmailShortcut::save(CassandraConnection *cassandra)
-  {
+  void EmailShortcut::save(CassandraConnection *cassandra) {
     const char *query = R"(INSERT INTO fannst.email_shortcuts (
       e_domain, e_subject, e_preview,
       e_owners_uuid, e_email_uuid, e_bucket,
@@ -39,8 +38,9 @@ namespace FSMTP::Models
     CassFuture *future = nullptr;
     CassError rc;
 
-    // Creates the statement and query, then binds
-    // - the values
+    // Creates the statement and binds the instance variables to the query
+    //  after which we insert the data into cassandra
+
     statement = cass_statement_new(query, 11);
     DEFER(cass_statement_free(statement));
     cass_statement_bind_string(statement, 0, this->e_Domain.c_str());
@@ -55,7 +55,6 @@ namespace FSMTP::Models
     cass_statement_bind_int32(statement, 9, this->e_Flags);
     cass_statement_bind_string(statement, 10, this->e_From.c_str());
 
-    // Executes the query and checks for errors
     future = cass_session_execute(cassandra->c_Session, statement);
     DEFER(cass_future_free(future));
     cass_future_wait(future);
@@ -69,14 +68,10 @@ namespace FSMTP::Models
   }
 
   vector<EmailShortcut> EmailShortcut::gatherAll(
-    CassandraConnection *cassandra,
-    const int32_t skip,
-    int32_t limit,
-    const string &domain,
-    const string &mailbox,
-    const CassUuid &uuid
-  )
-  {
+    CassandraConnection *cassandra, const int32_t skip,
+    int32_t limit, const string &domain,
+    const string &mailbox, const CassUuid &uuid
+  ) {
     vector<EmailShortcut> ret = {};
 
     const char *query = "SELECT * FROM fannst.email_shortcuts WHERE e_domain=? AND e_mailbox=? AND e_owners_uuid=? LIMIT ?";
@@ -132,7 +127,7 @@ namespace FSMTP::Models
       EmailShortcut shortcut;
       const char *domain, *subject, *preview, *mailbox, *from;
       domain = subject = preview = mailbox = from = nullptr;
-      size_t domainLen, subject, subjectLen, previewLen, mailboxLen, fromLen;
+      size_t domainLen, subjectLen, previewLen, mailboxLen, fromLen;
 
       // Gets the values from the result, and puts them into the variables
       
@@ -166,12 +161,9 @@ namespace FSMTP::Models
   }
 
   pair<int64_t, size_t> EmailShortcut::getStat(
-    CassandraConnection *cassandra,
-    const int32_t skip,
-    int32_t limit,
-    const string &domain,
-    const string &mailbox,
-    const CassUuid &uuid
+    CassandraConnection *cassandra, const int32_t skip,
+    int32_t limit, const string &domain,
+    const string &mailbox, const CassUuid &uuid
   ) {
     size_t total = 0;
     int64_t octets = 0;
@@ -208,33 +200,31 @@ namespace FSMTP::Models
     // Counts the total octets and count
     // =======================================
 
-    do
-    {
+    do {
       CassError rc;
       CassFuture *future = nullptr;
 
       // Executes the query, and checks for errors
       future = cass_session_execute(cassandra->c_Session, statement);
+      DEFER(cass_future_free(future));
       cass_future_wait(future);
 
       rc = cass_future_error_code(future);
-      if (rc != CASS_OK)
-      {
+      if (rc != CASS_OK) {
         string message = "cass_session_execute() failed: ";
         message += CassandraConnection::getError(future);
 
-        cass_future_free(future);
-        cass_statement_free(statement);
         throw DatabaseException(EXCEPT_DEBUG(message));
       }
 
-      // Creates the iterator and starts looping
-      // - over the received data
       const CassResult *result = cass_future_get_result(future);
       CassIterator *iterator = cass_iterator_from_result(result);
+      DEFER_M({
+        cass_result_free(result);
+        cass_iterator_free(iterator);
+      });
 
-      while (cass_iterator_next(iterator))
-      {
+      while (cass_iterator_next(iterator)) {
         const CassRow *row = cass_iterator_get_row(iterator);
 
         // Gets the size of the raw message
@@ -251,25 +241,19 @@ namespace FSMTP::Models
 
       // Performs the paging stuff
       hasMorePages = cass_result_has_more_pages(result);
-      if (hasMorePages)
+      if (hasMorePages) {
         cass_statement_set_paging_state(statement, result);
+      }
 
-      // Frees the memory
-      cass_result_free(result);
-      cass_iterator_free(iterator);
-      cass_future_free(future);
     } while (hasMorePages);
 
     return make_pair(octets, total);
   }
 
   vector<tuple<CassUuid, int64_t, int64_t>> EmailShortcut::gatherAllReferencesWithSize(
-    CassandraConnection *cassandra,
-    const int32_t skip,
-    int32_t limit,
-    const string &domain,
-    const string &mailbox,
-    const CassUuid &uuid,
+    CassandraConnection *cassandra, const int32_t skip,
+    int32_t limit, const string &domain,
+    const string &mailbox, const CassUuid &uuid,
     const bool deleted
   ) {
     vector<tuple<CassUuid, int64_t, int64_t>>  ret = {};
@@ -310,6 +294,7 @@ namespace FSMTP::Models
       CassFuture *future = nullptr;
 
       future = cass_session_execute(cassandra->c_Session, statement);
+      DEFER(cass_future_free(future));
       cass_future_wait(future);
 
       rc = cass_future_error_code(future);
@@ -329,6 +314,10 @@ namespace FSMTP::Models
 
       const CassResult *result = cass_future_get_result(future);
       CassIterator *iterator = cass_iterator_from_result(result);
+      DEFER_M({
+        cass_result_free(result);
+        cass_iterator_free(iterator);
+      });
 
       while (cass_iterator_next(iterator)) {
         const CassRow *row = cass_iterator_get_row(iterator);
@@ -364,9 +353,6 @@ namespace FSMTP::Models
       }
 
       // Frees the memory
-      cass_result_free(result);
-      cass_iterator_free(iterator);
-      cass_future_free(future);
     } while (hasMorePages);
 
     reverse(ret.begin(), ret.end());
@@ -374,10 +360,8 @@ namespace FSMTP::Models
   }
 
   void EmailShortcut::deleteOne(
-    CassandraConnection *cassandra,
-    const string &domain,
-    const CassUuid &ownersUuid,
-    const CassUuid &emailUuid,
+    CassandraConnection *cassandra, const string &domain,
+    const CassUuid &ownersUuid, const CassUuid &emailUuid,
     const string &mailbox
   ) {
     const char *query = R"(DELETE FROM fannst.email_shortcuts 

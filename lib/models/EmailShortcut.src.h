@@ -40,52 +40,41 @@ namespace FSMTP::Models
 
     void save(CassandraConnection *cassandra);
 
-    static std::vector<EmailShortcut> gatherAll(
-      CassandraConnection *cassandra,
-      const int32_t skip,
-      int32_t limit,
-      const std::string &domain,
-      const std::string &mailbox,
-      const CassUuid &uuid
+    static vector<EmailShortcut> gatherAll(
+      CassandraConnection *cassandra, const int32_t skip,
+      int32_t limit, const string &domain,
+      const string &mailbox, const CassUuid &uuid
     );
 
-    static std::vector<std::tuple<CassUuid, int64_t, int64_t>> gatherAllReferencesWithSize(
-      CassandraConnection *cassandra,
-      const int32_t skip,
-      int32_t limit,
-      const std::string &domain,
-      const std::string &mailbox,
-      const CassUuid &uuid,
+    static vector<tuple<CassUuid, int64_t, int64_t>> gatherAllReferencesWithSize(
+      CassandraConnection *cassandra, const int32_t skip,
+      int32_t limit, const string &domain,
+      const string &mailbox, const CassUuid &uuid,
       const bool deleted
     );
 
-    static std::pair<int64_t, std::size_t> getStat(
-      CassandraConnection *cassandra,
-      const int32_t skip,
-      int32_t limit,
-      const std::string &domain,
-      const std::string &mailbox,
-      const CassUuid &uuid
+    static pair<int64_t, size_t> getStat(
+      CassandraConnection *cassandra, const int32_t skip,
+      int32_t limit, const string &domain,
+      const string &mailbox, const CassUuid &uuid
     );
 
     static void deleteOne(
-      CassandraConnection *cassandra,
-      const std::string &domain,
-      const CassUuid &ownersUuid,
-      const CassUuid &emailUuid,
+      CassandraConnection *cassandra, const string &domain,
+      const CassUuid &ownersUuid, const CassUuid &emailUuid,
       const string &mailbox
     );
 
-    std::string e_Domain;
-    std::string e_Subject;
-    std::string e_Preview;
-    std::string e_From;
+    string e_Domain;
+    string e_Subject;
+    string e_Preview;
+    string e_From;
     CassUuid e_OwnersUUID;
     CassUuid e_EmailUUID;
     int32_t e_UID;
     int32_t e_Flags;
     int64_t e_Bucket;
-    std::string e_Mailbox;
+    string e_Mailbox;
     int64_t e_SizeOctets;
   };
 }
