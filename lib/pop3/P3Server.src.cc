@@ -142,34 +142,43 @@ namespace FSMTP::POP3
 			}
 
 
-			// Burries the death after the session clossed
-			if (session.s_Graveyard.size() > 0) {
-				DEBUG_ONLY(clogger << WARN << "Deleting " << session.s_Graveyard.size() << " emails !" << ENDL);
-				for (const std::size_t i : session.s_Graveyard)
-				{
-					// Deletes the the raw email, shortcut and parsed email
-					const CassUuid &uuid = std::get<0>(session.s_References[i]);
-					const int64_t &bucket = std::get<2>(session.s_References[i]);
+			try {
+				if (session.s_Graveyard.size() > 0) {
+					DEBUG_ONLY(clogger << WARN << "Deleting " << session.s_Graveyard.size() << " emails !" << ENDL);
+					for (const std::size_t i : session.s_Graveyard)
+					{
+						// Deletes the the raw email, shortcut and parsed email
+						const CassUuid &uuid = std::get<0>(session.s_References[i]);
+						const int64_t &bucket = std::get<2>(session.s_References[i]);
 
-					// Deletes the emails
-					EmailShortcut::deleteOne(
-						cassandra,
-						session.s_Account.a_Domain,
-						session.s_Account.a_UUID,
-						uuid,
-						"INBOX"
-					);
-					RawEmail::deleteOne(
-						cassandra,
-						session.s_Account.a_Domain,
-						session.s_Account.a_UUID,
-						uuid,
-						bucket
-					);
+						// Deletes the emails
+						EmailShortcut::deleteOne(
+							cassandra,
+							session.s_Account.a_Domain,
+							session.s_Account.a_UUID,
+							uuid,
+							"INBOX"
+						);
+						RawEmail::deleteOne(
+							cassandra,
+							session.s_Account.a_Domain,
+							session.s_Account.a_UUID,
+							uuid,
+							bucket
+						);
+					}
 				}
-			}
 
-			clogger << "Client disconnected" << ENDL;
+				clogger << "Client disconnected" << ENDL;	
+			} catch (const runtime_error &e) {
+				clogger << FATAL << "Could not delete emails: " << e.what() << ENDL << CLASSIC;
+			} catch (const exception &e) {
+				clogger << FATAL << "Could not delete emails: " << e.what() << ENDL << CLASSIC;
+			} catch (const DatabaseException &e) {
+				clogger << FATAL << "Could not delete emails: " << e.what() << ENDL << CLASSIC;
+			} catch (...) {
+				clogger << FATAL << "Could not delete emails: unknown" << ENDL << CLASSIC;
+			}
 		};
 
 		if (!newThread) {

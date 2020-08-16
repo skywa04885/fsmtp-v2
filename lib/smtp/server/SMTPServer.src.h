@@ -57,7 +57,8 @@ namespace FSMTP::Server
 			shared_ptr<SMTPServerSession> session, Logger &clogger
 		);
 
-		std::vector<SMTPServiceFunction> s_Services;
+		vector<SMTPServiceFunction> s_PlainServices;
+		vector<SMTPServiceFunction> s_SecureServices;
 	private:
 		unique_ptr<ServerSocket> s_SSLSocket;
 		unique_ptr<ServerSocket> s_PlainSocket;

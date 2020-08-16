@@ -19,22 +19,16 @@
 using namespace Server;
 
 SMTPServer::SMTPServer() noexcept: s_Logger("FSMTP-V2/ESMTP", LoggerLevel::INFO) {
-	this->s_Services.push_back({
-		"AUTH",
-		{"PLAIN"}
-	});
-	this->s_Services.push_back({
-		"STARTTLS",
-		{}
-	});
-	this->s_Services.push_back({
-		"SMTPUTF8",
-		{}
-	});
-	this->s_Services.push_back({
-		"SIZE",
-		{"10485760"}
-	});
+	const char *maxSize = "10485760";
+	
+	this->s_PlainServices.push_back({"AUTH", {"PLAIN"}});
+	this->s_PlainServices.push_back({"STARTTLS", {}});
+	this->s_PlainServices.push_back({"SMTPUTF8", {}});
+	this->s_PlainServices.push_back({"SIZE", {maxSize}});
+
+	this->s_SecureServices.push_back({"AUTH", {"PLAIN"}});
+	this->s_SecureServices.push_back({"SMTPUTF8", {}});
+	this->s_SecureServices.push_back({"SIZE", {maxSize}});
 }
 
 SMTPServer::~SMTPServer() noexcept {}
@@ -42,10 +36,6 @@ SMTPServer::~SMTPServer() noexcept {}
 SMTPServer &SMTPServer::createContext() {
 	auto &config = Global::getConfig();
 	auto &sslCtx = this->s_SSLContext;
-
-	const char *pass = config["ssl_pass"].asCString();
-	const char *cert = config["ssl_cert"].asCString();
-	const char *key = config["ssl_key"].asCString();
 
 	sslCtx = Global::getSSLContext(SSLv23_server_method());
 
@@ -238,7 +228,7 @@ bool SMTPServer::handleCommand(
 				SMTPResponseType::SRC_EHLO,
 				"",
 				reinterpret_cast<const void *>(prefix.c_str()),
-				&this->s_Services
+				(client->usingSSL() ? &this->s_SecureServices : &this->s_PlainServices)
 			);
 			client->write(response.build());
 
