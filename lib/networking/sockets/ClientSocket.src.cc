@@ -38,15 +38,14 @@ ClientSocket &ClientSocket::useSSL(SSLContext *ctx) {
 ClientSocket &ClientSocket::upgradeAsServer() {
   SSL *&ssl = this->s_SSL;
   int32_t &fd = this->s_SocketFD;
-  auto *&ctx = this->s_SSLCtx;
+  auto *ctx = this->s_SSLCtx;
 
   assert(("SSLContext does not exist", ctx != nullptr));
 
   ssl = SSL_new(ctx->p_SSLCtx);
   if (!ssl) {
-    throw runtime_error(EXCEPT_DEBUG(strerror(errno)));
+    throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
   }
-
   SSL_set_fd(ssl, fd);
   if (SSL_accept(ssl) <= 0) {
     throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
@@ -71,12 +70,13 @@ ClientSocket &ClientSocket::acceptAsServer(const int32_t server) {
     goto _accept_client;
   }
 
-  if (!this->s_SSLCtx) return *this;
-  else return this->upgradeAsServer();
+  return *this;
 }
 
 int32_t ClientSocket::write(const char *msg, const size_t len) {
   int32_t rc;
+
+  // cout << "SockWrite: " << string(msg, len) << endl;
 
   if (this->s_SSLCtx) {
     if ((rc = SSL_write(this->s_SSL, msg, len)) <= 0) {
@@ -157,6 +157,7 @@ string ClientSocket::readToDelim(const char *delim) {
     result.append(buffer, readLen);
   }
 
+  // cout << "SockRead: " << buffer << endl;
   delete[] buffer;
   return result.substr(0, result.length() - delimSize);
 }

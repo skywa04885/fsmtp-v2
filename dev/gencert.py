@@ -10,7 +10,7 @@ from OpenSSL import crypto, SSL
 
 config = {
     'email_address': 'webmaster@fannst.nl',
-    'common_name': 'Fannst Webmaster',
+    'common_name': 'fannst.nl',
     'country_name': 'NL',
     'locality_name': 'Nieuw Bergen',
     'state_name': 'Limburg',

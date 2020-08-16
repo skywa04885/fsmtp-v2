@@ -28,7 +28,7 @@ SSLContext::~SSLContext() noexcept {
 
 SSLContext &SSLContext::read(const char *privateKey, const char *cert) {
   SSL_CTX *&ctx= this->p_SSLCtx;
-	const SSL_METHOD *&method = this->p_SSLMethod;
+	const SSL_METHOD *method = this->p_SSLMethod;
 
   ctx = SSL_CTX_new(method);
   if (!ctx) {
@@ -39,13 +39,14 @@ SSLContext &SSLContext::read(const char *privateKey, const char *cert) {
 	//  ssl context, this will basically read the password from the
 	//  current instance, when this is requested by openssl. After
 	//  this we set the key and cert file.
-
+	
+	SSL_CTX_set_ecdh_auto(ctx, 1);
 	SSL_CTX_set_default_passwd_cb(ctx, SSLContext::passwordCallback);
 	SSL_CTX_set_default_passwd_cb_userdata(ctx, this);
 
-  if (SSL_CTX_use_PrivateKey_file(ctx, privateKey, SSL_FILETYPE_PEM) <= 0) {
+  if (SSL_CTX_use_certificate_file(ctx, cert, SSL_FILETYPE_PEM) <= 0) {
 		throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
-  } else if (SSL_CTX_use_certificate_file(ctx, cert, SSL_FILETYPE_PEM) <= 0) {
+  } else if (SSL_CTX_use_PrivateKey_file(ctx, privateKey, SSL_FILETYPE_PEM) <= 0) {
 		throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
 	}
 
@@ -83,4 +84,6 @@ SSLContext &SSLContext::justCreate() {
   if (!ctx) {
     throw runtime_error(EXCEPT_DEBUG("Could not create SSL Context"));
 	}
+
+	return *this;
 }

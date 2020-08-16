@@ -21,7 +21,7 @@
 	},
 	"servers": {
 		"esmtp": {
-			"secure": 587,
+			"secure": 465,
 			"plain": 25
 		}
 	},

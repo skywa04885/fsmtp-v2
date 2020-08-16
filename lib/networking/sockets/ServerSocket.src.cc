@@ -78,10 +78,8 @@ ServerSocket &ServerSocket::startAcceptor(const bool newThread)
 
       try {
         client->acceptAsServer(this->s_SocketFD);
-
         if (this->s_SSLContext) {
-          client->useSSL(this->s_SSLContext);
-          client->upgradeAsServer();
+          client->useSSL(this->s_SSLContext).upgradeAsServer();
         }
 
         thread t(this->s_Callback, client);

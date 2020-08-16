@@ -299,7 +299,9 @@ namespace FSMTP::POP3
 					"", nullptr, nullptr,
 					reinterpret_cast<void *>(client->getAddress())
 				).build());
+				clogger << "Upgrading to STARTTLS" << ENDL;
 				client->useSSL(this->s_SSLContext.get()).upgradeAsServer();
+				clogger << "Upgraded to STARTTLS" << ENDL;
 				break;
 			}
 			// =========================================
@@ -495,7 +497,7 @@ namespace FSMTP::POP3
 					"",
 					&this->s_Capabilities,
 					nullptr, nullptr
-				).buildCapabilities());
+				).build());
 				break;
 			}
 			// =========================================
@@ -553,7 +555,7 @@ namespace FSMTP::POP3
 					true,
 					POP3ResponseType::PRT_UIDL,
 					"", nullptr, &list, nullptr
-				).buildList());
+				).build());
 
 				break;
 			}
@@ -583,7 +585,7 @@ namespace FSMTP::POP3
 					true,
 					POP3ResponseType::PRT_LIST,
 					"", nullptr, &list, nullptr
-				).buildList());
+				).build());
 
 				break;
 			}

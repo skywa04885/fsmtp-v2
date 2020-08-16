@@ -252,10 +252,13 @@ bool SMTPServer::handleCommand(
 		// Upgrades the connection to SSL
 		// ========================================
 		case ClientCommandType::CCT_START_TLS: {
-			if (!session->getAction(_SMTP_SERV_PA_HELO))
+			if (!session->getAction(_SMTP_SERV_PA_HELO)) {
 				throw SMTPOrderException("EHLO/HELO first.");
-			else if (session->getFlag(_SMTP_SERV_SESSION_SSL_FLAG))
+			} else if (session->getFlag(_SMTP_SERV_SESSION_SSL_FLAG)) {
 				throw SMTPOrderException("Connection already secured");
+			}
+
+			clogger << "Upgrading to TLS ..." << ENDL;
 
 			sendResponse(SMTPResponseType::SRC_START_TLS);
 			client->useSSL(this->s_SSLContext.get()).upgradeAsServer();
@@ -327,7 +330,8 @@ bool SMTPServer::handleCommand(
 
 			// Writes the proceed message to the client, which indicates that everything is fine
 			//  and we're ready for further transport
-
+			
+			sessMess.e_TransportFrom = from;
 			ServerResponse response(
 				SMTPResponseType::SRC_MAIL_FROM, "",
 				reinterpret_cast<const void *>(sessMess.e_TransportFrom.e_Address.c_str()),
@@ -338,7 +342,6 @@ bool SMTPServer::handleCommand(
 			// Sets the from email address in the sessions message, after that
 			//  we tell that the mail from action has been used.
 
-			sessMess.e_TransportFrom = from;
 			session->setAction(_SMTP_SERV_PA_MAIL_FROM);
 			break;
 		}
