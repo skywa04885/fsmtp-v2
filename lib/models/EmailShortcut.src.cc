@@ -18,22 +18,10 @@
 
 namespace FSMTP::Models
 {
-  /**
-   * Default empty constructor for the EmailShortcut class
-   *
-   * @Param {void}
-   * @Return {void}
-   */
   EmailShortcut::EmailShortcut(void):
     e_Flags(0)
   {}
 
-  /**
-   * Stores an email shortcut in the cassandra database
-   *
-   * @Param {CassandraConnection *} cassandra
-   * @Return {void}
-   */
   void EmailShortcut::save(CassandraConnection *cassandra)
   {
     const char *query = R"(INSERT INTO fannst.email_shortcuts (
@@ -73,7 +61,7 @@ namespace FSMTP::Models
     rc = cass_future_error_code(future);
     if (rc != CASS_OK)
     {
-      std::string error = "cass_session_execute() failed: ";
+      string error = "cass_session_execute() failed: ";
       error += CassandraConnection::getError(future);
       cass_future_free(future);
       cass_statement_free(statement);
@@ -85,27 +73,16 @@ namespace FSMTP::Models
     cass_future_free(future);
   }
 
-  /**
-   * Gathers all messages from an specific user
-   *
-   * @Param {CassandraConnection *} cassandra
-   * @Param {const int32_t} skip
-   * @Param {int32_t} limit
-   * @Param {const std::string &} domain
-   * @Param {const std::string &mailbox}
-   * @Param {const CassUuid &} uuid
-   * @Return {std::vector<EmailShortcut>}
-   */
-  std::vector<EmailShortcut> EmailShortcut::gatherAll(
+  vector<EmailShortcut> EmailShortcut::gatherAll(
     CassandraConnection *cassandra,
     const int32_t skip,
     int32_t limit,
-    const std::string &domain,
-    const std::string &mailbox,
+    const string &domain,
+    const string &mailbox,
     const CassUuid &uuid
   )
   {
-    std::vector<EmailShortcut> ret = {};
+    vector<EmailShortcut> ret = {};
 
     const char *query = "SELECT * FROM fannst.email_shortcuts WHERE e_domain=? AND e_mailbox=? AND e_owners_uuid=? LIMIT ?";
     CassStatement *statement = nullptr;
@@ -135,7 +112,7 @@ namespace FSMTP::Models
     rc = cass_future_error_code(future);
     if (rc != CASS_OK)
     {
-      std::string error = "cass_session_execute() failed: ";
+      string error = "cass_session_execute() failed: ";
       error += CassandraConnection::getError(future);
       cass_future_free(future);
       cass_statement_free(statement);
@@ -158,13 +135,13 @@ namespace FSMTP::Models
       // Prepares memory for the new element
       const CassRow *row = cass_iterator_get_row(resultIterator);
       const char *domain = nullptr;
-      std::size_t domainLen;
+      size_t domainLen;
       const char *subject = nullptr;
-      std::size_t subjectLen;
+      size_t subjectLen;
       const char *preview = nullptr;
-      std::size_t previewLen;
+      size_t previewLen;
       const char *mailbox = nullptr;
-      std::size_t mailboxLen;
+      size_t mailboxLen;
       const char *from;
       size_t fromLen;
       EmailShortcut shortcut;
@@ -238,16 +215,16 @@ namespace FSMTP::Models
     return ret;
   }
 
-  std::pair<int64_t, std::size_t> EmailShortcut::getStat(
+  pair<int64_t, size_t> EmailShortcut::getStat(
     CassandraConnection *cassandra,
     const int32_t skip,
     int32_t limit,
-    const std::string &domain,
-    const std::string &mailbox,
+    const string &domain,
+    const string &mailbox,
     const CassUuid &uuid
   )
   {
-    std::size_t total = 0;
+    size_t total = 0;
     int64_t octets = 0;
 
     const char *query = "SELECT e_size_octets FROM fannst.email_shortcuts WHERE e_domain=? AND e_mailbox=? AND e_owners_uuid=? LIMIT ?";
@@ -291,7 +268,7 @@ namespace FSMTP::Models
       rc = cass_future_error_code(future);
       if (rc != CASS_OK)
       {
-        std::string message = "cass_session_execute() failed: ";
+        string message = "cass_session_execute() failed: ";
         message += CassandraConnection::getError(future);
 
         cass_future_free(future);
@@ -333,28 +310,29 @@ namespace FSMTP::Models
 
     // Frees the memory and returns
     cass_statement_free(statement);
-    return std::make_pair(octets, total);
+    return make_pair(octets, total);
   }
 
 
-  std::vector<std::tuple<CassUuid, int64_t, int64_t>> EmailShortcut::gatherAllReferencesWithSize(
+  vector<tuple<CassUuid, int64_t, int64_t>> EmailShortcut::gatherAllReferencesWithSize(
     CassandraConnection *cassandra,
     const int32_t skip,
     int32_t limit,
-    const std::string &domain,
-    const std::string &mailbox,
-    const CassUuid &uuid
-  )
-  {
-    std::vector<std::tuple<CassUuid, int64_t, int64_t>>  ret = {};
+    const string &domain,
+    const string &mailbox,
+    const CassUuid &uuid,
+    const bool deleted
+  ) {
+    vector<tuple<CassUuid, int64_t, int64_t>>  ret = {};
 
-    const char *query = "SELECT e_size_octets, e_email_uuid, e_bucket FROM fannst.email_shortcuts WHERE e_domain=? AND e_mailbox=? AND e_owners_uuid=? LIMIT ?";
+    const char *query = R"(SELECT e_size_octets, e_email_uuid, e_bucket, e_flags FROM fannst.email_shortcuts 
+    WHERE e_domain=? AND e_mailbox=? AND e_owners_uuid=?)";
     CassStatement *statement = nullptr;
     cass_bool_t hasMorePages = cass_false;
     CassError rc;
 
     // Limit of 80 emails a time
-    if (limit < 1) throw std::runtime_error("Limit must be positive");
+    if (limit < 1) throw runtime_error("Limit must be positive");
     if (limit > 500) limit = 500;
 
     // =======================================
@@ -365,11 +343,10 @@ namespace FSMTP::Models
     // =======================================
 
     // Prepares the statement and binds the values
-    statement = cass_statement_new(query, 4);
+    statement = cass_statement_new(query, 3);
     cass_statement_bind_string(statement, 0, domain.c_str());
     cass_statement_bind_string(statement, 1, mailbox.c_str());
     cass_statement_bind_uuid(statement, 2, uuid);
-    cass_statement_bind_int32(statement, 3, limit);
     cass_statement_set_paging_size(statement, 20);
 
     // =======================================
@@ -378,8 +355,7 @@ namespace FSMTP::Models
     // Counts the total octets and count
     // =======================================
 
-    do
-    {
+    do {
       CassError rc;
       CassFuture *future = nullptr;
 
@@ -390,7 +366,7 @@ namespace FSMTP::Models
       rc = cass_future_error_code(future);
       if (rc != CASS_OK)
       {
-        std::string message = "cass_session_execute() failed: ";
+        string message = "cass_session_execute() failed: ";
         message += CassandraConnection::getError(future);
 
         cass_future_free(future);
@@ -398,19 +374,33 @@ namespace FSMTP::Models
         throw DatabaseException(EXCEPT_DEBUG(message));
       }
 
-      // Creates the iterator and starts looping
-      // - over the received data
+      // Starts iterating over the results, since an user can specify deleted as true
+      //  or false, we will compare the flags to check if we want to process the current
+      //  entry or just skip, next to that before continueing we also check for
+      //  the limit, if the current count is bigger then the limit, just ignore
+
       const CassResult *result = cass_future_get_result(future);
       CassIterator *iterator = cass_iterator_from_result(result);
 
-      while (cass_iterator_next(iterator))
-      {
+      while (cass_iterator_next(iterator)) {
         const CassRow *row = cass_iterator_get_row(iterator);
-        int64_t octets;
-        int64_t bucket;
+        int64_t octets, bucket;
+        int32_t flags;
         CassUuid uuid;
 
-        // Gets the values
+        // Compares the flags to check if the message is marked as deleted
+        //  this will then be checked with the deleted boolean specified in
+        //  the arguments of this method
+
+        cass_value_get_int32(cass_row_get_column_by_name(row, "e_flags"), &flags);
+        if ((flags & _EMAIL_FLAG_DELETED) == _EMAIL_FLAG_DELETED) {
+          if (!deleted) continue;
+        } else if (deleted) {
+          continue;
+        }
+
+        // Gets the other flags, and pushes the entry to the result vector
+
         cass_value_get_int64(cass_row_get_column_by_name(
           row, "e_size_octets"),
           &octets
@@ -425,13 +415,14 @@ namespace FSMTP::Models
         );
 
         // Pushes to the result
-        ret.push_back(std::tuple<CassUuid, int64_t, int64_t>(uuid, octets, bucket));
+        ret.push_back(tuple<CassUuid, int64_t, int64_t>(uuid, octets, bucket));
       }
 
       // Handles the paging stuff
       hasMorePages = cass_result_has_more_pages(result);
-      if (hasMorePages)
+      if (hasMorePages) {
         cass_statement_set_paging_state(statement, result);
+      }
 
       // Frees the memory
       cass_result_free(result);
@@ -441,7 +432,7 @@ namespace FSMTP::Models
 
     // Frees the memory and returns
     cass_statement_free(statement);
-    std::reverse(ret.begin(), ret.end());
+    reverse(ret.begin(), ret.end());
     return ret;
   }
 
@@ -449,13 +440,13 @@ namespace FSMTP::Models
    * Delets an email shortcut
    *
    * @Param {CassandraConnection *} cassandra
-   * @Param {const std::string &} domain
+   * @Param {const string &} domain
    * @Param {const CassUuid &} ownersUuid
    * @Param {const CassUuid &} emailUuid
    */
   void EmailShortcut::deleteOne(
     CassandraConnection *cassandra,
-    const std::string &domain,
+    const string &domain,
     const CassUuid &ownersUuid,
     const CassUuid &emailUuid,
     const string &mailbox
@@ -466,7 +457,6 @@ namespace FSMTP::Models
     CassFuture *future = nullptr;
     CassError rc;
 
-    // Creates the statement and binds the values
     statement = cass_statement_new(query, 5);
     cass_statement_bind_string(statement, 0, domain.c_str());
     cass_statement_bind_int32(statement, 1, EmailType::ET_INCOMMING);
@@ -474,14 +464,12 @@ namespace FSMTP::Models
     cass_statement_bind_uuid(statement, 3, emailUuid);
     cass_statement_bind_string(statement, 4, mailbox.c_str());
 
-    // Executes the query and checks for errors
     future = cass_session_execute(cassandra->c_Session, statement);
     cass_future_wait(future);
 
     rc = cass_future_error_code(future);
-    if (rc != CASS_OK)
-    {
-      std::string error = "Could not delete email shortcut: ";
+    if (rc != CASS_OK) {
+      string error = "Could not delete email shortcut: ";
       error += CassandraConnection::getError(future);
       cass_future_free(future);
       cass_statement_free(statement);

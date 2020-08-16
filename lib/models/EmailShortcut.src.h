@@ -36,33 +36,10 @@ namespace FSMTP::Models
   class EmailShortcut
   {
   public:
-    /**
-     * Default empty constructor for the EmailShortcut class
-     *
-     * @Param {void}
-     * @Return {void}
-     */
     explicit EmailShortcut(void);
 
-    /**
-     * Stores an email shortcut in the cassandra database
-     *
-     * @Param {CassandraConnection *} cassandra
-     * @Return {void}
-     */
     void save(CassandraConnection *cassandra);
 
-    /**
-     * Gathers all messages from an specific user
-     *
-     * @Param {CassandraConnection *} cassandra
-     * @Param {const int32_t} skip
-     * @Param {int32_t} limit
-     * @Param {const std::string &} domain
-     * @Param {const std::string &} mailbox
-     * @Param {const CassUuid &} uuid
-     * @Return {std::vector<EmailShortcut>}
-     */
     static std::vector<EmailShortcut> gatherAll(
       CassandraConnection *cassandra,
       const int32_t skip,
@@ -78,7 +55,8 @@ namespace FSMTP::Models
       int32_t limit,
       const std::string &domain,
       const std::string &mailbox,
-      const CassUuid &uuid
+      const CassUuid &uuid,
+      const bool deleted
     );
 
     static std::pair<int64_t, std::size_t> getStat(
@@ -90,14 +68,6 @@ namespace FSMTP::Models
       const CassUuid &uuid
     );
 
-    /**
-     * Delets an email shortcut
-     *
-     * @Param {CassandraConnection *} cassandra
-     * @Param {const std::string &} domain
-     * @Param {const CassUuid &} ownersUuid
-     * @Param {const CassUuid &} emailUuid
-     */
     static void deleteOne(
       CassandraConnection *cassandra,
       const std::string &domain,

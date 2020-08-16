@@ -378,7 +378,8 @@ namespace FSMTP::POP3
 					120,
 					session.s_Account.a_Domain,
 					"INBOX",
-					session.s_Account.a_UUID
+					session.s_Account.a_UUID,
+					false
 				);
 
 				// Stores the password in the session, sets the flag and sends
