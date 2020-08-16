@@ -214,3 +214,17 @@ ClientSocket &ClientSocket::upgradeAsClient() {
 
   return *this;
 }
+
+ClientSocket &ClientSocket::timeout(const int32_t s) {
+  auto &sock = this->s_SocketFD;
+  
+  struct timeval timeo;
+  timeo.tv_sec = s;
+  timeo.tv_usec = 0;
+
+  if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<char *>(&timeo), sizeof(timeo)) < 0) {
+    throw runtime_error(strerror(errno));
+  } else if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, reinterpret_cast<char *>(&timeo), sizeof(timeo)) < 0) {
+    throw runtime_error(strerror(errno));
+  }
+}

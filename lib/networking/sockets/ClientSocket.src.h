@@ -32,6 +32,7 @@ namespace FSMTP::Sockets {
     ClientSocket &useSSL(SSLContext *ctx);
     ClientSocket &acceptAsServer(const int32_t server);
     ClientSocket &connectAsClient(const char *host, const int32_t port);
+    ClientSocket &timeout(const int32_t s);
     string getPrefix();
     struct sockaddr_in *getAddress();
     int32_t write(const char *msg, const size_t len);

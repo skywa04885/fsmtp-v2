@@ -59,16 +59,14 @@ SSLContext &SSLContext::read(const char *privateKey, const char *cert, const cha
 		throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
 	}
 
-	if (!bundle) {
-		if (SSL_CTX_use_certificate_file(ctx, cert, SSL_FILETYPE_PEM) <= 0) {
-			throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
-		}
-	} else {
-		if (SSL_CTX_use_certificate_chain_file(ctx, bundle) <= 0) {
-			throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
-		}
+	if (SSL_CTX_use_certificate_file(ctx, cert, SSL_FILETYPE_PEM) <= 0) {
+		throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
+	}
 
-		SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_SERVER | SSL_SESS_CACHE_NO_INTERNAL);
+	if (bundle) {
+		if (SSL_CTX_load_verify_locations(ctx, bundle, nullptr) <= 0) {
+			throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
+		}
 	}
 
 	return *this;

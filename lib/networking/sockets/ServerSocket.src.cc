@@ -82,6 +82,8 @@ ServerSocket &ServerSocket::startAcceptor(const bool newThread)
           client->useSSL(this->s_SSLContext).upgradeAsServer();
         }
 
+        client->timeout(7);
+
         thread t(this->s_Callback, client);
         t.detach();
       } catch (const runtime_error &e) {
