@@ -31,82 +31,20 @@ namespace FSMTP::Models
 	class EmailAddress
 	{
 	public:
-		/**
-		 * Variable constructor for the EmailAddres
-		 *
-		 * @Param {const std::string &} e_Name
-		 * @Param {const std::string &} e_Address
-		 * @Return {void}
-		 */
-		EmailAddress(const std::string &e_Name, const std::string &e_Address);
-
-		/**
-		 * Parse constructor for the email address
-		 * - basically calls EmailAddress::parse()
-		 *
-		 * @Param {const std::string &} raw
-		 * @Return {void}
-		 */
-		explicit EmailAddress(const std::string &raw);
-
-		/**
-		 * The empty constructor for the EmailAddress
-		 *
-		 * @Param {void}
-		 * @Return {void}
-		 */
+		EmailAddress(const string &e_Name, const string &e_Address);
+		EmailAddress(const string &raw);
 		explicit EmailAddress();
 
-		/**
-		 * Parses an raw string into an EmailAddress
-		 *
-		 * @Param {const std::string &} raw
-		 * @Return {void}
-		 */
-		void parse(const std::string &raw);
+		void parse(const string &raw);
 
-	  /**
-	   * Parses the domain name from the address
-	   *
-	   * @Param {void}
-	   * @Return {std::string}
-	   */
-		std::string getDomain(void) const;
+		string getDomain(void) const;
+		string getUsername(void) const;
+		static vector<EmailAddress> parseAddressList(const string &raw);
+		static string addressListToString(const vector<EmailAddress> &addresses);
+		string toString(void) const;
 
-	  /**
-	   * parses the username from the address
-	   *
-	   * @Param {void}
-	   * @Return {std::string}
-	   */
-		std::string getUsername(void) const;
-
-		/**
-		 * Parses an raw string into multiple addresses
-		 *
-		 * @Param {const std::string &} raw
-		 * @Return {std::vector<EmailAddress>}
-		 */
-		static std::vector<EmailAddress> parseAddressList(const std::string &raw);
-
-		/**
-		 * Turns an vector of addresses into an string
-		 *
-		 * @Param {const std::vector<EmailAddress> &} addresses
-		 * @Return {std::string}
-		 */
-		static std::string addressListToString(const std::vector<EmailAddress> &addresses);
-
-		/**
-		 * Returns the string version of the email address
-		 *
-		 * @Param {void}
-		 * @Return {std::string}
-		 */
-		std::string toString(void) const;
-
-		std::string e_Address;
-		std::string e_Name;
+		string e_Address;
+		string e_Name;
 	};
 
 	typedef enum : uint32_t
@@ -146,10 +84,10 @@ namespace FSMTP::Models
 	 * Turns an string into an enum value
 	 * - of email content type
 	 *
-	 * @Param {const std::string &} raw
+	 * @Param {const string &} raw
 	 * @Return {EmailContentType}
 	 */
-	EmailContentType stringToEmailContentType(const std::string &raw);
+	EmailContentType stringToEmailContentType(const string &raw);
 
 	/**
 	 * Turns an enum value into an string
@@ -171,22 +109,22 @@ namespace FSMTP::Models
 	 * Turns an string into an enum value of
 	 * - EmailTransferEncoding type
 	 *
-	 * @Param {const std::string &} raw
+	 * @Param {const string &} raw
 	 * @Return {EmailContentType}
 	 */
-	EmailTransferEncoding stringToEmailTransferEncoding(const std::string &raw);
+	EmailTransferEncoding stringToEmailTransferEncoding(const string &raw);
 
 	typedef struct
 	{
-		std::string e_Key;
-		std::string e_Value;
+		string e_Key;
+		string e_Value;
 	} EmailHeader;
 
 	typedef struct
 	{
-		std::string e_Content;
+		string e_Content;
 		EmailContentType e_Type;
-		std::vector<EmailHeader> e_Headers;
+		vector<EmailHeader> e_Headers;
 		int32_t e_Index;
 		EmailTransferEncoding e_TransferEncoding;
 	} EmailBodySection;
@@ -216,7 +154,7 @@ namespace FSMTP::Models
 
     static void deleteOne(
       CassandraConnection *cassandra,
-      const std::string &domain,
+      const string &domain,
       const CassUuid &ownersUuid,
       const CassUuid &emailUuid,
       const int64_t bucket
@@ -226,12 +164,12 @@ namespace FSMTP::Models
 
     EmailAddress e_TransportFrom;
 		vector<EmailAddress> e_TransportTo;
-		std::string e_Subject;
-		std::string e_MessageID;
-		std::vector<EmailBodySection> e_BodySections;
-		std::vector<EmailAddress> e_From;
-		std::vector<EmailAddress> e_To;
-		std::vector<EmailHeader> e_Headers;
-		std::size_t e_Date;
+		string e_Subject;
+		string e_MessageID;
+		vector<EmailBodySection> e_BodySections;
+		vector<EmailAddress> e_From;
+		vector<EmailAddress> e_To;
+		vector<EmailHeader> e_Headers;
+		size_t e_Date;
 	};
 }
