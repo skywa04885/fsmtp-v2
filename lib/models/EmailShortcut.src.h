@@ -23,16 +23,7 @@
 #define _EMAIL_FLAG_DRAFT 16
 #define _EMAIL_FLAG_RECENT 32
 
-#include <string>
-#include <vector>
-#include <iostream>
-#include <stdexcept>
-#include <cstdint>
-#include <functional>
-#include <list>
-#include <tuple>
-
-#include <cassandra.h>
+#include "../default.h"
 
 #include "Email.src.h"
 #include "../general/connections.src.h"
@@ -111,7 +102,8 @@ namespace FSMTP::Models
       CassandraConnection *cassandra,
       const std::string &domain,
       const CassUuid &ownersUuid,
-      const CassUuid &emailUuid
+      const CassUuid &emailUuid,
+      const string &mailbox
     );
 
     std::string e_Domain;

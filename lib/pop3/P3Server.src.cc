@@ -157,14 +157,8 @@ namespace FSMTP::POP3
 						cassandra,
 						session.s_Account.a_Domain,
 						session.s_Account.a_UUID,
-						uuid
-					);
-					FullEmail::deleteOne(
-						cassandra,
-						session.s_Account.a_Domain,
-						session.s_Account.a_UUID,
 						uuid,
-						bucket
+						"INBOX"
 					);
 					RawEmail::deleteOne(
 						cassandra,
