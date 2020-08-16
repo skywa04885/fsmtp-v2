@@ -472,7 +472,7 @@ namespace FSMTP::Models
     cass_statement_bind_int32(statement, 1, EmailType::ET_INCOMMING);
     cass_statement_bind_uuid(statement, 2, ownersUuid);
     cass_statement_bind_uuid(statement, 3, emailUuid);
-    cass_statement_bind_string(statement, 4, mailbox);
+    cass_statement_bind_string(statement, 4, mailbox.c_str());
 
     // Executes the query and checks for errors
     future = cass_session_execute(cassandra->c_Session, statement);
