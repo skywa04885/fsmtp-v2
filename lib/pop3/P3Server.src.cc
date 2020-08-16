@@ -62,8 +62,7 @@ namespace FSMTP::POP3
 		const char *key = config["ssl_key"].asCString();
 		const char *cert = config["ssl_cert"].asCString();
 
-		sslCtx = make_unique<SSLContext>();
-		sslCtx->method(SSLv23_server_method()).password(pass).read(key, cert);
+		sslCtx = Global::getSSLContext(SSLv23_server_method());
 
 		return *this;
 	}
@@ -303,8 +302,7 @@ namespace FSMTP::POP3
 			//
 			// Closes the connection with the client
 			// =========================================
-			case POP3CommandType::PCT_QUIT:
-			{
+			case POP3CommandType::PCT_QUIT: {
 				client->write(P3Response(true, PRT_QUIT).build());
 				return true;
 			}
@@ -314,8 +312,7 @@ namespace FSMTP::POP3
 			// The second phase of the auth process
 			// - where the password is verified
 			// =========================================
-			case POP3CommandType::PCT_PASS:
-			{
+			case POP3CommandType::PCT_PASS: {
 				// Checks if we're allowed to perform this command
 				// - this is only possible if we're not authenticated
 				// - and the client has sent the password
@@ -359,8 +356,7 @@ namespace FSMTP::POP3
 				}
 
 				// Compares the passwords to check if it realy is the user
-				if (!passwordVerify(command.c_Args[0], password))
-				{
+				if (!passwordVerify(command.c_Args[0], password)) {
 					client->write(P3Response(
 						false,
 						POP3ResponseType::PRT_AUTH_FAIL,
@@ -396,8 +392,7 @@ namespace FSMTP::POP3
 			// The first stage of the login process
 			// - after this the password is needed
 			// =========================================
-			case POP3CommandType::PCT_USER:
-			{
+			case POP3CommandType::PCT_USER: {
 				EmailAddress address;
 
 				// Checks if we're allowed to perform this command,
@@ -483,8 +478,7 @@ namespace FSMTP::POP3
 			//
 			// Lists the servers capabilities
 			// =========================================
-			case POP3CommandType::PCT_CAPA:
-			{
+			case POP3CommandType::PCT_CAPA: {
 				// Sends the list of capabilities
 				client->write(P3Response(
 					true,

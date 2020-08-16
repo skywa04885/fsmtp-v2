@@ -47,8 +47,7 @@ SMTPServer &SMTPServer::createContext() {
 	const char *cert = config["ssl_cert"].asCString();
 	const char *key = config["ssl_key"].asCString();
 
-	sslCtx = make_unique<SSLContext>();
-	sslCtx->method(SSLv23_server_method()).password(pass).read(key, cert);
+	sslCtx = Global::getSSLContext(SSLv23_server_method());
 
 	return *this;
 }

@@ -19,8 +19,10 @@
 
 #include "../default.h"
 #include "./connections.src.h"
+#include "../networking/sockets/SSLContext.src.h"
 
 using namespace FSMTP::Connections;
+using namespace FSMTP::Sockets;
 
 namespace FSMTP
 {
@@ -33,6 +35,7 @@ namespace FSMTP
     static Json::Value &getConfig() noexcept;
     static unique_ptr<CassandraConnection> getCassandra();
     static unique_ptr<RedisConnection> getRedis();
+		static unique_ptr<SSLContext> getSSLContext(const SSL_METHOD *method);
   };
 }
 

@@ -67,3 +67,14 @@ unique_ptr<RedisConnection> Global::getRedis() {
 		conf["database"]["redis_port"].asInt()
 	);
 }
+
+unique_ptr<SSLContext> Global::getSSLContext(const SSL_METHOD *method) {
+	const Json::Value &conf = _global_config;
+
+	const char *key = conf["ssl_key"].asCString();
+	const char *cert = conf["ssl_cert"].asCString();
+	const char *pass = conf["ssl_pass"].asCString();
+	const char *bundle = conf["ssl_bundle"] ? conf["ssl_bundle"].asCString() : nullptr;
+
+	return make_unique<SSLContext>(method, key, cert, pass, bundle);
+}

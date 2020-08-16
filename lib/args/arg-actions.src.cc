@@ -60,9 +60,9 @@ namespace FSMTP::ARG_ACTIONS {
     const char *sslCert = conf["ssl_cert"].asCString();
     const char *sslPass = conf["ssl_pass"].asCString();
 
-    SSLContext ctx;
+    unique_ptr<SSLContext> ctx;
     try {
-      ctx.method(SSLv23_server_method()).password(sslPass).read(sslKey, sslCert);
+      ctx = Global::getSSLContext(SSLv23_server_method());
       success("Created new SSLContext");
     } catch (const runtime_error &err) {
       failure("Could not create SSLContext", err.what());
@@ -76,7 +76,7 @@ namespace FSMTP::ARG_ACTIONS {
     }
 
     try {
-      ServerSocket().useSSL(&ctx).queue(250).listenServer(587);
+      ServerSocket().useSSL(ctx.get()).queue(250).listenServer(587);
       success("Created SSL socket server socket");
     } catch (const runtime_error &err) {
       failure("Could not create SSL server socket", err.what());

@@ -23,11 +23,15 @@
 namespace FSMTP::Sockets {
   class SSLContext {
   public:
+		SSLContext(
+			const SSL_METHOD *method, const char *key, const char *cert, 
+			const char *pass, const char *bundle
+		);
     SSLContext() noexcept;
 		~SSLContext() noexcept;
 
 		SSLContext &justCreate();
-    SSLContext &read(const char *privateKey, const char *cert);
+    SSLContext &read(const char *privateKey, const char *cert, const char *bundle);
 		SSLContext &password(const char * );
 		SSLContext &method(const SSL_METHOD *method);
     

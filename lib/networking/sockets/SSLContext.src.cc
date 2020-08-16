@@ -20,13 +20,24 @@ using namespace FSMTP::Sockets;
 
 SSLContext::SSLContext() noexcept {}
 
+SSLContext::SSLContext(
+	const SSL_METHOD *method, const char *key, const char *cert, 
+	const char *pass, const char *bundle
+) {	
+	if (pass) {
+		this->password(pass);
+	}
+
+	this->method(method).read(key, cert, bundle);
+}
+
 SSLContext::~SSLContext() noexcept {
 	if (this->p_SSLCtx) {
 		SSL_CTX_free(this->p_SSLCtx);
 	}
 }
 
-SSLContext &SSLContext::read(const char *privateKey, const char *cert) {
+SSLContext &SSLContext::read(const char *privateKey, const char *cert, const char *bundle) {
   SSL_CTX *&ctx= this->p_SSLCtx;
 	const SSL_METHOD *method = this->p_SSLMethod;
 
@@ -44,10 +55,20 @@ SSLContext &SSLContext::read(const char *privateKey, const char *cert) {
 	SSL_CTX_set_default_passwd_cb(ctx, SSLContext::passwordCallback);
 	SSL_CTX_set_default_passwd_cb_userdata(ctx, this);
 
-  if (SSL_CTX_use_certificate_file(ctx, cert, SSL_FILETYPE_PEM) <= 0) {
+	if (SSL_CTX_use_PrivateKey_file(ctx, privateKey, SSL_FILETYPE_PEM) <= 0) {
 		throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
-  } else if (SSL_CTX_use_PrivateKey_file(ctx, privateKey, SSL_FILETYPE_PEM) <= 0) {
-		throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
+	}
+
+	if (!bundle) {
+		if (SSL_CTX_use_certificate_file(ctx, cert, SSL_FILETYPE_PEM) <= 0) {
+			throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
+		}
+	} else {
+		if (SSL_CTX_use_certificate_chain_file(ctx, bundle) <= 0) {
+			throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
+		}
+
+		SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_SERVER | SSL_SESS_CACHE_NO_INTERNAL);
 	}
 
 	return *this;
