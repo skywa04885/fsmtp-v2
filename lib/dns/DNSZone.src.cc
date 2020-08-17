@@ -80,7 +80,7 @@ namespace FSMTP::DNS
 
 		// Sets the record class
 		int16_t recordClassCode = htons(queryClassToInt(this->r_Class));
-		memcpy(reinterpret_cast<void *>(&ret[retIndex]), &recordTypeCode, sizeof (int16_t));
+		memcpy(reinterpret_cast<void *>(&ret[retIndex]), &recordClassCode, sizeof (int16_t));
 		retIndex += sizeof (int16_t);
 
 		// Adds the TTL

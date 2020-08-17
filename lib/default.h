@@ -94,4 +94,16 @@ public: \
 private: string err; \
 };
 
+template <typename T>
+int throw_if(bool in, const T& ex) {
+    if(in)
+#ifndef DOCTEST_CONFIG_NO_EXCEPTIONS
+        throw ex;
+#else  // DOCTEST_CONFIG_NO_EXCEPTIONS
+        ((void)ex);
+#endif // DOCTEST_CONFIG_NO_EXCEPTIONS
+    return 42;
+}
+
+
 #endif

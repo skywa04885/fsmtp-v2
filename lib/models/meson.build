@@ -7,3 +7,7 @@ sources += files(
   'Mailbox.src.cc',
   'MailboxStatus.src.cc'
 )
+
+test_sources += files (
+  'Email.src.cc'
+)

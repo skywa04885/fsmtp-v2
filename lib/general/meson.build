@@ -12,3 +12,7 @@ sources += files(
     'macros.src.cc',
     'Global.src.cc'
 )
+
+test_sources += files (
+    'cleanup.src.cc'
+)

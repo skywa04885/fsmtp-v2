@@ -29,11 +29,11 @@ kunnen worden uit andere applicaties.
 
 1. JSON [Github](https://github.com/nlohmann/json)
 1. Hayai [Github](https://github.com/nickbruun/hayai)
-1. Doctest [Github](https://github.com/onqtam/doctest)
 1. HiRedis [Github](https://github.com/redis/hiredis)
 1. DataStax CQL Client [Github](https://github.com/datastax/cpp-driver)
 1. Inja Template Engine [Github](https://github.com/pantor/inja)
 1. JSONCPP [Github](https://github.com/open-source-parsers/jsoncpp)
+1. Catch2 [Github](https://github.com/catchorg/Catch2)
 
 ## Hoe installeer ik het ?
 

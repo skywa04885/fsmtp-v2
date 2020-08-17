@@ -36,7 +36,6 @@ namespace FSMTP::Models
     ))";
     CassStatement *statement = nullptr;
     CassFuture *future = nullptr;
-    CassError rc;
 
     // Creates the statement and binds the instance variables to the query
     //  after which we insert the data into cassandra
@@ -59,8 +58,7 @@ namespace FSMTP::Models
     DEFER(cass_future_free(future));
     cass_future_wait(future);
 
-    rc = cass_future_error_code(future);
-    if (rc != CASS_OK) {
+    if (cass_future_error_code(future) != CASS_OK) {
       string error = "cass_session_execute() failed: ";
       error += CassandraConnection::getError(future);
       throw DatabaseException(EXCEPT_DEBUG(error));
@@ -84,11 +82,8 @@ namespace FSMTP::Models
 
     // =======================================
     // Performs the query
-    //
-    // Prepares and executes the query
     // =======================================
 
-    // Prepares the statement and puts the values into it
     statement = cass_statement_new(query, 4);
     DEFER(cass_statement_free(statement));
     cass_statement_bind_string(statement, 0, domain.c_str());
@@ -96,13 +91,11 @@ namespace FSMTP::Models
     cass_statement_bind_uuid(statement, 2, uuid);
     cass_statement_bind_int32(statement, 3, limit);
 
-    // Executes the query and checks for errors
     future = cass_session_execute(cassandra->c_Session, statement);
     DEFER(cass_future_free(future));
     cass_future_wait(future);
 
-    rc = cass_future_error_code(future);
-    if (rc != CASS_OK) {
+    if (cass_future_error_code(future) != CASS_OK) {
       string error = "cass_session_execute() failed: ";
       error += CassandraConnection::getError(future);
       throw DatabaseException(EXCEPT_DEBUG(error));
@@ -110,9 +103,6 @@ namespace FSMTP::Models
 
     // =======================================
     // Handles the data
-    //
-    // Handles the data from the database
-    // - and puts it into the result vector
     // =======================================
 
     const CassResult *result = cass_future_get_result(future);
@@ -174,16 +164,12 @@ namespace FSMTP::Models
     LIMIT ?)";
     CassStatement *statement = nullptr;
     cass_bool_t hasMorePages = cass_false;
-    CassError rc;
 
     // Limit of 500 emails a time
     if (limit > 500) limit = 500;
 
     // =======================================
     // Prepares the statement
-    //
-    // Prepares the statement and binds the
-    // - values
     // =======================================
 
     statement = cass_statement_new(query, 4);
@@ -196,12 +182,9 @@ namespace FSMTP::Models
 
     // =======================================
     // Counts the data
-    //
-    // Counts the total octets and count
     // =======================================
 
     do {
-      CassError rc;
       CassFuture *future = nullptr;
 
       // Executes the query, and checks for errors
@@ -209,8 +192,7 @@ namespace FSMTP::Models
       DEFER(cass_future_free(future));
       cass_future_wait(future);
 
-      rc = cass_future_error_code(future);
-      if (rc != CASS_OK) {
+      if (cass_future_error_code(future) != CASS_OK) {
         string message = "cass_session_execute() failed: ";
         message += CassandraConnection::getError(future);
 
@@ -234,17 +216,14 @@ namespace FSMTP::Models
           &totalOctets
         );
 
-        // Increments the counters
         total++;
         octets += totalOctets;
       }
 
-      // Performs the paging stuff
       hasMorePages = cass_result_has_more_pages(result);
       if (hasMorePages) {
         cass_statement_set_paging_state(statement, result);
       }
-
     } while (hasMorePages);
 
     return make_pair(octets, total);
@@ -263,7 +242,6 @@ namespace FSMTP::Models
     WHERE e_domain=? AND e_mailbox=? AND e_owners_uuid=?)";
     CassStatement *statement = nullptr;
     cass_bool_t hasMorePages = cass_false;
-    CassError rc;
 
     // Limit of 500 emails a time
     if (limit < 1) throw runtime_error("Limit must be positive");
@@ -271,9 +249,6 @@ namespace FSMTP::Models
 
     // =======================================
     // Prepares the statement
-    //
-    // Prepares the statement and binds the
-    // - values
     // =======================================
 
     statement = cass_statement_new(query, 3);
@@ -285,20 +260,16 @@ namespace FSMTP::Models
 
     // =======================================
     // Counts the data
-    //
-    // Counts the total octets and count
     // =======================================
 
     do {
-      CassError rc;
       CassFuture *future = nullptr;
 
       future = cass_session_execute(cassandra->c_Session, statement);
       DEFER(cass_future_free(future));
       cass_future_wait(future);
 
-      rc = cass_future_error_code(future);
-      if (rc != CASS_OK) {
+      if (cass_future_error_code(future) != CASS_OK) {
         string message = "cass_session_execute() failed: ";
         message += CassandraConnection::getError(future);
 
@@ -346,13 +317,10 @@ namespace FSMTP::Models
         ret.push_back(tuple<CassUuid, int64_t, int64_t>(uuid, octets, bucket));
       }
 
-      // Handles the paging stuff
       hasMorePages = cass_result_has_more_pages(result);
       if (hasMorePages) {
         cass_statement_set_paging_state(statement, result);
       }
-
-      // Frees the memory
     } while (hasMorePages);
 
     reverse(ret.begin(), ret.end());
@@ -368,7 +336,6 @@ namespace FSMTP::Models
     WHERE e_domain=? AND e_type=? AND e_owners_uuid=? AND e_email_uuid=? AND e_mailbox=?)";
     CassStatement *statement = nullptr;
     CassFuture *future = nullptr;
-    CassError rc;
 
     statement = cass_statement_new(query, 5);
     DEFER(cass_statement_free(statement));
@@ -382,8 +349,7 @@ namespace FSMTP::Models
     DEFER(cass_future_free(future));
     cass_future_wait(future);
 
-    rc = cass_future_error_code(future);
-    if (rc != CASS_OK) {
+    if (cass_future_error_code(future) != CASS_OK) {
       string error = "Could not delete email shortcut: ";
       error += CassandraConnection::getError(future);
       throw DatabaseException(error);

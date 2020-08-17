@@ -82,11 +82,6 @@ namespace FSMTP::DNS
 		void *u
 	)
 	{
-		struct sockaddr_in clientSockAddr;
-		int32_t clientSockFD;
-		int32_t sockAddrSize = sizeof (struct sockaddr_in);
-		int32_t rc;
-
 		// Sets running to true, and loops while we're saying
 		// - it should
 		*running = true;

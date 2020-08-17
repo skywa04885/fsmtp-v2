@@ -25,9 +25,9 @@ function install {
 }
 
 install "https://github.com/nickbruun/hayai" "hayai"
-install "https://github.com/onqtam/doctest" "doctest"
 install "https://github.com/nlohmann/json" "json"
 install "https://github.com/pantor/inja" "inja"
 install "https://github.com/redis/hiredis" "hiredis"
 install "https://github.com/datastax/cpp-driver" "cpp-driver"
 install "https://github.com/open-source-parsers/jsoncpp" "jsoncpp"
+install "https://github.com/catchorg/Catch2" "Catch2"

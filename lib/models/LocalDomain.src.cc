@@ -59,7 +59,6 @@ namespace FSMTP::Models
 		LocalDomain res;
 		CassStatement *statement = nullptr;
 		CassFuture *future = nullptr;
-		CassError rc;
 
 		// Creates the statement and performs the query, and if something
 		//  goes wrong we throw the cassandra error, with the according message
@@ -72,8 +71,7 @@ namespace FSMTP::Models
 		DEFER(cass_future_free(future));
 		cass_future_wait(future);
 
-		rc = cass_future_error_code(future);
-		if (rc != CASS_OK) {
+		if (cass_future_error_code(future) != CASS_OK) {
 			string message = "cass_session_execute() failed: ";
 			message += message += CassandraConnection::getError(future);
 			throw DatabaseException(message);
@@ -131,7 +129,6 @@ namespace FSMTP::Models
 		vector<LocalDomain> res = {};
 		CassStatement *statement = nullptr;
 		CassFuture *future = nullptr;
-		CassError rc;
 
 		// Performs the query and throws an error of the execution failed
 		//  after this we will query the results
@@ -144,8 +141,7 @@ namespace FSMTP::Models
 			cass_future_free(future);
 		});
 
-		rc = cass_future_error_code(future);
-		if (rc != CASS_OK) {
+		if (cass_future_error_code(future) != CASS_OK) {
 			string message = "cass_session_execute() failed: ";
 			message += CassandraConnection::getError(future);
 			throw DatabaseException(message);

@@ -28,8 +28,7 @@ using namespace FSMTP::Connections;
 
 namespace FSMTP::Models
 {
-	class EmailAddress
-	{
+	class EmailAddress {
 	public:
 		EmailAddress(const string &e_Name, const string &e_Address);
 		EmailAddress(const string &raw);
@@ -37,26 +36,24 @@ namespace FSMTP::Models
 
 		void parse(const string &raw);
 
-		string getDomain(void) const;
-		string getUsername(void) const;
+		string getDomain() const;
+		string getUsername() const;
 		static vector<EmailAddress> parseAddressList(const string &raw);
 		static string addressListToString(const vector<EmailAddress> &addresses);
-		string toString(void) const;
+		string toString() const;
 
 		string e_Address;
 		string e_Name;
 	};
 
-	typedef enum : uint32_t
-	{
+	typedef enum : uint32_t {
 		ET_INCOMMING = 0,
 		ET_INCOMMING_SPAM,
 		ET_OUTGOING,
 		ET_RELAY_OUTGOING,
 	} EmailType;
 
-	typedef enum : uint8_t
-	{
+	typedef enum : uint8_t {
 		ETE_8BIT = 0,
 		ETE_7BIT,
 		ETE_BASE64,
@@ -65,8 +62,7 @@ namespace FSMTP::Models
 		ETE_NOT_FOUND
 	} EmailTransferEncoding;
 
-	typedef enum : uint8_t
-	{
+	typedef enum : uint8_t {
 		ECT_TEXT_PLAIN = 0,
 		ECT_TEXT_HTML,
 		ECT_MULTIPART_ALTERNATIVE,
@@ -80,48 +76,17 @@ namespace FSMTP::Models
 		ECT_FILE_OTHER
 	} EmailContentType;
 
-	/**
-	 * Turns an string into an enum value
-	 * - of email content type
-	 *
-	 * @Param {const string &} raw
-	 * @Return {EmailContentType}
-	 */
 	EmailContentType stringToEmailContentType(const string &raw);
-
-	/**
-	 * Turns an enum value into an string
-	 *
-	 * @Param {const EmailContentType} type
-	 * @Return {const char *}
-	 */
 	const char *contentTypeToString(const EmailContentType type);
-
-	/**
-	 * Turns an enum into an string
-	 *
-	 * @Param {const EmailTransferEncoding} enc
-	 * @Return {const char *}
-	 */
 	const char *contentTransferEncodingToString(const EmailTransferEncoding enc);
-
-	/**
-	 * Turns an string into an enum value of
-	 * - EmailTransferEncoding type
-	 *
-	 * @Param {const string &} raw
-	 * @Return {EmailContentType}
-	 */
 	EmailTransferEncoding stringToEmailTransferEncoding(const string &raw);
 
-	typedef struct
-	{
+	typedef struct {
 		string e_Key;
 		string e_Value;
 	} EmailHeader;
 
-	typedef struct
-	{
+	typedef struct {
 		string e_Content;
 		EmailContentType e_Type;
 		vector<EmailHeader> e_Headers;
@@ -129,38 +94,13 @@ namespace FSMTP::Models
 		EmailTransferEncoding e_TransferEncoding;
 	} EmailBodySection;
 
-	class FullEmail
-	{
+	class FullEmail {
 	public:
     FullEmail();
 
-    /**
-     * Prints an full email to the console
-     *
-     * @Param {FullEmail &} email
-     * @Param {Logger &logger} logger
-     * @Return {void}
-     */
+    static int64_t getBucket();
+    static CassUuid generateMessageUUID();
     static void print(FullEmail &email, Logger &logger);
-
-    /**
-     * Gets the current message bucket, basically
-     * - the current time in milliseconds / 1000 / 1000 / 1000
-     *
-     * @Param {void}
-     * @Return {int64_t}
-     */
-    static int64_t getBucket(void);
-
-    static void deleteOne(
-      CassandraConnection *cassandra,
-      const string &domain,
-      const CassUuid &ownersUuid,
-      const CassUuid &emailUuid,
-      const int64_t bucket
-    );
-
-    static CassUuid generateMessageUUID(void);
 
     EmailAddress e_TransportFrom;
 		vector<EmailAddress> e_TransportTo;

@@ -227,4 +227,6 @@ ClientSocket &ClientSocket::timeout(const int32_t s) {
   } else if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, reinterpret_cast<char *>(&timeo), sizeof(timeo)) < 0) {
     throw runtime_error(strerror(errno));
   }
+
+  return *this;
 }

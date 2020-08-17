@@ -18,7 +18,6 @@
 
 namespace FSMTP::ARG_ACTIONS {
   void testArgAction(void) {
-    const Json::Value &conf = Global::getConfig();
     Logger logger("test", LoggerLevel::INFO);
 
     size_t successes, failures;
@@ -55,10 +54,6 @@ namespace FSMTP::ARG_ACTIONS {
     // =======================
     // Socket tests
     // =======================
-
-    const char *sslKey = conf["ssl_key"].asCString();
-    const char *sslCert = conf["ssl_cert"].asCString();
-    const char *sslPass = conf["ssl_pass"].asCString();
 
     unique_ptr<SSLContext> ctx;
     try {

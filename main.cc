@@ -21,6 +21,10 @@ static const char *FALLBACK_CONFIG_FILE = "../fallback/config.json";
 
 int main(const int argc, const char **argv)
 {
+	// ==================================
+	// Default main
+	// ==================================
+
 	Logger logger("MAIN", LoggerLevel::INFO);
 
 	Global::configure();
@@ -32,6 +36,7 @@ int main(const int argc, const char **argv)
 	// ==================================
 	// Starts the services
 	// ==================================
+
 	Server::SMTPServer smtpServer;
 	POP3::P3Server pop3Server;
 	Workers::TransmissionWorker transmissionWorker;

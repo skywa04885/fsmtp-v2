@@ -47,6 +47,8 @@ SMTPClient &SMTPClient::prepare(
 SMTPClient &SMTPClient::reset() {
 	this->s_ErrorLog.clear();
 	this->s_ErrorCount = 0;
+
+	return *this;
 }
 
 SMTPClient &SMTPClient::configureRecipients(const vector<EmailAddress> &addresses) {

@@ -55,12 +55,7 @@ namespace FSMTP::POP3
 	}
 
 	P3Server &P3Server::createContext() {
-		auto &config = Global::getConfig();
 		auto &sslCtx = this->s_SSLContext;
-
-		const char *pass = config["ssl_pass"].asCString();
-		const char *key = config["ssl_key"].asCString();
-		const char *cert = config["ssl_cert"].asCString();
 
 		sslCtx = Global::getSSLContext(SSLv23_server_method());
 

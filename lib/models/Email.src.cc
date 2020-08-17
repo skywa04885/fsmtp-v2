@@ -19,187 +19,126 @@
 
 namespace FSMTP::Models
 {
-  /**
-   * Variable constructor for the EmailAddres
-   *
-   * @Param {const std::string &} e_Name
-   * @Param {const std::string &} e_Address
-   * @Return {void}
-   */
+	EmailAddress::EmailAddress() {}
+
 	EmailAddress::EmailAddress(
-		const std::string &e_Name,
-		const std::string &e_Address
+		const string &e_Name,
+		const string &e_Address
 	):
 		e_Name(e_Name), e_Address(e_Address)
 	{}
 
-  /**
-   * Parse constructor for the email address
-   * - basically calls EmailAddress::parse()
-   *
-   * @Param {const std::string &} raw
-   * @Return {void}
-   */
-	EmailAddress::EmailAddress(const std::string &raw)
-	{
+	EmailAddress::EmailAddress(const string &raw) {
 		this->parse(raw);
 	}
 
-  /**
-   * The empty constructor for the EmailAddress
-   *
-   * @Param {void}
-   * @Return {void}
-   */
-	EmailAddress::EmailAddress()
-	{
+  string EmailAddress::toString() const {
+		ostringstream oss;
 
-	}
-
-  /**
-   * Returns the string version of the email address
-   *
-   * @Param {void}
-   * @Return {std::string}
-   */
-  std::string EmailAddress::toString(void) const
-  {
-		std::string res;
 		if (!this->e_Name.empty()) {
-			res += this->e_Name;
-			res += ' ';
+			oss << this->e_Name << ' ';
 		}
-    res += "<" + this->e_Address + ">";
-    return res;
+    oss << "<" << this->e_Address << ">";
+    
+    return oss.str();
   }
 
-  /**
-   * Parses an raw string into an EmailAddress
-   *
-   * @Param {const std::string &} raw
-   * @Return {void}
-   */
-	void EmailAddress::parse(const std::string &raw)
-	{
-		// Checks the email format type, since there may
-		// - be multiple formats, and we need to parse it
-		// - in the correct way
-		std::size_t openBracket = raw.find_first_of('<'), closeBracket = raw.find_first_of('>');
-		if (openBracket != std::string::npos && closeBracket != std::string::npos) {
-			
+	void EmailAddress::parse(const string &raw) {
+
+    // Validates the raw address before proceeding with further parsing,
+    //  this is to detect an error early, and safe computational power
+
+		if (raw.find_first_of('@') == string::npos) {
+			throw runtime_error("Could not find @");
+    } else if (raw.find_last_of('.') == string::npos) {
+      throw runtime_error("Could not find domain extension");
+    }
+
+    // Checks if we're dealing with an address only, or an name + address
+    //  these both will be processed different. If we end up with an name
+    //  we also remove the duplicate whitespace and the quotes from the name
+
+		size_t openBracket = raw.find_first_of('<'), closeBracket = raw.find_first_of('>');
+		if (openBracket != string::npos && closeBracket != string::npos) {
 			this->e_Address = raw.substr(openBracket + 1, closeBracket - openBracket - 1);
 			this->e_Name = raw.substr(0, openBracket);
 
-			removeFirstAndLastWhite(this->e_Name);
-			removeStringQuotes(this->e_Name);
+			string clean;
+			reduceWhitespace(this->e_Name, clean);
+			removeFirstAndLastWhite(clean);
+			removeStringQuotes(clean);
+			this->e_Name = clean;
 		} else if (
-			openBracket == std::string::npos && closeBracket != std::string::npos ||
-			openBracket != std::string::npos && closeBracket == std::string::npos
+			(openBracket == string::npos && closeBracket != string::npos) ||
+			(openBracket != string::npos && closeBracket == string::npos)
 		) {
-			throw std::runtime_error("Only one bracket found, address ""should contain both opening and closing.");
-		}
-		else {
+			throw runtime_error("Only one bracket found, address should contain both opening and closing.");
+		} else {
 			this->e_Address = raw;
 		}
 
-		// Validates the email address by checking for the at symbol
-		if (raw.find_first_of('@') == std::string::npos)
-			throw std::runtime_error("Could not find @");
-
-		// Removes the non-required whitespace, this is always required
-		// - so used as last, while the name whitespace is only required when
-		// - the name was parsed
 		removeFirstAndLastWhite(this->e_Address);
 	}
 
+  vector<EmailAddress> EmailAddress::parseAddressList(const string &raw) {
+    stringstream stream(raw);
+    string token;
+    vector<EmailAddress> result = {};
 
-  /**
-   * Parses an raw string into multiple addresses
-   *
-   * @Param {const std::string &} raw
-   * @Return {std::vector<EmailAddress>}
-   */
-  std::vector<EmailAddress> EmailAddress::parseAddressList(const std::string &raw)
-  {
-    std::stringstream stream(raw);
-    std::string token;
-    std::vector<EmailAddress> result = {};
-
-    // Loops over the separate email addresses,
-    // - and parses them, and then pushes
-    // - them to the result vector
-    while (std::getline(stream, token, ','))
+    while (getline(stream, token, ',')) {
       result.push_back(EmailAddress(token));
+    }
 
     return result;
   }
 
-  /**
-   * Turns an vector of addresses into an string
-   *
-   * @Param {const std::vector<EmailAddress> &} addresses
-   * @Return {std::string}
-   */
-  std::string EmailAddress::addressListToString(const std::vector<EmailAddress> &addresses)
-  {
-    std::string res;
+  string EmailAddress::addressListToString(const vector<EmailAddress> &addresses) {
+    ostringstream oss;
+    size_t i = 0;
 
-    // Loops over the addresses and appends them to the result
-    std::size_t i = 0;
-    for (const EmailAddress &a : addresses)
-    {
-      if (!a.e_Name.empty()) res += '"' + a.e_Name + "\" ";
-      res += '<' + a.e_Address + '>';
-      if (++i < addresses.size()) res += ", ";
+    for (const EmailAddress &a : addresses) {
+      if (!a.e_Name.empty()) {
+        oss << '"' << a.e_Name << "\" ";
+      }
+
+      oss << '<' << a.e_Address << '>';
+      
+      if (++i < addresses.size()) {
+        oss << ", ";
+      }
     }
 
-    return res;
+    return oss.str();
   }
 
-  /**
-   * Parses the domain name from the address
-   *
-   * @Param {void}
-   * @Return {std::string}
-   */
-	std::string EmailAddress::getDomain(void) const
-	{
-		std::size_t index = this->e_Address.find_first_of('@');
-		if (index == std::string::npos)
-			throw std::runtime_error("Invalid email address");
-		return this->e_Address.substr(index + 1);
+	string EmailAddress::getDomain() const {
+    auto &addr = this->e_Address;
+
+		size_t index = addr.find_first_of('@');
+		if (index == string::npos) {
+			throw runtime_error("Invalid email address");
+    }
+		return addr.substr(index + 1);
 	}
 
-  /**
-   * parses the username from the address
-   *
-   * @Param {void}
-   * @Return {std::string}
-   */
-	std::string EmailAddress::getUsername(void) const
-	{
-		std::size_t index = this->e_Address.find_first_of('@');
-		if (index == std::string::npos)
-			throw std::runtime_error("Invalid email address");
-		return this->e_Address.substr(0, index);
+	string EmailAddress::getUsername() const {
+    auto &addr = this->e_Address;
+
+		size_t index = addr.find_first_of('@');
+		if (index == string::npos) {
+			throw runtime_error("Invalid email address");
+    }
+		return addr.substr(0, index);
 	}
+
 
 	// ======================================================
 	// The email stuff, instead of the address stuff
 	// ======================================================
   
-  FullEmail::FullEmail()
-  {}
+  FullEmail::FullEmail() {}
 
-  /**
-	 * Turns an string into an enum value
-	 * - of email content type
-	 *
-	 * @Param {const std::string &} raw
-	 * @Return {EmailContentType}
-	 */
-	EmailContentType stringToEmailContentType(const std::string &raw)
-	{
+	EmailContentType stringToEmailContentType(const string &raw) {
 		if (raw == "multipart/alternative") return EmailContentType::ECT_MULTIPART_ALTERNATIVE;
 		else if (raw == "multipart/mixed") return EmailContentType::ECT_MULTIPART_MIXED;
 		else if (raw == "text/plain") return EmailContentType::ECT_TEXT_PLAIN;
@@ -207,15 +146,7 @@ namespace FSMTP::Models
 		else return EmailContentType::ECT_NOT_FUCKING_KNOWN;
 	}
 
-
-  /**
-   * Turns an enum value into an string
-   *
-   * @Param {const EmailContentType} type
-   * @Return {const char *}
-   */
-  const char *contentTypeToString(const EmailContentType type)
-  {
+  const char *contentTypeToString(const EmailContentType type) {
     switch (type)
     {
       case EmailContentType::ECT_TEXT_PLAIN: return "text/plain";
@@ -226,15 +157,7 @@ namespace FSMTP::Models
     }
   }
 
-	/**
-	 * Turns an string into an enum value of
-	 * - EmailTransferEncoding type
-	 *
-	 * @Param {const std::string &} raw
-	 * @Return {EmailContentType}
-	 */
-	EmailTransferEncoding stringToEmailTransferEncoding(const std::string &raw)
-	{
+	EmailTransferEncoding stringToEmailTransferEncoding(const string &raw) {
 		if (raw == "7bit") return EmailTransferEncoding::ETE_7BIT;
 		else if (raw == "8bit") return EmailTransferEncoding::ETE_8BIT;
 		else if (raw == "base64") return EmailTransferEncoding::ETE_QUOTED_PRINTABLE;
@@ -242,16 +165,8 @@ namespace FSMTP::Models
 		else return EmailTransferEncoding::ETE_NOT_FUCKING_KNOWN;
 	}
 
-  /**
-   * Turns an enum into an string
-   *
-   * @Param {const EmailTransferEncoding} enc
-   * @Return {const char *}
-   */
-  const char *contentTransferEncodingToString(const EmailTransferEncoding enc)
-  {
-    switch (enc)
-    {
+  const char *contentTransferEncodingToString(const EmailTransferEncoding enc) {
+    switch (enc) {
       case EmailTransferEncoding::ETE_8BIT: return "8bit";
       case EmailTransferEncoding::ETE_BASE64: return "base64";
       case EmailTransferEncoding::ETE_7BIT: return "7bit";
@@ -260,26 +175,14 @@ namespace FSMTP::Models
     }
   }
 
-
-  /**
-   * Prints an full email to the console
-   *
-   * @Param {FullEmail &} email
-   * @Param {Logger &logger} logger
-   * @Return {void}
-   */
-  void FullEmail::print(FullEmail &email, Logger &logger)
-  {
+  void FullEmail::print(FullEmail &email, Logger &logger) {
   	logger << DEBUG;
+    DEFER(logger << CLASSIC);
 
   	// ========================================
   	// Prints the basic email data
-  	//
-  	// These are just some variables we
-  	// - want to see in debug mode
   	// ========================================
 
-  	// Prints the already finished variables
   	logger << "FullEmail:" << ENDL;
   	logger << " - Transport From: " << email.e_TransportFrom.e_Name << '<' << email.e_TransportFrom.e_Address << '>' << ENDL;
   	logger << " - Transport To: " << ENDL;
@@ -293,124 +196,47 @@ namespace FSMTP::Models
 
   	// ========================================
   	// Prints the arrays
-  	//
-  	// These print the vector data inside
-  	// - of the email
   	// ========================================
   	
-  	std::size_t c = 0;
-
-  	// Loops over the headers and displays them
-  	for (const EmailHeader &h : email.e_Headers)
-  	{
-  		logger << "\t - Header[no: " << c++ << "]: <"
-  			<< h.e_Key << "> - <" << h.e_Value << ">" << ENDL;
+  	size_t c = 0;
+  	for (const EmailHeader &h : email.e_Headers) {
+  		logger << "\t - Header[no: " << c++ << "]: <";
+  		logger << h.e_Key << "> - <" << h.e_Value << ">" << ENDL;
   	}
 
-
-  	// Loops over the body sections and displays them
     c = 0;
   	logger << " - Body sections: " << ENDL;
-  	for (const EmailBodySection &s : email.e_BodySections)
-  	{
-  		logger << "\t - Body Section[no: " << c++ << ", cType: "
-  			<< s.e_Type << ", cTransEnc: " 
-  			<< s.e_TransferEncoding << "]: " << ENDL;
+  	for (const EmailBodySection &s : email.e_BodySections) {
+  		logger << "\t - Body Section[no: " << c++ << ", cType: ";
+  		logger << s.e_Type << ", cTransEnc: "; 
+  		logger << s.e_TransferEncoding << "]: " << ENDL;
   		logger << "\t\t" << (s.e_Content.size() < 56 ? s.e_Content : s.e_Content.substr(0, 56) + " ...") << ENDL;
   	}
 
-    // Prints the addresses, for example from and
-    // - to, this is also an vector
-    c = 0;
-    logger << " - From: " << ENDL;
-    for (const EmailAddress &address : email.e_From)
-      logger << "\t - Email[no: " << c++ << "]: " 
-        << address.e_Name << " | " << address.e_Address << ENDL;
+    auto printAddressList = [&](const char *label, const vector<EmailAddress> &vec) {
+      c = 0;
+      logger << " - " << label << ": " << ENDL;
+      for (auto  &address : vec) {
+        logger << "\t - Email[no: " << c++ << "]: ";
+        logger << address.e_Name << " | " << address.e_Address << ENDL;
+      }
+    };
 
-    c = 0;
-    logger << " - To: " << ENDL;
-    for (const EmailAddress &address : email.e_To)
-      logger << "\t - Email[no: " << c++ << "]: " 
-        << address.e_Name << " | " << address.e_Address << ENDL;
-  	logger << CLASSIC;
+    printAddressList("From", email.e_From);
+    printAddressList("To", email.e_To);
   }
 
-  /**
-   * Gets the current message bucket, basically
-   * - the current time in milliseconds / 1000 / 1000 / 1000
-   *
-   * @Param {void}
-   * @Return {int64_t}
-   */
-  int64_t FullEmail::getBucket(void)
-  {
-  	int64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(
-  		std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+  int64_t FullEmail::getBucket(void) {
+  	int64_t now = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();
   	return now / 1000 / 1000 / 10;
   }
 
-  /**
-   * Generates an UUID for the current message
-   *
-   * @Param {void}
-   * @Return {void}
-   */
-  CassUuid FullEmail::generateMessageUUID(void)
-  {
+  CassUuid FullEmail::generateMessageUUID(void) {
 		CassUuid uuid;
     CassUuidGen *gen = cass_uuid_gen_new();
+    DEFER(cass_uuid_gen_free(gen));
+
     cass_uuid_gen_time(gen, &uuid);
-    cass_uuid_gen_free(gen);
 		return uuid;
-  }
-
-  /**
-   * Deletes one email from the database
-   *
-   * @Param {CassandraConnection *} cassandra
-   * @Param {const std::string &} domain
-   * @Param {const CassUuid &} ownersUuid
-   * @Param {const CassUuid &} emailUuid;
-   * @Param {const int64_t} bucket
-   * @Return {void} 
-   */
-  void FullEmail::deleteOne(
-    CassandraConnection *cassandra,
-    const std::string &domain,
-    const CassUuid &ownersUuid,
-    const CassUuid &emailUuid,
-    const int64_t bucket
-  )
-  {
-    const char *query = "DELETE FROM fannst.full_emails WHERE e_bucket=? AND e_domain=? AND e_owners_uuid=? AND e_email_uuid=? AND e_type=?";
-    CassStatement *statement = nullptr;
-    CassFuture *future = nullptr;
-    CassError rc;
-
-    // Creates the statement and binds the values
-    statement = cass_statement_new(query, 5);
-    cass_statement_bind_int64(statement, 0, bucket);
-    cass_statement_bind_string(statement, 1, domain.c_str());
-    cass_statement_bind_uuid(statement, 2, ownersUuid);
-    cass_statement_bind_uuid(statement, 3, emailUuid);
-    cass_statement_bind_int32(statement, 4, EmailType::ET_INCOMMING);
-
-    // Executes the query and checks for errors
-    future = cass_session_execute(cassandra->c_Session, statement);
-    cass_future_wait(future);
-
-    rc = cass_future_error_code(future);
-    if (rc != CASS_OK)
-    {
-      std::string error = "Could not delete full email: ";
-      error += CassandraConnection::getError(future);
-      cass_future_free(future);
-      cass_statement_free(statement);
-      throw DatabaseException(error);
-    }
-
-    // Frees the memory
-    cass_future_free(future);
-    cass_statement_free(statement);
   }
 }

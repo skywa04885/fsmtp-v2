@@ -34,7 +34,6 @@ SMTPServer::SMTPServer() noexcept: s_Logger("FSMTP-V2/ESMTP", LoggerLevel::INFO)
 SMTPServer::~SMTPServer() noexcept {}
 
 SMTPServer &SMTPServer::createContext() {
-	auto &config = Global::getConfig();
 	auto &sslCtx = this->s_SSLContext;
 
 	sslCtx = Global::getSSLContext(SSLv23_server_method());

@@ -40,10 +40,6 @@ namespace FSMTP
 		const std::string &compared
 	)
 	{
-		int32_t rc;
-		unsigned char out[32];
-		char hash[128];
-
 		// Gets the salt from the old hash, and stores it inside
 		// - of the salt, if not found throw error, else store
 		// - it inside of an string
@@ -95,7 +91,6 @@ namespace FSMTP
 	{
 		int32_t rc;
 		unsigned char out[32];
-		char hash[128];
 		
 		// ====================================
 		// Hashes

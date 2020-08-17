@@ -14,7 +14,6 @@
 	limitations under the License.
 */
 
-
 #include "TransmissionWorker.src.h"
 
 static mutex queueMutex;

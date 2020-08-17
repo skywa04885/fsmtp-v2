@@ -22,7 +22,6 @@ namespace FSMTP::Server
 		auto &conf = Global::getConfig();
 		char *decoded = new char[hash.size()];
 		BIO *base64 = nullptr, *bio = nullptr;
-		BUF_MEM *bufMem = nullptr;
 		int32_t rc;
 
 		// Decodes the base64 string, this will be done with openssl

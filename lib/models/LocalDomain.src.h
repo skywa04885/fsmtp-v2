@@ -34,11 +34,9 @@ namespace FSMTP::Models
 		void saveRedis(RedisConnection *redis);
 
 		static void getPrefix(const string &l_Domain, char *buffer);
-
 		static LocalDomain getByDomain(const string &l_Domain, CassandraConnection *database);
 		static LocalDomain findRedis(const string &l_Domain, RedisConnection *redis);
 		static vector<LocalDomain> findAllCassandra(CassandraConnection *cass);
-
 		static LocalDomain get(
 			const string &l_Domain, CassandraConnection *cass,
 			RedisConnection *redis

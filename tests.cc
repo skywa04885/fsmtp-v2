@@ -14,19 +14,4 @@
 	limitations under the License.
 */
 
-#pragma once
-
-#include "lib/default.h"
-#include "lib/general/Global.src.h"
-#include "lib/args/args.src.h"
-#include "lib/networking/sockets/SSLContext.src.h"
-#include "lib/networking/sockets/ServerSocket.src.h"
-#include "lib/networking/sockets/ClientSocket.src.h"
-#include "lib/workers/DatabaseWorker.src.h"
-#include "lib/workers/TransmissionWorker.src.h"
-#include "lib/pop3/P3Server.src.h"
-#include "lib/general/Logger.src.h"
-
-using namespace FSMTP;
-
-int main(const int argc, const char **argv);
+#include "tests.h"
