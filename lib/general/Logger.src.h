@@ -18,11 +18,8 @@
 
 #include "../default.h"
 
-namespace FSMTP
-{
-
-	typedef enum : uint8_t
-	{
+namespace FSMTP {
+	typedef enum : uint8_t {
 		DEBUG = 0,
 		PARSER,
 		INFO,
@@ -31,92 +28,90 @@ namespace FSMTP
 		FATAL
 	} LoggerLevel;
 
-	typedef enum : uint8_t
-	{
+	typedef enum : uint8_t {
 		ENDL = 0,
 		CLASSIC,
 		FLUSH
 	} LoggerOpts;
 
-	class Logger
-	{
+	class Logger {
 	public:
-		Logger(const std::string &l_Prefix, const LoggerLevel &l_Level):
+		Logger(const string &l_Prefix, const LoggerLevel &l_Level):
 			l_Prefix(l_Prefix), l_Level(l_Level)
 		{}
 
+		static void saveToDisk(const string &message);
+
 		template<typename T>
-		Logger &append(const T &a)
-		{
+		Logger &append(const T &a) {
 			this->l_Stream << a;
 			return *this;
 		}
 
-		Logger &append(const LoggerLevel& a)
-		{
+		Logger &append(const LoggerLevel& a) {
 			this->l_Old = this->l_Level;
 			this->l_Level = a;
 
 			return *this;
 		}
 
-		Logger &append(const LoggerOpts &a)
-		{
+		Logger &append(const LoggerOpts &a) {
 			switch (a)
 			{
 				case LoggerOpts::CLASSIC:
-				{
 					this->l_Level = this->l_Old;
 					break;
-				}
 				case LoggerOpts::ENDL:
-				case LoggerOpts::FLUSH:
-				{
+				case LoggerOpts::FLUSH: {
+					ostringstream oss;
+
 					char dateBuffer[64];
-					std::time_t rawTime;
+					time_t rawTime;
 					struct tm *timeInfo = nullptr;
 
 					time(&rawTime);
 					timeInfo = localtime(&rawTime);
-					strftime(dateBuffer, sizeof (dateBuffer), "%a, %d %b %Y %T", timeInfo);
-					std::cout << dateBuffer << "->";
+					strftime(dateBuffer, sizeof(dateBuffer), "%a, %d %b %Y %T", timeInfo);
+					cout << dateBuffer << "->";
 
-					switch (this->l_Level)
-					{
+					// Appends the level, and checks if the message should be logged to
+					//  the file, this only happens on an error.
+
+					switch (this->l_Level) {
 						case LoggerLevel::DEBUG:
-						{
-							std::cout << "\033[36m(DEBUG@" << this->l_Prefix << "): \033[0m";
+							oss << "\033[36m(DEBUG@" << this->l_Prefix << "): \033[0m";
 							break;
-						}
 						case LoggerLevel::PARSER:
-						{
-							std::cout << "\033[34m(PARSER@" << this->l_Prefix << "): \033[0m";
+							oss << "\033[34m(PARSER@" << this->l_Prefix << "): \033[0m";
 							break;
-						}
 						case LoggerLevel::INFO:
-						{
-							std::cout << "\033[32m(INFO@" << this->l_Prefix << "): \033[0m";
+							oss << "\033[32m(INFO@" << this->l_Prefix << "): \033[0m";
 							break;
-						}
 						case LoggerLevel::WARN:
-						{
-							std::cout << "\033[33m(WARN@" << this->l_Prefix << "): \033[0m";
+							oss << "\033[33m(WARN@" << this->l_Prefix << "): \033[0m";
 							break;
-						}
 						case LoggerLevel::ERROR:
-						{
-							std::cout << "\033[31m(ERR@" << this->l_Prefix << "): \033[0m";
+							oss << "\033[31m(ERR@" << this->l_Prefix << "): \033[0m";
 							break;
-						}
 						case LoggerLevel::FATAL:
-						{
-							std::cout << "\033[31m[FATAL@" << this->l_Prefix << "]: \033[0m";
+							oss << "\033[31m[FATAL@" << this->l_Prefix << "]: \033[0m";
 							break;
-						}
 					}
 
-					if (a == LoggerOpts::FLUSH) std::cout << this->l_Stream.str() << std::flush;
-					else std::cout << this->l_Stream.str() << std::endl;
+					oss << this->l_Stream.str();
+					if (this->l_Level == LoggerLevel::FATAL || this->l_Level == LoggerLevel::ERROR) {
+						Logger::saveToDisk(oss.str());
+					}
+
+					// Prints the message with the specified method, after this
+					//  we clear the internal buffer
+
+					if (a == LoggerOpts::FLUSH) {
+						cout << oss.str() << flush;
+					} else {
+						cout << oss.str() << endl;
+					}
+
 					this->l_Stream.str("");
 					this->l_Stream.clear();
 					break;
@@ -127,13 +122,12 @@ namespace FSMTP
 		}
 
 		template<typename T>
-		Logger &operator << (const T &a)
-		{
+		Logger &operator << (const T &a) {
 			return this->append(a);
 		}
 	private:
-		std::ostringstream l_Stream;
-		std::string l_Prefix;
+		ostringstream l_Stream;
+		string l_Prefix;
 		LoggerLevel l_Level;
 		LoggerLevel l_Old;
 	};

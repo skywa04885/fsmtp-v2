@@ -15,3 +15,27 @@
 */
 
 #include "Logger.src.h"
+
+using namespace FSMTP;
+
+void Logger::saveToDisk(const string &message) {
+	char filename[128];
+	time_t rawTime;
+	struct tm *timeInfo = nullptr;
+
+	// Checks if the logs dir exists, if not create the dir
+	if (!filesystem::exists("../logs")) {
+		filesystem::create_directory("../logs");
+	}
+
+	// Appends the message to the final logs, the file name will be generated
+	//  with the strftime and the current date
+	
+	time(&rawTime);
+	timeInfo = localtime(&rawTime);
+	strftime(filename, sizeof(filename), "../logs/%a, %d %b %Y.txt", timeInfo);
+	
+	ofstream stream(filename, ios::app);
+	DEFER(stream.close());
+	stream << message << endl;
+}

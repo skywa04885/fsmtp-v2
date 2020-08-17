@@ -12,5 +12,6 @@ sources += files(
 )
 
 test_sources += files (
-    'cleanup.src.cc'
+    'cleanup.src.cc',
+    'Logger.src.cc'
 )

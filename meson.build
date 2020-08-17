@@ -20,8 +20,7 @@ lib_cassandra = comp_cc.find_library('cassandra', required: true)
 lib_jsoncpp = comp_cc.find_library('jsoncpp', required: true)
 
 sources = [
-	'main.cc',
-	'dependencies/doctest.h'
+	'main.cc'
 ]
 
 test_sources = [
