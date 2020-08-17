@@ -76,10 +76,8 @@ namespace FSMTP::Models
 	}
 
 	vector<Mailbox> Mailbox::gatherAll(
-		CassandraConnection *cassandra,
-		const int64_t bucket,
-		const string &domain,
-		const CassUuid &uuid,
+		CassandraConnection *cassandra, const int64_t bucket,
+		const string &domain, const CassUuid &uuid,
 		const bool subscribedOnly
 	) {
 		const char *query = nullptr;
@@ -153,20 +151,9 @@ namespace FSMTP::Models
 		return ret;
 	}
 
-	/**
-	 * Gets an mailbox
-	 *
-	 * @Param {CassandraConnection *} cassandra
-	 * @Param {const string &} domain
-	 * @Param {const CassUuid &} uuid
-	 * @Param {const string &} mailbox
-	 * @Return {MailboxStatus}
-	 */
 	Mailbox Mailbox::get(
-		CassandraConnection *cassandra,
-		const int64_t bucket,
-		const string &domain,
-		const CassUuid &uuid,
+		CassandraConnection *cassandra, const int64_t bucket,
+		const string &domain, const CassUuid &uuid,
 		const string &mailboxPath
 	) {
 		const char *query = R"(SELECT e_mailbox_stand, e_subscribed, e_flags, e_message_count 

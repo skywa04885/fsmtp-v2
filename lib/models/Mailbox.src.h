@@ -26,10 +26,9 @@
 #define _MAILBOX_FLAG_JUNK 128
 #define _MAILBOX_SYS_FLAG_READ_ONLY 256
 
-#define _MAILBOX_FLAG_COUNT 8
+#define _MAILBOX_FLAG_COUNT 9
 
 #include "../default.h"
-
 #include "../general/connections.src.h"
 #include "../general/exceptions.src.h"
 #include "../general/macros.src.h"

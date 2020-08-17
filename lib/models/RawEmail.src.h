@@ -16,70 +16,36 @@
 
 #pragma once
 
-#include <string>
-#include <cstdint>
-#include <stdexcept>
-#include <memory>
-
-#include <cassandra.h>
-
+#include "../default.h"
 #include "../general/macros.src.h"
 #include "../general/connections.src.h"
 #include "../general/exceptions.src.h"
 
 using namespace FSMTP::Connections;
 
-namespace FSMTP::Models
-{
-  class RawEmail
-  {
+namespace FSMTP::Models {
+  class RawEmail {
   public:
-    /**
-     * Default construtor for the raw email
-     *
-     * @Param {void}
-     * @Return {void}
-     */
-    explicit RawEmail(void);
+    explicit RawEmail();
 
-    /**
-     * Stores an rawEmail into the database
-     *
-     * @Param {CassandraConnection *} cassandra
-     * @Return {void}
-     */
     void save(CassandraConnection *cassandra);
 
     static RawEmail get(
-      CassandraConnection *cassandra,
-      const std::string &domain,
-      const CassUuid &ownersUuid,
-      const CassUuid &emailUuid,
+      CassandraConnection *cassandra, const string &domain,
+      const CassUuid &ownersUuid, const CassUuid &emailUuid,
       const int64_t bucket
     );
 
-    /**
-     * Deletes one email from the database
-     *
-     * @Param {CassandraConnection *} cassandra
-     * @Param {const std::string &} domain
-     * @Param {const CassUuid &} ownersUuid
-     * @Param {const CassUuid &} emailUuid;
-     * @Param {const int64_t} bucket
-     * @Return {void} 
-     */
     static void deleteOne(
-      CassandraConnection *cassandra,
-      const std::string &domain,
-      const CassUuid &ownersUuid,
-      const CassUuid &emailUuid,
+      CassandraConnection *cassandra, const string &domain,
+      const CassUuid &ownersUuid, const CassUuid &emailUuid,
       const int64_t bucket
     );
 
     int64_t e_Bucket;
-    std::string e_Domain;
+    string e_Domain;
     CassUuid e_OwnersUUID;
     CassUuid e_EmailUUID;
-    std::string e_Content;
+    string e_Content;
   };
 }

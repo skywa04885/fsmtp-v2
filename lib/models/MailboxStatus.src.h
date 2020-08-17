@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "Models.src.h"
+#include "../default.h"
 #include "Mailbox.src.h"
 #include "EmailShortcut.src.h"
 
@@ -25,80 +25,35 @@ namespace FSMTP::Models
 	class MailboxStatus
 	{
 	public:
-		/**
-		 * Empty constructor for the mailbox status
-		 *
-		 * @Param {void}
-		 * @Return {void}
-		 */
-		explicit MailboxStatus(void);
+		explicit MailboxStatus();
 
-		/**
-		 * Gets the mailbox status
-		 *
-		 * @Param {RedisConnection *} redis
-	 	 * @Param {CassandraConnection *} cassandra
-		 * @Param {const int64_t} s_Bucket
-		 * @Param {const std::string &} s_Domain
-		 * @Param {const CassUuid &} uuid
-		 * @Param {const std::string &} mailboxPath
-		 */
+		static void clearRecent(
+			RedisConnection *redis, const int64_t s_Bucket,
+			const string &s_Domain, const CassUuid &uuid,
+			const string &mailboxPath
+		);
 		static MailboxStatus get(
-			RedisConnection *redis,
-			CassandraConnection *cassandra,
-			const int64_t s_Bucket,
-			const std::string &s_Domain,
-			const CassUuid &uuid,
-			const std::string &mailboxPath
+			RedisConnection *redis, CassandraConnection *cassandra,
+			const int64_t s_Bucket, const string &s_Domain,
+			const CassUuid &uuid, const string &mailboxPath
 		);
 
-		/**
-		 * Adds an new message to an mailbox
-		 *
-		 * @Param {RedisConnection *} redis
-	 	 * @Param {CassandraConnection *} cassandra
-		 * @Param {const int64_t} s_Bucket
-		 * @Param {const std::string &} s_Domain
-		 * @Param {const CassUuid &} uuid
-		 * @Param {const std::string &} mailboxPath
-	 	 * @Return {int32_t} uid
-		 */
 		static int32_t addOneMessage(
-			RedisConnection *redis,
-			CassandraConnection *cassandra,
-			const int64_t s_Bucket,
-			const std::string &s_Domain,
-			const CassUuid &uuid,
-			const std::string &mailboxPath
+			RedisConnection *redis, CassandraConnection *cassandra,
+			const int64_t s_Bucket, const string &s_Domain,
+			const CassUuid &uuid, const string &mailboxPath
 		);
 
-		/**
-		 * Saves the mailbox status
-		 *
-		 * @Param {RedisConnection *} redis
-		 * @Return {void}
-		 */
-		void save(RedisConnection *redis, const std::string &mailboxPath);
+		void save(RedisConnection *redis, const string &mailboxPath);
 
-		/**
-		 * Restores an mailbox status from cassandra (EXPENSIVE)
-		 *
-		 * @Param {CassandraConnection *} cassandra
-		 * @Param {const std::string &} domain
-		 * @Param {const CassUuid &} uuid
-		 * @Param {const std::string &} mailboxPath
-		 * @Return {MailboxStatus}
-		 */
 		static MailboxStatus restoreFromCassandra(
-			CassandraConnection *cassandra,
-			const int64_t bucket,
-			const std::string &domain,
-			const CassUuid &uuid,
-			const std::string &mailboxPath
+			CassandraConnection *cassandra, const int64_t bucket,
+			const string &domain, const CassUuid &uuid,
+			const string &mailboxPath
 		);
 
 		int64_t s_Bucket;
-		std::string s_Domain;
+		string s_Domain;
 		CassUuid s_UUID;
 		int32_t s_Unseen;
 		int32_t s_NextUID;
