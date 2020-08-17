@@ -134,7 +134,7 @@ SMTPServer &SMTPServer::startHandler(const bool newThread) {
 		}
 
 		size_t end = duration_cast<milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
-		DEBUG_ONLY((clogger << "Client disconnected, transmission in: " << end - start << " milliseconds" << ENDL);
+		DEBUG_ONLY(clogger << "Client disconnected, transmission in: " << end - start << " milliseconds" << ENDL);
 	};
 
 	// Checks if we need to start the acceptor in the same thread
