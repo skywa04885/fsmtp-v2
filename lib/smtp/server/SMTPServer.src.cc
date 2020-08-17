@@ -99,7 +99,7 @@ SMTPServer &SMTPServer::startHandler(const bool newThread) {
 		//  the greeting.
 
 		Logger clogger("ESMTP:" + client->getPrefix(), LoggerLevel::DEBUG);
-		clogger << "Client connected" << ENDL;
+		DEBUG_ONLY(clogger << "Client connected" << ENDL);
 
 		ServerResponse response(SMTPResponseType::SRC_GREETING);
 		client->write(response.build());
@@ -134,7 +134,7 @@ SMTPServer &SMTPServer::startHandler(const bool newThread) {
 		}
 
 		size_t end = duration_cast<milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
-		clogger << "Client disconnected, transmission in: " << end - start << " milliseconds" << ENDL;
+		DEBUG_ONLY((clogger << "Client disconnected, transmission in: " << end - start << " milliseconds" << ENDL);
 	};
 
 	// Checks if we need to start the acceptor in the same thread

@@ -80,7 +80,7 @@ namespace FSMTP::POP3
 		auto handler = [&](shared_ptr<ClientSocket> client) {
 			P3ServerSession session;
 			Logger clogger("POP3" + client->getPrefix(), LoggerLevel::DEBUG);
-			clogger << "Client connected" << ENDL;
+			DEBUG_ONLY(clogger << "Client connected" << ENDL);
 
 			client->write(P3Response(
 				true, POP3ResponseType::PRT_GREETING, 
@@ -159,7 +159,7 @@ namespace FSMTP::POP3
 					}
 				}
 
-				clogger << "Client disconnected" << ENDL;	
+				DEBUG_ONLY(clogger << "Client disconnected" << ENDL);	
 			} catch (const runtime_error &e) {
 				clogger << FATAL << "Could not delete emails: " << e.what() << ENDL << CLASSIC;
 			} catch (const exception &e) {
