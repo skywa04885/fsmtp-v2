@@ -111,10 +111,8 @@ namespace FSMTP::Models
 		DEFER(freeReplyObject(reply));
 
 		if (reply->type == REDIS_REPLY_NIL) {
-			freeReplyObject(reply);
 			throw EmptyQuery("Could not find domain: " + l_Domain);
 		} else if (reply->type != REDIS_REPLY_STRING) {
-			freeReplyObject(reply);
 			throw DatabaseException("Data type string expected, found different !");
 		}
 
