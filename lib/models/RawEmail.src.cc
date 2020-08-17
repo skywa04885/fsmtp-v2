@@ -18,14 +18,7 @@
 
 using namespace FSMTP::Models;
 
-/**
- * Default construtor for the raw email
- *
- * @Param {void}
- * @Return {void}
- */
-RawEmail::RawEmail(void)
-{}
+RawEmail::RawEmail() {}
 
 void RawEmail::save(CassandraConnection *cassandra) {
   const char *query = R"(INSERT INTO fannst.raw_emails (

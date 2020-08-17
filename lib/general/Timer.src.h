@@ -16,10 +16,7 @@
 
 #pragma once
 
-#include <iostream>
-#include <chrono>
-#include <string>
-
+#include "../default.h"
 #include "Logger.src.h"
 
 namespace FSMTP
@@ -27,24 +24,10 @@ namespace FSMTP
 	class Timer
 	{
 	public:
-		/**
-		 * Initializes the timer with an specific name
-		 *
-		 * @Param {const std::string &} t_Prefix
-		 * @Param {Logger &} t_Logger
-		 * @Return {void}
-		 */
-		Timer(const std::string &t_Prefix, Logger &t_Logger);
-
-		/**
-		 * Default destructor which calls the timer print
-		 *
-		 * @Param {void}
-		 * @Return {void}
-		 */
+		Timer(const string &t_Prefix, Logger &t_Logger);
 		~Timer();
 	private:
-		std::string t_Prefix;
+		string t_Prefix;
 		Logger &t_Logger;
 		int64_t t_StartTime;
 	};

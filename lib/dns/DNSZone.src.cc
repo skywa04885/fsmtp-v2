@@ -1,7 +1,5 @@
 #include "DNSZone.src.h"
 
-extern Json::Value _config;
-
 namespace FSMTP::DNS
 {
 	/**
@@ -134,15 +132,17 @@ namespace FSMTP::DNS
 	 */
 	std::vector<Domain> readConfig(void)
 	{
+		auto &conf = Global::getConfig();
+
 		Logger logger("DNSCFG", LoggerLevel::INFO);
 		std::vector<Domain> result = {};
 
 		// Starts reading the zones
 		logger << "Reading configuration zones ..." << ENDL;
 		Json::Value defaultValue;
-		for (std::size_t i = 0; i < _config["zone"].size(); i++)
+		for (std::size_t i = 0; i < conf["zone"].size(); i++)
 		{
-			Json::Value val = _config["zone"].get(i, defaultValue);
+			Json::Value val = conf["zone"].get(i, defaultValue);
 			Domain domain;
 			domain.d_Domain = val["domain"].asString();
 

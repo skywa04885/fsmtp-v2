@@ -18,7 +18,6 @@
 #define _LIB_NETWORKING_SOCKETS_SSL_CONTEXT_H
 
 #include "../../default.h"
-#include "../../general/macros.src.h"
 
 namespace FSMTP::Sockets {
   class SSLContext {

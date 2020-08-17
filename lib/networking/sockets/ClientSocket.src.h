@@ -19,7 +19,6 @@
 
 #include "../../default.h"
 #include "./SSLContext.src.h"
-#include "../../general/macros.src.h"
 
 namespace FSMTP::Sockets {
   class ClientSocket {

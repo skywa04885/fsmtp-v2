@@ -8,8 +8,6 @@ sources += files(
     'Logger.src.cc',
     'Passwords.src.cc',
     'Timer.src.cc',
-    'Configuration.src.cc',
-    'macros.src.cc',
     'Global.src.cc'
 )
 

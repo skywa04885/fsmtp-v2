@@ -16,63 +16,27 @@
 
 #pragma once
 
-#include <vector>
-#include <iostream>
-#include <stdexcept>
-#include <string>
-#include <cstdint>
-#include <cstring>
-
-#include <resolv.h>
-#include <netdb.h>
-#include <arpa/inet.h>
+#include "../default.h"
 
 #include "../general/Logger.src.h"
-#include "../general/macros.src.h"
 
-namespace FSMTP::DNS
-{
-	typedef enum : uint8_t
-	{
+namespace FSMTP::DNS {
+	typedef enum : uint8_t {
 		RT_MX = 0,
 		RT_TXT
 	} RecordType;
 
-	typedef struct
-	{
-		std::string r_Value;
-		std::string r_Name;
+	typedef struct {
+		string r_Value;
+		string r_Name;
 		int32_t r_Type;
 		int32_t r_TTL;
 		int32_t r_Class;
 		int32_t r_ReadLen;
 	} Record;
 
-	/**
-	 * Resolves the IP Address from an hostname
-	 *
-	 * @Param {const char *} hostname
-	 * @Return {const char *}
-	 */
-	std::string resolveHostname(const char *hostname);
+	string resolveHostname(const char *hostname);
+	string getHostnameByAddress(const struct sockaddr_in *addr);
 
-	/**
-	 * Resolves an set of records
-	 *
-	 * @Param {std::string &} hostname
-	 * @Param {RecordType} type
-	 * @Return {std::vector<Record>}
-	 */
-	std::vector<Record> resolveDNSRecords(
-		const std::string &hostname,
-		const RecordType type
-	);
-
-	/**
-	 * Gets the hostname based on the ip address
-	 *
-	 * @Param {struct sockaddr_in *addr} addr
-	 * @Return {std::string}
-	 */
-	std::string getHostnameByAddress(const struct sockaddr_in *addr);
+	vector<Record> resolveDNSRecords(const string &hostname, const RecordType type);
 }

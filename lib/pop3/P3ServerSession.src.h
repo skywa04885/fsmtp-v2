@@ -30,51 +30,19 @@ namespace FSMTP::POP3
 	class P3ServerSession
 	{
 	public:
-		/**
-		 * Initializes the session and zeros the flags and actions
-		 *
-		 * @Param {void}
-		 * @Return {void}
-		 */
-		P3ServerSession(void);
+		P3ServerSession();
 
-		/**
-		 * Sets an flag
-		 *
-		 * @Param {int64_t} mask
-		 * @Return {void}
-		 */
 		void setFlag(int64_t mask);
-
-		/**
-		 * Gets an flag
-		 *
-		 * @Param {int64_t} mask
-		 * @Return {bool}
-		 */
 		bool getFlag(int64_t mask);
 
-		/**
-		 * Sets an action
-		 *
-		 * @Param {int64_t} mask
-		 * @Return {void}
-		 */
 		void setAction(int64_t mask);
-
-		/**
-		 * Gets an action
-		 *
-		 * @Param {int64_t} mask
-		 * @Return {bool}
-		 */
 		bool getAction(int64_t mask);
 
-		std::string s_User;
-		std::string s_Pass;
+		string s_User;
+		string s_Pass;
 		AccountShortcut s_Account;
-		std::vector<std::tuple<CassUuid, int64_t, int64_t>> s_References;
-		std::vector<std::size_t> s_Graveyard;
+		vector<tuple<CassUuid, int64_t, int64_t>> s_References;
+		vector<size_t> s_Graveyard;
 	private:
 		int64_t s_Flags;
 		int64_t s_Actions;

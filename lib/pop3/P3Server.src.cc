@@ -22,15 +22,8 @@ namespace FSMTP::POP3
 		s_Logger("POP3", LoggerLevel::INFO)
 	{
 		// Sets the capabilities
-		this->s_Capabilities.push_back(POP3Capability{
-			"EXPIRE",
-			{"NEVER"}
-		});
-		this->s_Capabilities.push_back(POP3Capability{
-
-			"LOGIN-DELAY",
-			{"0"}
-		});
+		this->s_Capabilities.push_back(POP3Capability{"EXPIRE", {"NEVER"}});
+		this->s_Capabilities.push_back(POP3Capability{"LOGIN-DELAY", {"0"}});
 		this->s_Capabilities.push_back(POP3Capability{"STLS", {}});
 		this->s_Capabilities.push_back(POP3Capability{"USER", {}});
 		this->s_Capabilities.push_back(POP3Capability{"TOP", {}});
@@ -56,17 +49,19 @@ namespace FSMTP::POP3
 
 	P3Server &P3Server::createContext() {
 		auto &sslCtx = this->s_SSLContext;
-
 		sslCtx = Global::getSSLContext(SSLv23_server_method());
-
 		return *this;
 	}
 
 	P3Server &P3Server::listenServer() {
+		auto &conf = Global::getConfig();
 		auto &sslCtx = this->s_SSLContext;
 		auto &logger = this->s_Logger;
 		auto &sslSocket = this->s_SSLSocket;
 		auto &plainSocket = this->s_PlainSocket;
+
+		int32_t securePort = conf["servers"]["pop3"]["secure"].asInt();
+		int32_t plainPort = conf["servers"]["pop3"]["plain"].asInt();
 
 		sslSocket = make_unique<ServerSocket>();
 		plainSocket = make_unique<ServerSocket>();
@@ -74,7 +69,7 @@ namespace FSMTP::POP3
 		sslSocket->queue(250).useSSL(sslCtx.get()).listenServer(995);
 		plainSocket->queue(250).listenServer(110);
 
-		logger << "listening on SSL:995, PLAIN:110" << ENDL;
+		logger << "listening on SSL:" << securePort << ", PLAIN:" << plainPort << ENDL;
 
 		return *this;
 	}
@@ -140,11 +135,11 @@ namespace FSMTP::POP3
 			try {
 				if (session.s_Graveyard.size() > 0) {
 					DEBUG_ONLY(clogger << WARN << "Deleting " << session.s_Graveyard.size() << " emails !" << ENDL);
-					for (const std::size_t i : session.s_Graveyard)
+					for (const size_t i : session.s_Graveyard)
 					{
 						// Deletes the the raw email, shortcut and parsed email
-						const CassUuid &uuid = std::get<0>(session.s_References[i]);
-						const int64_t &bucket = std::get<2>(session.s_References[i]);
+						const CassUuid &uuid = get<0>(session.s_References[i]);
+						const int64_t &bucket = get<2>(session.s_References[i]);
 
 						// Deletes the emails
 						EmailShortcut::deleteOne(
@@ -218,45 +213,45 @@ namespace FSMTP::POP3
 
 				// Parses the arguments, and throws syntax error when
 				// - wrong entered
-				std::size_t i, line;
+				size_t i, line;
 				try {
 					i = stol(command.c_Args[0]);
 					--i;
-				} catch (const std::invalid_argument& e)
+				} catch (const invalid_argument& e)
 				{
 					throw P3SyntaxException("TOP invalid index");
 				}
 
 				try {
 					line = stol(command.c_Args[1]);
-				} catch (const std::invalid_argument& e) {
+				} catch (const invalid_argument& e) {
 					throw P3SyntaxException("TOP invalid line");
 				}
 
 				// Gets the UUID from the specified message, and then
 				// - query's the raw message
-				std::cout << i << std::endl;
-				const CassUuid &uuid = std::get<0>(session.s_References[i]);
+				cout << i << endl;
+				const CassUuid &uuid = get<0>(session.s_References[i]);
 				RawEmail raw = RawEmail::get(
 					cassandra, 
 					session.s_Account.a_Domain,
 					session.s_Account.a_UUID,
 					uuid,
-					std::get<2>(session.s_References[i])
+					get<2>(session.s_References[i])
 				);
 
 				// Prepares the email contents, and splits the message
 				// - into the headers and body
-				std::string headers, body;
+				string headers, body;
 				MIME::splitHeadersAndBody(raw.e_Content, headers, body);
 
 				// Checks how we should return the data
 				size_t currentLine = 0;
 				if (line > 0){
 					headers += "\r\n";
-					std::stringstream stream(body);
-					std::string token;
-					while (std::getline(stream, token, '\n'))
+					stringstream stream(body);
+					string token;
+					while (getline(stream, token, '\n'))
 					{
 						if (token[token.size() - 1] == '\r') token.pop_back();
 						if (currentLine++ > line) break;
@@ -276,7 +271,7 @@ namespace FSMTP::POP3
 					POP3ResponseType::PRT_TOP,
 					"",
 					nullptr, nullptr,
-					reinterpret_cast<void *>(&std::get<1>(session.s_References[i]))
+					reinterpret_cast<void *>(&get<1>(session.s_References[i]))
 				).build());
 				client->write(headers);
 
@@ -331,9 +326,9 @@ namespace FSMTP::POP3
 				}
 
 				// Gets the user password from the database
-				std::string publicKey, password;
+				string publicKey, password;
 				try {
-					std::tie(password, publicKey) = Account::getPassAndPublicKey(
+					tie(password, publicKey) = Account::getPassAndPublicKey(
 						cassandra,
 						session.s_Account.a_Domain,
 						session.s_Account.a_Bucket,
@@ -342,7 +337,7 @@ namespace FSMTP::POP3
 				} catch (const EmptyQuery &e)
 				{
 					// Constructs the error
-					std::string error = "user [";
+					string error = "user [";
 					error += session.s_Account.a_Username;
 					error += '@';
 					error += session.s_Account.a_Domain;
@@ -413,7 +408,7 @@ namespace FSMTP::POP3
 
 				// Checks if there is an domain, if not
 				// - ignore this step and append the default one
-				if (command.c_Args[0].find_first_of('@') != std::string::npos) {
+				if (command.c_Args[0].find_first_of('@') != string::npos) {
 					address.parse(command.c_Args[0]);
 
 					// Searches the database for the local domain, so we
@@ -422,7 +417,7 @@ namespace FSMTP::POP3
 						LocalDomain domain = LocalDomain::get(address.getDomain(), cassandra, redis);
 					} catch (const EmptyQuery &e) {
 						// Constructs the error
-						std::string error = "domain [";
+						string error = "domain [";
 						error += address.getDomain();
 						error += "] was not found on this server.";
 
@@ -447,7 +442,7 @@ namespace FSMTP::POP3
 					session.s_Account = AccountShortcut::findRedis(redis, address.getDomain(), address.getUsername());
 				} catch (const EmptyQuery &e) {
 					// Constructs the error
-					std::string error = "user [";
+					string error = "user [";
 					error += address.e_Address;
 					error += "] was not found on this server.";
 
@@ -507,12 +502,12 @@ namespace FSMTP::POP3
 
 				// Gets the data and builds the response
 				int64_t octets = 0;
-				for (const std::tuple<CassUuid, int64_t, int64_t> &pair : session.s_References)
-					octets += std::get<1>(pair);
+				for (const tuple<CassUuid, int64_t, int64_t> &pair : session.s_References)
+					octets += get<1>(pair);
 
-				std::string response = std::to_string(session.s_References.size());
+				string response = to_string(session.s_References.size());
 				response += ' ';
-				response += std::to_string(octets);
+				response += to_string(octets);
 
 				// Sends the stat response
 				client->write(P3Response(
@@ -534,13 +529,13 @@ namespace FSMTP::POP3
 				if (!session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
 					throw P3OrderException("USER/PASS First.");
 
-				std::vector<POP3ListElement> list = {};
+				vector<POP3ListElement> list = {};
 
-				std::size_t i = 0;
-				for (const std::tuple<CassUuid, int64_t, int64_t> &ref : session.s_References)
+				size_t i = 0;
+				for (const tuple<CassUuid, int64_t, int64_t> &ref : session.s_References)
 					list.push_back(POP3ListElement{
 						++i,
-						std::to_string(cass_uuid_timestamp(std::get<0>(ref)))
+						to_string(cass_uuid_timestamp(get<0>(ref)))
 					});
 
 				// Sends the response
@@ -564,13 +559,13 @@ namespace FSMTP::POP3
 				if (!session.getFlag(_P3_SERVER_SESS_FLAG_AUTH))
 					throw P3OrderException("USER/PASS First.");
 
-				std::vector<POP3ListElement> list = {};
+				vector<POP3ListElement> list = {};
 
-				std::size_t i = 0;
-				for (const std::tuple<CassUuid, int64_t, int64_t> &ref : session.s_References)
+				size_t i = 0;
+				for (const tuple<CassUuid, int64_t, int64_t> &ref : session.s_References)
 					list.push_back(POP3ListElement{
 						++i,
-						std::to_string(std::get<1>(ref))
+						to_string(get<1>(ref))
 					});
 
 				// Sends the response
@@ -599,29 +594,29 @@ namespace FSMTP::POP3
 
 				// Tries to parse the argument, and checks if the index is too
 				// - large by comparing it to the vector
-				std::size_t i;
+				size_t i;
 				try {
-					i = std::stol(command.c_Args[0]);
+					i = stol(command.c_Args[0]);
 					--i;
-				} catch (const std::invalid_argument &e) {
+				} catch (const invalid_argument &e) {
 					throw P3SyntaxException("Invalid index for RETR");
 				}
 				
 				if (i > session.s_References.size()) {
-					std::string error = "Max index ";
-					error += std::to_string(session.s_References.size());
+					string error = "Max index ";
+					error += to_string(session.s_References.size());
 					throw P3SyntaxException(error);
 				}
 
 				// Gets the UUID from the specified message, and then
 				// - query's the raw message
-				const CassUuid &uuid = std::get<0>(session.s_References[i]);
+				const CassUuid &uuid = get<0>(session.s_References[i]);
 				RawEmail raw = RawEmail::get(
 					cassandra, 
 					session.s_Account.a_Domain,
 					session.s_Account.a_UUID,
 					uuid,
-					std::get<2>(session.s_References[i])
+					get<2>(session.s_References[i])
 				);
 
 				// Prepares the email contents
@@ -638,7 +633,7 @@ namespace FSMTP::POP3
 					POP3ResponseType::PRT_RETR,
 					"",
 					nullptr, nullptr,
-					reinterpret_cast<void *>(&std::get<1>(session.s_References[i]))
+					reinterpret_cast<void *>(&get<1>(session.s_References[i]))
 				).build());
 				client->write(raw.e_Content);
 
@@ -673,17 +668,17 @@ namespace FSMTP::POP3
 				}
 
 				// Parses the index, if it is too large send error
-				std::size_t i;
+				size_t i;
 				try {
-					i = std::stol(command.c_Args[0]);
+					i = stol(command.c_Args[0]);
 					--i;
-				} catch (const std::invalid_argument &e) {
+				} catch (const invalid_argument &e) {
 					throw P3SyntaxException("Invalid index for DELE");
 				}
 
 				if (i > session.s_References.size()) {
-					std::string error = "Max index ";
-					error += std::to_string(session.s_References.size());
+					string error = "Max index ";
+					error += to_string(session.s_References.size());
 					throw P3SyntaxException(error);
 				}
 

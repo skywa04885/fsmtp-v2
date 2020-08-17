@@ -199,27 +199,27 @@ namespace FSMTP::Models
   	// ========================================
   	
   	size_t c = 0;
-  	for (const EmailHeader &h : email.e_Headers) {
+  	for_each(email.e_Headers.begin(), email.e_Headers.end(), [&](auto &h){
   		logger << "\t - Header[no: " << c++ << "]: <";
   		logger << h.e_Key << "> - <" << h.e_Value << ">" << ENDL;
-  	}
+  	});
 
     c = 0;
   	logger << " - Body sections: " << ENDL;
-  	for (const EmailBodySection &s : email.e_BodySections) {
+  	for_each(email.e_BodySections.begin(), email.e_BodySections.end(), [&](auto &s) {
   		logger << "\t - Body Section[no: " << c++ << ", cType: ";
   		logger << s.e_Type << ", cTransEnc: "; 
   		logger << s.e_TransferEncoding << "]: " << ENDL;
   		logger << "\t\t" << (s.e_Content.size() < 56 ? s.e_Content : s.e_Content.substr(0, 56) + " ...") << ENDL;
-  	}
+  	});
 
     auto printAddressList = [&](const char *label, const vector<EmailAddress> &vec) {
       c = 0;
       logger << " - " << label << ": " << ENDL;
-      for (auto  &address : vec) {
+      for_each(vec.begin(), vec.end(), [&](auto &address) {
         logger << "\t - Email[no: " << c++ << "]: ";
         logger << address.e_Name << " | " << address.e_Address << ENDL;
-      }
+      });
     };
 
     printAddressList("From", email.e_From);

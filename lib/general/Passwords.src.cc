@@ -16,8 +16,7 @@
 
 #include "Passwords.src.h"
 
-namespace FSMTP
-{
+namespace FSMTP {
 	static char _saltDict[] = {
 		'a','b','c','d','e','f','g','h','i','j',
 		'k','l','m','n','o','p','q','r','s','t',
@@ -28,75 +27,49 @@ namespace FSMTP
 		'9','0'
 	};
 
-	/**
-	 * Verifies an password with existing comparable password
-	 *
-	 * @Param {const std::string &} password
-	 * @Param {const std::string &} comparable
-	 * @Return {bool}
-	 */
 	bool passwordVerify(
-		const std::string &password,
-		const std::string &compared
-	)
-	{
+		const string &password,
+		const string &compared
+	) {
 		// Gets the salt from the old hash, and stores it inside
 		// - of the salt, if not found throw error, else store
 		// - it inside of an string
-		std::size_t saltIndex = compared.find_first_of('.');
-		if (saltIndex == std::string::npos)
-			throw std::runtime_error("Could not derive salt");
-		std::string salt = compared.substr(saltIndex + 1);
+		size_t saltIndex = compared.find_first_of('.');
+		if (saltIndex == string::npos)
+			throw runtime_error("Could not derive salt");
+		string salt = compared.substr(saltIndex + 1);
 
 		// Performs the comparison
-		std::string newHash = passwordHashOnly(password, salt);
+		string newHash = passwordHashOnly(password, salt);
 		if (newHash == compared.substr(0, saltIndex))
 			return true;
 		else return false;
 	}
 
-	/**
-	 * Generates salt and hashes an password
-	 *
-	 * @Param {const std::string &password}
-	 * @Return {std::string}
-	 */
-	std::string passwordHash(const std::string &password)
-	{
-		std::string salt;
+	string passwordHash(const string &password) {
+		string salt;
 
 		// Generates the salt, using the C++
 		// - random stuff
-		std::random_device rd;
-		std::mt19937 re(rd());
-		std::uniform_int_distribution<int> dist(0, sizeof (_saltDict) - 1);
-		for (std::size_t i = 0; i < 25; i++)
+		random_device rd;
+		mt19937 re(rd());
+		uniform_int_distribution<int> dist(0, sizeof (_saltDict) - 1);
+		for (size_t i = 0; i < 25; i++)
 			salt += _saltDict[dist(re)];
 
 		// Returns the hash
-		std::string res = passwordHashOnly(password, salt);
+		string res = passwordHashOnly(password, salt);
 		res += '.';
 		res += salt;
 		return res;
 	}
-	
-	/**
-	 * Only hashes an password to base64, give it some existing salt
-	 *
-	 * @Param {const std::string &} password
-	 * @Param {const std::string &} salt
-	 * @Return {std::string}
-	 */
-	std::string passwordHashOnly(const std::string &password, const std::string &salt)
-	{
+
+	string passwordHashOnly(const string &password, const string &salt) {
 		int32_t rc;
 		unsigned char out[32];
 		
 		// ====================================
 		// Hashes
-		//
-		// Generates the salt and performs
-		// - the hash
 		// ====================================
 
 		// Performs the hash
@@ -112,8 +85,6 @@ namespace FSMTP
 
 		// ====================================
 		// Encodes
-		//
-		// Generates the Base64 string
 		// ====================================
 
 		BIO *bio = nullptr, *base64 = nullptr;
@@ -131,7 +102,7 @@ namespace FSMTP
 		BIO_get_mem_ptr(bio, &bufMem);
 
 		// Creates the result and frees the memory
-		std::string res(bufMem->data, bufMem->length);
+		string res(bufMem->data, bufMem->length);
 		BIO_free_all(bio);
 
 		// Frees the memory

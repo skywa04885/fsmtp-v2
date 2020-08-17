@@ -23,18 +23,7 @@
 
 #pragma once
 
-#include <iostream>
-#include <string>
-#include <memory>
-#include <cstdint>
-
-#include <string.h>
-#include <stdio.h>
-#include <openssl/crypto.h>
-#include <openssl/sha.h>
-#include <openssl/err.h>
-#include <openssl/bio.h>
-#include <openssl/pem.h>
+#include "../default.h"
 
 namespace FSMTP::DKIM::Hashes
 {

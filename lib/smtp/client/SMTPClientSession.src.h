@@ -16,12 +16,7 @@
 
 #pragma once
 
-#include <iostream>
-#include <vector>
-#include <cstdint>
-#include <string>
-
-#include "../../general/macros.src.h"
+#include "../../default.h"
 
 #define _SCS_ACTION_HELO 1
 #define _SCS_ACTION_START_TLS 2

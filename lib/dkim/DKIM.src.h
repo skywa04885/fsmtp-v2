@@ -23,22 +23,10 @@
 
 #pragma once
 
-#include <iostream>
-#include <string>
-#include <vector>
-#include <cstring>
-#include <sstream>
-#include <map>
-#include <cstdint>
-
-#include <openssl/err.h>
-#include <openssl/ssl.h>
-
-#include "../parsers/mime.src.h"
-#include "../general/macros.src.h"
-#include "../general/Logger.src.h"
-#include "../general/Timer.src.h"
+#include "../default.h"
 #include "../general/cleanup.src.h"
+#include "../parsers/mime.src.h"
+#include "../general/encoding.src.h"
 #include "DKIMHashes.src.h"
 
 using namespace FSMTP::Parsers;

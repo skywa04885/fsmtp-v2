@@ -31,3 +31,9 @@ string __ssl_get_error()
 	BIO_free(bio);
 	return error;
 }
+
+string __except_debug(const char *file, const size_t line, const string& mess) {
+	ostringstream oss;
+	oss << file << ": " << line << "->" << mess;
+	return oss.str();
+}

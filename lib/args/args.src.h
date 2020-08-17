@@ -16,68 +16,23 @@
 
 #pragma once
 
-#include <iostream>
-#include <string>
-#include <vector>
-#include <sstream>
-
+#include "../default.h"
 #include "../general/Logger.src.h"
 #include "arg-actions.src.h"
 
 namespace FSMTP
 {
-    class CMDArg
-    {
-    public:
-        /**
-         * Parses an raw string of arguments into an argument
-         * - vector
-         *
-         * @Param {const std::vector<std::string> &} raw
-         * @Return {std::vector<CMDArg>}
-         */
-        static std::vector<CMDArg> parse(
-            const std::vector<std::string> &raw
-        );
+  class CMDArg
+  {
+  public:
+    CMDArg(const string &c_Name, const string &c_Arg);
+    explicit CMDArg(void);
+    bool compare(const string &command);
 
-        /**
-         * Default constructor for an command line argument
-         *
-         * @Param {const std::String &} c_Name
-         * @Param {const std::vector<std::string &} c_Arg
-         */
-        CMDArg(
-            const std::string &c_Name,
-            const std::string &c_Arg
-        );
+    static vector<CMDArg> parse(const vector<string> &raw);
 
-        /**
-         * The empty default constructor for an command line
-         * - argument
-         *
-         * @Param {void}
-         * @Return {void}
-         */
-        explicit CMDArg(void);
-
-        /**
-         * Checks if the current command matches the
-         * - specified command
-         *
-         * @Param {const std::string &} command
-         * @Return {bool}
-         */
-        bool compare(const std::string &command);
-
-        std::string c_Arg;
-        std::string c_Name;
-    };
-
-    /**
-     * Handles the arguments from the FSMTP program
-     *
-     * @Param {const std::vector<std::string> &} argList
-     * @Return {void}
-     */
-    void handleArguments(const std::vector<std::string> &argList);
+    string c_Name;
+    string c_Arg;
+  };
+  void handleArguments(const vector<string> &argList);
 }

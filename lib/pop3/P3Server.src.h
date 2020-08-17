@@ -48,8 +48,8 @@ namespace FSMTP::POP3
 		unique_ptr<ServerSocket> s_PlainSocket;
 		unique_ptr<SSLContext> s_SSLContext;
 		Logger s_Logger;
-		std::atomic<bool> s_Run;
-		std::atomic<bool> s_Running;
-		std::vector<POP3Capability> s_Capabilities;
+		atomic<bool> s_Run;
+		atomic<bool> s_Running;
+		vector<POP3Capability> s_Capabilities;
 	};
 }

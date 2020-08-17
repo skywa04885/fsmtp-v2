@@ -42,8 +42,8 @@ namespace FSMTP::Models
 		static string addressListToString(const vector<EmailAddress> &addresses);
 		string toString() const;
 
-		string e_Address;
 		string e_Name;
+		string e_Address;
 	};
 
 	typedef enum : uint32_t {

@@ -18,37 +18,19 @@
 
 namespace FSMTP
 {
-	/**
-	 * Initializes the timer with an specific name
-	 *
-	 * @Param {const std::string &} t_Prefix
-	 * @Param {Logger &} t_Logger
-	 * @Return {void}
-	 */
-	Timer::Timer(const std::string &t_Prefix, Logger &t_Logger):
+	Timer::Timer(const string &t_Prefix, Logger &t_Logger):
 		t_Logger(t_Logger), t_Prefix(t_Prefix)
 	{
-		this->t_StartTime = std::chrono::duration_cast<std::chrono::nanoseconds>(
-			std::chrono::high_resolution_clock::now().time_since_epoch()
-		).count();
-
+		this->t_StartTime = duration_cast<nanoseconds>(high_resolution_clock::now().time_since_epoch()).count();
 		this->t_Logger << DEBUG << "\033[35mTimer@" << this->t_Prefix << " started !\033[0m" << ENDL << CLASSIC;
 	}
 
-	/**
-	 * Default destructor which calls the timer print
-	 *
-	 * @Param {void}
-	 * @Return {void}
-	 */
-	Timer::~Timer()
-	{
-		std::size_t end = std::chrono::duration_cast<std::chrono::nanoseconds>(
-			std::chrono::high_resolution_clock::now().time_since_epoch()
-		).count();
-
-		this->t_Logger << DEBUG << "\033[35mTimer@" << this->t_Prefix 
-			<< " ended in [" << ((static_cast<double>(end) - static_cast<double>(this->t_StartTime)) / 1000000) 
-			<< "ms, " << (end - this->t_StartTime) << "us]\033[0m" << ENDL << CLASSIC;
+	Timer::~Timer() {
+		auto &logger = this->t_Logger;
+		
+		size_t end = duration_cast<nanoseconds>(high_resolution_clock::now().time_since_epoch()).count();
+		logger << DEBUG << "\033[35mTimer@" << this->t_Prefix;
+		logger << " ended in [" << ((static_cast<double>(end) - static_cast<double>(this->t_StartTime)) / 1000000);
+		logger << "ms, " << (end - this->t_StartTime) << "us]\033[0m" << ENDL << CLASSIC;
 	}
 }

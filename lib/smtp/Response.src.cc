@@ -157,11 +157,9 @@ string ServerResponse::buildServices(
 
 	for_each(c_Services->begin(), c_Services->end(), [&](auto &service) {
 		stream << code << (++index == total ? ' ' : '-') << service.s_Name;
-
 		for_each(service.s_SubArgs.begin(), service.s_SubArgs.end(), [&](auto &arg) {
 			stream << ' ' << arg;
 		});
-
 		stream << "\r\n";
 	});
 

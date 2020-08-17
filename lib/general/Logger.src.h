@@ -16,14 +16,7 @@
 
 #pragma once
 
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <thread>
-#include <mutex>
-#include <cstdint>
-#include <chrono>
-#include <ctime>
+#include "../default.h"
 
 namespace FSMTP
 {

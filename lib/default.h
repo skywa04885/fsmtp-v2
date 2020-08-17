@@ -45,11 +45,16 @@
 // ==== C Libraries ====
 #include <sys/socket.h>
 #include <sys/fcntl.h>
+#include <netdb.h>
+#include <resolv.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <openssl/ssl.h>
 #include <openssl/err.h>
-#include <openssl/pem.h>
+#include <openssl/hmac.h>
+#include <openssl/bio.h>
+#include <openssl/crypto.h>
+#include <openssl/sha.h>
+#include <openssl/ssl.h>
 #include <string.h>
 #include <assert.h>
 #include <sys/sysinfo.h>
@@ -61,7 +66,9 @@ using namespace chrono;
 using namespace nlohmann;
 
 // ==== Global functions/classes ====
+
 string __ssl_get_error();
+string __except_debug(const char *file, const size_t line, const string &mess);
 
 template<typename T>
 class Defer
@@ -94,16 +101,36 @@ public: \
 private: string err; \
 };
 
-template <typename T>
-int throw_if(bool in, const T& ex) {
-    if(in)
-#ifndef DOCTEST_CONFIG_NO_EXCEPTIONS
-        throw ex;
-#else  // DOCTEST_CONFIG_NO_EXCEPTIONS
-        ((void)ex);
-#endif // DOCTEST_CONFIG_NO_EXCEPTIONS
-    return 42;
-}
+#define BINARY_COMPARE(A, B) (A & B) == B
+
+#define _PREP_TO_STRING(A) #A
+#define PREP_TO_STRING(A) _PREP_TO_STRING(A)
+
+#define _BASH_CHECKMARK "\u2713"
+#define _BASH_CROSS "\u2717"
+#define _BASH_SUCCESS_MARK "\033[32m[\u2713]:\033[0m "
+#define _BASH_FAIL_MARK "\033[31m[\u2717]:\033[0m "
+#define _BASH_UNKNOWN_MARK "\033[35m[?]:\033[0m "
+
+#ifdef _SMTP_DEBUG
+#define DEBUG_ONLY(A) A
+#else
+#define DEBUG_ONLY(A)
+#endif
+
+#ifdef _SMTP_DEBUG
+#define DEBUG_PRINT(A, B) A << DEBUG << B << ENDL << CLASSIC
+#else
+#define DEBUG_PRINT(A, B)
+#endif
+
+#ifdef _SMTP_DEBUG
+#define EXCEPT_DEBUG(A) __except_debug(__FILE__, __LINE__, A)
+#else
+#define EXCEPT_DEBUG(A) A
+#endif
+
+#define FATAL_ERROR(A) std::cerr << "\033[32m" << __LINE__ << '@' << __FILE__ << "\033[31m" << ": " << A << "\033[0m" << std::endl
 
 
 #endif

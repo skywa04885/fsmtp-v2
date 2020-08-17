@@ -1,5 +1,12 @@
 {
   "files.associations": {
-    "future": "cpp"
+    "future": "cpp",
+    "hash_map": "cpp",
+    "hash_set": "cpp",
+    "*.tcc": "cpp",
+    "csignal": "cpp",
+    "forward_list": "cpp",
+    "unordered_set": "cpp",
+    "netfwd": "cpp"
   }
 }

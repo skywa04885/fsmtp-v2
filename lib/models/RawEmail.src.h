@@ -17,7 +17,6 @@
 #pragma once
 
 #include "../default.h"
-#include "../general/macros.src.h"
 #include "../general/connections.src.h"
 #include "../general/exceptions.src.h"
 

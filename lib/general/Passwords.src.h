@@ -16,40 +16,10 @@
 
 #pragma once
 
-#include <string>
-#include <random>
-#include <iostream>
+#include "../default.h"
 
-#include <openssl/err.h>
-#include <openssl/hmac.h>
-#include <openssl/bio.h>
-#include <openssl/ssl.h>
-
-namespace FSMTP
-{
-	/**
-	 * Verifies an password with existing comparable password
-	 *
-	 * @Param {const std::string &} password
-	 * @Param {const std::string &} comparable
-	 * @Return {bool}
-	 */
-	bool passwordVerify(const std::string &password, const std::string &compared);
-
-	/**
-	 * Generates salt and hashes an password
-	 *
-	 * @Param {const std::string &} password
-	 * @Return {std::string}
-	 */
-	std::string passwordHash(const std::string &password);
-
-	/**
-	 * Only hashes an password to base64, give it some existing salt
-	 *
-	 * @Param {const std::string &} password
-	 * @Param {const std::string &} salt
-	 * @Return {std::string}
-	 */
-	std::string passwordHashOnly(const std::string &password, const std::string &salt);
+namespace FSMTP {
+	bool passwordVerify(const string &password, const string &compared);
+	string passwordHash(const string &password);
+	string passwordHashOnly(const string &password, const string &salt);
 }

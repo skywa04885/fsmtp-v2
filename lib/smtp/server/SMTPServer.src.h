@@ -24,7 +24,6 @@
 #include "../Response.src.h"
 #include "../Command.src.h"
 #include "../../general/Logger.src.h"
-#include "../../general/macros.src.h"
 #include "SMTPServerSession.src.h"
 #include "SMTPServerExceptions.src.h"
 #include "SMTPAuthentication.src.h"

@@ -23,6 +23,10 @@
 		"esmtp": {
 			"secure": 465,
 			"plain": 25
+		},
+		"pop3": {
+			"secure": 995,
+			"plain": 110
 		}
 	},
 	"smtp": {

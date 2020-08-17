@@ -26,7 +26,6 @@
 #include "../general/connections.src.h"
 #include "../pop3/P3Server.src.h"
 #include "../general/Logger.src.h"
-#include "../general/macros.src.h"
 #include "../general/connections.src.h"
 #include "../general/AES256.src.h"
 #include "../smtp/server/SMTPServer.src.h"

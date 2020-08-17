@@ -31,7 +31,6 @@
 #include "../default.h"
 #include "../general/connections.src.h"
 #include "../general/exceptions.src.h"
-#include "../general/macros.src.h"
 
 using namespace FSMTP::Connections;
 
