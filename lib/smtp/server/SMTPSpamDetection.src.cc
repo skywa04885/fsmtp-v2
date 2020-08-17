@@ -16,9 +16,35 @@
 
 #include "SMTPSpamDetection.src.h"
 
-using namespace FSMTP::Server::SpamDetection;
+namespace FSMTP::Server::SpamDetection {
+	bool checkSpamhaus(string ip) {
+		// Reverses the remote address, this is required since zen some or another
+		//  way works like this
+		vector<string> segments = {};
+		stringstream ss(ip);
+		string segment;
 
-bool checkSpamhaus(std::string ip)
-{
+		while(getline(ss, segment, '.')) {
+			segments.push_back(segment);
+		}
 
+		reverse(segments.begin(), segments.end());
+
+		// Builds the final address, with the reverse and the zen address
+		//  appended to it, when this is done we resolve the DNS records
+
+		string address;
+		for_each(segments.begin(), segments.end(), [&](auto &seg) {
+			address += seg;
+			address += '.';
+		});
+		address += "zen.spamhaus.org";
+
+		try {
+			vector<Record> records = resolveDNSRecords(address, RecordType::RT_A);
+			return true;
+		} catch (...) {
+			return false;
+		}
+	}
 }

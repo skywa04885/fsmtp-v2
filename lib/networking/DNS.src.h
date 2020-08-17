@@ -23,7 +23,8 @@
 namespace FSMTP::DNS {
 	typedef enum : uint8_t {
 		RT_MX = 0,
-		RT_TXT
+		RT_TXT,
+		RT_A
 	} RecordType;
 
 	typedef struct {

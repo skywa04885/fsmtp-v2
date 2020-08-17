@@ -52,6 +52,9 @@ string ServerResponse::getMessage(const SMTPResponseType c_Type) {
 	ostringstream stream;
 
 	switch (c_Type) {
+		case SMTPResponseType::SRC_SPAM_ALERT:
+			stream << "Your address is zen.spamhaus.org database";
+			break;
 		case SMTPResponseType::SRC_AUTH_NOT_ALLOWED:
 			stream << "Mail from different then authenticated email";
 			break;
@@ -126,6 +129,7 @@ string ServerResponse::getMessage(const SMTPResponseType c_Type) {
 
 int32_t ServerResponse::getCode(const SMTPResponseType c_Type) {
 	switch (c_Type) {
+		case SMTPResponseType::SRC_SPAM_ALERT: return 554;
 		case SMTPResponseType::SRC_GREETING: return 220;
 		case SMTPResponseType::SRC_EHLO: return 250;
 		case SMTPResponseType::SRC_HELO: return 250;
