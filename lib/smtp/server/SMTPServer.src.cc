@@ -104,6 +104,8 @@ SMTPServer &SMTPServer::startHandler(const bool newThread) {
 		if (SpamDetection::checkSpamhaus(client->getPrefix())) {
 			ServerResponse response(SMTPResponseType::SRC_SPAM_ALERT);
 			client->write(response.build());
+
+			DEBUG_ONLY(clogger << "Rejected client due to zen.spamhaus.org records" << ENDL);
 		} else {
 			ServerResponse response(SMTPResponseType::SRC_GREETING);
 			client->write(response.build());

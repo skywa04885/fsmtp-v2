@@ -53,7 +53,7 @@ string ServerResponse::getMessage(const SMTPResponseType c_Type) {
 
 	switch (c_Type) {
 		case SMTPResponseType::SRC_SPAM_ALERT:
-			stream << "Your address is zen.spamhaus.org database";
+			stream << "rejected; Blocked using zen.spamhaus.org";
 			break;
 		case SMTPResponseType::SRC_AUTH_NOT_ALLOWED:
 			stream << "Mail from different then authenticated email";

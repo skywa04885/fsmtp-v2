@@ -40,11 +40,20 @@ namespace FSMTP::Server::SpamDetection {
 		});
 		address += "zen.spamhaus.org";
 
-		try {
-			vector<Record> records = resolveDNSRecords(address, RecordType::RT_A);
-			return true;
-		} catch (...) {
+		// Checks if any records are found for the specified ip address, if so we classify
+		//  it as an spam address
+
+		struct __res_state state;
+		res_ninit(&state);
+		DEFER(res_nclose(&state));
+
+		unsigned char output[1024];
+		int32_t len = res_nquery(&state, address.c_str(), ns_c_in, ns_t_a, output, sizeof(output));
+
+		if (len == -1) {
 			return false;
+		} else {
+			return true;
 		}
 	}
 }
