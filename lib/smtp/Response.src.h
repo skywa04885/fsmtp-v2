@@ -64,7 +64,8 @@ namespace FSMTP::SMTP
 
 		string build(void);
 		string getMessage(const SMTPResponseType c_Type);
-
+		
+		static const char *getEnchancedCode(const SMTPResponseType &c_Type);
 		static int32_t getCode(const SMTPResponseType c_Type);
 		static string buildServices(const int32_t code, vector<SMTPServiceFunction> *c_Services);
 		static tuple<int32_t, string> parseResponse(const std::string &raw);

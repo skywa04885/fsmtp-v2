@@ -31,18 +31,21 @@ ServerResponse::ServerResponse(
 {}
 
 string ServerResponse::build(void) {
-	int32_t code = ServerResponse::getCode(this->c_Type);
-	ostringstream stream;
+	auto &type = this->c_Type;
+	ostringstream oss;
+
+	int32_t code = ServerResponse::getCode(type);
 
 	if (this->c_Services == nullptr) {
-		stream << code << ' ' << this->getMessage(this->c_Type);
-		stream << " - fsmtp\r\n";
+		oss << code << ' ' << ServerResponse::getEnchancedCode(type);
+		oss << this->getMessage(type);
+		oss << " - fsmtp\r\n";
 	} else {
-		stream << code << '-' << this->getMessage(this->c_Type) << "\r\n";
-		stream << ServerResponse::buildServices(code, this->c_Services);
+		oss << code << '-' << this->getMessage(type) << "\r\n";
+		oss << ServerResponse::buildServices(code, this->c_Services);
 	}
 
-	return stream.str();
+	return oss.str();
 }
 
 string ServerResponse::getMessage(const SMTPResponseType c_Type) {
@@ -148,6 +151,31 @@ int32_t ServerResponse::getCode(const SMTPResponseType c_Type) {
 		case SMTPResponseType::SRC_RELAY_FAIL: return 551;
 		case SMTPResponseType::SRC_HELP_RESP: return 214;
 		case SMTPResponseType::SRC_AUTH_NOT_ALLOWED: return 551;
+		default: throw std::runtime_error("getCode() invalid type");
+	}
+}
+
+const char *ServerResponse::getEnchancedCode(const SMTPResponseType &c_Type) {
+	switch (c_Type) {
+		case SMTPResponseType::SRC_SPAM_ALERT: return "5.7.1 ";
+		case SMTPResponseType::SRC_DATA_START:
+		case SMTPResponseType::SRC_GREETING:
+		case SMTPResponseType::SRC_EHLO:
+		case SMTPResponseType::SRC_HELO: return "";
+		case SMTPResponseType::SRC_MAIL_FROM: return "2.1.0 ";
+		case SMTPResponseType::SRC_RCPT_TO: return "2.1.5 ";
+		case SMTPResponseType::SRC_DATA_END: return "2.6.0 ";
+		case SMTPResponseType::SRC_QUIT_GOODBYE: return "2.0.0 ";
+		case SMTPResponseType::SRC_SYNTAX_ERR: return "5.5.2 ";
+		case SMTPResponseType::SRC_ORDER_ERR: return "5.5.1 ";
+		case SMTPResponseType::SRC_INVALID_COMMAND: return "5.5.1 ";
+		case SMTPResponseType::SRC_START_TLS: return "5.7.0 ";
+		case SMTPResponseType::SRC_REC_NOT_LOCAL: return "5.1.1 ";
+		case SMTPResponseType::SRC_AUTH_SUCCESS: return "2.5.0 ";
+		case SMTPResponseType::SRC_AUTH_FAIL: return "5.5.0 ";
+		case SMTPResponseType::SRC_RELAY_FAIL: return "5.1.0 ";
+		case SMTPResponseType::SRC_HELP_RESP: return "2.2.0 ";
+		case SMTPResponseType::SRC_AUTH_NOT_ALLOWED: return "5.5.0 ";
 		default: throw std::runtime_error("getCode() invalid type");
 	}
 }

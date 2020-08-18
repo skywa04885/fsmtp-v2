@@ -25,10 +25,12 @@ SMTPServer::SMTPServer() noexcept: s_Logger("FSMTP-V2/ESMTP", LoggerLevel::INFO)
 	this->s_PlainServices.push_back({"STARTTLS", {}});
 	this->s_PlainServices.push_back({"SMTPUTF8", {}});
 	this->s_PlainServices.push_back({"SIZE", {maxSize}});
+	this->s_PlainServices.push_back({"ENHANCEDSTATUSCODES", {}});
 
 	this->s_SecureServices.push_back({"AUTH", {"PLAIN"}});
 	this->s_SecureServices.push_back({"SMTPUTF8", {}});
 	this->s_SecureServices.push_back({"SIZE", {maxSize}});
+	this->s_SecureServices.push_back({"ENHANCEDSTATUSCODES", {}});
 }
 
 SMTPServer::~SMTPServer() noexcept {}
