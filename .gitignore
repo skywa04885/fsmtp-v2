@@ -12,4 +12,3 @@ cmake-build-release/*
 subprojects/*
 dependencies/*
 config.json
-logs/*
