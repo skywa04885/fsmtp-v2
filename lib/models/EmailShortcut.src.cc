@@ -130,7 +130,7 @@ namespace FSMTP::Models
       cass_value_get_string(cass_row_get_column_by_name(row, "e_mailbox"), &mailbox, &mailboxLen);
       cass_value_get_int64(cass_row_get_column_by_name(row, "e_size_octets"), &shortcut.e_SizeOctets);
       cass_value_get_int32(cass_row_get_column_by_name(row, "e_uid"), &shortcut.e_UID);
-      cass_value_get_int32(cass_row_get_column_by_name(row, "e_Flags"), &shortcut.e_Flags);
+      cass_value_get_int32(cass_row_get_column_by_name(row, "e_flags"), &shortcut.e_Flags);
       cass_value_get_string(cass_row_get_column_by_name(row, "e_from"), &from, &fromLen);
 
       // Turns the buffers into real strings, and starts appending
@@ -333,17 +333,16 @@ namespace FSMTP::Models
     const string &mailbox
   ) {
     const char *query = R"(DELETE FROM fannst.email_shortcuts 
-    WHERE e_domain=? AND e_type=? AND e_owners_uuid=? AND e_email_uuid=? AND e_mailbox=?)";
+    WHERE e_domain=? AND e_owners_uuid=? AND e_email_uuid=? AND e_mailbox=?)";
     CassStatement *statement = nullptr;
     CassFuture *future = nullptr;
 
-    statement = cass_statement_new(query, 5);
+    statement = cass_statement_new(query, 4);
     DEFER(cass_statement_free(statement));
     cass_statement_bind_string(statement, 0, domain.c_str());
-    cass_statement_bind_int32(statement, 1, EmailType::ET_INCOMMING);
-    cass_statement_bind_uuid(statement, 2, ownersUuid);
-    cass_statement_bind_uuid(statement, 3, emailUuid);
-    cass_statement_bind_string(statement, 4, mailbox.c_str());
+    cass_statement_bind_uuid(statement, 1, ownersUuid);
+    cass_statement_bind_uuid(statement, 2, emailUuid);
+    cass_statement_bind_string(statement, 3, mailbox.c_str());
 
     future = cass_session_execute(cassandra->c_Session, statement);
     DEFER(cass_future_free(future));

@@ -75,8 +75,6 @@ namespace FSMTP::POP3
 	}
 
 	P3Server &P3Server::startHandler(const bool newThread) {
-		auto *cassandra = this->s_Cassandra.get();
-
 		auto handler = [&](shared_ptr<ClientSocket> client) {
 			P3ServerSession session;
 			Logger clogger("POP3" + client->getPrefix(), LoggerLevel::DEBUG);
@@ -134,9 +132,10 @@ namespace FSMTP::POP3
 
 			try {
 				if (session.s_Graveyard.size() > 0) {
+					auto *cassandra = this->s_Cassandra.get();
+
 					DEBUG_ONLY(clogger << WARN << "Deleting " << session.s_Graveyard.size() << " emails !" << ENDL);
-					for (const size_t i : session.s_Graveyard)
-					{
+					for (const size_t i : session.s_Graveyard) {
 						// Deletes the the raw email, shortcut and parsed email
 						const CassUuid &uuid = get<0>(session.s_References[i]);
 						const int64_t &bucket = get<2>(session.s_References[i]);
@@ -161,13 +160,13 @@ namespace FSMTP::POP3
 
 				DEBUG_ONLY(clogger << "Client disconnected" << ENDL);	
 			} catch (const runtime_error &e) {
-				clogger << FATAL << "Could not delete emails: " << e.what() << ENDL << CLASSIC;
+				clogger << FATAL << "Could not delete emails (runtime): " << e.what() << ENDL << CLASSIC;
 			} catch (const exception &e) {
-				clogger << FATAL << "Could not delete emails: " << e.what() << ENDL << CLASSIC;
+				clogger << FATAL << "Could not delete emails (except): " << e.what() << ENDL << CLASSIC;
 			} catch (const DatabaseException &e) {
-				clogger << FATAL << "Could not delete emails: " << e.what() << ENDL << CLASSIC;
+				clogger << FATAL << "Could not delete emails (DBExcept): " << e.what() << ENDL << CLASSIC;
 			} catch (...) {
-				clogger << FATAL << "Could not delete emails: unknown" << ENDL << CLASSIC;
+				clogger << FATAL << "Could not delete emails (other): unknown" << ENDL << CLASSIC;
 			}
 		};
 
@@ -217,8 +216,7 @@ namespace FSMTP::POP3
 				try {
 					i = stol(command.c_Args[0]);
 					--i;
-				} catch (const invalid_argument& e)
-				{
+				} catch (const invalid_argument& e) {
 					throw P3SyntaxException("TOP invalid index");
 				}
 
@@ -675,7 +673,7 @@ namespace FSMTP::POP3
 					throw P3SyntaxException("Invalid index for DELE");
 				}
 
-				if (i > session.s_References.size()) {
+				if (i >= session.s_References.size()) {
 					string error = "Max index ";
 					error += to_string(session.s_References.size());
 					throw P3SyntaxException(error);
