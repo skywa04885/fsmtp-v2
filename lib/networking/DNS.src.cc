@@ -49,6 +49,9 @@ namespace FSMTP::DNS {
 			case RecordType::RT_TXT:
 				rType = ns_t_txt;
 				break;
+			case RecordType::RT_A:
+				rType = ns_t_a;
+				break;
 			default: throw runtime_error("Invalid record type");
 		}
 

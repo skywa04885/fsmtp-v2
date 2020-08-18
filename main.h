@@ -26,6 +26,7 @@
 #include "lib/workers/TransmissionWorker.src.h"
 #include "lib/pop3/P3Server.src.h"
 #include "lib/general/Logger.src.h"
+#include "lib/smtp/server/SMTPSpamDetection.src.h"
 
 using namespace FSMTP;
 

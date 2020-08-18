@@ -15,6 +15,7 @@
 */
 
 #include "main.h"
+#include "lib/smtp/server/SMTPSpamDetection.src.h"
 
 static const char *CONFIG_FILE = "../config.json";
 static const char *FALLBACK_CONFIG_FILE = "../fallback/config.json";
