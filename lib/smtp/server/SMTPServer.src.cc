@@ -101,6 +101,7 @@ SMTPServer &SMTPServer::startHandler(const bool newThread) {
 		Logger clogger("ESMTP:" + client->getPrefix(), LoggerLevel::DEBUG);
 		DEBUG_ONLY(clogger << "Client connected" << ENDL);
 
+		cout << client->getPrefix() << endl;
 		if (SpamDetection::checkSpamhaus(client->getPrefix())) {
 			ServerResponse response(SMTPResponseType::SRC_SPAM_ALERT);
 			client->write(response.build());
