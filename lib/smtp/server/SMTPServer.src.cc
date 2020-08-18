@@ -210,7 +210,7 @@ bool SMTPServer::handleCommand(
 			string prefix = client->getPrefix();
 			ServerResponse response(
 				SMTPResponseType::SRC_HELO, "",
-				reinterpret_cast<const void *>(prefix.c_str()), nullptr
+				reinterpret_cast<const void *>(client->getAddress()), nullptr
 			);
 			client->write(response.build());
 
@@ -233,7 +233,7 @@ bool SMTPServer::handleCommand(
 			ServerResponse response(
 				SMTPResponseType::SRC_EHLO,
 				"",
-				reinterpret_cast<const void *>(prefix.c_str()),
+				reinterpret_cast<const void *>(client->getAddress()),
 				(client->usingSSL() ? &this->s_SecureServices : &this->s_PlainServices)
 			);
 			client->write(response.build());
