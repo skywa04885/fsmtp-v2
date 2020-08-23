@@ -73,7 +73,7 @@ namespace FSMTP::Server
 
 	bool authVerify(
 		RedisConnection *redis,
-		CassandraConnection *cassandra,
+		CassandraConnection *cass,
 		const std::string &user,
 		const std::string &password,
 		AccountShortcut &shortcutTarget
@@ -86,15 +86,13 @@ namespace FSMTP::Server
 		//  fails we know that the user is not local, and throw error
 
 		try {
-			domain = LocalDomain::get(address.getDomain(), cassandra, redis);
+			domain = LocalDomain::get(address.getDomain(), cass, redis);
 		} catch (const EmptyQuery &e) {
 			throw runtime_error("Domain not local");
 		}
 
 		try {
-			shortcutTarget = AccountShortcut::findRedis(
-				redis, address.getDomain(), address.getUsername()
-			);
+			shortcutTarget = AccountShortcut::find(cass, redis, address.getDomain(), address.getUsername());
 		} catch (const EmptyQuery &e) {
 			throw runtime_error("User not found on server");
 		}
@@ -103,7 +101,7 @@ namespace FSMTP::Server
 		std::string uPass, uPubKey;
 		try {
 			std::tie(uPass, uPubKey) = Account::getPassAndPublicKey(
-				cassandra, 
+				cass, 
 				shortcutTarget.a_Domain, 
 				shortcutTarget.a_Bucket, 
 				shortcutTarget.a_UUID

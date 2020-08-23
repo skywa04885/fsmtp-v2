@@ -224,7 +224,10 @@ namespace FSMTP::Models
 
 			const CassResult *result = cass_future_get_result(future);
 			CassIterator *iterator = cass_iterator_from_result(result);
-			DEFER(cass_iterator_free(iterator));
+			DEFER({
+				cass_result_free(result);
+				cass_iterator_free(iterator);
+			});
 
 			while (cass_iterator_next(iterator)) {
 				const CassRow *row = cass_iterator_get_row(iterator);

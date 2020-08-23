@@ -5,7 +5,8 @@ sources += files(
   'EmailShortcut.src.cc',
   'RawEmail.src.cc',
   'Mailbox.src.cc',
-  'MailboxStatus.src.cc'
+  'MailboxStatus.src.cc',
+  'UIDHolder.src.cc'
 )
 
 test_sources += files (

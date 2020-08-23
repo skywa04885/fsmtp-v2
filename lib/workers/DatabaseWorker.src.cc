@@ -111,26 +111,23 @@ namespace FSMTP::Workers
 				raw.e_EmailUUID = uuid;
 				
 				try {
-					shortcut.e_UID = MailboxStatus::addOneMessage(
-						redis, cass, acc.a_Bucket, acc.a_Domain,
-						acc.a_UUID, shortcut.e_Mailbox
+					shortcut.e_UID = UIDHolder::getAndIncrement(
+						cass, redis, acc.a_Bucket, acc.a_Domain, acc.a_UUID
 					);
 
 					raw.save(cass);
 					shortcut.save(cass);
-
-					databaseMutex.lock();
-					databaseQueue.pop_back();
-					databaseMutex.unlock();
 				} catch (const runtime_error &e) {
 					logger << FATAL << "Could not store message: " << e.what() << ENDL << CLASSIC;
 				} catch (const EmptyQuery &e) {
 					logger << FATAL << "Could not store message: " << e.what() << ENDL << CLASSIC;
 				} catch (const DatabaseException &e) {
 					logger << FATAL << "Could not store message: " << e.what() << ENDL << CLASSIC;
-				} catch (...) {
-					logger << FATAL << "Could not store message, error unknown !" << ENDL << CLASSIC;
 				}
+
+				databaseMutex.lock();
+				databaseQueue.pop_back();
+				databaseMutex.unlock();
 			});
 		}
 	}

@@ -76,7 +76,12 @@ namespace FSMTP::Models
 		void saveRedis(RedisConnection *redis);
 
 		static void getPrefix(const string &domain, const string &username, char *buffer);
+		
 		static AccountShortcut find(
+			CassandraConnection *cass, RedisConnection *redis,
+			const string &domain, const string &username
+		);
+		static AccountShortcut findCassandra(
 			CassandraConnection *conn, const string &domain,
 			const string &username
 		);

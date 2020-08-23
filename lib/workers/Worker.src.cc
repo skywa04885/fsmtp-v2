@@ -95,9 +95,7 @@ namespace FSMTP::Workers
 				this->action(u);
 			} catch (const EmptyQuery &e) {
 				logger << ERROR << "Execution failed: " << e.what() << ENDL << CLASSIC;
-			} catch (...) {
-				logger << ERROR << "Execution failed with unknown error !" << ENDL << CLASSIC;
-			}
+			} 
 
 			this_thread::sleep_for(milliseconds(this->w_Interval));
 		}

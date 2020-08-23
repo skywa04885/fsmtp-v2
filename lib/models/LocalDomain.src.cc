@@ -89,6 +89,7 @@ namespace FSMTP::Models
 		}
 
 		cass_value_get_uuid(cass_row_get_column_by_name(row, "u_uuid"), &res.l_UUID);
+		res.l_Domain = l_Domain;
 
 		return res;
 	}

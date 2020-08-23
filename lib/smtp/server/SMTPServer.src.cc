@@ -394,7 +394,7 @@ bool SMTPServer::handleCommand(
 				//  we will send an error, and return from the current command.
 
 				try {
-					receivingAccount = AccountShortcut::findRedis(redis, to.getDomain(), to.getUsername());
+					receivingAccount = AccountShortcut::find(cass, redis, to.getDomain(), to.getUsername());
 				} catch (const EmptyQuery &e) {
 					ServerResponse response(
 						SMTPResponseType::SRC_REC_NOT_LOCAL, "",

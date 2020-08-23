@@ -255,6 +255,22 @@ namespace FSMTP::Models
 	}
 
 	AccountShortcut AccountShortcut::find(
+		CassandraConnection *cass, RedisConnection *redis,
+		const string &domain, const string &username
+	) {
+		AccountShortcut res;
+
+		try {
+			res = findRedis(redis, domain, username);
+		} catch (const EmptyQuery &e) {
+			res = findCassandra(cass, domain, username);
+			res.saveRedis(redis);
+		}
+
+		return res;
+	}
+
+	AccountShortcut AccountShortcut::findCassandra(
 		CassandraConnection *conn,
 		const string &domain,
 		const string &username
@@ -298,6 +314,7 @@ namespace FSMTP::Models
 		cass_value_get_int64(cass_row_get_column_by_name(row, "a_bucket"), &res.a_Bucket);
 		cass_value_get_uuid(cass_row_get_column_by_name(row, "a_uuid"), &res.a_UUID);
 		res.a_Domain = domain;
+		res.a_Username = username;
 
 		return res;
 	}
