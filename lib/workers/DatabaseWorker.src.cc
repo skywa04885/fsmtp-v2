@@ -114,6 +114,7 @@ namespace FSMTP::Workers
 					shortcut.e_UID = UIDHolder::getAndIncrement(
 						cass, redis, acc.a_Bucket, acc.a_Domain, acc.a_UUID
 					);
+					MailboxStatus::addOneMessage(redis, cass, acc.a_Bucket, acc.a_Domain, acc.a_UUID, shortcut.e_Mailbox);
 
 					raw.save(cass);
 					shortcut.save(cass);

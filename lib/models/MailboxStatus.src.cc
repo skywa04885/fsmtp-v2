@@ -35,7 +35,7 @@ namespace FSMTP::Models
 
 	MailboxStatus::MailboxStatus(void):
 		s_Recent(0), s_Total(0), s_Flags(0x0),
-		s_PerfmaFlags(0x0), s_NextUID(0), s_Unseen(0),
+		s_PerfmaFlags(0x0), s_Unseen(0),
 		s_Bucket(0)
 	{}
 
@@ -111,15 +111,10 @@ namespace FSMTP::Models
 				throw DatabaseException(EXCEPT_DEBUG("Expected type integer, got something else .."));
 			} res.s_PerfmaFlags = stoi(reply->element[7]->str);
 
-			// Gets the next UID
+			// Gets the recent
 			if (reply->element[9]->type != REDIS_REPLY_STRING) {
 				throw DatabaseException(EXCEPT_DEBUG("Expected type integer, got something else .."));
-			} res.s_NextUID = stoi(reply->element[9]->str);
-
-			// Gets the most recent one
-			if (reply->element[11]->type != REDIS_REPLY_STRING) {
-				throw DatabaseException(EXCEPT_DEBUG("Expected type integer, got something else .."));
-			} res.s_Recent = stoi(reply->element[11]->str);
+			} res.s_Recent = stoi(reply->element[9]->str);
 
 			// Updates the status and sets the recent number, since it now is received
 			//  we want to set it to zero
@@ -149,10 +144,9 @@ namespace FSMTP::Models
 		char prefix[512], command[1024];
 		getPrefix(s_Bucket, s_Domain.c_str(), this->s_UUID, mailboxPath.c_str(), prefix); 
 		sprintf(
-			command, "%s %s v1 %d v2 %d v3 %d v4 %d v5 %d v6 %d",
+			command, "%s %s v1 %d v2 %d v3 %d v4 %d v5 %d",
 			"HMSET", prefix, this->s_Flags, this->s_Unseen,
-			this->s_Total, this->s_PerfmaFlags, this->s_NextUID,
-			this->s_Recent
+			this->s_Total, this->s_PerfmaFlags, this->s_Recent
 		);
 
 		// Executes the command and checks for errors, if something goes
@@ -182,7 +176,6 @@ namespace FSMTP::Models
 		WHERE e_domain=? AND e_owners_uuid=? AND e_mailbox=?)";
 		MailboxStatus res;
 		cass_bool_t hasMorePages;
-		int32_t largestUID = 0;
 
 		res.s_Bucket = bucket;
 		res.s_Domain = domain;
@@ -239,9 +232,6 @@ namespace FSMTP::Models
 				if (!(BINARY_COMPARE(flags, _EMAIL_FLAG_SEEN))) {
 					++res.s_Unseen;
 				}
-
-				if (uid > largestUID) largestUID = uid;
-				++res.s_Total;
 			}
 
 			hasMorePages = cass_result_has_more_pages(result);
@@ -253,11 +243,10 @@ namespace FSMTP::Models
 		// Sets the next uuid as the largest one incremented
 		//  after this we return the constructed status object
 
-		res.s_NextUID = ++largestUID;
 		return res;
 	}
 
-	int32_t MailboxStatus::addOneMessage(
+	void MailboxStatus::addOneMessage(
 		RedisConnection *redis,
 		CassandraConnection *cassandra,
 		const int64_t s_Bucket,
@@ -272,8 +261,6 @@ namespace FSMTP::Models
 		//  these are all effected when a new message is received 
 
 		MailboxStatus old = MailboxStatus::get(redis, cassandra, s_Bucket, s_Domain, uuid, mailboxPath);
-		retUID = old.s_NextUID;
-		old.s_NextUID++;
 		old.s_Total++;
 		old.s_Recent++;
 		old.s_Unseen++;
@@ -284,9 +271,9 @@ namespace FSMTP::Models
 		char prefix[512], command[1024];
 		getPrefix(s_Bucket, s_Domain.c_str(), uuid, mailboxPath.c_str(), prefix);
 		sprintf(
-			command, "%s %s v2 %d v3 %d v5 %d v6 %d",
+			command, "%s %s v2 %d v3 %d v5 %d",
 			"HMSET", prefix,
-			old.s_Unseen, old.s_Total, old.s_NextUID, old.s_Recent
+			old.s_Unseen, old.s_Total, old.s_Recent
 		);
 
 		redisReply *reply = reinterpret_cast<redisReply *>(redisCommand(
@@ -299,7 +286,5 @@ namespace FSMTP::Models
 			error += string(reply->str, reply->len);
 			throw DatabaseException(EXCEPT_DEBUG(error));
 		}
-
-		return retUID;
 	}
 }

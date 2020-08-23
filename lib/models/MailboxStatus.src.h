@@ -38,7 +38,7 @@ namespace FSMTP::Models
 			const CassUuid &uuid, const string &mailboxPath
 		);
 
-		static int32_t addOneMessage(
+		static void addOneMessage(
 			RedisConnection *redis, CassandraConnection *cassandra,
 			const int64_t s_Bucket, const string &s_Domain,
 			const CassUuid &uuid, const string &mailboxPath
@@ -56,7 +56,6 @@ namespace FSMTP::Models
 		string s_Domain;
 		CassUuid s_UUID;
 		int32_t s_Unseen;
-		int32_t s_NextUID;
 		int32_t s_Recent;
 		int32_t s_Total;
 		int32_t s_Flags;

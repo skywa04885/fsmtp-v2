@@ -325,7 +325,7 @@ namespace FSMTP::IMAP
 		// Prints to the buffers
 		sprintf(uidValidity, "%s %d", "UIDVALIDITY", std::numeric_limits<int32_t>::max());
 		sprintf(unseenStr, "%s %d", "UNSEEN", status.s_Unseen);
-		sprintf(uidNext, "%s %d", "UIDNEXT", status.s_NextUID);
+		// sprintf(uidNext, "%s %d", "UIDNEXT", ));
 
 		// Builds the flags
 		std::vector<const char *> flags = IMAPResponse::buildMailboxFlags(status.s_Flags);
