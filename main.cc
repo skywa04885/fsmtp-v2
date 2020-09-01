@@ -20,8 +20,11 @@
 static const char *CONFIG_FILE = "../config.json";
 static const char *FALLBACK_CONFIG_FILE = "../fallback/config.json";
 
-int main(const int argc, const char **argv)
-{
+int main(const int argc, const char **argv) {
+	FSMTP::Server::SU::checkSU("fannst.nl");
+
+	return 0;
+
 	// ==================================
 	// Default main
 	// ==================================
