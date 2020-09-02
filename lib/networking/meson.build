@@ -1,7 +1,8 @@
 subdir('sockets')
 
 sources += files(
-    'DNS.src.cc'
+    'DNS.src.cc',
+    'Address.src.cc'
 )
 
 test_sources += files(

@@ -101,8 +101,8 @@ namespace FSMTP::Server::SU {
 		// Checks if the current address is in the allowed addresses,
 		//  else we resolve the MX or A records if allowed is specified
 		auto &ipv4s = spf.getAllowedIPV4s();
-		if (find(ipv4s.begin(), ipv4s.end(), checkAddr) != ipv4s.end()) {
-			return true;
+		for (auto &addr : ipv4s) {
+			if (addr_compare(checkAddr, addr, AddrType::AT_IPv4)) return true;
 		}
 
 		// Checks if the MX records are allowed addresses, if so
@@ -121,7 +121,7 @@ namespace FSMTP::Server::SU {
 
 			// Checks if one of the email addresses matches the
 			//  address specified by the app
-			for (auto &r : mxRecords) if (r == checkAddr) return true;
+			for (auto &r : mxRecords) if (addr_compare(checkAddr, r, AddrType::AT_IPv4)) return true;
 		}
 
 		// Checks if A records are allowed, if so
@@ -140,7 +140,7 @@ namespace FSMTP::Server::SU {
 
 			// Checks if one of the email addresses matches the
 			//  address specified by the app
-			for (auto &r : aRecords) if (r == checkAddr) return true;
+			for (auto &r : aRecords) if (addr_compare(checkAddr, r, AddrType::AT_IPv4)) return true;
 		}
 
 		auto &allowed_domains = spf.getAllowedDomains();

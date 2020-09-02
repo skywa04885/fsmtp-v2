@@ -17,6 +17,9 @@
 #include "../../default.h"
 #include "../../general/Logger.src.h"
 #include "../../dns/SPF.src.h"
+#include "../../networking/Address.src.h"
+
+using namespace FSMTP::Networking;
 
 namespace FSMTP::Server::SU {
 	/**
