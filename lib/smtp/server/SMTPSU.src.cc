@@ -22,24 +22,25 @@ namespace FSMTP::Server::SU {
 	 *  this will allow to send it from fannst without
 	 *  authenticating.
 	 */
-	bool checkSU(const string &hostname) {
+	bool checkSU(const string &hostname, const string &checkAddr) {
 		#ifdef _SMTP_DEBUG
 		Logger logger("CHECKSU", LoggerLevel::DEBUG);
+		logger << "SU Checker by Luke A.C.A. Rieff" << ENDL;
 		logger << "Resolving SPF for: " << hostname << ENDL;
 		#endif
 
 		// Initializes the resolver state
 		struct __res_state state;
-		DEFER(res_nclose(&state));
 		if (res_ninit(&state) < 0) {
 			throw runtime_error(EXCEPT_DEBUG(
 						string("Failed to initialize state: ") + strerror(errno)
 			));
 		}
+		DEFER(res_nclose(&state));
 
 		// Performs the query, we store the result in a 4096 byte
 		//  long buffer. Should be enough i guess..
-		u_char answer[4096];
+		u_char answer[8192];
 		int32_t answer_len;
 		if ((answer_len = res_nquery(
 					&state, hostname.c_str(), 
@@ -59,9 +60,8 @@ namespace FSMTP::Server::SU {
 
 		// Starts parsing the message, and checks for an SPF record
 		ns_rr record;
-		char *spf_record = nullptr;
-		char record_data[2048];
-		for (int32_t i = 0; i < response_count; i++) {
+		string spf_record;
+		for (int32_t i = 0; i < response_count; ++i) {
 			ns_parserr(&msg, ns_s_an, i, &record);
 
 			// Gets the record contents, this will also append the null term to the record's
@@ -69,6 +69,7 @@ namespace FSMTP::Server::SU {
 			char *data = reinterpret_cast<char *>(const_cast<u_char *>(ns_rr_rdata(record) + 1));
 			size_t data_len = strlen(data) - 2;
 			data[data_len] = '\0';
+			DEBUG_ONLY(logger << "Checking record: " << data << ENDL);
 
 			// Checks if the record is spf
 			if (data_len < 7) {
@@ -81,9 +82,137 @@ namespace FSMTP::Server::SU {
 
 		// Checks if we should parse, if no record found
 		//  return false.
-		if (spf_record == nullptr) return false;
-		
+		if (spf_record.empty()) {
+			DEBUG_ONLY(logger << "No valid record found !" << ENDL);
+			return false;
+		}
 
-		return true;
+		DNS::SPF::SPFRecord spf(spf_record);
+		DEBUG_ONLY(spf.print(logger));
+		
+		// Checks if we should recurse, if we recurse we return
+		//  the result from the recursion
+		if (spf.shouldRedirect()) {
+			DEBUG_ONLY(logger << "Redirect required, started recurse: " 
+					<< spf.getRedirectURI() << ENDL);
+			return checkSU(spf.getRedirectURI(), checkAddr);
+		}
+
+		// Checks if the current address is in the allowed addresses,
+		//  else we resolve the MX or A records if allowed is specified
+		auto &ipv4s = spf.getAllowedIPV4s();
+		if (find(ipv4s.begin(), ipv4s.end(), checkAddr) != ipv4s.end()) {
+			return true;
+		}
+
+		// Checks if the MX records are allowed addresses, if so
+		//  we perform an query and check all the addresses
+		if (spf.getMXRecordsAllowed()) {
+			DEBUG_ONLY(logger << "MX Allowed, resolving .." << ENDL);
+
+			vector<string> mxRecords = getMXAddresses(hostname);
+			DEBUG_ONLY(logger << "MX Record addresses found: " << ENDL);
+			DEBUG_ONLY({
+				size_t i = 0;
+				for_each(mxRecords.begin(), mxRecords.end(), [&](auto &r) {
+					logger << '\t' << i++ << ": " << r << ENDL;
+				});
+			});
+
+			// Checks if one of the email addresses matches the
+			//  address specified by the app
+			for (auto &r : mxRecords) if (r == checkAddr) return true;
+		}
+
+		// Checks if A records are allowed, if so
+		//  start looping over them, and checking if in there
+		if (spf.getARecordsAllowed()) {
+			DEBUG_ONLY(logger << "A Allowed, resolving .." << ENDL);
+
+			vector<string> aRecords = getARecordAddresses(hostname);
+			DEBUG_ONLY(logger << "A Record addresses found: " << ENDL);
+			DEBUG_ONLY({
+				size_t i = 0;
+				for_each(aRecords.begin(), aRecords.end(), [&](auto &r) {
+					logger << '\t' << i++ << ": " << r << ENDL;
+				});
+			});
+
+			// Checks if one of the email addresses matches the
+			//  address specified by the app
+			for (auto &r : aRecords) if (r == checkAddr) return true;
+		}
+
+		auto &allowed_domains = spf.getAllowedDomains();
+		if (allowed_domains.size() > 0) {
+			for (auto &domain : allowed_domains) {
+				if (checkSU(domain, checkAddr)) return true;
+			}
+		}
+
+		DEBUG_ONLY(logger << checkAddr << " is not an SU for " << hostname << ENDL); 
+		return false;
+	}
+
+
+	vector<string> getMXAddresses(const string &hostname) {
+		struct __res_state state;
+		if (res_ninit(&state) < 0) {
+			throw runtime_error(EXCEPT_DEBUG(
+				string("Failed to initialize state: ") + strerror(errno)
+			));
+		}
+		DEFER(res_nclose(&state));
+
+		// Performs the query for the MX records
+		u_char answer[8192];
+		int32_t answer_len;
+		if ((answer_len = res_nquery(
+				&state, hostname.c_str(), 
+				ns_c_in, ns_t_mx, answer, 
+				sizeof(answer)
+			)) < 0) return {};
+
+
+		// Parses the response message and counts
+		//  the amount of records
+		ns_msg msg;
+		ns_initparse(answer, answer_len, &msg);
+		int response_count;
+		if ((response_count = ns_msg_count(msg, ns_s_an)) < 0) return {};
+
+		// Loops over all the records, and turns them into
+		//  ip addresses
+		ns_rr record;
+		vector<string> records = {};
+		records.reserve(response_count);
+		char data[1024];
+		for (int32_t i = 0; i < response_count; ++i) {
+			ns_parserr(&msg, ns_s_an, i, &record);
+			dn_expand(ns_msg_base(msg), ns_msg_end(msg),
+				ns_rr_rdata(record) + 2, data,
+				sizeof (data));
+
+			// Turns the hostname in to an ip address
+			//  which can be used for comparison later on
+			struct hostent *h;
+			if ((h = gethostbyname(data)) == nullptr) continue;
+			in_addr *address = reinterpret_cast<in_addr *>(h->h_addr);
+			records.push_back(inet_ntoa(*address));
+		}
+
+		return move(records);
+	}
+
+	vector<string> getARecordAddresses(const string &hostname) {
+		struct hostent *h;
+		if ((h = gethostbyname(hostname.c_str())) == nullptr) return {};
+
+		// Gets all the 'A' records, and parses the ip
+		//  addresses from them.
+		vector<string> result = {};
+		struct in_addr **p = reinterpret_cast<struct in_addr **>(h->h_addr_list);
+		for (; *p != nullptr; p++) result.push_back(inet_ntoa(**p));
+		return move(result);
 	}
 }

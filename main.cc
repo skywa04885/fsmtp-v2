@@ -21,7 +21,9 @@ static const char *CONFIG_FILE = "../config.json";
 static const char *FALLBACK_CONFIG_FILE = "../fallback/config.json";
 
 int main(const int argc, const char **argv) {
-	FSMTP::Server::SU::checkSU("fannst.nl");
+	bool isSU = FSMTP::Server::SU::checkSU("gmail.com", "108.177.119.109");
+	if (isSU) cout << "Server is SU" << endl;
+	else cout << "Server is not SU" << endl;
 
 	return 0;
 

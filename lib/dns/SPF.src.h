@@ -19,6 +19,15 @@
 #define _LIB_DNS_SPF_H
 
 #include "../default.h"
+#include "../general/Logger.src.h"
+#include "../general/cleanup.src.h"
+
+#define _SPF_FLAG_SOFTFAIL_ALL 1
+#define _SPF_FLAG_DENY_ALL 2
+#define _SPF_FLAG_ALLOW_MX 4
+#define _SPF_FLAG_ALLOW_A 8
+
+using namespace FSMTP::Cleanup;
 
 namespace FSMTP::DNS::SPF {
 	class SPFRecord {
@@ -36,24 +45,44 @@ namespace FSMTP::DNS::SPF {
 		/**
 		 * Gets the set of allowed domains specified in the header
 		 */
-		vector<string> getAllowedDomains() const;
+		const vector<string>& getAllowedDomains() const;
 
 		/**
 		 * Gets the set of allowed ipv4 addresses specified in the header
 		 */
-		vector<string> getAllowedIPV4s() const;
+		const vector<string>& getAllowedIPV4s() const;
 
 		/**
 		 * Gets the set of allowed A record domains. Domains which A recourd
 		 *  should be used as valid.
 		 */
-		vector<string> getAllowedADomains() const;
+		const vector<string>& getAllowedADomains() const;
 
 		/**
 		 * Gets the set of allowed MX record domains, the MX records addresses
 		 *  will be marked as allowed.
 		 */
-		vector<string> getAllowedMXDomains() const;
+		const vector<string>& getAllowedMXDomains() const;
+
+		/**
+		 * Returns true if we need to redirect
+		 */
+		bool shouldRedirect();
+
+		/**
+		 * Returns the redirect uri
+		 */
+		string &getRedirectURI();
+
+		void print(Logger &logger);
+	private:
+		string s_Redirect;
+		uint32_t s_Flags;
+		vector<string> s_AllowedIPV4s;
+		vector<string> s_AllowedIPV6s;
+		vector<string> s_AllowedADomains;
+		vector<string> s_AllowedMXDomains;
+		vector<string> s_AllowedDomains;
 	};
 }
 

@@ -1,3 +1,4 @@
 test_sources += files (
-  'models.test.cc'
+  'models.test.cc',
+  'address.test.cc'
 )

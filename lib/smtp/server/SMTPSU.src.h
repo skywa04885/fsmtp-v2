@@ -16,6 +16,7 @@
 
 #include "../../default.h"
 #include "../../general/Logger.src.h"
+#include "../../dns/SPF.src.h"
 
 namespace FSMTP::Server::SU {
 	/**
@@ -23,5 +24,17 @@ namespace FSMTP::Server::SU {
 	 *  this will allow to send it from fannst without
 	 *  authenticating.
 	 */
-	bool checkSU(const string &hostname);
+	bool checkSU(const string &hostname, const string &checkAddr);
+
+	/**
+	 * Gets the MX Addresses for an specific domain, this
+	 *  may be used to validate an server.
+	 */
+	vector<string> getMXAddresses(const string &hostname);
+
+	/**
+	 * Gets all the A Records for a specific domain, this
+	 *  may be used to validate an server.
+	 */
+	vector<string> getARecordAddresses(const string &hostname);
 }

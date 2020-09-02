@@ -18,8 +18,9 @@
 
 using namespace FSMTP::DNS::SPF;
 
-SPFRecord::SPFRecord(const string &raw) {
-	this->parse(const string &raw);
+SPFRecord::SPFRecord(const string &raw):
+	s_Flags(0x0) {
+	this->parse(raw);
 }
 
 void SPFRecord::parse(const string &raw) {
@@ -27,45 +28,122 @@ void SPFRecord::parse(const string &raw) {
 	stringstream stream(raw);
 	string part;
 
+	// Splits the header into parts, which we 
+	//  later will parse.
 	while (getline(stream, part, ' ')) {
-		if (part.empty()) continue;
-		else parts.push_back(part);
+		string cleanPart;
+		reduceWhitespace(part, cleanPart);
+		removeFirstAndLastWhite(cleanPart);
+
+		if (cleanPart.empty()) continue;
+		else parts.push_back(cleanPart);
 	}
 
+	// Parses the parts, after which we return
 	for_each(parts.begin(), parts.end(), [&](auto &part) {
-			if (part[0] == '~') {
-				if (part.substr(1) == "all") {
-
-				}
-			} else if (part[1] == '-') {
-				if (part.substr(1) == "all") {
-
-				}
-			} else if (part == "mx") {
-
-			} else if (part == "a") {
-
-			} else {
+			if (part[0] == 'v') return;
+			else if (part[0] == '~') {
+				if (part.substr(1) == "all") this->s_Flags |= _SPF_FLAG_SOFTFAIL_ALL;
+			} else if (part[0] == '-') {
+				if (part.substr(1) == "all") this->s_Flags |= _SPF_FLAG_DENY_ALL;
+			} else if (part == "mx") this->s_Flags |= _SPF_FLAG_ALLOW_MX;
+			else if (part == "a") this->s_Flags |= _SPF_FLAG_ALLOW_A;
+			else {
 				string key, val;
 				size_t sep;
 
 				if ((sep = part.find_first_of(':')) == string::npos) {
-					throw runtime_error(EXCEPT_DEBUG("Invalid header: key value pair not existing"));
+					// Checks if the separator is =
+					if ((sep = part.find_first_of('=')) == string::npos)
+						throw runtime_error(EXCEPT_DEBUG(
+							string("Invalid header: key value pair not existing for: ") + part)
+						);
 				}
 
 				key = part.substr(0, sep);
 				val = part.substr(++sep);
 			
-				if (key == "a") {
-
-				} else if (key == "mx") {
-
-				} else if (key == "ipv4") {
-
-				} else if (key == "include") {
-
-				} else throw runtime_error(EXCEPT_DEBUG("Invalid header: key unknown !"));
+				if (key == "a") this->s_AllowedADomains.push_back(val);
+				else if (key == "mx") this->s_AllowedMXDomains.push_back(val);
+				else if (key == "ip4") this->s_AllowedIPV4s.push_back(val);
+				else if (key == "ip6") this->s_AllowedIPV6s.push_back(val);
+				else if (key == "include") this->s_AllowedDomains.push_back(val);
+				else if (key == "redirect") this->s_Redirect = val;
+				else throw runtime_error(EXCEPT_DEBUG("Invalid header: key unknown !"));
 			}
 	});
 }
 
+void SPFRecord::print(Logger &logger) {
+	logger << "SPFRecord: " << ENDL;
+	logger << " - Redirect: " << 
+		(this->s_Redirect.empty() ? "No" : string("Yes: ") + this->s_Redirect) << ENDL;
+	logger << " - Flags: " << bitset<32>(this->s_Flags) << ':' << ENDL;
+
+	// Prints the flags in a meaningfull way ( with strings )
+	vector<const char *> flags = {};
+	if (BINARY_COMPARE(this->s_Flags, _SPF_FLAG_ALLOW_A)) flags.push_back("Allow A Records");
+	if (BINARY_COMPARE(this->s_Flags, _SPF_FLAG_ALLOW_MX)) flags.push_back("Allow MX Records");
+	if (BINARY_COMPARE(this->s_Flags, _SPF_FLAG_DENY_ALL)) flags.push_back("Deny all");
+	if (BINARY_COMPARE(this->s_Flags, _SPF_FLAG_SOFTFAIL_ALL)) flags.push_back("Softfail");
+
+	size_t i = 0;
+	for_each(flags.begin(), flags.end(), [&](auto &flag) {
+			logger << '\t' << i++ << ": " << flag << ENDL;
+	});
+
+	// Prints the allowed IP's and domains
+	logger << " - Allowed IPv4's: " << ENDL;
+	i = 0;
+	for_each(this->s_AllowedIPV4s.begin(), this->s_AllowedIPV4s.end(), [&](auto &ip) {
+			logger << '\t' << i++ << ": " << ip << ENDL;
+	});
+	
+	logger << " - Allowed IPv6's: " << ENDL;
+	i = 0;
+	for_each(this->s_AllowedIPV6s.begin(), this->s_AllowedIPV6s.end(), [&](auto &ip) {
+			logger << '\t' << i++ << ": " << ip << ENDL;
+	});
+
+	logger << " - Allowed Domains: " << ENDL;
+	i = 0;
+	for_each(this->s_AllowedDomains.begin(), this->s_AllowedDomains.end(), [&](auto &ip) {
+			logger << '\t' << i++ << ": " << ip << ENDL;
+	});
+
+	logger << " - Allowed A Records from domains: " << ENDL;
+	i = 0;
+	for_each(this->s_AllowedADomains.begin(), this->s_AllowedADomains.end(), [&](auto &ip) {
+			logger << '\t' << i++ << ": " << ip << ENDL;
+	});
+
+	logger << " - Allowed MX Records from domains: " << ENDL;
+	i = 0;
+	for_each(this->s_AllowedMXDomains.begin(), this->s_AllowedMXDomains.end(), [&](auto &ip) {
+			logger << '\t' << i++ << ": " << ip << ENDL;
+	});
+}
+
+string &SPFRecord::getRedirectURI() {
+	return this->s_Redirect;
+}
+
+const vector<string> &SPFRecord::getAllowedDomains() const {
+	return this->s_AllowedDomains;
+}
+
+bool SPFRecord::shouldRedirect() {
+	return !this->s_Redirect.empty();
+}
+
+const vector<string> &SPFRecord::getAllowedIPV4s() const {
+	return this->s_AllowedIPV4s;
+}
+
+bool SPFRecord::getARecordsAllowed() const {
+	return BINARY_COMPARE(this->s_Flags, _SPF_FLAG_ALLOW_A);
+}
+
+bool SPFRecord::getMXRecordsAllowed() const {
+	return BINARY_COMPARE(this->s_Flags, _SPF_FLAG_ALLOW_MX);
+}
