@@ -83,6 +83,7 @@ namespace FSMTP::DNS::SPF {
 		vector<string> s_AllowedADomains;
 		vector<string> s_AllowedMXDomains;
 		vector<string> s_AllowedDomains;
+		vector<string> s_AllowedPTRs;
 	};
 }
 

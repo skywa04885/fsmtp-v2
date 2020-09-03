@@ -51,7 +51,10 @@ namespace FSMTP::Server::SU {
 		// Parses the response, and throws an exception
 		//  if the response contains zero or less messages
 		ns_msg msg;
-		ns_initparse(answer, answer_len, &msg);
+		if (ns_initparse(answer, answer_len, &msg)) {
+			throw runtime_error(string("Failed to initialize parser: ") + strerror(errno));
+		}
+
 		int32_t response_count;
 		if ((response_count = ns_msg_count(msg, ns_s_an)) <= 0) {
 			throw runtime_error(EXCEPT_DEBUG("No records found for domain !"));
@@ -59,16 +62,17 @@ namespace FSMTP::Server::SU {
 		DEBUG_ONLY(logger << "Found " << response_count << " records" << ENDL);
 
 		// Starts parsing the message, and checks for an SPF record
+		// cout << string((const char *)answer, answer_len) << endl;
 		ns_rr record;
 		string spf_record;
 		for (int32_t i = 0; i < response_count; ++i) {
-			ns_parserr(&msg, ns_s_an, i, &record);
+			if (ns_parserr(&msg, ns_s_an, i, &record)) {
+				throw runtime_error(string("Failed to parse record: ") + strerror(errno));
+			}
 
-			// Gets the record contents, this will also append the null term to the record's
-			//  data since we will otherwise have random chars. We skip the first one too.
-			char *data = reinterpret_cast<char *>(const_cast<u_char *>(ns_rr_rdata(record) + 1));
-			size_t data_len = strlen(data) - 2;
-			data[data_len] = '\0';
+			// Gets the data from the SPF record
+			const char *data = reinterpret_cast<const char *>(ns_rr_rdata(record) + 1);
+			size_t data_len = strlen(data);
 			DEBUG_ONLY(logger << "Checking record: " << data << ENDL);
 
 			// Checks if the record is spf

@@ -67,9 +67,10 @@ void SPFRecord::parse(const string &raw) {
 				else if (key == "mx") this->s_AllowedMXDomains.push_back(val);
 				else if (key == "ip4") this->s_AllowedIPV4s.push_back(val);
 				else if (key == "ip6") this->s_AllowedIPV6s.push_back(val);
+				else if (key == "ptr") this->s_AllowedPTRs.push_back(val);
 				else if (key == "include") this->s_AllowedDomains.push_back(val);
 				else if (key == "redirect") this->s_Redirect = val;
-				else throw runtime_error(EXCEPT_DEBUG("Invalid header: key unknown !"));
+				else return; // Just ignore
 			}
 	});
 }
@@ -120,6 +121,13 @@ void SPFRecord::print(Logger &logger) {
 	logger << " - Allowed MX Records from domains: " << ENDL;
 	i = 0;
 	for_each(this->s_AllowedMXDomains.begin(), this->s_AllowedMXDomains.end(), [&](auto &ip) {
+			logger << '\t' << i++ << ": " << ip << ENDL;
+	});
+
+
+	logger << " - Allowed PTR Records from domains: " << ENDL;
+	i = 0;
+	for_each(this->s_AllowedPTRs.begin(), this->s_AllowedPTRs.end(), [&](auto &ip) {
 			logger << '\t' << i++ << ": " << ip << ENDL;
 	});
 }
