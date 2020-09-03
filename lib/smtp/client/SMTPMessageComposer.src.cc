@@ -98,7 +98,7 @@ namespace FSMTP::Mailer::Composer
 
 		time(&rawTime);
 		timeInfo = localtime(&rawTime);
-		strftime(dateBuffer, sizeof (dateBuffer), "%a, %d %b %Y %T %Z", timeInfo);
+		strftime(dateBuffer, sizeof (dateBuffer), "%a, %-d %b %Y %T (%Z)", timeInfo);
 		dateValue = dateBuffer;
 		DEBUG_ONLY(logger << "Verwerkings datum: " << dateValue << ENDL);
 
