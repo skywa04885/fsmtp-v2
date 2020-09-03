@@ -46,6 +46,10 @@ void SPFRecord::parse(const string &raw) {
 				if (part.substr(1) == "all") this->s_Flags |= _SPF_FLAG_SOFTFAIL_ALL;
 			} else if (part[0] == '-') {
 				if (part.substr(1) == "all") this->s_Flags |= _SPF_FLAG_DENY_ALL;
+			} else if (part[0] == '+') {
+				if (part.substr(1) == "all") this->s_Flags |= _SPF_FLAG_ALLOW_ALL;
+			} else if (part[0] == '?') {
+				if (part.substr(1) == "all") this->s_Flags |= _SPF_FLAG_ALLOW_NO_FURTHER_CHECKS;
 			} else if (part == "mx") this->s_Flags |= _SPF_FLAG_ALLOW_MX;
 			else if (part == "a") this->s_Flags |= _SPF_FLAG_ALLOW_A;
 			else {
@@ -67,7 +71,7 @@ void SPFRecord::parse(const string &raw) {
 				else if (key == "mx") this->s_AllowedMXDomains.push_back(val);
 				else if (key == "ip4") this->s_AllowedIPV4s.push_back(val);
 				else if (key == "ip6") this->s_AllowedIPV6s.push_back(val);
-				else if (key == "ptr") this->s_AllowedPTRs.push_back(val);
+				else if (key == "ptr") this->s_Flags |= _SPF_FLAG_DEPRECATED;
 				else if (key == "include") this->s_AllowedDomains.push_back(val);
 				else if (key == "redirect") this->s_Redirect = val;
 				else return; // Just ignore
@@ -87,6 +91,8 @@ void SPFRecord::print(Logger &logger) {
 	if (BINARY_COMPARE(this->s_Flags, _SPF_FLAG_ALLOW_MX)) flags.push_back("Allow MX Records");
 	if (BINARY_COMPARE(this->s_Flags, _SPF_FLAG_DENY_ALL)) flags.push_back("Deny all");
 	if (BINARY_COMPARE(this->s_Flags, _SPF_FLAG_SOFTFAIL_ALL)) flags.push_back("Softfail");
+	if (BINARY_COMPARE(this->s_Flags, _SPF_FLAG_ALLOW_ALL)) flags.push_back("Allow all");
+	if (BINARY_COMPARE(this->s_Flags, _SPF_FLAG_ALLOW_NO_FURTHER_CHECKS)) flags.push_back("No further checks");
 
 	size_t i = 0;
 	for_each(flags.begin(), flags.end(), [&](auto &flag) {
@@ -123,13 +129,6 @@ void SPFRecord::print(Logger &logger) {
 	for_each(this->s_AllowedMXDomains.begin(), this->s_AllowedMXDomains.end(), [&](auto &ip) {
 			logger << '\t' << i++ << ": " << ip << ENDL;
 	});
-
-
-	logger << " - Allowed PTR Records from domains: " << ENDL;
-	i = 0;
-	for_each(this->s_AllowedPTRs.begin(), this->s_AllowedPTRs.end(), [&](auto &ip) {
-			logger << '\t' << i++ << ": " << ip << ENDL;
-	});
 }
 
 string &SPFRecord::getRedirectURI() {
@@ -154,4 +153,10 @@ bool SPFRecord::getARecordsAllowed() const {
 
 bool SPFRecord::getMXRecordsAllowed() const {
 	return BINARY_COMPARE(this->s_Flags, _SPF_FLAG_ALLOW_MX);
+}
+
+bool SPFRecord::getAllowNoQuestionsAsked() const {
+	if (BINARY_COMPARE(this->s_Flags, _SPF_FLAG_ALLOW_ALL)) return true;
+	else if (BINARY_COMPARE(this->s_Flags, _SPF_FLAG_DEPRECATED)) return true;
+	else return false;
 }

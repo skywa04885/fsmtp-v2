@@ -126,13 +126,13 @@ namespace FSMTP::DNS {
 
 	string getHostnameByAddress(const struct sockaddr_in *addr) {
 		char hostname[256];
-    getnameinfo(
-    	reinterpret_cast<const struct sockaddr *>(addr),
-    	sizeof (struct sockaddr_in),
-    	hostname,
-    	sizeof (hostname),
-    	nullptr, 0, NI_NAMEREQD
-    );
-    return hostname;
-  }
+    	getnameinfo(
+	    	reinterpret_cast<const struct sockaddr *>(addr),
+	    	sizeof (struct sockaddr_in),
+	    	hostname,
+	    	sizeof (hostname),
+	    	nullptr, 0, NI_NAMEREQD
+	    );
+	    return hostname;
+	 }
 }

@@ -26,6 +26,9 @@
 #define _SPF_FLAG_DENY_ALL 2
 #define _SPF_FLAG_ALLOW_MX 4
 #define _SPF_FLAG_ALLOW_A 8
+#define _SPF_FLAG_ALLOW_ALL 16
+#define _SPF_FLAG_ALLOW_NO_FURTHER_CHECKS 32
+#define _SPF_FLAG_DEPRECATED 64
 
 using namespace FSMTP::Cleanup;
 
@@ -41,6 +44,7 @@ namespace FSMTP::DNS::SPF {
 		bool ipv4Allowed(const string &ipv4) const;
 		bool getSoftfailFlag() const;
 		bool getDenyFlag() const;
+		bool getAllowNoQuestionsAsked() const;
 
 		/**
 		 * Gets the set of allowed domains specified in the header
@@ -83,7 +87,6 @@ namespace FSMTP::DNS::SPF {
 		vector<string> s_AllowedADomains;
 		vector<string> s_AllowedMXDomains;
 		vector<string> s_AllowedDomains;
-		vector<string> s_AllowedPTRs;
 	};
 }
 

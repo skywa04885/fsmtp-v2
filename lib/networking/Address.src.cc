@@ -51,20 +51,7 @@ namespace FSMTP::Networking {
 
 		size_t i = 0;
 		while (getline(stream, segment, ':')) {
-			uint16_t binSegment;
 
-			if (!segment.empty()) {
-				if (segment.length() >= 1) binSegment |= (decodeC(segment[0]) << 12);
-				if (segment.length() >= 2) binSegment |= (decodeC(segment[0]) << 8);
-				if (segment.length() >= 3) binSegment |= (decodeC(segment[0]) << 4);
-				if (segment.length() >= 4) binSegment |= decodeC(segment[0]);
-			} else binSegment = 0x0;
-
-			// if (i < 4) {
-			// 	result.seg0 |= binSegment << (128 - ++i * 16);
-			// } else {
-			// 	result.seg1 |= binSegment << (64 - ++i * 16);
-			// }
 		}
 
 		return result;
@@ -82,47 +69,11 @@ namespace FSMTP::Networking {
 				uint32_t bBinary = bin_from_ipv4(b);
 
 				int32_t bCidr = stoi(b.substr(b.find_first_of('/') + 1));
-				cout << bCidr << endl;
 
 				aBinary >>= 32 - bCidr;
 				bBinary >>= 32 - bCidr;
 				return aBinary == bBinary;
 			} else return a == b;
-
-			// vector<string> ASegments = {};
-			// string segment;
-
-			// // Gets the default segments from the a string
-			// //  this will not contain any ranges
-			// {
-			// 	stringstream stream(a);
-			// 	while (getline(stream, segment, '.')) {
-			// 		ASegments.push_back(segment);
-			// 	}
-			// }
-
-			// // Starts comparing the segments, this will
-			// //  be done using a range stored in the b
-			// //  address
-			// stringstream stream(b);
-			// size_t i = 0;
-			// while (getline(stream, segment, '.')) {
-			// 	auto &currentASegment = ASegments[i++];
-
-			// 	if (segment.find_first_of('/') == string::npos) {
-			// 		if (segment == currentASegment) continue;
-			// 		else return false;
-			// 	} else {
-			// 		int32_t rangeFrom = stoi(segment.substr(0, segment.find_first_of('/')));
-			// 		int32_t rangeTo = stoi(segment.substr(segment.find_first_of('/') + 1));
-			// 		int32_t numberOfA = stoi(currentASegment);
-
-			// 		if (numberOfA >= rangeFrom && numberOfA <= rangeTo) continue;
-			// 		else return false;
-			// 	}
-			// }
-
-			// return true;
 		} else {
 
 		}

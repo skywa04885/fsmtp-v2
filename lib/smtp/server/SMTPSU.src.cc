@@ -92,6 +92,12 @@ namespace FSMTP::Server::SU {
 
 		DNS::SPF::SPFRecord spf(spf_record);
 		DEBUG_ONLY(spf.print(logger));
+
+		// Checks if the SPF record allows all outgoing stuff
+		if (spf.getAllowNoQuestionsAsked()) {
+			DEBUG_ONLY(logger << "All addresses allowed, or deprecated record" << ENDL);
+			return true;
+		}
 		
 		// Checks if we should recurse, if we recurse we return
 		//  the result from the recursion
@@ -182,7 +188,7 @@ namespace FSMTP::Server::SU {
 		ns_msg msg;
 		ns_initparse(answer, answer_len, &msg);
 		int response_count;
-		if ((response_count = ns_msg_count(msg, ns_s_an)) < 0) return {};
+		if ((response_count = ns_msg_count(msg, ns_s_an)) <= 0) return {};
 
 		// Loops over all the records, and turns them into
 		//  ip addresses
