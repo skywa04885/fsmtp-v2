@@ -102,7 +102,7 @@ namespace FSMTP::Models
     static CassUuid generateMessageUUID();
     static void print(FullEmail &email, Logger &logger);
 
-    EmailAddress e_TransportFrom;
+    	EmailAddress e_TransportFrom;
 		vector<EmailAddress> e_TransportTo;
 		string e_Subject;
 		string e_MessageID;

@@ -436,4 +436,42 @@ namespace FSMTP::Parsers::MIME
 			});
 		}
 	}
+
+	/**
+	 * Turns an set of email headers into a mime header set
+	 */
+	string buildHeaders(const vector<EmailHeader> &headers) {
+		ostringstream result;
+
+		for_each(headers.begin(), headers.end(), [&](auto &h) {
+			result << h.e_Key << ": " << h.e_Value << "\r\n";
+		});
+
+		return move(result.str());
+	}
+
+	/**
+	 * Builds an mime header which consists of small segments
+	 *  separated by a ;
+	 */
+	#define _BUILD_HEADER_MAX_LINE_LENGTH 73
+	string buildHeader(const vector<EmailHeader> &headers) {
+		ostringstream result;
+
+		size_t currentLineLength = 0;
+		for_each(headers.begin(), headers.end(), [&](auto &h) {
+			string append = h.e_Key;
+			append += ": ";
+			append += h.e_Value;
+
+			if (currentLineLength + append.length() > _BUILD_HEADER_MAX_LINE_LENGTH) {
+
+			} else {
+				currentLineLength += append.length();
+				result << append << "\r\n";
+			}
+		});
+
+		return move(result.str());
+	}
 }

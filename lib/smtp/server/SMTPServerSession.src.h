@@ -28,6 +28,7 @@
 #define _SMTP_SERV_SESSION_SSL_FLAG 2
 #define _SMTP_SERV_SESSION_FROM_LOCAL 4
 #define _SMTP_SERV_SESSION_RELAY 8
+#define _SMTP_SERV_SESSION_SU 16
 
 #define _SMTP_SERV_PA_HELO 1
 #define _SMTP_SERV_PA_START_TLS 2
@@ -60,5 +61,6 @@ namespace FSMTP::Server
 		vector<AccountShortcut> s_StorageTasks;
 		vector<EmailAddress> s_RelayTasks;
 		string s_RawBody;
+		bool s_PossSpam;
 	};
 }

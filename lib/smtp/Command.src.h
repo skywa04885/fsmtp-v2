@@ -33,7 +33,8 @@ namespace FSMTP::SMTP
 		CCT_QUIT,
 		CCT_UNKNOWN,
 		CCT_AUTH,
-		CCT_HELP
+		CCT_HELP,
+		CCT_SU
 	} ClientCommandType;
 
 	class ClientCommand {

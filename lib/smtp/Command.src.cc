@@ -62,62 +62,38 @@ namespace FSMTP::SMTP
 		switch (command[0])
 		{
 			case 'h':
-				if (command == "helo") {
-					type = ClientCommandType::CCT_HELO;
-				} else if (command == "help") {
-					type = ClientCommandType::CCT_HELP;
-				} else { 
-					type = ClientCommandType::CCT_UNKNOWN;
-				}
+				if (command == "helo") type = ClientCommandType::CCT_HELO;
+				else if (command == "help") type = ClientCommandType::CCT_HELP;
+				else type = ClientCommandType::CCT_UNKNOWN;
 				break;
 			case 'e':
-				if (command == "ehlo") {
-					type = ClientCommandType::CCT_EHLO;
-				} else { 
-					type = ClientCommandType::CCT_UNKNOWN;
-				}
+				if (command == "ehlo") type = ClientCommandType::CCT_EHLO;
+				else type = ClientCommandType::CCT_UNKNOWN;
 				break;
 			case 's':
-				if (command == "starttls") {
-					type = ClientCommandType::CCT_START_TLS;
-				} else {
-					type = ClientCommandType::CCT_UNKNOWN;
-				}
+				if (command == "starttls") type = ClientCommandType::CCT_START_TLS;
+				else if (command == "su") type = ClientCommandType::CCT_SU;
+				else type = ClientCommandType::CCT_UNKNOWN;
 				break;
 			case 'm':
-				if (command == "mail from") {
-					type = ClientCommandType::CCT_MAIL_FROM;
-				} else {
-					type = ClientCommandType::CCT_UNKNOWN;
-				}
+				if (command == "mail from") type = ClientCommandType::CCT_MAIL_FROM;
+				else type = ClientCommandType::CCT_UNKNOWN;
 				break;
 			case 'r':
-				if (command == "rcpt to") {
-					type = ClientCommandType::CCT_RCPT_TO;
-				} else {
-					type = ClientCommandType::CCT_UNKNOWN;
-				}
+				if (command == "rcpt to") type = ClientCommandType::CCT_RCPT_TO;
+				else type = ClientCommandType::CCT_UNKNOWN;
 				break;
 			case 'd':
-				if (command == "data") {
-					type = ClientCommandType::CCT_DATA;
-				} else { 
-					type = ClientCommandType::CCT_UNKNOWN;
-				}
+				if (command == "data") type = ClientCommandType::CCT_DATA;
+				else type = ClientCommandType::CCT_UNKNOWN;
 				break;
 			case 'q':
-				if (command == "quit") {
-					type = ClientCommandType::CCT_QUIT;
-				} else { 
-					type = ClientCommandType::CCT_UNKNOWN;
-				}
+				if (command == "quit") type = ClientCommandType::CCT_QUIT;
+				else type = ClientCommandType::CCT_UNKNOWN;
 				break;
 			case 'a':
-				if (command == "auth") {
-					this->c_CommandType = ClientCommandType::CCT_AUTH;
-				} else { 
-					this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
-				}
+				if (command == "auth") this->c_CommandType = ClientCommandType::CCT_AUTH;
+				else this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
 				break;
 			default:
 				this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
@@ -173,6 +149,9 @@ namespace FSMTP::SMTP
 				break;
 			case ClientCommandType::CCT_HELP:
 				stream << "HELP";
+				break;
+			case ClientCommandType::CCT_SU:
+				stream << "SU";
 				break;
 		}
 

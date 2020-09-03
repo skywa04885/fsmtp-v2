@@ -14,6 +14,9 @@
 	limitations under the License.
 */
 
+#ifndef _LIB_SMTP_SERVER_SMTPSU_H
+#define _LIB_SMTP_SERVER_SMTPSU_H
+
 #include "../../default.h"
 #include "../../general/Logger.src.h"
 #include "../../dns/SPF.src.h"
@@ -41,3 +44,5 @@ namespace FSMTP::Server::SU {
 	 */
 	vector<string> getARecordAddresses(const string &hostname);
 }
+
+#endif

@@ -88,8 +88,10 @@ namespace FSMTP::Workers
 			auto &domain  = session->s_SendingAccount.a_Domain;
 			if (username + '@' + domain	== fullEmail.e_TransportFrom.e_Address) {
 				shortcut.e_Mailbox = "INBOX.Sent";
-			} else {
+			} else if (!session->s_PossSpam) {
 				shortcut.e_Mailbox = "INBOX";
+			} else {
+				shortcut.e_Mailbox = "INBOX.Spam";
 			}
 
 			// Updates the folder status, and gets the new
