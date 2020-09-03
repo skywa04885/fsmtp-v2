@@ -114,4 +114,15 @@ namespace FSMTP::Parsers::MIME
 		FullEmail& email,
 		std::size_t i
 	);
+
+	/**
+	 * Turns an set of email headers into a mime header set
+	 */
+	string buildHeaders(const vector<EmailHeader> &headers);
+
+	/**
+	 * Builds an mime header which consists of small segments
+	 *  separated by a ;
+	 */
+	string buildHeader(const vector<EmailHeader> &headers);
 }

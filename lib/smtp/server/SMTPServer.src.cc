@@ -302,6 +302,11 @@ bool SMTPServer::handleCommand(
 
 			string domain = from.getDomain();
 			try {
+				// Checks if the SU flag is set, if so we we throw an empty query
+				//  to indicate that the domain is not local ( while it actually is )
+				//  but this tricks the server to allow the messages without auth
+				if (session->getFlag(_SMTP_SERV_SESSION_SU)) throw EmptyQuery("");
+
 				// Attempts to find the domain in redis, this check makes sure
 				//  that the sending domain is from us, or somebody else. If this
 				//  succeeds, and the client is not authenticated, send error.
@@ -517,10 +522,31 @@ bool SMTPServer::handleCommand(
 
 			session->s_RawBody = client->readToDelim("\r\n.\r\n");
 
+			// Performs the message validation, like checking the SPF and DKIM
+			//  records, we will set the headers accordingly. Also if this fails
+			//  the message is possible spam, and we put it in the spam.
+			vector<EmailHeader> authResults = {};
+			if (SU::checkSU(session->s_TransportMessage.e_TransportFrom.getDomain(), client->getPrefix())) {
+				authResults.push_back({"spf", string("pass, address ") + client->getPrefix() + " is authorized sender"});
+			} else {
+				authResults.push_back({"spf", string("fail, address ") + client->getPrefix() + " is not an authorized sender !"});
+				session->s_PossSpam = true;
+			}
+
+			string headers, body;
+			MIME::splitHeadersAndBody(session->s_RawBody, headers, body);
+			headers += MIME::buildHeaders({
+				{"X-Fannst-Conn", client->usingSSL() ? "SSL" : "Plain"},
+				{"X-Fannst-Auth", MIME::buildHeader(authResults)}
+			});
+			session->s_RawBody = headers;
+			session->s_RawBody += "\r\n";
+			session->s_RawBody += body;
+
+
 			try {
-				auto &message = session->s_TransportMessage;
-				MIME::parseRecursive(session->s_RawBody, message, 0);
-				DEBUG_ONLY(FullEmail::print(message, clogger));
+				MIME::parseRecursive(session->s_RawBody, session->s_TransportMessage, 0);
+				DEBUG_ONLY(FullEmail::print(session->s_TransportMessage, clogger));
 			} catch (const runtime_error &e) {
 				throw SMTPSyntaxException(string("Parsing failed: ") + e.what());
 			}
@@ -539,6 +565,39 @@ bool SMTPServer::handleCommand(
 			if (session->s_StorageTasks.size() > 0) DatabaseWorker::push(session);
 			if (session->s_RelayTasks.size() > 0) TransmissionWorker::push(session);
 
+			break;
+		}
+		// ========================================
+		// Handles the 'SU' command
+		//
+		// Checks if client is one of our comrades
+		// ========================================
+		case ClientCommandType::CCT_SU: {
+			auto &conf = Global::getConfig();
+			auto prefix = client->getPrefix();
+			if (prefix != "0.0.0.0" && prefix != "127.0.0.1" && !SU::checkSU(conf["domain"].asCString(), prefix)) {
+				client->write(ServerResponse(SMTPResponseType::SRC_SU_DENIED).build());
+				return true;
+			}
+
+			// Writes the greeting to our comrade, and grants
+			//  full SMTP access.
+			ServerResponse response(
+				SMTPResponseType::SRC_SU_ACC, "", 
+				reinterpret_cast<const void *>(client->getAddress()), nullptr
+			);
+			client->write(response.build());
+			session->setFlag(_SMTP_SERV_SESSION_SU);
+			break;
+		}
+		// ====[====================================
+		// Handles the 'FCAPA' command
+		//
+		// Sends that the server implements fannst
+		//  smtp extensions
+		// ========================================
+		case ClientCommandType::CCT_FCAPA: {
+			client->write(ServerResponse(SMTPResponseType::SRC_FCAPA_RESP).build());
 			break;
 		}
 		default: {

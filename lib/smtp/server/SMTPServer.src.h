@@ -31,6 +31,7 @@
 #include "../../models/LocalDomain.src.h"
 #include "../../workers/TransmissionWorker.src.h"
 #include "SMTPSpamDetection.src.h"
+#include "./SMTPSU.src.h"
 
 using namespace FSMTP::Parsers;
 using namespace FSMTP;

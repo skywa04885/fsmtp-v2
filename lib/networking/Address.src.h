@@ -14,38 +14,26 @@
 	limitations under the License.
 */
 
-#pragma once
+#ifndef _LIB_NET_ADDR_H
+#define _LIB_DNS_ADDR_H
 
 #include "../default.h"
-#include "../general/cleanup.src.h"
+#include "../general/hex.src.h"
 
-using namespace FSMTP::Cleanup;
+namespace FSMTP::Networking {
+	typedef enum {
+		AT_IPv4,
+		AT_IPv6
+	} AddrType;
 
-namespace FSMTP::SMTP
-{
-	typedef enum : uint32_t {
-		CCT_HELO = 0,
-		CCT_EHLO,
-		CCT_START_TLS,
-		CCT_MAIL_FROM,
-		CCT_RCPT_TO,
-		CCT_DATA,
-		CCT_QUIT,
-		CCT_UNKNOWN,
-		CCT_AUTH,
-		CCT_HELP,
-		CCT_SU,
-		CCT_FCAPA
-	} ClientCommandType;
+	/**
+	 * Compares to addresses with for example support for ranges
+	 *  which is used in SPF.
+	 */
+	bool addr_compare(const string &a, const string &b, const AddrType type);
 
-	class ClientCommand {
-	public:
-		ClientCommand(const ClientCommandType c_CommandType, const vector<string> &c_Arguments);
-		ClientCommand();
-		ClientCommand(const string &raw);
-		string build(void);
-		
-		ClientCommandType c_CommandType;
-		vector<string> c_Arguments;
-	};
+	uint32_t bin_from_ipv4(const string &ip);
+	uint128_t bin_from_ipv6(const string &ip);
 }
+
+#endif

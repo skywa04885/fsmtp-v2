@@ -53,8 +53,8 @@ namespace FSMTP::Workers
 			{}, 0, EmailTransferEncoding::ETE_QUOTED_PRINTABLE
 		});
 		composeConfig.m_From.push_back(EmailAddress(
-			"FSMTP Delivery", 
-			"test@gmail.com"
+			"Delivery Subsystem", 
+			"delivery@fannst.nl"
 		));
 		composeConfig.m_To.push_back(client.s_MailFrom);
 		composeConfig.m_Subject = "SMTP Delivery failure";

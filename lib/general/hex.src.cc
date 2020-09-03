@@ -26,8 +26,7 @@ namespace FSMTP::Encoding::HEX
 	 */
 	char _reverseDict(const char c)
 	{
-	 switch (c)
-    {
+	 switch (c) {
       case '0': return 0;
       case '1': return 1;
       case '2': return 2;

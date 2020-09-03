@@ -88,6 +88,17 @@ string ServerResponse::getMessage(const SMTPResponseType c_Type) {
 		case SMTPResponseType::SRC_HELP_RESP:
 			stream << "Fannst ESMTP server https://github.com/skywa04885/fsmtp-v2";
 			break;
+		case SMTPResponseType::SRC_FCAPA_RESP:
+			stream << "FSMTP-V2 Extensions implemented, Proceed.";
+			break;
+		case SMTPResponseType::SRC_SU_ACC:
+			stream << "Access granted for ";
+			stream << DNS::getHostnameByAddress(reinterpret_cast<const struct sockaddr_in *>(this->c_U));
+			stream << " [" << inet_ntoa(reinterpret_cast<const struct sockaddr_in *>(this->c_U)->sin_addr) << ']';
+			break;
+		case SMTPResponseType::SRC_SU_DENIED:
+			stream << "Access denied, closing transmission channel.";
+			break;
 		case SMTPResponseType::SRC_GREETING: {
 			struct tm *timeInfo = nullptr;
 			char dateBuffer[128];
@@ -151,6 +162,9 @@ int32_t ServerResponse::getCode(const SMTPResponseType c_Type) {
 		case SMTPResponseType::SRC_RELAY_FAIL: return 551;
 		case SMTPResponseType::SRC_HELP_RESP: return 214;
 		case SMTPResponseType::SRC_AUTH_NOT_ALLOWED: return 551;
+		case SMTPResponseType::SRC_SU_ACC: return 600;
+		case SMTPResponseType::SRC_SU_DENIED: return 651;
+		case SMTPResponseType::SRC_FCAPA_RESP: return 601;
 		default: throw std::runtime_error("getCode() invalid type");
 	}
 }
@@ -175,7 +189,10 @@ const char *ServerResponse::getEnchancedCode(const SMTPResponseType &c_Type) {
 		case SMTPResponseType::SRC_AUTH_FAIL: return "5.5.0 ";
 		case SMTPResponseType::SRC_RELAY_FAIL: return "5.1.0 ";
 		case SMTPResponseType::SRC_HELP_RESP: return "2.2.0 ";
+		case SMTPResponseType::SRC_SU_ACC: return "6.1.0 ";
+		case SMTPResponseType::SRC_SU_DENIED: return "6.5.1 ";
 		case SMTPResponseType::SRC_AUTH_NOT_ALLOWED: return "5.5.0 ";
+		case SMTPResponseType::SRC_FCAPA_RESP: return "6.1.1 ";
 		default: throw std::runtime_error("getCode() invalid type");
 	}
 }

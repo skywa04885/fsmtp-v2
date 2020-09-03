@@ -91,8 +91,9 @@ namespace FSMTP::POP3
 			//  the client command and send the according response. 
 			//  If anything goes wrong we print the error, and exit
 			//  on an fatal exception.		
-		
-			for (;;) {
+
+			bool _run = true;
+			while (_run) {
 				try {
 					P3Command command(client->readToDelim("\r\n"));
 
@@ -117,15 +118,15 @@ namespace FSMTP::POP3
 						false, POP3ResponseType::PRT_ORDER_ERROR, "",
 						nullptr, nullptr, reinterpret_cast<const void *>(e.what())
 					).build());
-				}  catch (const runtime_error &e) {
+				} catch (const runtime_error &e) {
 					clogger << ERROR << "An runtime error occured, message: " << e.what() << ENDL << CLASSIC;
-					break;
+					_run = false;
 				} catch (const exception &e) {
 					clogger << ERROR << "An error occured, message: " << e.what() << ENDL << CLASSIC;
-					break;
+					_run = false;
 				} catch (...) {
 					clogger << ERROR << "An error occured, message: unknown." << ENDL << CLASSIC;
-					break;
+					_run = false;
 				}
 			}
 

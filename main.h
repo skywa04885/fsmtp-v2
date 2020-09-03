@@ -27,7 +27,9 @@
 #include "lib/pop3/P3Server.src.h"
 #include "lib/general/Logger.src.h"
 #include "lib/smtp/server/SMTPSpamDetection.src.h"
+#include "lib/smtp/server/SMTPSU.src.h"
 
 using namespace FSMTP;
+using namespace FSMTP::Server::SU;
 
 int main(const int argc, const char **argv);

@@ -19,7 +19,7 @@
 using namespace FSMTP::Server;
 
 SMTPServerSession::SMTPServerSession():
-	s_Flags(0x0), s_PerformedActions(0x0)
+	s_Flags(0x0), s_PerformedActions(0x0), s_PossSpam(false)
 {}
 
 void SMTPServerSession::setFlag(int64_t mask) {
