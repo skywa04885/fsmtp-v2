@@ -83,6 +83,12 @@ template<typename T>
 Defer<T> __defer_func(T cb)
 { return Defer<T>(cb); }
 
+
+typedef struct __attribute__ (( packed )) {
+	uint64_t seg0;
+	uint64_t seg1;
+} uint128_t;
+
 // ==== Global definitions ====
 
 #define DEFER_1(x, y) x##y

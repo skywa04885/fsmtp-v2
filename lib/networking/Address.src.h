@@ -18,6 +18,7 @@
 #define _LIB_DNS_ADDR_H
 
 #include "../default.h"
+#include "../general/hex.src.h"
 
 namespace FSMTP::Networking {
 	typedef enum {
@@ -30,6 +31,9 @@ namespace FSMTP::Networking {
 	 *  which is used in SPF.
 	 */
 	bool addr_compare(const string &a, const string &b, const AddrType type);
+
+	uint32_t bin_from_ipv4(const string &ip);
+	uint128_t bin_from_ipv6(const string &ip);
 }
 
 #endif

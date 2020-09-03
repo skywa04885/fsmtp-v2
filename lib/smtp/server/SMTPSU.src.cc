@@ -71,16 +71,15 @@ namespace FSMTP::Server::SU {
 			}
 
 			// Gets the data from the SPF record
-			const char *data = reinterpret_cast<const char *>(ns_rr_rdata(record) + 1);
-			size_t data_len = strlen(data);
-			DEBUG_ONLY(logger << "Checking record: " << data << ENDL);
+			spf_record = string(reinterpret_cast<const char *>(ns_rr_rdata(record) + 1), ns_rr_rdlen(record) - 1);
+			DEBUG_ONLY(logger << "Checking record: " << spf_record << ENDL);
 
 			// Checks if the record is spf
-			if (data_len < 7) {
+			if (spf_record.length() < 7) {
 				DEBUG_ONLY(logger << "Record too short for TXT, skipping ... " << ENDL); continue;
-			} else if (ns_rr_type(record) == ns_t_txt && strncmp(data, "v=spf", 5) == 0) {
-				DEBUG_ONLY(logger << "SPF Record found: " << data << ENDL);
-				spf_record = data;
+			} else if (ns_rr_type(record) == ns_t_txt && strncmp(spf_record.c_str(), "v=spf", 5) == 0) {
+				DEBUG_ONLY(logger << "SPF Record found: " << spf_record << ENDL);
+				break;
 			}
 		}
 
