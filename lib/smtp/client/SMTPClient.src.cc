@@ -394,7 +394,7 @@ SMTPClient &SMTPClient::beSocial(void) {
 
 									// Checks if the server granted us the permissions to transmit from the same domain
 									//  this is again (onmly with fsmtp-v2 servers)
-									if (code == 601) DEBUG_ONLY(this->s_Logger << DEBUG << "SU Permissions granted" << ENDL << CLASSIC);
+									if (code == 600) DEBUG_ONLY(this->s_Logger << DEBUG << "SU Permissions granted" << ENDL << CLASSIC);
 									else if (code == 651) throw runtime_error("Access denied to server, check SPF");
 									else throw runtime_error("SU Failed");
 								} else throw runtime_error("FCAPA Not supported");

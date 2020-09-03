@@ -562,7 +562,7 @@ bool SMTPServer::handleCommand(
 			// Adds the message to the specified queue's these will either store
 			//  or transmit the message.
 
-			if (session->s_StorageTasks.size() > 0 && !session->getFlag(_SMTP_SERV_SESSION_SU)) DatabaseWorker::push(session);
+			if (session->s_StorageTasks.size() > 0) DatabaseWorker::push(session);
 			if (session->s_RelayTasks.size() > 0) TransmissionWorker::push(session);
 
 			break;
