@@ -461,7 +461,7 @@ namespace FSMTP::Parsers::MIME
 		size_t currentLineLength = 0;
 		for_each(headers.begin(), headers.end(), [&](auto &h) {
 			string append = h.e_Key;
-			append += ": ";
+			append += "=";
 			append += h.e_Value;
 
 			if (currentLineLength + append.length() > _BUILD_HEADER_MAX_LINE_LENGTH) {
