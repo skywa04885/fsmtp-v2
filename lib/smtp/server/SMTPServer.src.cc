@@ -302,6 +302,11 @@ bool SMTPServer::handleCommand(
 
 			string domain = from.getDomain();
 			try {
+				// Checks if the SU flag is set, if so we we throw an empty query
+				//  to indicate that the domain is not local ( while it actually is )
+				//  but this tricks the server to allow the messages without auth
+				if (session->getFlag(_SMTP_SERV_SESSION_SU)) throw EmptyQuery("");
+
 				// Attempts to find the domain in redis, this check makes sure
 				//  that the sending domain is from us, or somebody else. If this
 				//  succeeds, and the client is not authenticated, send error.

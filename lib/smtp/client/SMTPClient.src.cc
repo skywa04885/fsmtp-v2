@@ -153,6 +153,13 @@ SMTPClient &SMTPClient::beSocial(void) {
 			continue;
 		}
 
+
+		auto sendCommand = [&](const ClientCommandType commandType,	const std::vector<std::string> &args) {
+			ClientCommand command(commandType, args);
+			client.write(command.build());
+		};
+
+
 		// ===============================
 		// Starts sending the message
 		// 
@@ -165,15 +172,10 @@ SMTPClient &SMTPClient::beSocial(void) {
 		bool _run = true;
 		bool _performParse = true;
 
-		int32_t code;
-		string args;
-
-		auto sendCommand = [&](const ClientCommandType commandType,	const std::vector<std::string> &args) {
-			ClientCommand command(commandType, args);
-			client.write(command.build());
-		};
-
 		while (_run) {
+			int32_t code;
+			string args;
+
 			// ===================================
 			// Receives the default command
 			//
@@ -368,6 +370,45 @@ SMTPClient &SMTPClient::beSocial(void) {
 						!session.getAction(_SCS_ACTION_HELO) &&
 						session.getFlag(_SCS_FLAG_ESMTP)
 					) { // -> Initial HELO command
+						// Checks if the target message is the same domain, if so we send the SU command
+						//  to the server to request access
+						try {
+							cout << target.t_Address.getDomain() << endl;
+							if (target.t_Address.getDomain() == conf["domain"].asCString()) {
+								sendCommand(ClientCommandType::CCT_FCAPA, {});
+								DEBUG_ONLY(this->printSent("FCAPA"));
+								int32_t code;
+								string args;
+
+								tie(code, args) = ServerResponse::parseResponse(client.readToDelim("\r\n"));
+								DEBUG_ONLY(this->printReceived(code, args));
+
+								if (code == 601) {
+									// Sends the SU command, which most likely will work
+									sendCommand(ClientCommandType::CCT_SU, {});
+									DEBUG_ONLY(this->printSent("SU"));
+
+									// Gets the response code and arguments, after which we perform the debug print
+									tie(code, args) = ServerResponse::parseResponse(client.readToDelim("\r\n"));
+									DEBUG_ONLY(this->printReceived(code, args));
+
+									// Checks if the server granted us the permissions to transmit from the same domain
+									//  this is again (onmly with fsmtp-v2 servers)
+									if (code == 601) DEBUG_ONLY(this->s_Logger << DEBUG << "SU Permissions granted" << ENDL << CLASSIC);
+									else if (code == 651) throw runtime_error("Access denied to server, check SPF");
+									else throw runtime_error("SU Failed");
+								} else throw runtime_error("FCAPA Not supported");
+							}
+						} catch (const runtime_error &err) {
+							this->addError(target.t_Address.toString(), string("FSMTP-V2 Error: ") + err.what());	
+							_run = false;
+							continue;
+						} catch (...) {
+							this->addError(target.t_Address.toString(), "An unknown FSMTP-V2 Error occured");	
+							_run = false;
+							continue;
+						}
+
 						session.setAction(_SCS_ACTION_HELO);
 
 						// Sends the ehlo command

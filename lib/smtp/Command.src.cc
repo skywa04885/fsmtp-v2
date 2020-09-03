@@ -158,7 +158,7 @@ namespace FSMTP::SMTP
 				stream << "SU";
 				break;
 			case ClientCommandType::CCT_FCAPA:
-				stream << "SU";
+				stream << "FCAPA";
 				break;
 		}
 
