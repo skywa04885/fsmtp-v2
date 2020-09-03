@@ -64,6 +64,8 @@ namespace FSMTP::DKIM
 		DKIMAlgorithmPair c_Algo = DKIMAlgorithmPair::DAP_RELAXED_RELAXED;
 	} DKIMConfig;
 
+	DKIMAlgorithmPair algorithmPairFromString(const string &compare);
+
 	/**
 	 * Signs an raw email using the DKIM algorithm
 	 *

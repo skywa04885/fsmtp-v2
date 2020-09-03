@@ -18,6 +18,19 @@
 
 namespace FSMTP::DKIM
 {
+	DKIMAlgorithmPair algorithmPairFromString(const string &compare) {
+		if (compare == "relaxed/relaxed")
+			return DKIMAlgorithmPair::DAP_RELAXED_RELAXED;
+		else if (compare == "relaxed/simple")
+			return DKIMAlgorithmPair::DAP_RELAXED_SIMPLE;
+		else if (compare == "simple/simple")
+			return DKIMAlgorithmPair::DAP_SIMPLE_SIMPLE;
+		else if (compare == "simple/relaxed")
+			return DKIMAlgorithmPair::DAP_SIMPLE_RELAXED;
+		else throw runtime_error("Algorithm not recognized");
+	}
+
+	
 	/**
 	 * Signs an raw email using the DKIM algorithm
 	 *

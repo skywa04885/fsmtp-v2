@@ -15,6 +15,7 @@
 */
 
 #include "main.h"
+#include "lib/dkim/DKIMVerifier.src.h"
 #include "lib/smtp/server/SMTPSpamDetection.src.h"
 
 static const char *CONFIG_FILE = "../config.json";
@@ -22,6 +23,21 @@ static const char *FALLBACK_CONFIG_FILE = "../fallback/config.json";
 
 int main(const int argc, const char **argv)
 {
+	ifstream file;
+	file.open("../gitlab.eml");
+	if (!file.is_open())
+		throw runtime_error("Could not open file");
+
+	string line, total;
+	while (getline(file, line)) {
+		total += line;
+		total += '\n';
+	}
+
+	DKIM_Verifier::verify(total);
+
+	return 0;
+
 	// ==================================
 	// Default main
 	// ==================================

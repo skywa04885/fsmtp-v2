@@ -38,7 +38,7 @@ namespace FSMTP::DNS {
 
 		ns_msg nsMsg;
 		int32_t responseCount;
-		uint8_t resultBuffer[2048];
+		uint8_t resultBuffer[8 * 1024];
 		vector<Record> res = {};
 		int rType;
 
@@ -87,7 +87,7 @@ namespace FSMTP::DNS {
 		}
 
 		ns_rr record;
-		char data[512];
+		char data[4 * 1024];
 		for (int32_t i = 0; i < responseCount; i++) {
 			ns_parserr(&nsMsg, ns_s_an, i, &record);
 			dn_expand(

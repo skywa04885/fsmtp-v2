@@ -17,7 +17,7 @@
 #include "P3Commands.src.h"
 
 namespace FSMTP::POP3
-{
+{	
 	P3Command::P3Command(const std::string &raw) {
 		this->parse(raw);
 	}
