@@ -34,7 +34,8 @@ namespace FSMTP::SMTP
 		CCT_UNKNOWN,
 		CCT_AUTH,
 		CCT_HELP,
-		CCT_SU
+		CCT_SU,
+		CCT_FCAPA
 	} ClientCommandType;
 
 	class ClientCommand {

@@ -25,13 +25,11 @@ SMTPServer::SMTPServer() noexcept: s_Logger("FSMTP-V2/ESMTP", LoggerLevel::INFO)
 	this->s_PlainServices.push_back({"STARTTLS", {}});
 	this->s_PlainServices.push_back({"SMTPUTF8", {}});
 	this->s_PlainServices.push_back({"SIZE", {maxSize}});
-	this->s_PlainServices.push_back({"FSMTPEXCLUSIVE", {"SU"}});
 	this->s_PlainServices.push_back({"ENHANCEDSTATUSCODES", {}});
 
 	this->s_SecureServices.push_back({"AUTH", {"PLAIN"}});
 	this->s_SecureServices.push_back({"SMTPUTF8", {}});
 	this->s_SecureServices.push_back({"SIZE", {maxSize}});
-	this->s_SecureServices.push_back({"FSMTPEXCLUSIVE", {"SU"}});
 	this->s_SecureServices.push_back({"ENHANCEDSTATUSCODES", {}});
 }
 
@@ -585,6 +583,16 @@ bool SMTPServer::handleCommand(
 			);
 			client->write(response.build());
 			session->setFlag(_SMTP_SERV_SESSION_SU);
+			break;
+		}
+		// ====[====================================
+		// Handles the 'FCAPA' command
+		//
+		// Sends that the server implements fannst
+		//  smtp extensions
+		// ========================================
+		case ClientCommandType::CCT_FCAPA: {
+			client->write(ServerResponse(SMTPResponseType::SRC_FCAPA_RESP).build());
 			break;
 		}
 		default: {

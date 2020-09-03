@@ -95,6 +95,10 @@ namespace FSMTP::SMTP
 				if (command == "auth") this->c_CommandType = ClientCommandType::CCT_AUTH;
 				else this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
 				break;
+			case 'f':
+				if (command == "fcapa") this->c_CommandType = ClientCommandType::CCT_FCAPA;
+				else this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
+				break;
 			default:
 				this->c_CommandType = ClientCommandType::CCT_UNKNOWN;
 				break;
@@ -151,6 +155,9 @@ namespace FSMTP::SMTP
 				stream << "HELP";
 				break;
 			case ClientCommandType::CCT_SU:
+				stream << "SU";
+				break;
+			case ClientCommandType::CCT_FCAPA:
 				stream << "SU";
 				break;
 		}
