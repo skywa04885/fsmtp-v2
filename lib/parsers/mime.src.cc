@@ -454,34 +454,43 @@ namespace FSMTP::Parsers::MIME
 	 * Builds an mime header which consists of small segments
 	 *  separated by a ;
 	 */
-	#define _BUILD_HEADER_MAX_LINE_LENGTH 73
+	#define _BUILD_HEADER_MAX_LINE_LENGTH 63
 	string buildHeader(const vector<EmailHeader> &headers) {
 		ostringstream result;
 
-		size_t currentLineLength = 0;
+		// Starts looping over the headers
+		bool shouldIndent = false;
 		for_each(headers.begin(), headers.end(), [&](const EmailHeader &h) {
-			string append = h.e_Key;
-			append += "=";
-			append += h.e_Value;
+			// Prepares the buffer which contains the header that should be appendend
+			string buffer = h.e_Key;
+			buffer += '=';
+			buffer += h.e_Value;
+			buffer += ';';
 
-			if (currentLineLength + append.length() > _BUILD_HEADER_MAX_LINE_LENGTH) {
-				size_t used = 0, left = append.length();
+			// Appends the spacing if it is not the first round
+			//  after which we append the buffer
+			if (shouldIndent) result << "       ";
+			if (buffer.size() > _BUILD_HEADER_MAX_LINE_LENGTH) {
+				size_t usedLength = 0, leftLength = buffer.size();
 
-				while (left > 0) {
-					if (left > _BUILD_HEADER_MAX_LINE_LENGTH) {
-						result << append.substr(used, _BUILD_HEADER_MAX_LINE_LENGTH) << "\r\n";
-						used += _BUILD_HEADER_MAX_LINE_LENGTH;
-						left -= _BUILD_HEADER_MAX_LINE_LENGTH;
+				size_t i = 0;
+				while (leftLength > 0) {
+					if (++i > 1) result << "        ";
+					if (leftLength > _BUILD_HEADER_MAX_LINE_LENGTH) {
+						result << buffer.substr(usedLength, _BUILD_HEADER_MAX_LINE_LENGTH) << "\r\n";
+						usedLength += _BUILD_HEADER_MAX_LINE_LENGTH;
+						leftLength -= _BUILD_HEADER_MAX_LINE_LENGTH;
 					} else {
-						result << append.substr(used, left) << "\r\n";
-						used += left;
-						left -= left;
+						result << buffer.substr(usedLength, leftLength) << "\r\n";
+						usedLength += leftLength;
+						leftLength -= leftLength;
 					}
 				}
 			} else {
-				currentLineLength += append.length();
-				result << append << "\r\n";
+				result << buffer << "\r\n";
 			}
+
+			shouldIndent = true;
 		});
 
 		return result.str();
