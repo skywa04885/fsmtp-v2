@@ -100,7 +100,7 @@ namespace FSMTP::DKIM_Verifier {
 				headerSegments.s_BodyHash = v.c_str();
 			} else if (k == "b") {
 				// Signature
-				headerSegments.s_Signature = move(v);
+				headerSegments.s_Signature = v;
 			} else if (k == "h") {
 				// The header selection
 				stringstream iss(v);
@@ -181,8 +181,7 @@ namespace FSMTP::DKIM_Verifier {
 		if (bodyHash == headerSegments.s_BodyHash) {
 			DEBUG_ONLY(logger << "Body hashes do match" << ENDL);
 			bodyHashValid = true;
-		}
-		else {
+		} else {
 			DEBUG_ONLY(logger << "Body hashes do not match" << ENDL);
 			bodyHashValid = false;
 		}
