@@ -160,7 +160,7 @@ namespace FSMTP::DKIM
 	 */
 	string _canonicalizeBodyRelaxed(const string &raw) {
 		string reduced;
-		string res = "\r\n";
+		string res;
 
 		// Reduces the whitespace
 		reduced.reserve(raw.length());
@@ -177,10 +177,10 @@ namespace FSMTP::DKIM
 		}
 
 		// Removes the prefix white lines, these cause issues later on
-		for (list<string>::iterator it = lines.begin(); it != lines.end();) {
-			if ((*it).empty()) lines.erase(it++);
-			else break;
-		}
+		// for (list<string>::iterator it = lines.begin(); it != lines.end();) {
+		// 	if ((*it).empty()) lines.erase(it++);
+		// 	else break;
+		// }
 
 		// Trims all the lines and removes
 		//  the extra spaces
