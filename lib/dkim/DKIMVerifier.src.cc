@@ -281,7 +281,7 @@ namespace FSMTP::DKIM_Verifier {
 			//  and TCP
 			dkim_record.reserve(rdata.length());
 			for (unsigned char c : rdata) {
-				if (c >= 0 && c < 128) dkim_record += c;
+				if (c >= 32 && c <= 126) dkim_record += c;
 			}
 		}
 

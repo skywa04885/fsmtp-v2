@@ -29,6 +29,21 @@ int main(const int argc, const char **argv)
 
 	Logger logger("MAIN", LoggerLevel::INFO);
 
+	ifstream stream("../test.eml");
+
+	string total;
+	string line;
+	while (getline(stream, line)) {
+		total += line;
+		total += "\n";
+	}
+
+	FullEmail email;
+	Parsers::parseMIME(total, email);
+	FullEmail::print(email, logger);
+
+	return 0;
+
 	Global::configure();
 	Global::readConfig(CONFIG_FILE, FALLBACK_CONFIG_FILE);
 
