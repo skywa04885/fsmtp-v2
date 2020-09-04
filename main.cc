@@ -23,36 +23,6 @@ static const char *FALLBACK_CONFIG_FILE = "../fallback/config.json";
 
 int main(const int argc, const char **argv)
 {
-	ifstream file;
-	file.open("../test.eml");
-	if (!file.is_open())
-		throw runtime_error("Could not open file");
-
-	string line, total;
-	while (getline(file, line)) {
-		total += line;
-		total += '\n';
-	}
-
-	cout << DKIM_Verifier::verify(total) << endl;
-
-	// return 0;
-	// Global::readConfig(CONFIG_FILE, FALLBACK_CONFIG_FILE);
-
-	// Mailer::Composer::MailComposerConfig config;
-	// config.m_To.push_back({"Luke Rieff", "luke.rieff@gmail.com"});
-	// config.m_From.push_back({"Webmaster", "webmaster@fannst.nl"});
-	// config.m_Subject = "Hello World";
-
-	// SMTPClient mailer(false);
-	// mailer.prepare(config);
-	// mailer.beSocial();
-
-	// cout << DKIM_Verifier::verify(sd) << endl;
-
-	return 0;
-
-
 	// ==================================
 	// Default main
 	// ==================================

@@ -39,7 +39,8 @@ namespace FSMTP::DKIM_Verifier {
 	}
 
 	DKIMVerifyResponse verify(const string &raw) {
-		Logger logger("DKIMVerifier", LoggerLevel::DEBUG);
+		bool signatureValid, bodyHashValid;
+		DEBUG_ONLY(Logger logger("DKIMVerifier", LoggerLevel::DEBUG));
 
 		// Splits the headers from the body, after which
 		//  we parse the headers
@@ -66,16 +67,16 @@ namespace FSMTP::DKIM_Verifier {
 		}
 
 		if (!dkimHeaderFound) {
-			logger << "Could not find DKIM-Signature !" << ENDL;
-			return false;
+			DEBUG_ONLY(logger << "Could not find DKIM-Signature !" << ENDL);
+			return DKIMVerifyResponse::DVR_FAIL_HEADER;
 		}
-		logger << "Found DKIM-Signature" << ENDL;
+		DEBUG_ONLY(logger << "Found DKIM-Signature" << ENDL);
 
 		// Starts getting the values from the DKIM header
 		DKIM::DKIMHeaderSegments headerSegments;
 		map<string, string>::iterator it;
 		for (it = dkimHeader.begin(); it != dkimHeader.end(); ++it) {
-			logger << it->first << ": " << it->second << ENDL;
+			DEBUG_ONLY(logger << it->first << ": " << it->second << ENDL);
 
 			auto &k = it->first;
 			auto &v = it->second;
@@ -112,12 +113,18 @@ namespace FSMTP::DKIM_Verifier {
 
 		// Gets the public key from the DNS TXT record, this
 		//  is required to decode the signature
-		
-		string record = resolveRecord(headerSegments.s_Domain, headerSegments.s_KeySelector);
+
+		string record;
+		try {
+			record = resolveRecord(headerSegments.s_Domain, headerSegments.s_KeySelector);
+		} catch (const runtime_error &e) {
+			return DKIMVerifyResponse::DVR_FAIL_RECORD;
+		}
+
 		DEBUG_ONLY(logger << "DKIM Record: \r\n\033[44m'" << record << "'\033[0m" << ENDL);
 		map<string, string> dkimValueMap = MIME::subtextIntoKeyValuePairs(record);
 
-		if (dkimValueMap.count("p") <= 0) throw runtime_error(EXCEPT_DEBUG("Public key not found !"));
+		if (dkimValueMap.count("p") <= 0) return DKIMVerifyResponse::DVR_FAIL_RECORD;
 
 		// Since we now know which headers were used by the signer
 		//  we now want to get them ourselves, so we can canonicalize
@@ -171,8 +178,23 @@ namespace FSMTP::DKIM_Verifier {
 
 		string bodyHash = Hashes::sha256base64(canedBody);
 		DEBUG_ONLY(logger << "Body hash: " << bodyHash << ENDL);
+		if (bodyHash == headerSegments.s_BodyHash) bodyHashValid = true;
+		else bodyHashValid = false;
 
-		return Hashes::RSASha256verify(headerSegments.s_Signature, canedHeaders, dkimValueMap.find("p")->second);
+		try {
+			signatureValid = Hashes::RSASha256verify(headerSegments.s_Signature, canedHeaders, dkimValueMap.find("p")->second);
+		} catch (const runtime_error &e) {
+			return DKIMVerifyResponse::DVR_FAIL_SYSTEM;
+		}
+
+		// Returns the verification response, this will be either pass both, fail both,
+		//  or if one of them failed.
+
+		if (bodyHashValid && signatureValid) return DKIMVerifyResponse::DVR_PASS_BOTH;
+		else if (!bodyHashValid && !signatureValid) return DKIMVerifyResponse::DVR_FAIL_BOTH;
+		else if (bodyHashValid && !signatureValid) return DKIMVerifyResponse::DVR_FAIL_SIGNATURE;
+		else if (!bodyHashValid && signatureValid) return DKIMVerifyResponse::DVR_FAIL_BODY_HASH;
+		else return DKIMVerifyResponse::DVR_FAIL_SYSTEM;
 	}
 
 	string resolveRecord(const string &domain, const string &keySeletor) {		
