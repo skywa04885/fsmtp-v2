@@ -186,17 +186,30 @@ namespace FSMTP::DKIM_Verifier {
 				canedHeaders, dkimValueMap.find("p")->second)) signatureValid = true;
 			else signatureValid = false;
 		} catch (const runtime_error &e) {
+			DEBUG_ONLY(logger << ERROR << "Failed to verify signature: " << e.what() << ENDL);
 			return DKIMVerifyResponse::DVR_FAIL_SYSTEM;
 		}
 
 		// Returns the verification response, this will be either pass both, fail both,
 		//  or if one of them failed.
 
-		if (bodyHashValid && signatureValid) return DKIMVerifyResponse::DVR_PASS_BOTH;
-		else if (!bodyHashValid && !signatureValid) return DKIMVerifyResponse::DVR_FAIL_BOTH;
-		else if (bodyHashValid && !signatureValid) return DKIMVerifyResponse::DVR_FAIL_SIGNATURE;
-		else if (!bodyHashValid && signatureValid) return DKIMVerifyResponse::DVR_FAIL_BODY_HASH;
-		else return DKIMVerifyResponse::DVR_FAIL_SYSTEM;
+		DEBUG_ONLY(logger << "Checking which response to make" << ENDL);
+		if (bodyHashValid && signatureValid) {
+			return DKIMVerifyResponse::DVR_PASS_BOTH;
+			DEBUG_ONLY(logger << "Respose: Body hash and signature valid" << ENDL);
+		} else if (!bodyHashValid && !signatureValid) {
+			DEBUG_ONLY(logger << "Respose: Body hash and signature invalid" << ENDL);
+			return DKIMVerifyResponse::DVR_FAIL_BOTH;
+		} else if (bodyHashValid && !signatureValid) {
+			DEBUG_ONLY(logger << "Invalid signature" << ENDL);
+			return DKIMVerifyResponse::DVR_FAIL_SIGNATURE;
+		} else if (!bodyHashValid && signatureValid) {
+			DEBUG_ONLY(logger << "Respose: invalid body has" << ENDL);
+			return DKIMVerifyResponse::DVR_FAIL_BODY_HASH;
+		} else {
+			DEBUG_ONLY(logger << "Respose: System failure" << ENDL);
+			return DKIMVerifyResponse::DVR_FAIL_SYSTEM;
+		}
 	}
 
 	string resolveRecord(const string &domain, const string &keySeletor) {		
