@@ -210,7 +210,7 @@ namespace FSMTP::Server::SU {
 			records.push_back(inet_ntoa(*address));
 		}
 
-		return move(records);
+		return records;
 	}
 
 	vector<string> getARecordAddresses(const string &hostname) {
@@ -222,6 +222,6 @@ namespace FSMTP::Server::SU {
 		vector<string> result = {};
 		struct in_addr **p = reinterpret_cast<struct in_addr **>(h->h_addr_list);
 		for (; *p != nullptr; p++) result.push_back(inet_ntoa(**p));
-		return move(result);
+		return result;
 	}
 }

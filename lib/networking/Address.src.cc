@@ -24,6 +24,7 @@ namespace FSMTP::Networking {
 
 		size_t i = 0;
 		while (getline(stream, segment, '.')) {
+			if (i > 4) break;
 			result |= stoi(segment) << (32 - ++i * 8);
 		}
 

@@ -21,27 +21,25 @@
 static const char *CONFIG_FILE = "../config.json";
 static const char *FALLBACK_CONFIG_FILE = "../fallback/config.json";
 
-<<<<<<< HEAD
 int main(const int argc, const char **argv)
 {
-	ifstream file;
-	file.open("../gitlab.eml");
-	if (!file.is_open())
-		throw runtime_error("Could not open file");
+	// SU::checkSU("gmail.com", "0.0.0.0");
+	// return 0;
+	// ifstream file;
+	// file.open("../gitlab.eml");
+	// if (!file.is_open())
+	// 	throw runtime_error("Could not open file");
 
-	string line, total;
-	while (getline(file, line)) {
-		total += line;
-		total += '\n';
-	}
+	// string line, total;
+	// while (getline(file, line)) {
+	// 	total += line;
+	// 	total += '\n';
+	// }
 
-	DKIM_Verifier::verify(total);
+	// DKIM_Verifier::verify(total);
 
-	return 0;
+	// return 0;
 
-=======
-int main(const int argc, const char **argv) {
->>>>>>> 94bcfed0aa031abe9308446fdb251c98746f368c
 	// ==================================
 	// Default main
 	// ==================================

@@ -193,4 +193,84 @@ namespace FSMTP::DKIM::Hashes
 		delete[] buffer;
 		return res;
 	}
+
+	/**
+	 * Verifies an signature using the public key
+	 */
+	bool RSASha256verify(const string &signature, const string &raw, const string &pubKey) {
+		// Formats the key in a way openssl can read, this is in the
+		//  pem format.
+
+		string readyPubKey = "-----BEGIN PUBLIC KEY-----\r\n";
+
+		size_t leftLength = pubKey.length(), usedLength = 0;
+		while (leftLength > 0) {
+			if (leftLength > 64) {
+				readyPubKey += pubKey.substr(usedLength, 64);
+				readyPubKey += "\r\n";
+				usedLength += 64;
+				leftLength -= 64;
+			} else {
+				readyPubKey += pubKey.substr(usedLength, leftLength);
+				readyPubKey += "\r\n";
+				usedLength += leftLength;
+				leftLength -= leftLength;
+			}
+		}
+
+		readyPubKey += "-----END PUBLIC KEY-----";
+
+		// =====================================
+		// Decodes the Base64 string
+		//
+		// Due to transmission we encoded the
+		//  binary signature to base64, so lets
+		//  decode it
+		// =====================================
+
+		BIO *base64 = nullptr, *bio = nullptr;
+		unsigned char *decodedSignature = new unsigned char[raw.size()];
+
+		// Prepares the decoder
+		base64 = BIO_new(BIO_f_base64());
+		bio = BIO_new_mem_buf(signature.c_str(), signature.length());
+		bio = BIO_push(base64, bio);
+		BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+		DEFER(BIO_free_all(bio));
+
+		// Reads the decoded base64 data
+		int32_t decodedLen = BIO_read(bio, decodedSignature, raw.size());
+
+		// =====================================
+		// Gets the RSA key
+		// =====================================
+
+		BIO *pubKeyBio = BIO_new(BIO_s_mem());
+		BIO_write(pubKeyBio, readyPubKey.c_str(), readyPubKey.length());
+		DEFER(BIO_free(pubKeyBio));
+
+		cout << readyPubKey << endl;
+		RSA *rsa = nullptr;
+		if (PEM_read_bio_RSA_PUBKEY(pubKeyBio, &rsa, nullptr, nullptr) == nullptr) {
+			throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
+		}
+		DEFER(RSA_free(rsa));
+
+		// =====================================
+		// Validates the signature
+		// =====================================
+
+		EVP_MD_CTX *rsaVerifyContext = EVP_MD_CTX_new();
+		EVP_PKEY *rsaVerifyKey = EVP_PKEY_new();
+
+		// Assigns the public key to the pkey
+		EVP_PKEY_assign_RSA(rsaVerifyKey, rsa);
+
+		// Initializes the signature verifier
+		//  with the public key
+		if (EVP_DigestVerifyInit(
+			rsaVerifyContext, nullptr, EVP_sha256(), 
+			nullptr, rsaVerifyKey
+		) < 0) throw runtime_error(EXCEPT_DEBUG(string("EVP_DigestVerifyInit() failed:") + SSL_STRERROR)); 
+	}
 }

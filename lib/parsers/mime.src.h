@@ -125,4 +125,10 @@ namespace FSMTP::Parsers::MIME
 	 *  separated by a ;
 	 */
 	string buildHeader(const vector<EmailHeader> &headers);
+
+	/**
+	 * Parses an email header into k/v pairs, this will be used
+	 *  for example with DKIM.
+	 */
+	map<string, string> subtextIntoKeyValuePairs(const string &raw);
 }

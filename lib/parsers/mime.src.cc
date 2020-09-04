@@ -443,11 +443,11 @@ namespace FSMTP::Parsers::MIME
 	string buildHeaders(const vector<EmailHeader> &headers) {
 		ostringstream result;
 
-		for_each(headers.begin(), headers.end(), [&](auto &h) {
+		for_each(headers.begin(), headers.end(), [&](const EmailHeader &h) {
 			result << h.e_Key << ": " << h.e_Value << "\r\n";
 		});
 
-		return move(result.str());
+		return result.str();
 	}
 
 	/**
@@ -459,19 +459,63 @@ namespace FSMTP::Parsers::MIME
 		ostringstream result;
 
 		size_t currentLineLength = 0;
-		for_each(headers.begin(), headers.end(), [&](auto &h) {
+		for_each(headers.begin(), headers.end(), [&](const EmailHeader &h) {
 			string append = h.e_Key;
 			append += "=";
 			append += h.e_Value;
 
 			if (currentLineLength + append.length() > _BUILD_HEADER_MAX_LINE_LENGTH) {
+				size_t used = 0, left = append.length();
 
+				while (left > 0) {
+					if (left > _BUILD_HEADER_MAX_LINE_LENGTH) {
+						result << append.substr(used, _BUILD_HEADER_MAX_LINE_LENGTH) << "\r\n";
+						used += _BUILD_HEADER_MAX_LINE_LENGTH;
+						left -= _BUILD_HEADER_MAX_LINE_LENGTH;
+					} else {
+						result << append.substr(used, left) << "\r\n";
+						used += left;
+						left -= left;
+					}
+				}
 			} else {
 				currentLineLength += append.length();
 				result << append << "\r\n";
 			}
 		});
 
-		return move(result.str());
+		return result.str();
+	}
+
+	/**
+	 * Parses an email header into k/v pairs, this will be used
+	 *  for example with DKIM.
+	 */
+	map<string, string> subtextIntoKeyValuePairs(const string &raw) {
+		map<string, string> result = {};
+
+		stringstream stream(raw);
+		string val;
+		while (getline(stream, val, ';')) {
+			// Cleans the first and last white, and gets the 
+			//  separator index
+			removeFirstAndLastWhite(val);
+			size_t sepIndex = val.find_first_of('=');
+			if (sepIndex == string::npos) continue;
+
+			// Gets the key/value pair
+			string key, value;
+			key = val.substr(0, sepIndex);
+			value = val.substr(++sepIndex);
+
+			// Cleans the first and last whitespace from the element
+			removeFirstAndLastWhite(key);
+			removeFirstAndLastWhite(val);
+
+			// Inserts the pair into the final result map
+			result.insert(make_pair(key, value));
+		}
+
+		return result;
 	}
 }

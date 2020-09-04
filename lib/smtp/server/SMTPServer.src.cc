@@ -527,10 +527,14 @@ bool SMTPServer::handleCommand(
 			//  the message is possible spam, and we put it in the spam.
 			vector<EmailHeader> authResults = {};
 			if (SU::checkSU(session->s_TransportMessage.e_TransportFrom.getDomain(), client->getPrefix())) {
-				authResults.push_back({"spf", string("pass, address ") + client->getPrefix() + " is authorized sender"});
+				authResults.push_back({"spf", string("pass (address ") + client->getPrefix() + " is verified by " + session->s_TransportMessage.e_TransportFrom.getDomain() + ")"});
 			} else {
-				authResults.push_back({"spf", string("fail, address ") + client->getPrefix() + " is not an authorized sender !"});
+				authResults.push_back({"spf", string("fail (address ") + client->getPrefix() + " is not verified by " + session->s_TransportMessage.e_TransportFrom.getDomain() + ")"});
 				session->s_PossSpam = true;
+			}
+
+			if (session->getFlag(_SMTP_SERV_SESSION_SU)) {
+				authResults.push_back({"su", string("pass (access granted for ") + client->getPrefix() + " , using FSMTP-V2 extensions)"});
 			}
 
 			string headers, body;

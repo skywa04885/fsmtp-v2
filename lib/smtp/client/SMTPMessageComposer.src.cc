@@ -152,21 +152,21 @@ namespace FSMTP::Mailer::Composer
 			});
 		}
 
-		if (config.m_BodySections.size() == 1) {
-			// Checks the content type, if it is html we just want to turn it into
-			// - plain text and make an new section for i
-			if (config.m_BodySections[0].e_Type == EmailContentType::ECT_TEXT_HTML)
-			{
-				DEBUG_ONLY(logger << "HTML Only found, generating text version ..." << ENDL);
-				config.m_BodySections.push_back(EmailBodySection{
-					generateTextFromHTML(config.m_BodySections[0].e_Content),
-					EmailContentType::ECT_TEXT_PLAIN,
-					{},
-					1,
-					EmailTransferEncoding::ETE_QUOTED_PRINTABLE
-				});
-			}
-		}
+		// if (config.m_BodySections.size() == 1) {
+		// 	// Checks the content type, if it is html we just want to turn it into
+		// 	// - plain text and make an new section for i
+		// 	if (config.m_BodySections[0].e_Type == EmailContentType::ECT_TEXT_HTML)
+		// 	{
+		// 		DEBUG_ONLY(logger << "HTML Only found, generating text version ..." << ENDL);
+		// 		config.m_BodySections.push_back(EmailBodySection{
+		// 			generateTextFromHTML(config.m_BodySections[0].e_Content),
+		// 			EmailContentType::ECT_TEXT_PLAIN,
+		// 			{},
+		// 			1,
+		// 			EmailTransferEncoding::ETE_QUOTED_PRINTABLE
+		// 		});
+		// 	}
+		// }
 
 		// ======================================
 		// Generates the MIME message

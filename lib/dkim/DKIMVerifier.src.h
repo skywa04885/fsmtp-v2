@@ -21,11 +21,13 @@
 #include "../general/cleanup.src.h"
 #include "../parsers/mime.src.h"
 #include "../models/Email.src.h"
-#include "DKIM.src.h"
 #include "../networking/DNS.src.h"
+#include "DKIMHashes.src.h"
+#include "DKIM.src.h"
 
 using namespace FSMTP::Parsers;
 using namespace FSMTP::DNS;
+using namespace FSMTP::DKIM;
 
 namespace FSMTP::DKIM_Verifier {
 	/**
@@ -41,7 +43,7 @@ namespace FSMTP::DKIM_Verifier {
 	/**
 	 * Gets the public key from an domain, which is needed to decode the signature
 	 */
-	void resolveRecord(const string &domain, const string &keySeletor);
+	string resolveRecord(const string &domain, const string &keySeletor);
 }
 
 #endif

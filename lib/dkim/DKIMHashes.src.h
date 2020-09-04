@@ -47,4 +47,9 @@ namespace FSMTP::DKIM::Hashes
 		const std::string &raw, 
 		const char *privateKeyFile
 	);
+
+	/**
+	 * Verifies an signature using the public key
+	 */
+	bool RSASha256verify(const string &signature, const string &raw, const string &pubKey);
 }
