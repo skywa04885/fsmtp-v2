@@ -98,6 +98,8 @@ SMTPClient &SMTPClient::prepare(MailComposerConfig &config) {
 	this->s_TransportMessage = DKIM::sign(plain, dkimConfig);
 	this->s_MailFrom = config.m_From[0];
 
+	cout << this->s_TransportMessage << endl;
+
 	this->configureRecipients(config.m_To);
 
 	return *this;

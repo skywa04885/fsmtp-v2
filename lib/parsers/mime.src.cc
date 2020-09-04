@@ -130,45 +130,34 @@ namespace FSMTP::Parsers::MIME
 	 */
 	void joinMessageLines(
 		std::string &raw
-	)
-	{
-		std::string res;
+	) {
+		string res;
 
-		// Starts the splitting process
-		std::stringstream stream(raw);
-		std::string token;
-		std::size_t i = 0;
-		bool pendedInSemicolon;
-		while (std::getline(stream, token))
-		{
-			// Removes the '\r'
-			if (token[token.size() - 1] == '\r') token.pop_back();
-
-			if (token[0] == ' ' || token[0] == '\t')
-			{
-				// Removes the whitespace in the beginning of it
-				std::size_t delIndex = 0;
-				for (const char c : token)
-				{
-					if (c == ' ' || c == '\t') delIndex++;
-					else continue;
-				}
-
-				if (pendedInSemicolon) res += token.substr(delIndex-1);
-				else res += token.substr(delIndex);
-			} else {
-				if (i != 0) res += "\r\n";
-				res += token;
-			}
-
-			i++;
-			if (token[token.size() - 1] == ';' || token[token.size() - 2] == ';')
-				pendedInSemicolon = true;
-			else
-				pendedInSemicolon = false;
+		// Splits the document into lines
+		stringstream stream(raw);
+		string line;
+		vector<string> lines = {};
+		while (getline(stream, line, '\n')) {
+			// Since we can only use one char for the getline, we need
+			//  to remove the \r ourselves, after which we push it to
+			//  the lines vector
+			if (line[line.size() - 1] == '\r') line.pop_back();
+			lines.push_back(line);
 		}
 
-		// Overwrites the source
+		// Starts joining the lines
+		for (size_t i = 0; i < lines.size(); i++) {
+			lines[i].erase(lines[i].find_last_not_of(' ') + 1);
+			lines[i].erase(0, lines[i].find_first_not_of(' '));
+			if (i + 1 < lines.size() && lines[i+1][0] == ' ') {
+				if (res[res.size() - 1] == ';') res += ' ';
+				res += lines[i];
+			} else {
+				res += lines[i];
+				res += "\r\n";
+			}
+		}
+
 		raw = res;
 	}
 

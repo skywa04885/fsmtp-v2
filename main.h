@@ -28,6 +28,7 @@
 #include "lib/general/Logger.src.h"
 #include "lib/smtp/server/SMTPSpamDetection.src.h"
 #include "lib/smtp/server/SMTPSU.src.h"
+#include "lib/smtp/client/SMTPMessageComposer.src.h"
 
 using namespace FSMTP;
 using namespace FSMTP::Server::SU;

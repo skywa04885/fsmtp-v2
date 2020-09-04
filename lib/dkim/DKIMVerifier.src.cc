@@ -38,7 +38,7 @@ namespace FSMTP::DKIM_Verifier {
 		}
 	}
 
-	bool verify(const string &raw) {
+	DKIMVerifyResponse verify(const string &raw) {
 		Logger logger("DKIMVerifier", LoggerLevel::DEBUG);
 
 		// Splits the headers from the body, after which
@@ -53,10 +53,12 @@ namespace FSMTP::DKIM_Verifier {
 		//  we just return false, else we parse the values from
 		//  the DKIM header
 		map<string, string> dkimHeader; // IMPORTANT ! Keep in scope !
+		const string *rawDKIMHeader = nullptr;
 		bool dkimHeaderFound = false;
 		for (const auto &header : headers) {
 			if (header.e_Key == "dkim-signature") {
 				parseDkimHeader(header.e_Value, dkimHeader);
+				rawDKIMHeader = &header.e_Value;
 
 				dkimHeaderFound = true;
 				break;
@@ -123,21 +125,39 @@ namespace FSMTP::DKIM_Verifier {
 		
 		ostringstream finalHeaders;
 		auto &segHeaders = headerSegments.s_Headers;
-		for_each(headers.begin(), headers.end(), [&](const auto &header) {
+		for_each(headers.begin(), headers.end(), [&](const EmailHeader &header) {
 			if (find(segHeaders.begin(), segHeaders.end(), header.e_Key) != segHeaders.end())
 				finalHeaders << header.e_Key << ": " << header.e_Value << "\r\n";
 		});
 
-		DKIM::DKIMAlgorithmPair algorithm = DKIM::algorithmPairFromString(headerSegments.s_CanonAlgo);
-		
+		// Adds the DKIM-SIgnature to the final headers, this is always required
+		//  for the signing process, so we need to add them in order to verify
+
+		finalHeaders << "DKIM-Signature: ";
+		stringstream stream(*rawDKIMHeader);
+		string token;
+		while(getline(stream, token, ';')) {
+			string key = token.substr(0, token.find_first_of('='));
+			removeFirstAndLastWhite(key);
+
+			if (key == "b") {
+				finalHeaders << token.substr(0, token.find_first_of('=') + 1);
+				break;
+			} else finalHeaders << token << ';';
+		}
+
 		// Starts canonicalizing the body and headers, this is done
 		//  using the above specified algorithm
-		
+		DKIM::DKIMAlgorithmPair algorithm = DKIM::algorithmPairFromString(headerSegments.s_CanonAlgo);
+
 		string canedBody, canedHeaders;
 		switch (algorithm) {
 			case DKIM::DKIMAlgorithmPair::DAP_RELAXED_RELAXED:
 				canedBody = DKIM::_canonicalizeBodyRelaxed(rawBody);
 				canedHeaders = DKIM::_canonicalizeHeadersRelaxed(finalHeaders.str());
+
+				// Removes the CRLF because we included the signature this time
+				canedHeaders.erase(canedHeaders.size() - 2);
 				break;
 			default: throw runtime_error("Algorithm not implemented");
 		}
@@ -152,16 +172,18 @@ namespace FSMTP::DKIM_Verifier {
 		string bodyHash = Hashes::sha256base64(canedBody);
 		DEBUG_ONLY(logger << "Body hash: " << bodyHash << ENDL);
 
-		Hashes::RSASha256verify(headerSegments.s_Signature, canedHeaders, dkimValueMap.find("p")->second);
+		return Hashes::RSASha256verify(headerSegments.s_Signature, canedHeaders, dkimValueMap.find("p")->second);
 	}
 
-	string resolveRecord(const string &domain, const string &keySeletor) {
-		#ifdef _SMTP_DEBUG
-		Logger logger("DKIM_RESOLV", LoggerLevel::DEBUG);
-		#endif
+	string resolveRecord(const string &domain, const string &keySeletor) {		
 		string resolveFor = keySeletor;
 		resolveFor += "._domainkey.";
 		resolveFor += domain;
+
+		#ifdef _SMTP_DEBUG
+		Logger logger("DKIM_RESOLV", LoggerLevel::DEBUG);
+		logger << "Resolving for: " << resolveFor << ENDL;
+		#endif
 
 		struct __res_state state;
 		if (res_ninit(&state) < 0) {
@@ -211,7 +233,7 @@ namespace FSMTP::DKIM_Verifier {
 			DEBUG_ONLY(logger << "Checking record: " << rdata << ENDL);
 
 			// Checks if the record is actually DKIM Like, else just continue
-			if (rdata.substr(0, 7) != "v=DKIM1") continue;
+			if (rdata.substr(0, 7) != "v=DKIM1" && rdata.substr(0, 5) != "k=rsa") continue;
 
 			// Filters away the non-ascii crap, since this indicates the switch between UDP
 			//  and TCP

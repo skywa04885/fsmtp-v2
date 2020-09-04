@@ -30,6 +30,16 @@ using namespace FSMTP::DNS;
 using namespace FSMTP::DKIM;
 
 namespace FSMTP::DKIM_Verifier {
+	typedef enum {
+		DVR_PASS_BOTH,
+		DVR_FAIL_BOTH,
+		DVR_FAIL_BODY_HASH,
+		DVR_FAIL_SIGNATURE,
+		DVR_FAIL_RECORD,
+		DVR_FAIL_HEADER,
+		DVR_FAIL_SYSTEM
+	} DKIMVerifyResponse;
+
 	/**
 	 * Parses an DKIM header, this is puts the k/v pairs into the specified map
 	 */
@@ -38,7 +48,7 @@ namespace FSMTP::DKIM_Verifier {
 	/**
 	 * Verifies an message which possibly contains some DKIM-Signature header
 	 */
-	bool verify(const string &raw);
+	DKIMVerifyResponse verify(const string &raw);
 
 	/**
 	 * Gets the public key from an domain, which is needed to decode the signature

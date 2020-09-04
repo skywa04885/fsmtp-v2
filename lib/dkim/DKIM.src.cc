@@ -154,56 +154,116 @@ namespace FSMTP::DKIM
 	}
 
 	/**
-	 * canonicalizes the body using the relaxed algorithm
+	 * Canonicalizes an message body with the relaxed algorithm
 	 *
-	 * @Param {const std::string &} raw
-	 * @Return {std::string}
+	 * rewritten at: Fri sep 4
 	 */
-	std::string _canonicalizeBodyRelaxed(const std::string &raw)
-	{
-		std::string res;
-		std::string temp;
+	string _canonicalizeBodyRelaxed(const string &raw) {
+		string res;
 
-		// Reduces the whitespace occurences
-		reduceWhitespace(raw, res);
+		// Splits the document up into empty lines, so we can
+		//  later process them more easily
+		list<string> lines = {};
+		stringstream stream(raw);
+		string line;
+		size_t lastLineWithContent = 0;
+		while (getline(stream, line, '\n')) {
+			if (line[line.size() - 1] == '\r') line.pop_back();
+			lines.push_back(move(line));
+		}
 
-		// Removes the whitespace at start and end of lines
-		// - using an string stream
-		std::stringstream stream(res);
-		std::string token;
-		std::size_t lastNotEmptyIndex = 0, i = 0;
-		while (std::getline(stream, token, '\n'))
-		{
-			// Removes the '\r' if it is there
-			if (!token.empty() && token[token.size() - 1] == '\r') token.pop_back();
+		// Removes the prefix white lines, these cause issues later on
+		for (list<string>::iterator it = lines.begin(); it != lines.end();) {
+			if ((*it).empty()) lines.erase(it++);
+			else break;
+		}
 
-			// Checks if it is an empty line, if so ignore it
-			if (!token.empty()) lastNotEmptyIndex = i;
+		// Trims all the lines and removes
+		//  the extra spaces
+		size_t i = 0;
+		for_each(lines.begin(), lines.end(), [&](string &line) {
+			// Removes the whitespace at the end of the line
+			line.erase(line.find_last_not_of(' ') + 1);
 
-			// Removes the whitespace at start and end, and pushes it to
-			// - the result
-			if (!token.empty() && token[token.size() - 1] == ' ') token.pop_back();
-			temp += token + "\r\n";
+			// Reduces the whitespace
+			string tempLine;
+			reduceWhitespace(line, tempLine);
+			line = tempLine;
 
-			// Increments the index
+			// Checks if the line is empty, if so
+			//  just continue, else report it as the
+			//  last full line
+			if (!line.empty()) lastLineWithContent = i;
 			i++;
+		});
+
+		// Removes the double empty lines, these may be two
+		//  at max
+		i = 0;
+		for (list<string>::iterator it = lines.begin(); it != lines.end();) {
+			if (i++ > lastLineWithContent) {
+				lines.erase(it++);
+				continue;
+			}
+			it++;
 		}
 
-		// Clears the result and removes the last empty
-		// - lines from the body
-		res.clear();
-		std::stringstream secondStream(temp);
-		std::size_t j = 0;
-		while (std::getline(secondStream, token, '\n'))
-		{
-			if (j++ > lastNotEmptyIndex) break;
-			// Removes the '\r' if it is there, and adds the token
-			// - to the result
-			if (!token.empty() && token[token.size() - 1] == '\r') token.pop_back();
-			res += token += "\r\n";
-		}
+		// Joins all the lines into one message,
+		//  which will be stored in res
+		for_each(lines.begin(), lines.end(), [&](string &line) {
+			res += line;
+			res += "\r\n";
+		});
 
 		return res;
+
+		// // return res;
+		// std::string res;
+		// std::string temp;
+
+		// // Reduces the whitespace occurences
+		// reduceWhitespace(raw, res);
+
+		// // Removes the whitespace at start and end of lines
+		// // - using an string stream
+		// std::stringstream stream(res);
+		// std::string token;
+		// std::size_t lastNotEmptyIndex = 0, i = 0;
+		// while (std::getline(stream, token, '\n'))
+		// {
+		// 	// Removes the '\r' if it is there
+		// 	if (!token.empty() && token[token.size() - 1] == '\r') token.pop_back();
+
+		// 	// Checks if it is an empty line, if so ignore it
+		// 	if (!token.empty()) lastNotEmptyIndex = i;
+
+		// 	// Removes the whitespace at start and end, and pushes it to
+		// 	// - the result
+		// 	if (!token.empty() && token[token.size() - 1] == ' ') token.pop_back();
+		// 	temp += token + "\r\n";
+
+		// 	// Increments the index
+		// 	i++;
+		// }
+
+		// // Removes the empty lines from the body, there may only be one in a row
+		//  // and it may not be at the start or end of the body
+
+		// // Clears the result and removes the first and last empty
+		// //  lines from the body
+		// res.clear();
+		// std::stringstream secondStream(temp);
+		// std::size_t j = 0;
+		// while (std::getline(secondStream, token, '\n'))
+		// {
+		// 	if (j++ > lastNotEmptyIndex) break;
+		// 	// Removes the '\r' if it is there, and adds the token
+		// 	// - to the result
+		// 	if (!token.empty() && token[token.size() - 1] == '\r') token.pop_back();
+		// 	res += token += "\r\n";
+		// }
+
+		// return res;
 	}
 
 	/**
@@ -278,6 +338,8 @@ namespace FSMTP::DKIM
 		if (key == "to")
 			return true;
 		if (key == "mime-version")
+			return true;
+		if (key == "dkim-signature")
 			return true;
 		return false;
 	}

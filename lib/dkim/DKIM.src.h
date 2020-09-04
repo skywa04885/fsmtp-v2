@@ -84,12 +84,11 @@ namespace FSMTP::DKIM
 	bool verify(const std::string &email);
 
 	/**
-	 * canonicalizes the body using the relaxed algorithm
+	 * Canonicalizes an message body with the relaxed algorithm
 	 *
-	 * @Param {const std::string &} raw
-	 * @Return {std::string}
+	 * rewritten at: Fri sep 4
 	 */
-	std::string _canonicalizeBodyRelaxed(const std::string &raw);
+	std::string _canonicalizeBodyRelaxed(const string &raw);
 
 	/**
 	 * Canonicalizes the headers using the relaxed algorithm

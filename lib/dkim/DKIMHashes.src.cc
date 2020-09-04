@@ -230,6 +230,7 @@ namespace FSMTP::DKIM::Hashes
 
 		BIO *base64 = nullptr, *bio = nullptr;
 		unsigned char *decodedSignature = new unsigned char[raw.size()];
+		DEFER(delete[] decodedSignature);
 
 		// Prepares the decoder
 		base64 = BIO_new(BIO_f_base64());
@@ -249,12 +250,10 @@ namespace FSMTP::DKIM::Hashes
 		BIO_write(pubKeyBio, readyPubKey.c_str(), readyPubKey.length());
 		DEFER(BIO_free(pubKeyBio));
 
-		cout << readyPubKey << endl;
 		RSA *rsa = nullptr;
 		if (PEM_read_bio_RSA_PUBKEY(pubKeyBio, &rsa, nullptr, nullptr) == nullptr) {
 			throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
 		}
-		DEFER(RSA_free(rsa));
 
 		// =====================================
 		// Validates the signature
@@ -262,15 +261,32 @@ namespace FSMTP::DKIM::Hashes
 
 		EVP_MD_CTX *rsaVerifyContext = EVP_MD_CTX_new();
 		EVP_PKEY *rsaVerifyKey = EVP_PKEY_new();
-
-		// Assigns the public key to the pkey
 		EVP_PKEY_assign_RSA(rsaVerifyKey, rsa);
+		DEFER_M({
+			EVP_MD_CTX_free(rsaVerifyContext);
+			EVP_PKEY_free(rsaVerifyKey);
+		});
 
 		// Initializes the signature verifier
 		//  with the public key
 		if (EVP_DigestVerifyInit(
 			rsaVerifyContext, nullptr, EVP_sha256(), 
 			nullptr, rsaVerifyKey
-		) < 0) throw runtime_error(EXCEPT_DEBUG(string("EVP_DigestVerifyInit() failed:") + SSL_STRERROR)); 
+		) < 0) {
+			throw runtime_error(EXCEPT_DEBUG(string("EVP_DigestVerifyInit() failed:") + SSL_STRERROR));
+		}
+		
+		// Updates the verifier with the data we want to compare
+		//  to the signature
+		if (EVP_DigestVerifyUpdate(rsaVerifyContext, raw.c_str(), raw.length()) < 0) {
+			throw runtime_error(EXCEPT_DEBUG(string("EVP_DigestVerfifyUpdate() failed:") + SSL_STRERROR));
+		}
+
+		// Adds the signature to the verifier, and checks if anything
+		//  goes wrong in the meantime
+		int32_t code = EVP_DigestVerifyFinal(rsaVerifyContext, decodedSignature, decodedLen);
+		if (code == 0) return false;
+		else if (code == 1) return true;
+		else throw runtime_error(EXCEPT_DEBUG(string("EVP_DigestVerifyFinal() failed: ") + SSL_STRERROR));
 	}
 }

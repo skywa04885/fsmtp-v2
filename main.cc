@@ -23,28 +23,34 @@ static const char *FALLBACK_CONFIG_FILE = "../fallback/config.json";
 
 int main(const int argc, const char **argv)
 {
-	// cout << MIME::buildHeader({
-	// 	{"SPF", "this is a long string example of a part of a spf record"},
-	// 	{"SU", "this is another long string example"}
-	// }) << endl;
-	// return 0;
+	ifstream file;
+	file.open("../test.eml");
+	if (!file.is_open())
+		throw runtime_error("Could not open file");
 
-	// SU::checkSU("gmail.com", "0.0.0.0");
-	// return 0;
-	// ifstream file;
-	// file.open("../gitlab.eml");
-	// if (!file.is_open())
-	// 	throw runtime_error("Could not open file");
+	string line, total;
+	while (getline(file, line)) {
+		total += line;
+		total += '\n';
+	}
 
-	// string line, total;
-	// while (getline(file, line)) {
-	// 	total += line;
-	// 	total += '\n';
-	// }
-
-	// DKIM_Verifier::verify(total);
+	cout << DKIM_Verifier::verify(total) << endl;
 
 	// return 0;
+	// Global::readConfig(CONFIG_FILE, FALLBACK_CONFIG_FILE);
+
+	// Mailer::Composer::MailComposerConfig config;
+	// config.m_To.push_back({"Luke Rieff", "luke.rieff@gmail.com"});
+	// config.m_From.push_back({"Webmaster", "webmaster@fannst.nl"});
+	// config.m_Subject = "Hello World";
+
+	// SMTPClient mailer(false);
+	// mailer.prepare(config);
+	// mailer.beSocial();
+
+	// cout << DKIM_Verifier::verify(sd) << endl;
+
+	return 0;
 
 
 	// ==================================
