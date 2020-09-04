@@ -460,12 +460,14 @@ namespace FSMTP::Parsers::MIME
 
 		// Starts looping over the headers
 		bool shouldIndent = false;
+		size_t headerIndex = 0;
 		for_each(headers.begin(), headers.end(), [&](const EmailHeader &h) {
 			// Prepares the buffer which contains the header that should be appendend
 			string buffer = h.e_Key;
 			buffer += '=';
 			buffer += h.e_Value;
-			buffer += ';';
+
+			if (++headerIndex < headers.size()) buffer += ';';
 
 			// Appends the spacing if it is not the first round
 			//  after which we append the buffer

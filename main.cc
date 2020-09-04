@@ -23,6 +23,12 @@ static const char *FALLBACK_CONFIG_FILE = "../fallback/config.json";
 
 int main(const int argc, const char **argv)
 {
+	cout << MIME::buildHeader({
+		{"SPF", "this is a long string example of a part of a spf record"},
+		{"SU", "this is another long string example"}
+	}) << endl;
+	return 0;
+
 	// SU::checkSU("gmail.com", "0.0.0.0");
 	// return 0;
 	// ifstream file;
