@@ -454,7 +454,7 @@ namespace FSMTP::Parsers::MIME
 	 * Builds an mime header which consists of small segments
 	 *  separated by a ;
 	 */
-	#define _BUILD_HEADER_MAX_LINE_LENGTH 63
+	#define _BUILD_HEADER_MAX_LINE_LENGTH 73
 	string buildHeader(const vector<EmailHeader> &headers) {
 		ostringstream result;
 
