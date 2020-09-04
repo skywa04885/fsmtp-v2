@@ -178,8 +178,14 @@ namespace FSMTP::DKIM_Verifier {
 
 		string bodyHash = Hashes::sha256base64(canedBody);
 		DEBUG_ONLY(logger << "Body hash: " << bodyHash << ", in message: " << headerSegments.s_BodyHash << ENDL);
-		if (bodyHash == headerSegments.s_BodyHash) bodyHashValid = true;
-		else bodyHashValid = false;
+		if (bodyHash == headerSegments.s_BodyHash) {
+			DEBUG_ONLY(logger << "Body hashes do match" << ENDL);
+			bodyHashValid = true;
+		}
+		else {
+			DEBUG_ONLY(logger << "Body hashes do not match" << ENDL);
+			bodyHashValid = false;
+		}
 
 		try {
 			if (Hashes::RSASha256verify(headerSegments.s_Signature, 
@@ -204,7 +210,7 @@ namespace FSMTP::DKIM_Verifier {
 			DEBUG_ONLY(logger << "Invalid signature" << ENDL);
 			return DKIMVerifyResponse::DVR_FAIL_SIGNATURE;
 		} else if (!bodyHashValid && signatureValid) {
-			DEBUG_ONLY(logger << "Respose: invalid body has" << ENDL);
+			DEBUG_ONLY(logger << "Respose: invalid body hash" << ENDL);
 			return DKIMVerifyResponse::DVR_FAIL_BODY_HASH;
 		} else {
 			DEBUG_ONLY(logger << "Respose: System failure" << ENDL);
