@@ -541,7 +541,7 @@ bool SMTPServer::handleCommand(
 
 			switch (DKIM_Verifier::verify(session->s_RawBody)) {
 				case DKIM_Verifier::DKIMVerifyResponse::DVR_PASS_BOTH:
-					authResults.push_back({"dkim", "pass (signature valid, body-hash invalid"});
+					authResults.push_back({"dkim", "pass (signature valid, body-hash valid)"});
 					possibleSpamDKIM = false;
 					break;
 				case DKIM_Verifier::DKIMVerifyResponse::DVR_FAIL_BOTH:
@@ -570,12 +570,7 @@ bool SMTPServer::handleCommand(
 					break;
 			}
 
-			// Checks if we should mark the message as spam, this depends if
-			//  dkim fails, since dkim is a better auth way then SPF.
-			if (possibleSpamSPF && possibleSpamDKIM) session->s_PossSpam = true;
-			if (possibleSpamSPF && !possibleSpamDKIM) session->s_PossSpam = false;
-			if (!possibleSpamSPF && possibleSpamDKIM) session->s_PossSpam = true;
-			else session->s_PossSpam = false;
+			if (possibleSpamSPF || possibleSpamDKIM) session->s_PossSpam = true;
 
 			string headers, body;
 			MIME::splitHeadersAndBody(session->s_RawBody, headers, body);
