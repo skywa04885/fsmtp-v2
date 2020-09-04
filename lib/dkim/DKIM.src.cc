@@ -172,11 +172,8 @@ namespace FSMTP::DKIM
 			lines.push_back(move(line));
 		}
 
-		// Removes the prefix white lines, these cause issues later on
-		for (list<string>::iterator it = lines.begin(); it != lines.end();) {
-			if ((*it).empty()) lines.erase(it++);
-			else break;
-		}
+		// If the first line of the message is empty, remove it
+		if (lines.front().empty()) lines.pop_front();
 
 		// Trims all the lines and removes
 		//  the extra spaces

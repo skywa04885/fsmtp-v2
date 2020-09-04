@@ -177,12 +177,14 @@ namespace FSMTP::DKIM_Verifier {
 		//  and return the result
 
 		string bodyHash = Hashes::sha256base64(canedBody);
-		DEBUG_ONLY(logger << "Body hash: " << bodyHash << ENDL);
+		DEBUG_ONLY(logger << "Body hash: " << bodyHash << ", in message: " << headerSegments.s_BodyHash << ENDL);
 		if (bodyHash == headerSegments.s_BodyHash) bodyHashValid = true;
 		else bodyHashValid = false;
 
 		try {
-			signatureValid = Hashes::RSASha256verify(headerSegments.s_Signature, canedHeaders, dkimValueMap.find("p")->second);
+			if (Hashes::RSASha256verify(headerSegments.s_Signature, 
+				canedHeaders, dkimValueMap.find("p")->second)) signatureValid = true;
+			else signatureValid = false;
 		} catch (const runtime_error &e) {
 			return DKIMVerifyResponse::DVR_FAIL_SYSTEM;
 		}

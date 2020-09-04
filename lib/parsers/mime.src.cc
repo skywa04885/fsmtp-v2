@@ -456,7 +456,7 @@ namespace FSMTP::Parsers::MIME
 			buffer += '=';
 			buffer += h.e_Value;
 
-			if (++headerIndex < headers.size()) buffer += ';';
+			if (++headerIndex < headers.size()) buffer += "; ";
 
 			// Appends the spacing if it is not the first round
 			//  after which we append the buffer
@@ -472,7 +472,7 @@ namespace FSMTP::Parsers::MIME
 						usedLength += _BUILD_HEADER_MAX_LINE_LENGTH;
 						leftLength -= _BUILD_HEADER_MAX_LINE_LENGTH;
 					} else {
-						result << buffer.substr(usedLength, leftLength) << "\r\n";
+						result << buffer.substr(usedLength) << "\r\n";
 						usedLength += leftLength;
 						leftLength -= leftLength;
 					}
