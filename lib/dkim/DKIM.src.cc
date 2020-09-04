@@ -104,8 +104,8 @@ namespace FSMTP::DKIM
 			default: throw std::runtime_error(EXCEPT_DEBUG("Algorithm pair not implemented"));
 		}
 
-		DEBUG_ONLY(logger << "Canonicalized headers: \r\n\033[41m" << cannedHeaders.substr(0, cannedHeaders.size() - 2) << "\033[0m" << ENDL);
-		DEBUG_ONLY(logger << "Canonicalized body: \r\n\033[41m" << cannedBody.substr(0, cannedBody.size() - 2) << "\033[0m" << ENDL);
+		DEBUG_ONLY(logger << "Canonicalized headers: \r\n\033[41m'" << cannedHeaders.substr(0, cannedHeaders.size() - 2) << "'\033[0m" << ENDL);
+		DEBUG_ONLY(logger << "Canonicalized body: \r\n\033[41m'" << cannedBody.substr(0, cannedBody.size() - 2) << "'\033[0m" << ENDL);
 
 		// ========================================
 		// Prepares headers
@@ -159,33 +159,37 @@ namespace FSMTP::DKIM
 	 * rewritten at: Fri sep 4
 	 */
 	string _canonicalizeBodyRelaxed(const string &raw) {
-		string res;
+		string reduced;
+		string res = "\r\n";
+
+		// Reduces the whitespace
+		reduced.reserve(raw.length());
+		reduceWhitespace(raw, reduced);
 
 		// Splits the document up into empty lines, so we can
 		//  later process them more easily
 		list<string> lines = {};
-		stringstream stream(raw);
+		stringstream stream(reduced);
 		string line;
-		size_t lastLineWithContent = 0;
 		while (getline(stream, line, '\n')) {
-			if (line[line.size() - 1] == '\r') line.pop_back();
+			if (!line.empty() && line[line.size() - 1] == '\r') line.pop_back();
 			lines.push_back(move(line));
 		}
 
-		// If the first line of the message is empty, remove it
-		if (lines.front().empty()) lines.pop_front();
+		// Removes the prefix white lines, these cause issues later on
+		for (list<string>::iterator it = lines.begin(); it != lines.end();) {
+			if ((*it).empty()) lines.erase(it++);
+			else break;
+		}
 
 		// Trims all the lines and removes
 		//  the extra spaces
 		size_t i = 0;
+		size_t lastLineWithContent = 0;
 		for_each(lines.begin(), lines.end(), [&](string &line) {
 			// Removes the whitespace at the end of the line
 			line.erase(line.find_last_not_of(' ') + 1);
-
-			// Reduces the whitespace
-			string tempLine;
-			reduceWhitespace(line, tempLine);
-			line = tempLine;
+			line.erase(0, line.find_first_not_of(' '));
 
 			// Checks if the line is empty, if so
 			//  just continue, else report it as the
@@ -194,8 +198,7 @@ namespace FSMTP::DKIM
 			i++;
 		});
 
-		// Removes the double empty lines, these may be two
-		//  at max
+		// Removes the empty lines at the end of the message
 		i = 0;
 		for (list<string>::iterator it = lines.begin(); it != lines.end();) {
 			if (i++ > lastLineWithContent) {
@@ -211,7 +214,6 @@ namespace FSMTP::DKIM
 			res += line;
 			res += "\r\n";
 		});
-
 		return res;
 
 		// // return res;
