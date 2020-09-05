@@ -86,7 +86,7 @@ namespace FSMTP::Parsers {
    * Joins MIME headers and parses them into EmailHeader's
    */
   vector<EmailHeader> parseHeaders(strvec_it from, strvec_it to) {
-    _parseHeaders(from, to, false);
+    return _parseHeaders(from, to, false);
   }
 
   vector<EmailHeader> _parseHeaders(strvec_it from, strvec_it to, bool lowerKey) {
