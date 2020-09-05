@@ -88,7 +88,7 @@ namespace FSMTP::Parsers {
   vector<EmailHeader> parseHeaders(strvec_it from, strvec_it to) {
     parseHeaders(from, to, false);
   }
-  
+
   vector<EmailHeader> parseHeaders(strvec_it from, strvec_it to, bool lowerKey) {
     #ifdef _SMTP_DEBUG
     Logger logger("MIMEV2", LoggerLevel::DEBUG);
@@ -163,8 +163,20 @@ namespace FSMTP::Parsers {
       if (sep == string::npos) {
         throw runtime_error(EXCEPT_DEBUG("Could not find k/v pair for header"));
       }
+
+      auto key = a(header.substr(0, sep));
+
+      // Turns the header key into lowercase if specified
+      //  by the callee
+      if (lowerKey) {
+        transform(key.begin(), key.end(), key.begin(), [](const char c) {
+          return tolower(c);
+        });
+      }
+
+      // Pushes the header to the result vector
       headers.push_back(EmailHeader {
-        a(header.substr(0, sep)),
+        key,
         a(header.substr(++sep))
       });
     });

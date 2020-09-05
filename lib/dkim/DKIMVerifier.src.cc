@@ -51,7 +51,7 @@ namespace FSMTP::DKIM_Verifier {
 		strvec_it headersStart, headersEnd, bodyStart, bodyEnd;
 		tie(headersStart, headersEnd, 
 			bodyStart, bodyEnd) = splitMIMEBodyAndHeaders(lines.begin(), lines.end());
-		vector<EmailHeader> headers = parseHeaders(headersStart, headersEnd);
+		vector<EmailHeader> headers = parseHeaders(headersStart, headersEnd, true);
 
 		// Gets the raw body from the splitted lines, this is required
 		//  for signing
