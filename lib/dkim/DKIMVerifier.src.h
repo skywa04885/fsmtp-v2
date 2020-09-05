@@ -20,6 +20,7 @@
 #include "../default.h"
 #include "../general/cleanup.src.h"
 #include "../parsers/mime.src.h"
+#include "../parsers/mimev2.src.h"
 #include "../models/Email.src.h"
 #include "../networking/DNS.src.h"
 #include "DKIMHashes.src.h"

@@ -19,8 +19,6 @@
 #include "../default.h"
 #include "hex.src.h"
 
-typedef vector<string>::iterator strvec_it;
-
 namespace FSMTP::Encoding
 {
 	/**

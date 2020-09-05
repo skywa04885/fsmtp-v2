@@ -42,13 +42,20 @@ namespace FSMTP::DKIM_Verifier {
 		bool signatureValid, bodyHashValid;
 		DEBUG_ONLY(Logger logger("DKIMVerifier", LoggerLevel::DEBUG));
 
+		// Splits the body into lines, so we can parse the
+		//  headers from it
+		vector<string> lines = getMIMELines(raw);
+
 		// Splits the headers from the body, after which
 		//  we parse the headers
-		string rawHeaders, rawBody;
-		MIME::splitHeadersAndBody(raw, rawHeaders, rawBody);
+		strvec_it headersStart, headersEnd, bodyStart, bodyEnd;
+		tie(headersStart, headersEnd, 
+			bodyStart, bodyEnd) = splitMIMEBodyAndHeaders(lines.begin(), lines.end());
+		vector<EmailHeader> headers = parseHeaders(headersStart, headersEnd);
 
-		vector<EmailHeader> headers = {};
-		MIME::parseHeaders(rawHeaders, headers, false);
+		// Gets the raw body from the splitted lines, this is required
+		//  for signing
+		string rawBody = getStringFromLines(bodyStart, bodyEnd);
 
 		// Checks if the DKIM header is there, if not
 		//  we just return false, else we parse the values from

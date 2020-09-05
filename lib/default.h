@@ -90,6 +90,8 @@ typedef struct __attribute__ (( packed )) {
 	uint64_t seg1;
 } uint128_t;
 
+typedef vector<string>::iterator strvec_it;
+
 // ==== Global definitions ====
 
 #define DEFER_1(x, y) x##y

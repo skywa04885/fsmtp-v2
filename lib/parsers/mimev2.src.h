@@ -26,8 +26,6 @@
 
 using namespace FSMTP::Models;
 
-typedef vector<string>::iterator strvec_it;
-
 namespace FSMTP::Parsers {
   /**
    * Decodes an piece of text from an email
@@ -85,6 +83,16 @@ namespace FSMTP::Parsers {
    * Parses an raw MIME Message into an valid FullEmail
    */
   void parseMIME(const string &raw, FullEmail &email);
+
+  /**
+   * Turns an message into a vector of lines
+   */
+  vector<string> getMIMELines(const string &raw);
+
+  /**
+   * Turns the lines into a string
+   */
+  string getStringFromLines(strvec_it from, strvec_it to);
 };
 
 #endif

@@ -417,6 +417,15 @@ namespace FSMTP::Parsers {
 
     // Splits the message into lines, which later can be used
     //  to iterate over in the different rounds
+    vector<string> lines = getMIMELines(raw);
+
+    parseMIMERecursive(email, 0, lines.begin(), lines.end());
+  }
+
+  /**
+   * Turns an message into a vector of lines
+   */
+  vector<string> getMIMELines(const string &raw) {
     vector<string> lines = {};
 
     stringstream stream(raw);
@@ -426,6 +435,19 @@ namespace FSMTP::Parsers {
       lines.push_back(line);
     }
 
-    parseMIMERecursive(email, 0, lines.begin(), lines.end());
+    return lines;
+  }
+
+  /**
+   * Turns the lines into a string
+   */
+  string getStringFromLines(strvec_it from, strvec_it to) {
+    string result;
+
+    for_each(from, to, [&](const string &line) {
+      result += line;
+    });
+
+    return result;  
   }
 }
