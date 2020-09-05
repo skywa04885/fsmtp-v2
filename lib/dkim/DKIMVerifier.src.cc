@@ -19,7 +19,7 @@
 #include <openssl/ssl3.h>
 
 namespace FSMTP::DKIM_Verifier {
-	void parseDkimHeader(const string &raw, map<string, string> &header) {
+	void parseDkimHeader(const string &raw, vector<tuple<string, string>> &header) {
 		stringstream ss(raw);
 		string pair;
 		
@@ -34,13 +34,17 @@ namespace FSMTP::DKIM_Verifier {
 			Cleanup::removeFirstAndLastWhite(key);
 			Cleanup::removeFirstAndLastWhite(value);
 
-			header.insert(make_pair(move(key), move(value)));
+			header.push_back(tuple<string, string>(key, value));
 		}
 	}
 
 	DKIMVerifyResponse verify(const string &raw) {
 		bool signatureValid, bodyHashValid;
 		DEBUG_ONLY(Logger logger("DKIMVerifier", LoggerLevel::DEBUG));
+
+		// ==================================
+		// Parses the mime message
+		// ==================================
 
 		// Splits the body into lines, so we can parse the
 		//  headers from it
@@ -49,8 +53,7 @@ namespace FSMTP::DKIM_Verifier {
 		// Splits the headers from the body, after which
 		//  we parse the headers
 		strvec_it headersStart, headersEnd, bodyStart, bodyEnd;
-		tie(headersStart, headersEnd, 
-			bodyStart, bodyEnd) = splitMIMEBodyAndHeaders(lines.begin(), lines.end());
+		tie(headersStart, headersEnd, bodyStart, bodyEnd) = splitMIMEBodyAndHeaders(lines.begin(), lines.end());
 		vector<EmailHeader> headers = _parseHeaders(headersStart, headersEnd, true);
 
 		// Gets the raw body from the splitted lines, this is required
@@ -60,7 +63,7 @@ namespace FSMTP::DKIM_Verifier {
 		// Checks if the DKIM header is there, if not
 		//  we just return false, else we parse the values from
 		//  the DKIM header
-		map<string, string> dkimHeader; // IMPORTANT ! Keep in scope !
+		vector<tuple<string, string>> dkimHeader;
 		const string *rawDKIMHeader = nullptr;
 		bool dkimHeaderFound = false;
 		for (auto &header : headers) {
@@ -85,14 +88,18 @@ namespace FSMTP::DKIM_Verifier {
 		}
 		DEBUG_ONLY(logger << "Found DKIM-Signature" << ENDL);
 
+		// ==================================
+		// Gets the values from the header
+		// ==================================
+
 		// Starts getting the values from the DKIM header
 		DKIM::DKIMHeaderSegments headerSegments;
-		map<string, string>::iterator it;
+		vector<tuple<string, string>>::iterator it;
 		for (it = dkimHeader.begin(); it != dkimHeader.end(); ++it) {
-			DEBUG_ONLY(logger << it->first << ": " << it->second << ENDL);
+			DEBUG_ONLY(logger << get<0>(*it) << ": " << get<1>(*it) << ENDL);
 
-			auto &k = it->first;
-			auto &v = it->second;
+			auto &k = get<0>(*it);
+			auto &v = get<1>(*it);
 			if (k == "v") {
 				// Version
 				headerSegments.s_Version = v.c_str();
@@ -127,6 +134,10 @@ namespace FSMTP::DKIM_Verifier {
 			}
 		}
 
+		// ==================================
+		// Verifies the signature
+		// ==================================
+
 		// Gets the public key from the DNS TXT record, this
 		//  is required to decode the signature
 
@@ -140,7 +151,10 @@ namespace FSMTP::DKIM_Verifier {
 		DEBUG_ONLY(logger << "DKIM Record: \r\n\033[44m'" << record << "'\033[0m" << ENDL);
 		map<string, string> dkimValueMap = MIME::subtextIntoKeyValuePairs(record);
 
+		// Checks if the public key is actually in the record
+		//  if not return fail record error
 		if (dkimValueMap.count("p") <= 0) return DKIMVerifyResponse::DVR_FAIL_RECORD;
+		auto &publicKey = dkimValueMap.find("p")->second;
 
 		// Since we now know which headers were used by the signer
 		//  we now want to get them ourselves, so we can canonicalize
@@ -148,52 +162,68 @@ namespace FSMTP::DKIM_Verifier {
 		
 		ostringstream finalHeaders;
 		auto &segHeaders = headerSegments.s_Headers;
-		for_each(headers.begin(), headers.end(), [&](const EmailHeader &header) {
-			if (find(segHeaders.begin(), segHeaders.end(), header.e_Key) != segHeaders.end())
-				finalHeaders << header.e_Key << ": " << header.e_Value << "\r\n";
+		// for_each(headers.begin(), headers.end(), [&](const EmailHeader &header) {
+		// 	if (find(segHeaders.begin(), segHeaders.end(), header.e_Key) != segHeaders.end())
+		// 		finalHeaders << header.e_Key << ": " << header.e_Value << "\r\n";
+		// });
+		for_each(segHeaders.begin(), segHeaders.end(), [&](const string &a) {
+			vector<EmailHeader>::iterator header = find_if(headers.begin(), headers.end(), [&](const EmailHeader &h) {
+				return (h.e_Key == a);
+			});
+			if (header == headers.end()) {
+				throw runtime_error(EXCEPT_DEBUG("DKIM Specified header not found in headers"));
+			}
+
+			finalHeaders << header->e_Key << ": " << header->e_Value << "\r\n";
 		});
 
 		// Adds the DKIM-SIgnature to the final headers, this is always required
 		//  for the signing process, so we need to add them in order to verify
 
 		finalHeaders << "DKIM-Signature: ";
-		stringstream stream(*rawDKIMHeader);
-		string token;
-		while(getline(stream, token, ';')) {
-			string key = token.substr(0, token.find_first_of('='));
-			removeFirstAndLastWhite(key);
+		for_each(dkimHeader.begin(), dkimHeader.end(), [&](const tuple<string, string> tup) {
+			auto &key = get<0>(tup);
+			auto value = get<1>(tup);
 
 			if (key == "b") {
-				finalHeaders << token.substr(0, token.find_first_of('=') + 1);
-				break;
-			} else finalHeaders << token << ';';
-		}
+				finalHeaders << "b=";
+				return;
+			} else if (key == "h") {
+				transform(value.begin(), value.end(), value.begin(), [](const char c) {
+					return tolower(c);
+				});
+			}
+
+			finalHeaders << key << '=' << value << "; ";
+		});
 
 		// Starts canonicalizing the body and headers, this is done
 		//  using the above specified algorithm
+
 		DKIM::DKIMAlgorithmPair algorithm = DKIM::algorithmPairFromString(headerSegments.s_CanonAlgo);
 
 		string canedBody, canedHeaders;
 		switch (algorithm) {
-			case DKIM::DKIMAlgorithmPair::DAP_RELAXED_RELAXED:
+			case DKIM::DKIMAlgorithmPair::DAP_RELAXED_RELAXED: {
 				canedBody = DKIM::_canonicalizeBodyRelaxed(rawBody);
 				canedHeaders = DKIM::_canonicalizeHeadersRelaxed(finalHeaders.str());
 
 				// Removes the CRLF because we included the signature this time
 				canedHeaders.erase(canedHeaders.size() - 2);
 				break;
+			}
 			default: throw runtime_error("Algorithm not implemented");
 		}
 
 		DEBUG_ONLY(logger << "Canonicalized body: \r\n\033[44m'" << canedBody << "'\033[0m" << ENDL);
 		DEBUG_ONLY(logger << "Canonicalized headers: \r\n\033[44m'" << canedHeaders << "'\033[0m" << ENDL);
 
-		// Performs the hash of the headers, and the hash of the body. After this we will use
-		//  openssl to decode the signature with the public key. Then we compare both hashes
-		//  and return the result
+		// Creates the body hash, and compares it against the body
+		//  hash specified in the email message
 
 		string bodyHash = Hashes::sha256base64(canedBody);
 		DEBUG_ONLY(logger << "Body hash: " << bodyHash << ", in message: " << headerSegments.s_BodyHash << ENDL);
+		
 		if (bodyHash == headerSegments.s_BodyHash) {
 			DEBUG_ONLY(logger << "Body hashes do match" << ENDL);
 			bodyHashValid = true;
@@ -202,30 +232,31 @@ namespace FSMTP::DKIM_Verifier {
 			bodyHashValid = false;
 		}
 
-		try {
-			if (Hashes::RSASha256verify(headerSegments.s_Signature, 
-				canedHeaders, dkimValueMap.find("p")->second)) signatureValid = true;
-			else signatureValid = false;
+		// Verifies the signature, against the one specified in the message
+		//  this also makes use of the public key
+
+		try {		
+			signatureValid = Hashes::RSASha256verify(headerSegments.s_Signature, canedHeaders, publicKey);
 		} catch (const runtime_error &e) {
 			DEBUG_ONLY(logger << ERROR << "Failed to verify signature: " << e.what() << ENDL);
 			return DKIMVerifyResponse::DVR_FAIL_SYSTEM;
 		}
 
-		// Returns the verification response, this will be either pass both, fail both,
-		//  or if one of them failed.
+		// ==================================
+		// Returns the validation response
+		// ==================================
 
-		DEBUG_ONLY(logger << "Checking which response to make" << ENDL);
 		if (bodyHashValid && signatureValid) {
+			DEBUG_ONLY(logger << "Response: Body hash and signature valid" << ENDL);
 			return DKIMVerifyResponse::DVR_PASS_BOTH;
-			DEBUG_ONLY(logger << "Respose: Body hash and signature valid" << ENDL);
 		} else if (!bodyHashValid && !signatureValid) {
-			DEBUG_ONLY(logger << "Respose: Body hash and signature invalid" << ENDL);
+			DEBUG_ONLY(logger << "Response: Body hash and signature invalid" << ENDL);
 			return DKIMVerifyResponse::DVR_FAIL_BOTH;
 		} else if (bodyHashValid && !signatureValid) {
-			DEBUG_ONLY(logger << "Invalid signature" << ENDL);
+			DEBUG_ONLY(logger << "Response: Invalid signature" << ENDL);
 			return DKIMVerifyResponse::DVR_FAIL_SIGNATURE;
 		} else if (!bodyHashValid && signatureValid) {
-			DEBUG_ONLY(logger << "Respose: invalid body hash" << ENDL);
+			DEBUG_ONLY(logger << "Response: invalid body hash" << ENDL);
 			return DKIMVerifyResponse::DVR_FAIL_BODY_HASH;
 		} else {
 			DEBUG_ONLY(logger << "Respose: System failure" << ENDL);

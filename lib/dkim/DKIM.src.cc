@@ -215,54 +215,6 @@ namespace FSMTP::DKIM
 			res += "\r\n";
 		});
 		return res;
-
-		// // return res;
-		// std::string res;
-		// std::string temp;
-
-		// // Reduces the whitespace occurences
-		// reduceWhitespace(raw, res);
-
-		// // Removes the whitespace at start and end of lines
-		// // - using an string stream
-		// std::stringstream stream(res);
-		// std::string token;
-		// std::size_t lastNotEmptyIndex = 0, i = 0;
-		// while (std::getline(stream, token, '\n'))
-		// {
-		// 	// Removes the '\r' if it is there
-		// 	if (!token.empty() && token[token.size() - 1] == '\r') token.pop_back();
-
-		// 	// Checks if it is an empty line, if so ignore it
-		// 	if (!token.empty()) lastNotEmptyIndex = i;
-
-		// 	// Removes the whitespace at start and end, and pushes it to
-		// 	// - the result
-		// 	if (!token.empty() && token[token.size() - 1] == ' ') token.pop_back();
-		// 	temp += token + "\r\n";
-
-		// 	// Increments the index
-		// 	i++;
-		// }
-
-		// // Removes the empty lines from the body, there may only be one in a row
-		//  // and it may not be at the start or end of the body
-
-		// // Clears the result and removes the first and last empty
-		// //  lines from the body
-		// res.clear();
-		// std::stringstream secondStream(temp);
-		// std::size_t j = 0;
-		// while (std::getline(secondStream, token, '\n'))
-		// {
-		// 	if (j++ > lastNotEmptyIndex) break;
-		// 	// Removes the '\r' if it is there, and adds the token
-		// 	// - to the result
-		// 	if (!token.empty() && token[token.size() - 1] == '\r') token.pop_back();
-		// 	res += token += "\r\n";
-		// }
-
-		// return res;
 	}
 
 	/**

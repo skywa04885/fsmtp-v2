@@ -81,10 +81,12 @@ namespace FSMTP::Models
 	const char *contentTransferEncodingToString(const EmailTransferEncoding enc);
 	EmailTransferEncoding stringToEmailTransferEncoding(const string &raw);
 
-	typedef struct {
+	struct EmailHeader {
 		string e_Key;
 		string e_Value;
-	} EmailHeader;
+	};
+
+	typedef struct EmailHeader EmailHeader;
 
 	typedef struct {
 		string e_Content;

@@ -29,11 +29,24 @@ int main(const int argc, const char **argv)
 
 	Logger logger("MAIN", LoggerLevel::INFO);
 
-	Global::configure();
-	Global::readConfig(CONFIG_FILE, FALLBACK_CONFIG_FILE);
+	// ifstream stream("../gmail-email.eml");
 
-	vector<string> args(argv, argv + argc);
-	handleArguments(args);
+	// string total;
+	// string line;
+	// while (getline(stream, line)) {
+	// 	total += line;
+	// 	total += "\n";
+	// }
+
+	// DKIM_Verifier::verify(total);
+
+	// return 0;
+
+	// Global::configure();
+	// Global::readConfig(CONFIG_FILE, FALLBACK_CONFIG_FILE);
+
+	// vector<string> args(argv, argv + argc);
+	// handleArguments(args);
 
 	// ==================================
 	// Starts the services

@@ -1,67 +1,50 @@
-Delivered-To: luke.rieff@gmail.com
-Received: by 2002:a17:90b:184:0:0:0:0 with SMTP id t4csp1181378pjs;
-        Fri, 4 Sep 2020 01:39:35 -0700 (PDT)
-X-Google-Smtp-Source: ABdhPJzklX8rPR2D1ui+EqAOv35S9x/gkDPVOhYj5t3Eh/IoQHZB7AI9lJAuji0rwOF7AINBItx4
-X-Received: by 2002:a17:902:d20d:: with SMTP id t13mr5462396ply.214.1599208775393;
-        Fri, 04 Sep 2020 01:39:35 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1599208775; cv=none;
-        d=google.com; s=arc-20160816;
-        b=FvdNIrkBUodvXTEYOGejTb4yHTj354lqmbxJFy5VLpPp8rsA6LkedFL7KHFIf0peU7
-         e38EyHGUHjl1H0ry3chhTUNXYG/dxP0OdKVaO6cMYL4B1+Nm6HpagWioNgSohasYXvFq
-         cAJ/AUEdbM3E8kZ/FB6RkbtMhy0+upjEEwDOggMpXR64/FAW32eZw6wHDTuO/C4An8wr
-         yxDGsQ287TqmyuW0fpPphBPKdJoroXGv5GnGx2Dil/54uz3DH3egmy7n3Iyx5p6JiGUe
-         3gmjHTMk56/INspH+kWP4GR/KO9seG5W/8ZAggUB8SDPyaG9w8J3lAlaeOxQUxjzXlaw
-         JayQ==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20160816;
-        h=dkim-signature:mime-version:date:message-id:subject:to:from;
-        bh=979pT1I5hEm+m3oITUszb9W9pdKofBSZsRoE1jBcWro=;
-        b=lk8AT92u7JuV7XDlYsA+JiToN7EknL1gpfanyjaGd6BjONdnz4W1aIZJbnZecKGr/L
-         fJsx6X1GRdr4EhCq3l3/g1LiJIIpszX2j/JHRA8mua/FEWcoDHwpFSFOHw7lVCqgGHLz
-         FRufkVlWKXvrPr0pVEyNThkk23i1JzyZR8KvfeEjoJeM4NufnTDpUTkM8/StkLtaXZ4m
-         /y6gKdRWt/xWKgjtVmIDyqHyr9oXhhKdIx2XwHXSbESxCYMkYgPxVINzR4HRipUvPzZB
-         g5Yh0KJHmWEASXXbrhwEtKd8n9i5ku1DdbJDceiosPKl+OyQmhkU/uWd2ivFU2GvwguQ
-         v+4w==
-ARC-Authentication-Results: i=1; mx.google.com;
-       dkim=pass header.i=@fannst.nl header.s=default header.b=gxVCyfjt;
-       spf=pass (google.com: domain of lrieff@fannst.nl designates 145.53.228.5 as permitted sender) smtp.mailfrom=lrieff@fannst.nl;
-       dmarc=pass (p=NONE sp=NONE dis=NONE) header.from=fannst.nl
-Return-Path: <lrieff@fannst.nl>
-Received: from mailer.fannst.nl (145-53-228-5.fixed.kpn.net. [145.53.228.5])
-        by mx.google.com with ESMTPS id s17si491105pjn.24.2020.09.04.01.39.33
-        for <luke.rieff@gmail.com>
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 04 Sep 2020 01:39:35 -0700 (PDT)
-Received-SPF: pass (google.com: domain of lrieff@fannst.nl designates 145.53.228.5 as permitted sender) client-ip=145.53.228.5;
-Authentication-Results: mx.google.com;
-       dkim=pass header.i=@fannst.nl header.s=default header.b=gxVCyfjt;
-       spf=pass (google.com: domain of lrieff@fannst.nl designates 145.53.228.5 as permitted sender) smtp.mailfrom=lrieff@fannst.nl;
-       dmarc=pass (p=NONE sp=NONE dis=NONE) header.from=fannst.nl
-Content-Type: multipart/alternative; boundary="--_NmP-30083445d6637162-Part_1"
-X-Mailer: FSMTP-V2 Node
-From: Luke Rieff <lrieff@fannst.nl>
-To: Luke Rieff <luke.rieff@gmail.com>
-Subject: Hello World
-Message-ID: <dc391349-ce79-fd11-9624-2109e5751a38@fannst.nl>
-Date: Fri, 04 Sep 2020 08:39:03 +0000
+Received: by mail-pj1-f48.google.com with SMTP id u3so1099187pjr.3
+        for <webmaster@fannst.nl>; Sat, 05 Sep 2020 07:08:05 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20161025;
+        h=mime-version:from:date:message-id:subject:to;
+        bh=duX38snjTA3PcKthOo0u5QoVbD2ypWpJ+hxPs9VHATY=;
+        b=syPctiYFki7kPM7SUOjEyM/AnBZpvK/3McPrL+4A/QvyXCRCJrUvvY6t+h9j+xXnae
+         CvCiGBV5c6e4EjpUEcPmtem7kEE721OQqDI2o8H0gfRdntZPe7q2yATr3Be0gtFQu9Sf
+         AiWSQ5dZFlcb3PZbFNuwv/RjQGspN+JF446KzpN0tb5GqV6tW3iTkbP6JYW+urT6gTte
+         MOAf9k+DrOxtZIomG/V4PGH9IqXDJ7iLwykiQHHcy9e0I9uSiYCWTKrvblPO0qqUpcIU
+         oITUcpIstyD38Jkx8XbVQ/Xv5jRSuLDcLlv0tm/gmbaccWeXVtm3Rq/DPV06ok34bzCR
+         yvOw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20161025;
+        h=x-gm-message-state:mime-version:from:date:message-id:subject:to;
+        bh=duX38snjTA3PcKthOo0u5QoVbD2ypWpJ+hxPs9VHATY=;
+        b=n0ZzJ6TGz9PiW8O5V/L57SxpvBn3W14TkAjXPpRu5qFzIfLfnJ96ZBGPI0b+Plxoca
+         oy+dtCFrF0sk9gKCvYcNyvKArW5Ri6AY1zLd9UFNfulDDOyMKEYKkcjoMyBW+Gji0Ejh
+         NwiFvF9oRi5n8CGjytss1wyiOZUYqXuw/nsWDy+8CbHohC7YLPOskZ80tZQrVPTj3Zw6
+         ymZQB/FPIAlO2hheHNcBGrr4m6GH+v1CTw8OahhHGPxHEiPE3VbZ1ksYF6DRRF49Hhkx
+         w2XHawlAh3KHZTxHzoSem3kCrRurx1sHqrYj0O/YuJ7UJcdFr9ebpjRPCIa5Ic5ZEz6S
+         AOUA==
+X-Gm-Message-State: AOAM532hHnnMT5LBvHWdrP1VdCqeEaSV1ZcHL9RxmU4txQYF4M9XQgpp
+    FZiZmnHqfI6/ivwGNyh50P17RGKEvKaoEPSBKDmvYZUWQY4=
+X-Google-Smtp-Source: ABdhPJwJtBmAxdh1XlDHHHsExaPi8rmbdxpTFdg63Gc6YxdrE90Puf4hYpOnHK29nOKIy5pqBI6JtiKcznW5joRbknc=
+X-Received: by 2002:a17:902:40a:: with SMTP id 10mr5707260ple.25.1599314545920;
+ Sat, 05 Sep 2020 07:02:25 -0700 (PDT)
 MIME-Version: 1.0
+From: Skywalker <luke.rieff@gmail.com>
+Date: Sat, 5 Sep 2020 16:01:50 +0200
+Message-ID: <CAFoEhQN472UpSDqoivMvLi9M3pFVPJd0mjnpnJGuNmPbF93ZDg@mail.gmail.com>
+Subject: dasdasdasdasd
+To: webmaster <webmaster@fannst.nl>
+Content-Type: multipart/alternative; boundary="00000000000064d14c05ae916f3e"
 X-Fannst-Conn: SSL
-X-Fannst-Auth: spf=fail (address 127.0.0.1 is not verified by fannst.nl)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=fannst.nl; s=default;
-        h=from:to:subject:message-id:date:mime-version;
-        bh=979pT1I5hEm+m3oITUszb9W9pdKofBSZsRoE1jBcWro=; b=gxVCyfjtdjmwKo4IjQgnOmarQDaKb/nOD+WGRQ1
-        jrx9jKQ7cHqRrypXbqVp7bPg3cfFol2u3BA6SzqxhwxEutfekQC9ltmUT5K1hKMavx0IhOxEYGKHiTUy9xZ+YEwE5q
-        ZXBCvOGDQEFxuGtI7J2KFpbnx97OoW90V+53XEV2s/O3ZXra/wManMj+lS4M5G8T8DN7LL7cNVYNqA4Fk6CnRfeaHv
-        yCfCZdTYG8C6d5HkdYEX6IjqN8EPGZFmLgvf2EGt53mXL/ADYDbKFsTeaNJRecGrd+sacOVXvASmIFyo1YN2X3E5rI
-        0uVtAtv7YYFM8h3cgNlG0UbTo09nvIW3A==
+X-Fannst-Auth: spf=pass (address 209.85.216.48 is verified by gmail.com); 
+       dkim=pass (signature valid, body-hash valid)
 
-----_NmP-30083445d6637162-Part_1
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
 
-Hello World test
-----_NmP-30083445d6637162-Part_1
-Content-Type: text/html; charset=utf-8
-Content-Transfer-Encoding: 7bit
+--00000000000064d14c05ae916f3e
+Content-Type: text/plain; charset="UTF-8"
 
-<h1 asd="test">Hello World Test</h1>
-----_NmP-30083445d6637162-Part_1--
+asdas
+
+--00000000000064d14c05ae916f3e
+Content-Type: text/html; charset="UTF-8"
+
+<div dir="ltr">asdas<br></div>
+
+--00000000000064d14c05ae916f3e--
