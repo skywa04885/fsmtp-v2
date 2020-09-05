@@ -42,11 +42,11 @@ int main(const int argc, const char **argv)
 
 	// return 0;
 
-	// Global::configure();
-	// Global::readConfig(CONFIG_FILE, FALLBACK_CONFIG_FILE);
+	Global::configure();
+	Global::readConfig(CONFIG_FILE, FALLBACK_CONFIG_FILE);
 
-	// vector<string> args(argv, argv + argc);
-	// handleArguments(args);
+	vector<string> args(argv, argv + argc);
+	handleArguments(args);
 
 	// ==================================
 	// Starts the services
