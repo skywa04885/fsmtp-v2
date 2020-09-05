@@ -19,8 +19,15 @@
 #include "../default.h"
 #include "hex.src.h"
 
+typedef vector<string>::iterator strvec_it;
+
 namespace FSMTP::Encoding
 {
+	/**
+	 * Encodes an vector range to quoted printable
+	 */
+	string decodeQuotedPrintableRange(strvec_it from, strvec_it to);
+	
 	string decodeQuotedPrintable(const string &raw);
 	string encodeQuotedPrintable(const string &raw);
 	string escapeHTML(const string &raw);

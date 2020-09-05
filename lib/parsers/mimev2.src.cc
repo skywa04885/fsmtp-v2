@@ -18,6 +18,38 @@
 
 namespace FSMTP::Parsers {
   /**
+   * Decodes an piece of text from an email
+   */
+  string decodeMIMEContent(
+    strvec_it from, strvec_it to, const EmailTransferEncoding encoding
+  ) {
+    // Switches the transfer encoding, this will determine
+    //  how we're going to process the current email
+    switch (encoding) {
+      // Decoedes 7bit/quoted printable, these use hex
+      //  to encode special chars to make it 7bit
+      case EmailTransferEncoding::ETE_QUOTED_PRINTABLE: {
+        return Encoding::decodeQuotedPrintableRange(from, to);
+      }
+
+      // The default just keeps the original content in place
+      //  most likely this happens for files.
+      default:
+      case EmailTransferEncoding::ETE_7BIT:
+      case EmailTransferEncoding::ETE_8BIT:
+      case EmailTransferEncoding::ETE_BASE64: {
+        string result;
+
+        for_each(from, to, [&](const string &line) {
+          result += line + "\r\n";
+        });
+
+        return result;
+      };
+    }
+  }
+
+  /**
    * Gets the MIME body ranges from an message
    */
   tuple<strvec_it, strvec_it, strvec_it, strvec_it> splitMIMEBodyAndHeaders(strvec_it from, strvec_it to) {
@@ -261,21 +293,21 @@ namespace FSMTP::Parsers {
 
     // If SMTP_DEBUG set perform the debug print of
     //  the parsed sections
-    #ifdef _SMTP_DEBUG
-    Logger logger("MIMEV2", LoggerLevel::DEBUG);
+    // #ifdef _SMTP_DEBUG
+    // Logger logger("MIMEV2", LoggerLevel::DEBUG);
 
-    for_each(result.begin(), result.end(), [&](const tuple<strvec_it, strvec_it> &tup) {
-      logger << "Parsed section: '" << ENDL;
+    // for_each(result.begin(), result.end(), [&](const tuple<strvec_it, strvec_it> &tup) {
+    //   logger << "Parsed section: '" << ENDL;
 
-      strvec_it start, end;
-      tie(start, end) = tup;
-      for_each(start, end, [](const string &l) {
-        cout << l << endl;
-      });
+    //   strvec_it start, end;
+    //   tie(start, end) = tup;
+    //   for_each(start, end, [](const string &l) {
+    //     cout << l << endl;
+    //   });
 
-      cout << '\'' << endl;
-    });
-    #endif
+    //   cout << '\'' << endl;
+    // });
+    // #endif
 
     return result;
   }
@@ -302,12 +334,14 @@ namespace FSMTP::Parsers {
     // ================================
 
     EmailContentType contentType;
-    EmaiLTransferEncoding contentTransferEncoding;
+    EmailTransferEncoding contentTransferEncoding;
     string boundary, charset;
 
-    // Parses the headers into an vector
-    auto &headers = email.e_Headers;
+    // Parses the headers into an vector, if we're in the
+    //  first round store the headers inside of the email
+    vector<EmailHeader> headers = {};
     headers = parseHeaders(headersBegin, headersEnd);
+    if (!i) email.e_Headers = headers;
 
     // Prints the found headers, only if
     //  debug mode is enabled
@@ -339,7 +373,8 @@ namespace FSMTP::Parsers {
       if (key == "content-type") {
         tie(contentType, boundary, charset) = parseContentType(value);
       } else if (key == "content-transfer-encoding") {
-        contentTransferEncoding = stringToEmailTransferEncoding(val);
+        contentTransferEncoding = stringToEmailTransferEncoding(value);
+        cout << contentTransferEncodingToString(contentTransferEncoding) << endl;
       }
     });
 
@@ -351,12 +386,6 @@ namespace FSMTP::Parsers {
 
     DEBUG_ONLY(logger << "Parsing section of type: " << contentTypeToString(contentType) << ENDL);
     switch (contentType) {
-      case EmailContentType::ECT_TEXT_PLAIN: {
-        break;
-      }
-      case EmailContentType::ECT_TEXT_HTML: {
-        break;
-      }
       case EmailContentType::ECT_MULTIPART_ALTERNATIVE:
       case EmailContentType::ECT_MULTIPART_MIXED: {
         // Performs the recursive parsing of all the sections,
@@ -366,8 +395,13 @@ namespace FSMTP::Parsers {
         }
         break;
       }
+      case EmailContentType::ECT_TEXT_PLAIN:
+      case EmailContentType::ECT_TEXT_HTML:
       default: {
-        
+        email.e_BodySections.push_back(EmailBodySection {
+          decodeMIMEContent(bodyBegin, bodyEnd, contentTransferEncoding),
+          contentType, headers, i, contentTransferEncoding
+        });
       }
     }
   }

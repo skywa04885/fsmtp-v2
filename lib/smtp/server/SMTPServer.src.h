@@ -27,7 +27,7 @@
 #include "SMTPServerSession.src.h"
 #include "SMTPServerExceptions.src.h"
 #include "SMTPAuthentication.src.h"
-#include "../../parsers/mime.src.h"
+#include "../../parsers/mimev2.src.h"
 #include "../../models/LocalDomain.src.h"
 #include "../../workers/TransmissionWorker.src.h"
 #include "SMTPSpamDetection.src.h"

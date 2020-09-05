@@ -582,9 +582,8 @@ bool SMTPServer::handleCommand(
 			session->s_RawBody += "\r\n";
 			session->s_RawBody += body;
 
-
 			try {
-				MIME::parseRecursive(session->s_RawBody, session->s_TransportMessage, 0);
+				parseMIME(session->s_RawBody, session->s_TransportMessage);
 				DEBUG_ONLY(FullEmail::print(session->s_TransportMessage, clogger));
 			} catch (const runtime_error &e) {
 				throw SMTPSyntaxException(string("Parsing failed: ") + e.what());

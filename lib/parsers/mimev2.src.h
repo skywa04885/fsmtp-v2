@@ -21,6 +21,7 @@
 
 #include "../general/Logger.src.h"
 #include "../general/Timer.src.h"
+#include "../general/encoding.src.h"
 #include "../models/Email.src.h"
 
 using namespace FSMTP::Models;
@@ -31,7 +32,9 @@ namespace FSMTP::Parsers {
   /**
    * Decodes an piece of text from an email
    */
-  string decodeMIMEContent(strvec_it from, strvec_it to);
+  string decodeMIMEContent(
+    strvec_it from, strvec_it to, const EmailTransferEncoding encoding
+  );
   
   /**
    * Gets the MIME body ranges from an message

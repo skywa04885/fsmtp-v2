@@ -128,6 +128,8 @@ namespace FSMTP::Workers
 					logger << FATAL << "Could not store message: " << e.what() << ENDL << CLASSIC;
 				}
 
+				DEBUG_ONLY(logger << DEBUG << "Stored 1 message !" << ENDL << CLASSIC);
+
 				databaseMutex.lock();
 				databaseQueue.pop_back();
 				databaseMutex.unlock();

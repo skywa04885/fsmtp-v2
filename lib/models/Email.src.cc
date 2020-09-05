@@ -160,8 +160,8 @@ namespace FSMTP::Models
 	EmailTransferEncoding stringToEmailTransferEncoding(const string &raw) {
 		if (raw == "7bit") return EmailTransferEncoding::ETE_7BIT;
 		else if (raw == "8bit") return EmailTransferEncoding::ETE_8BIT;
-		else if (raw == "base64") return EmailTransferEncoding::ETE_QUOTED_PRINTABLE;
-    else if (raw == "quoted-printable") return EmailTransferEncoding::ETE_BASE64;
+		else if (raw == "base64") return EmailTransferEncoding::ETE_BASE64;
+    else if (raw == "quoted-printable") return EmailTransferEncoding::ETE_QUOTED_PRINTABLE;
 		else return EmailTransferEncoding::ETE_NOT_FUCKING_KNOWN;
 	}
 
@@ -208,8 +208,8 @@ namespace FSMTP::Models
   	logger << " - Body sections: " << ENDL;
   	for_each(email.e_BodySections.begin(), email.e_BodySections.end(), [&](auto &s) {
   		logger << "\t - Body Section[no: " << c++ << ", cType: ";
-  		logger << s.e_Type << ", cTransEnc: "; 
-  		logger << s.e_TransferEncoding << "]: " << ENDL;
+  		logger << static_cast<int>(s.e_Type) << ", cTransEnc: "; 
+  		logger << static_cast<int>(s.e_TransferEncoding) << "]: " << ENDL;
   		logger << "\t\t" << (s.e_Content.size() < 56 ? s.e_Content : s.e_Content.substr(0, 56) + " ...") << ENDL;
   	});
 
