@@ -63,10 +63,15 @@ namespace FSMTP::DKIM_Verifier {
 		map<string, string> dkimHeader; // IMPORTANT ! Keep in scope !
 		const string *rawDKIMHeader = nullptr;
 		bool dkimHeaderFound = false;
-		for (const auto &header : headers) {
+		for (auto &header : headers) {
+			auto &val = header.e_Value;
+			transform(val.begin(), val.end(), val.begin(), [](const char c){
+				return tolower(c);
+			});
+
 			if (header.e_Key == "dkim-signature") {
-				parseDkimHeader(header.e_Value, dkimHeader);
-				rawDKIMHeader = &header.e_Value;
+				parseDkimHeader(val, dkimHeader);
+				rawDKIMHeader = &val;
 
 				dkimHeaderFound = true;
 				break;
