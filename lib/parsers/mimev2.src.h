@@ -43,7 +43,7 @@ namespace FSMTP::Parsers {
    * Joins MIME headers and parses them into EmailHeader's
    */
   vector<EmailHeader> parseHeaders(strvec_it from, strvec_it to);
-  vector<EmailHeader> parseHeaders(strvec_it from, strvec_it to, bool lowerKey);  
+  vector<EmailHeader> _parseHeaders(strvec_it from, strvec_it to, bool lowerKey);  
   
   /**
    * Splits header values using a semicolon

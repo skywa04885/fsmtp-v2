@@ -86,10 +86,10 @@ namespace FSMTP::Parsers {
    * Joins MIME headers and parses them into EmailHeader's
    */
   vector<EmailHeader> parseHeaders(strvec_it from, strvec_it to) {
-    parseHeaders(from, to, false);
+    _parseHeaders(from, to, false);
   }
 
-  vector<EmailHeader> parseHeaders(strvec_it from, strvec_it to, bool lowerKey) {
+  vector<EmailHeader> _parseHeaders(strvec_it from, strvec_it to, bool lowerKey) {
     #ifdef _SMTP_DEBUG
     Logger logger("MIMEV2", LoggerLevel::DEBUG);
     Timer timer("parseHeaders()", logger);
