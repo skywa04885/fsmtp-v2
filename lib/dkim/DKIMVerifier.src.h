@@ -47,9 +47,17 @@ namespace FSMTP::DKIM_Verifier {
 	void parseDkimHeader(const string &raw, map<string, string> &header);
 
 	/**
+	 * Verifies a single signature
+	 */
+	DKIMVerifyResponse verifySignature(
+		const string &signature, const vector<EmailHeader> &headers, 
+		const string &body
+	);
+
+	/**
 	 * Verifies an message which possibly contains some DKIM-Signature header
 	 */
-	DKIMVerifyResponse verify(const string &raw);
+	vector<DKIMVerifyResponse> verify(const string &raw);
 
 	/**
 	 * Gets the public key from an domain, which is needed to decode the signature

@@ -523,7 +523,7 @@ bool SMTPServer::handleCommand(
 			// Performs the message validation, like checking the SPF and DKIM
 			//  records, we will set the headers accordingly. Also if this fails
 			//  the message is possible spam, and we put it in the spam.
-			bool possibleSpamSPF, possibleSpamDKIM;
+			bool possibleSpamSPF, possibleSpamDKIM = true;
 			vector<EmailHeader> authResults = {};
 			if (SU::checkSU(session->s_TransportMessage.e_TransportFrom.getDomain(), client->getPrefix())) {
 				authResults.push_back({"spf", string("pass (address ") + client->getPrefix() + " is verified by " + session->s_TransportMessage.e_TransportFrom.getDomain() + ")"});
@@ -537,38 +537,45 @@ bool SMTPServer::handleCommand(
 				authResults.push_back({"su", string("pass (access granted for ") + client->getPrefix() + " , using FSMTP-V2 extensions)"});
 			}
 
-			switch (DKIM_Verifier::verify(session->s_RawBody)) {
-				case DKIM_Verifier::DKIMVerifyResponse::DVR_PASS_BOTH:
-					authResults.push_back({"dkim", "pass (signature valid, body-hash valid)"});
-					possibleSpamDKIM = false;
-					break;
-				case DKIM_Verifier::DKIMVerifyResponse::DVR_FAIL_BOTH:
-					authResults.push_back({"dkim", "fail (signature invalid, body-hash invalid)"});
-					possibleSpamDKIM = true;
-					break;
-				case DKIM_Verifier::DKIMVerifyResponse::DVR_FAIL_BODY_HASH:
-					authResults.push_back({"dkim", "fail (signature valid, body-hash invalid)"});
-					possibleSpamDKIM = true;
-					break;
-				case DKIM_Verifier::DKIMVerifyResponse::DVR_FAIL_SIGNATURE:
-					authResults.push_back({"dkim", "fail (signature invalid, body-hash valid)"});
-					possibleSpamDKIM = true;
-					break;
-				case DKIM_Verifier::DKIMVerifyResponse::DVR_FAIL_RECORD:
-					authResults.push_back({"dkim", "fail (could not find record)"});
-					possibleSpamDKIM = true;
-					break;
-				case DKIM_Verifier::DKIMVerifyResponse::DVR_FAIL_HEADER:
-					authResults.push_back({"dkim", "neutral (no DKIM Record found)"});
-					possibleSpamDKIM = false;
-					break;
-				case DKIM_Verifier::DKIMVerifyResponse::DVR_FAIL_SYSTEM:
-					authResults.push_back({"dkim", "neutral (FSMTP-V2 Failed to verify)"});
-					possibleSpamDKIM = false;
-					break;
+			vector<DKIM_Verifier::DKIMVerifyResponse> responses = DKIM_Verifier::verify(session->s_RawBody);
+
+			if (responses[0] == DKIM_Verifier::DKIMVerifyResponse::DVR_FAIL_HEADER) {
+				authResults.push_back({"dkim", "neutral (no signature found)"});
+			} else {
+				stringstream dkimAuthResult;
+
+				size_t i = 0;
+				for_each(responses.begin(), responses.end(), [&](const DKIM_Verifier::DKIMVerifyResponse resp) {
+					switch(resp) {
+						case DKIM_Verifier::DKIMVerifyResponse::DVR_PASS_BOTH:
+							possibleSpamDKIM = false;
+							dkimAuthResult << "(signature[" << i++ << "]: is valid)";
+							break;
+						case DKIM_Verifier::DKIMVerifyResponse::DVR_FAIL_BOTH:
+							dkimAuthResult << "(signature[" << i++ << "]: is invalid)";
+							break;
+						case DKIM_Verifier::DKIMVerifyResponse::DVR_FAIL_BODY_HASH:
+							dkimAuthResult << "(signature[" << i++ << "]: invalid body-hash)";
+							break;
+						case DKIM_Verifier::DKIMVerifyResponse::DVR_FAIL_SIGNATURE:
+							dkimAuthResult << "(signature[" << i++ << "]: invalid signature)";
+							break;
+						case DKIM_Verifier::DKIMVerifyResponse::DVR_FAIL_RECORD:
+							dkimAuthResult << "(signature[" << i++ << "]: no record found)";
+							break;
+						case DKIM_Verifier::DKIMVerifyResponse::DVR_FAIL_SYSTEM:
+							dkimAuthResult << "(signature[" << i++ << "]: system failure)";
+							break;
+						default: break;
+					}
+
+					if (i + 1 != responses.size()) dkimAuthResult << ", ";
+				});
+
+				authResults.push_back({"dkim", (possibleSpamDKIM ? "fail" : "pass") + dkimAuthResult.str()});
 			}
 
-			if (possibleSpamSPF || possibleSpamDKIM) session->s_PossSpam = true;
+			if (possibleSpamSPF && possibleSpamDKIM) session->s_PossSpam = true;
 
 			string headers, body;
 			MIME::splitHeadersAndBody(session->s_RawBody, headers, body);
