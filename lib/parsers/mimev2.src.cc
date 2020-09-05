@@ -79,13 +79,17 @@ namespace FSMTP::Parsers {
       }
     };
 
-    return tuple(from, headersEnd, bodyBegin, to);
+    return tuple<strvec_it, strvec_it, strvec_it, strvec_it>(from, headersEnd, bodyBegin, to);
   }
 
   /**
    * Joins MIME headers and parses them into EmailHeader's
    */
   vector<EmailHeader> parseHeaders(strvec_it from, strvec_it to) {
+    parseHeaders(from, to, false);
+  }
+  
+  vector<EmailHeader> parseHeaders(strvec_it from, strvec_it to, bool lowerKey) {
     #ifdef _SMTP_DEBUG
     Logger logger("MIMEV2", LoggerLevel::DEBUG);
     Timer timer("parseHeaders()", logger);
@@ -231,7 +235,7 @@ namespace FSMTP::Parsers {
     if (valuePairs.count("charset") > 0) charset = valuePairs.find("charset")->second;
     if (valuePairs.count("boundary") > 0) boundary = valuePairs.find("boundary")->second;
 
-    return tuple(contentType, boundary, charset);
+    return tuple<EmailContentType, string, string>(contentType, boundary, charset);
   }
 
   /**
