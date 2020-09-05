@@ -445,7 +445,7 @@ namespace FSMTP::Parsers {
     string result;
 
     for_each(from, to, [&](const string &line) {
-      result += line;
+      result += line + "\r\n";
     });
 
     return result;  
