@@ -17,6 +17,9 @@
 #include "mimev2.src.h"
 
 namespace FSMTP::Parsers {
+  /**
+   * Gets the MIME body ranges from an message
+   */
   tuple<strvec_it, strvec_it, strvec_it, strvec_it> splitMIMEBodyAndHeaders(strvec_it from, strvec_it to) {
     strvec_it headersEnd;
     strvec_it bodyBegin;
@@ -47,6 +50,9 @@ namespace FSMTP::Parsers {
     return tuple(from, headersEnd, bodyBegin, to);
   }
 
+  /**
+   * Joins MIME headers and parses them into EmailHeader's
+   */
   vector<EmailHeader> parseHeaders(strvec_it from, strvec_it to) {
     #ifdef _SMTP_DEBUG
     Logger logger("MIMEV2", LoggerLevel::DEBUG);
@@ -118,8 +124,9 @@ namespace FSMTP::Parsers {
     size_t sep;
     for_each(joinedHeaders.begin(), joinedHeaders.end(), [&](const string &header) {
       sep = header.find_first_of(':');
-      if (sep == string::npos)
+      if (sep == string::npos) {
         throw runtime_error(EXCEPT_DEBUG("Could not find k/v pair for header"));
+      }
       headers.push_back(EmailHeader {
         a(header.substr(0, sep)),
         a(header.substr(++sep))
@@ -129,6 +136,154 @@ namespace FSMTP::Parsers {
     return headers;
   }
 
+  /**
+   * Splits header values using a semicolon
+   */
+  vector<string> splitHeaderBySemicolon(const string &raw) {
+    vector<string> result = {};
+
+    // Creates an stringstream which will be used
+    //  to split the header by the semicolon
+    stringstream stream(raw);
+    string segment;
+    while (getline(stream, segment, ';')) {
+      result.push_back(segment);
+    }
+
+    return result;
+  }
+
+  /**
+   * Parses key/value pairs from an email header value
+   */
+  map<string, string> parseHeaderKeyValuePairs(strvec_it from, strvec_it to) {
+    map<string, string> result = {};
+    
+    for_each(from, to, [&](const string &segment) {
+      size_t sep = segment.find_first_of('=');
+      if (!sep) return;
+
+      string key = segment.substr(0, sep);
+      string value = segment.substr(++sep);
+
+      if (*(key.end() - 1) == ' ') key.pop_back();
+      if (*key.begin() == ' ') key.erase(key.begin());
+
+      if (*(value.end() - 1) == ' ') value.pop_back();
+      if (*value.begin() == ' ') value.erase(value.begin());
+      if (*(value.end() - 1) == '"') value.pop_back();
+      if (*value.begin() == '"') value.erase(value.begin());
+
+      result.insert(make_pair(key, value));
+    });
+
+    return result;
+  }
+
+  /**
+   * Gets the content type, boundary and charset from the content-type header
+   */
+  tuple<EmailContentType, string, string> parseContentType(const string &raw) {
+    vector<string> segments = splitHeaderBySemicolon(raw);
+    if (segments.size() <= 0) throw runtime_error(EXCEPT_DEBUG("Invalid content type"));
+
+    // Gets the email content type, this is here in almost
+    //  all cases since it is required    
+    EmailContentType contentType = stringToEmailContentType(segments[0]);
+
+    // Parses the other key/value pairs, and attempts to get the
+    //  charset and the boundary, thse are both not required.
+    string boundary, charset;
+    
+    auto valuePairs = parseHeaderKeyValuePairs(segments.begin()+1, segments.end());
+    if (valuePairs.count("charset") > 0) charset = valuePairs.find("charset")->second;
+    if (valuePairs.count("boundary") > 0) boundary = valuePairs.find("boundary")->second;
+
+    return tuple(contentType, boundary, charset);
+  }
+
+  /**
+   * Gets the default set of email information from an mime message
+   */
+  void parseMIMEDataFromHeaders(
+    const string &key, const string &value, FullEmail &email
+  ) {
+    // Checks the key, and based on that decides what to do
+    //  with the key/value pair
+    if (key == "subject") email.e_Subject = value;
+    else if (key == "message-id") email.e_MessageID = value;
+    else if (key == "date") {
+      struct tm t;
+      if (strptime(value.c_str(), "%a, %d %b %Y %T %Z", &t) == nullptr) {
+        throw runtime_error(EXCEPT_DEBUG("Invalid date format"));
+      }
+      email.e_Date = timegm(&t);
+    } else if (key == "from") email.e_From = EmailAddress::parseAddressList(value);
+    else if (key == "to") email.e_To = EmailAddress::parseAddressList(value);
+  }
+
+  /**
+   * Gets the section ranges of an multipart body separated by an boundary
+   */
+  vector<tuple<strvec_it, strvec_it>> splitMultipartMessage(strvec_it from, strvec_it to, const string &boundary) {
+    vector<tuple<strvec_it, strvec_it>> result = {};
+
+    const string &sectionStartBoundary = "--" + boundary;
+    const string sectionEndBoundary = "--" + boundary + "--";
+
+    // Splits the body into sections using the boundaries
+    //  when the end boundary is hit we close the loop
+    size_t i = 0;
+    strvec_it prev = from;
+    for (strvec_it it = from; it != to; ++it) {
+      auto &line = *it;
+      if (line[0] == '-' && line[1] == '-') {
+        // Checks if an boundary is hit, if so
+        //  set a 8 bit value to either 1 ( section )
+        //  or 2 ( end )
+        uint8_t boundaryHit = 0;
+        if (line == sectionStartBoundary) boundaryHit = 1;
+        else if (line == sectionEndBoundary) boundaryHit = 2;
+
+        // Checks which action to perform, if section or end is
+        //  hit we will append the current section, after that we
+        //  check if the end boundary is hit, if so break
+        if (boundaryHit == 2 || boundaryHit == 1) {
+          if (i++ > 0) {
+            result.push_back(make_pair(++prev, it));
+            prev = it;
+          }
+        }
+        
+        if (boundaryHit == 2) break;
+      }
+    }
+
+    // If SMTP_DEBUG set perform the debug print of
+    //  the parsed sections
+    #ifdef _SMTP_DEBUG
+    Logger logger("MIMEV2", LoggerLevel::DEBUG);
+
+    for_each(result.begin(), result.end(), [&](const tuple<strvec_it, strvec_it> &tup) {
+      logger << "Parsed section: '" << ENDL;
+
+      strvec_it start, end;
+      tie(start, end) = tup;
+      for_each(start, end, [](const string &l) {
+        cout << l << endl;
+      });
+
+      cout << '\'' << endl;
+    });
+    #endif
+
+    return result;
+  }
+
+  /**
+   * Performs a recursive round on a mime message, each round gets an iterator
+   *  range on which the parsing will be performed
+   */
   void parseMIMERecursive(
     FullEmail &email, const size_t i, strvec_it from, strvec_it to
   ) {
@@ -146,7 +301,16 @@ namespace FSMTP::Parsers {
     //  the default fields from them
     // ================================
 
-    vector<EmailHeader> headers = parseHeaders(headersBegin, headersEnd);
+    EmailContentType contentType;
+    EmaiLTransferEncoding contentTransferEncoding;
+    string boundary, charset;
+
+    // Parses the headers into an vector
+    auto &headers = email.e_Headers;
+    headers = parseHeaders(headersBegin, headersEnd);
+
+    // Prints the found headers, only if
+    //  debug mode is enabled
     #ifdef _SMTP_DEBUG
     logger << "Found headers: " << ENDL;
     
@@ -156,14 +320,69 @@ namespace FSMTP::Parsers {
     });
     #endif
 
+    // Gets the default fields, such as the date
+    //  boundary, subject etcetera
+    for_each(headers.begin(), headers.end(), [&](EmailHeader &h) {
+      auto &key = h.e_Key;
+      auto &value = h.e_Value;
+
+      // Turns the key into lowercase for easier comparison,
+      //  this will be also visible in the result since it modifies
+      //  a reference
+      transform(key.begin(), key.end(), key.begin(), [](const char c) {
+        return tolower(c);
+      });
+
+      // Checks if we're in the first iteration, if so
+      //  fetch the basic data
+      if (!i) parseMIMEDataFromHeaders(key, value, email);
+      if (key == "content-type") {
+        tie(contentType, boundary, charset) = parseContentType(value);
+      } else if (key == "content-transfer-encoding") {
+        contentTransferEncoding = stringToEmailTransferEncoding(val);
+      }
+    });
+
     // ================================
     // Starts parsing the body / body
     //  sections, based on the content
     //  type
     // ================================
+
+    DEBUG_ONLY(logger << "Parsing section of type: " << contentTypeToString(contentType) << ENDL);
+    switch (contentType) {
+      case EmailContentType::ECT_TEXT_PLAIN: {
+        break;
+      }
+      case EmailContentType::ECT_TEXT_HTML: {
+        break;
+      }
+      case EmailContentType::ECT_MULTIPART_ALTERNATIVE:
+      case EmailContentType::ECT_MULTIPART_MIXED: {
+        // Performs the recursive parsing of all the sections,
+        //  this will be done by the same function
+        for (tuple<strvec_it, strvec_it> sec : splitMultipartMessage(bodyBegin, bodyEnd, boundary)) {
+          parseMIMERecursive(email, i+1, get<0>(sec), get<1>(sec));
+        }
+        break;
+      }
+      default: {
+        
+      }
+    }
   }
 
+  /**
+   * Parses an raw MIME Message into an valid FullEmail
+   */
   void parseMIME(const string &raw, FullEmail &email) {
+    #ifdef _SMTP_DEBUG
+    Logger logger("MIMEV2", LoggerLevel::DEBUG);
+    Timer timer("parseMIME()", logger);
+    #endif
+
+    // Splits the message into lines, which later can be used
+    //  to iterate over in the different rounds
     vector<string> lines = {};
 
     stringstream stream(raw);

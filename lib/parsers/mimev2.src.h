@@ -28,13 +28,59 @@ using namespace FSMTP::Models;
 typedef vector<string>::iterator strvec_it;
 
 namespace FSMTP::Parsers {
+  /**
+   * Decodes an piece of text from an email
+   */
+  string decodeMIMEContent(strvec_it from, strvec_it to);
+  
+  /**
+   * Gets the MIME body ranges from an message
+   */
   tuple<strvec_it, strvec_it, strvec_it, strvec_it> splitMIMEBodyAndHeaders(strvec_it from, strvec_it to);
 
+  /**
+   * Joins MIME headers and parses them into EmailHeader's
+   */
   vector<EmailHeader> parseHeaders(strvec_it from, strvec_it to);
+  
+  /**
+   * Splits header values using a semicolon
+   */
+  vector<string> splitHeaderBySemicolon(const string &raw);
+  
+  /**
+   * Parses key/value pairs from an email header value
+   */
+  map<string, string> parseHeaderKeyValuePairs(strvec_it from, strvec_it to);
 
+  /**
+   * Gets the content type, boundary and charset from the content-type header
+   */
+  tuple<EmailContentType, string, string> parseContentType(const string &raw);
+  
+  /**
+   * Gets the default set of email information from an mime message
+   */
+  void parseMIMEDataFromHeaders(
+    const string &key, const string &value, FullEmail &email
+  );
+
+  /**
+   * Gets the section ranges of an multipart body separated by an boundary
+   */
+  vector<tuple<strvec_it, strvec_it>> splitMultipartMessage(strvec_it from, strvec_it to, const string &boundary);
+
+  /**
+   * Performs a recursive round on a mime message, each round gets an iterator
+   *  range on which the parsing will be performed
+   */
   void parseMIMERecursive(
     FullEmail &email, const size_t i, strvec_it from, strvec_it to
   );
+
+  /**
+   * Parses an raw MIME Message into an valid FullEmail
+   */
   void parseMIME(const string &raw, FullEmail &email);
 };
 
