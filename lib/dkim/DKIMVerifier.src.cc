@@ -119,6 +119,9 @@ namespace FSMTP::DKIM_Verifier {
 				stringstream iss(v);
 				string token;
 				while (getline(iss, token, ':')) {
+					transform(token.begin(), token.end(), token.begin(), [](const char c) {
+						return tolower(c);
+					});
 					headerSegments.s_Headers.push_back(token);
 				}
 			}
