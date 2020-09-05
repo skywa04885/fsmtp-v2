@@ -32,7 +32,7 @@ using namespace FSMTP::DKIM;
 
 namespace FSMTP::DKIM_Verifier {
 	typedef enum {
-		DVR_PASS_BOTH = 0,
+		DVR_PASS_BOTH,
 		DVR_FAIL_BOTH,
 		DVR_FAIL_BODY_HASH,
 		DVR_FAIL_SIGNATURE,

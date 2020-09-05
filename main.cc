@@ -28,7 +28,7 @@ int main(const int argc, const char **argv)
 	// ==================================
 
 	Logger logger("MAIN", LoggerLevel::INFO);
-	
+
 	Global::configure();
 	Global::readConfig(CONFIG_FILE, FALLBACK_CONFIG_FILE);
 
@@ -41,8 +41,8 @@ int main(const int argc, const char **argv)
 
 	Server::SMTPServer smtpServer;
 	POP3::P3Server pop3Server;
-	Workers::TransmissionWorker transmissionWorker;
-	Workers::DatabaseWorker databaseWorker;
+	unique_ptr<Workers::TransmissionWorker> transmissionWorker = make_unique<Workers::TransmissionWorker>();
+	unique_ptr<Workers::DatabaseWorker> databaseWorker = make_unique<Workers::DatabaseWorker>();
 
 	try {
 		pop3Server
@@ -66,8 +66,8 @@ int main(const int argc, const char **argv)
 		logger << ", error: " << e.what() << ENDL << CLASSIC;
 	}
 
-	transmissionWorker.start(nullptr);
-	databaseWorker.start(nullptr);
+	transmissionWorker->start(nullptr);
+	databaseWorker->start(nullptr);
 
 	for (;;) {
 		this_thread::sleep_for(seconds(1));

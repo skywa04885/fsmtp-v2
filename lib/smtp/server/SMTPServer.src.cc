@@ -523,14 +523,30 @@ bool SMTPServer::handleCommand(
 			// Performs the message validation, like checking the SPF and DKIM
 			//  records, we will set the headers accordingly. Also if this fails
 			//  the message is possible spam, and we put it in the spam.
-			bool possibleSpamSPF, possibleSpamDKIM = true;
+			bool possibleSpamSPF = true, possibleSpamDKIM = true;
 			vector<EmailHeader> authResults = {};
-			if (SU::checkSU(session->s_TransportMessage.e_TransportFrom.getDomain(), client->getPrefix())) {
-				authResults.push_back({"spf", string("pass (address ") + client->getPrefix() + " is verified by " + session->s_TransportMessage.e_TransportFrom.getDomain() + ")"});
-				possibleSpamSPF = false;
-			} else {
-				authResults.push_back({"spf", string("fail (address ") + client->getPrefix() + " is not verified by " + session->s_TransportMessage.e_TransportFrom.getDomain() + ")"});
-				possibleSpamSPF = true;
+
+			switch (SU::checkSU(session->s_TransportMessage.e_TransportFrom.getDomain(), client->getPrefix())) {
+				case SU::CheckSUReturnCode::CSC_ALLOWED:
+					authResults.push_back({"spf", string("pass (address ") + client->getPrefix() + " is listed by " + session->s_TransportMessage.e_TransportFrom.getDomain() + ")"});
+					possibleSpamSPF = false;
+					break;
+				case SU::CheckSUReturnCode::CSC_NOT_ALLOWED:
+					authResults.push_back({"spf", string("fail (address ") + client->getPrefix() + " is not listed by " + session->s_TransportMessage.e_TransportFrom.getDomain() + ")"});
+					break;
+				case SU::CheckSUReturnCode::CSC_DEPRECATED:
+					authResults.push_back({"spf", "neutral (one or more deprecated features, all traffic allowed)"});
+					possibleSpamSPF = false;
+					break;
+				case SU::CheckSUReturnCode::CSC_ALL_ALLOWED:
+					possibleSpamSPF = false;
+					authResults.push_back({"spf", "neutral (all traffic allowed)"});
+					break;
+				case SU::CheckSUReturnCode::CSC_SYSTEM_ERROR:
+					possibleSpamSPF = false;
+					authResults.push_back({"spf", "neutral (system error)"});
+					break;
+				default: break;
 			}
 
 			if (session->getFlag(_SMTP_SERV_SESSION_SU)) {

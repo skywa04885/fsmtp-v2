@@ -45,7 +45,8 @@ namespace FSMTP::DNS::SPF {
 		bool getSoftfailFlag() const;
 		bool getDenyFlag() const;
 		bool getAllowNoQuestionsAsked() const;
-
+		bool getDeprecated() const;
+		
 		/**
 		 * Gets the set of allowed domains specified in the header
 		 */

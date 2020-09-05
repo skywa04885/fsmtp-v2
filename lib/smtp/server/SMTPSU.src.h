@@ -25,12 +25,21 @@
 using namespace FSMTP::Networking;
 
 namespace FSMTP::Server::SU {
+	typedef enum CheckSUReturnCode {
+		CSC_NOT_ALLOWED,
+		CSC_ALLOWED,
+		CSC_DEPRECATED,
+		CSC_RECORD,
+		CSC_ALL_ALLOWED,
+		CSC_SYSTEM_ERROR
+	};
+
 	/**
 	 * Checks if an hostname is in the SuperUser list
 	 *  this will allow to send it from fannst without
 	 *  authenticating.
 	 */
-	bool checkSU(const string &hostname, const string &checkAddr);
+	CheckSUReturnCode checkSU(const string &hostname, const string &checkAddr);
 
 	/**
 	 * Gets the MX Addresses for an specific domain, this

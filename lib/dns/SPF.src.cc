@@ -156,7 +156,9 @@ bool SPFRecord::getMXRecordsAllowed() const {
 }
 
 bool SPFRecord::getAllowNoQuestionsAsked() const {
-	if (BINARY_COMPARE(this->s_Flags, _SPF_FLAG_ALLOW_ALL)) return true;
-	else if (BINARY_COMPARE(this->s_Flags, _SPF_FLAG_DEPRECATED)) return true;
-	else return false;
+	return BINARY_COMPARE(this->s_Flags, _SPF_FLAG_ALLOW_ALL);
+}
+
+bool SPFRecord::getDeprecated() const {
+	return BINARY_COMPARE(this->s_Flags, _SPF_FLAG_DEPRECATED);
 }
