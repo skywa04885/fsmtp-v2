@@ -569,7 +569,7 @@ bool SMTPServer::handleCommand(
 						default: break;
 					}
 
-					if (i + 1 != responses.size()) dkimAuthResult << ", ";
+					if (i < responses.size()) dkimAuthResult << ", ";
 				});
 
 				authResults.push_back({"dkim", (possibleSpamDKIM ? "fail" : "pass") + dkimAuthResult.str()});
