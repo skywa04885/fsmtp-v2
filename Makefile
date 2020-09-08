@@ -1,0 +1,2 @@
+install:
+	mkdir build -p
