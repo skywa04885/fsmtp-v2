@@ -82,7 +82,53 @@ FSMTP-V2 is getest en werkt op deze diensten:
 1. Google Mail
 1. Andere ESMTP & SMTP Servers
 
-Een voorbeeld hiervan is:
+
+een voorbeeld van een ESMTP Conversatie ( intern, met FSMTP-V2 Extensions ):
+
+```
+S -> 220 LUKERIEFF_MCLUST_A001 Fannst ESMTP Mail service ready at Fri, 11 Sep 2020 20:07:18 CEST - fsmtp
+C -> FCAPA
+S -> 601 6.1.1 FSMTP-V2 Extensions implemented, Proceed. - fsmtp
+C -> SU
+S -> 600 6.1.0 Access granted for 145-53-228-5.fixed.kpn.net [145.53.228.5] - fsmtp
+C -> EHLO fannst.nl
+S -> 250-smtp.fannst.nl, at your service 145-53-228-5.fixed.kpn.net [145.53.228.5]
+   + 250-AUTH PLAIN
+   + 250-STARTTLS
+   + 250-SMTPUTF8
+   + 250-SIZE 10485760
+   + 250 ENHANCEDSTATUSCODES
+C -> STARTTLS
+S -> 220 5.7.0 Ready to start TLS - fsmtp
+
+(( Upgrading to TLS ))
+
+C -> FCAPA
+S -> 601 6.1.1 FSMTP-V2 Extensions implemented, Proceed. - fsmtp
+C -> SU
+S -> 600 6.1.0 Access granted for 145-53-228-5.fixed.kpn.net [145.53.228.5] - fsmtp
+C -> EHLO fannst.nl
+S -> 250-smtp.fannst.nl, at your service 145-53-228-5.fixed.kpn.net [145.53.228.5]
+   + 250-AUTH PLAIN
+   + 250-SMTPUTF8
+   + 250-SIZE 10485760
+   + 250 ENHANCEDSTATUSCODES
+C -> MAIL FROM: lrieff@fannst.nl
+S -> 250 2.1.0 OK, proceed [luke.rieff@gmail.com] - fsmtp
+C -> RCPT TO: webmaster@fannst.nl
+S -> 250 2.1.5 OK, proceed [webmaster@fannst.nl] - fsmtp
+C -> DATA
+S -> 354 End data with <CR><LF>.<CR><LF> - fsmtp
+
+(( Sends message body ))
+
+S -> 250 2.6.0 OK, message queued <P2luzwlzea7BvtPdW4hM6k5ymOQqX7kZuP9O2M8qXXa0S5qt4M7owG13PzaqTYPV@mailer.fannst.nl> - fsmtp
+C -> QUIT
+S -> 221 2.0.0 Closing connection - fsmtp
+```
+
+Een voorbeeld van de Fannst Mailer:
+
 ```bash
 Fri, 11 Sep 2020 20:00:15->(INFO@Mail): Enter type [c: custom, d: default]: c
 Fri, 11 Sep 2020 20:00:16->(INFO@Mail): Enter subject: Test Message
