@@ -24,6 +24,7 @@ function install {
   cd ../../../dependencies
 }
 
+install "https://github.com/onqtam/doctest" "doctest"
 install "https://github.com/nickbruun/hayai" "hayai"
 install "https://github.com/nlohmann/json" "json"
 install "https://github.com/pantor/inja" "inja"

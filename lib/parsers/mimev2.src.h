@@ -28,6 +28,11 @@ using namespace FSMTP::Models;
 
 namespace FSMTP::Parsers {
   /**
+   * Decodes an MIME-Header, which contains non-utf crap
+   */
+  string decodeHeader(const string &raw);
+
+  /**
    * Decodes an piece of text from an email
    */
   string decodeMIMEContent(

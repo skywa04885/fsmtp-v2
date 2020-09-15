@@ -26,6 +26,11 @@ namespace FSMTP::Encoding
 	 */
 	string decodeQuotedPrintableRange(strvec_it from, strvec_it to);
 	
+	/**
+	 * Decodes an line of quoted printable data
+	 */
+	string decodeQuotedPrintableLine(const string &line);
+
 	string decodeQuotedPrintable(const string &raw);
 	string encodeQuotedPrintable(const string &raw);
 	string escapeHTML(const string &raw);

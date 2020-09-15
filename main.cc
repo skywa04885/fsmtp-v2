@@ -23,6 +23,20 @@ static const char *FALLBACK_CONFIG_FILE = "../fallback/config.json";
 
 int main(const int argc, const char **argv)
 {
+	Logger asd("Test", DEBUG);
+
+	ifstream file("../emls/quore.eml");
+	string total, line;
+	while (getline(file, line)) {
+		total += line + "\r\n";
+	}
+
+	FullEmail email;
+	Parsers::parseMIME(total, email);
+	FullEmail::print(email, asd);
+
+	return 0;
+
 	// ==================================
 	// Default main
 	// ==================================

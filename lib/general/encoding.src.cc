@@ -19,11 +19,9 @@
 namespace FSMTP::Encoding
 {
 	/**
-	 * Encodes an vector range to quoted printable
+	 * Decodes an line of quoted printable data
 	 */
-	string decodeQuotedPrintableRange(strvec_it from, strvec_it to) {
-		string result;
-
+	string decodeQuotedPrintableLine(const string &line) {
 		// Gets the binary value of an hex char
 		//  will be called twice per sequence of decoding
 		auto getBinaryHexValue = [](char c) {
@@ -39,60 +37,61 @@ namespace FSMTP::Encoding
 			}
 		};
 
-		// Decodes an line of quoted-printable data
-		//  each encoded char is in this way: =3D ( where 3D is a hex sequence )
-		auto a = [&](const string &line) {
-			string result;
-			result.reserve(line.length());
+		string result;
+		result.reserve(line.length());
 
-			// Start looping over the string, while looping
-			//  check for '=' if one is found, decode it and continue
-			//  we use an buffer to optimize the concat operation, since
-			//  it requires quite an amount of computational power
-			char buffer[24] = {'\0'};
-			size_t bufferSize = 0;
-			for (string::const_iterator it = line.begin(); it != line.end(); ++it) {
-				if (*it == '=') {
-					// Skips the equals sign, and gets the two hex chars
-					//  we place them into a null terminated buffer
-					++it;
-					char hexBuffer[3] = {*(it++), *it, '\0'};
+		// Start looping over the string, while looping
+		//  check for '=' if one is found, decode it and continue
+		//  we use an buffer to optimize the concat operation, since
+		//  it requires quite an amount of computational power
+		char buffer[24] = {'\0'};
+		size_t bufferSize = 0;
+		for (string::const_iterator it = line.begin(); it != line.end(); ++it) {
+			if (*it == '=') {
+				// Skips the equals sign, and gets the two hex chars
+				//  we place them into a null terminated buffer
+				++it;
+				char hexBuffer[3] = {*(it++), *it, '\0'};
 
-					// Decodes the hex chars, and appends the new char to
-					//  the buffer
-					char decoded = getBinaryHexValue(hexBuffer[0]);
-					decoded <<= 4;
-					decoded |= getBinaryHexValue(hexBuffer[1]);
+				// Decodes the hex chars, and appends the new char to
+				//  the buffer
+				char decoded = getBinaryHexValue(hexBuffer[0]);
+				decoded <<= 4;
+				decoded |= getBinaryHexValue(hexBuffer[1]);
 
-					// Appends the decoded char to the buffer
-					buffer[bufferSize] = decoded;
-					++bufferSize;
-				} else {
-					buffer[bufferSize] = *it;
-					++bufferSize;
-				}
-
-				// Appends and flushes the buffer if the buffersize
-				//  is too large
-				if (bufferSize >= 24) {
-					result += buffer;
-					buffer[0] = '\0';
-					bufferSize = 0;
-				}
+				// Appends the decoded char to the buffer
+				buffer[bufferSize] = decoded;
+				++bufferSize;
+			} else {
+				buffer[bufferSize] = *it;
+				++bufferSize;
 			}
 
-			// Checks if there is anything left in the buffer
-			//  if so put a null term at the current insertion index
-			//  and concat it to the result
-			if (bufferSize > 0) {
-				buffer[bufferSize] = '\0';
+			// Appends and flushes the buffer if the buffersize
+			//  is too large
+			if (bufferSize >= 24) {
 				result += buffer;
+				buffer[0] = '\0';
+				bufferSize = 0;
 			}
-			
-			cout << result << endl;
+		}
 
-			return result;
-		};
+		// Checks if there is anything left in the buffer
+		//  if so put a null term at the current insertion index
+		//  and concat it to the result
+		if (bufferSize > 0) {
+			buffer[bufferSize] = '\0';
+			result += buffer;
+		}
+		
+		return result;
+	}
+
+	/**
+	 * Encodes an vector range to quoted printable
+	 */
+	string decodeQuotedPrintableRange(strvec_it from, strvec_it to) {
+		string result;
 
 		// Removes the '=' from an line, if it is there
 		//  this means in almost all cases that there is
@@ -107,8 +106,8 @@ namespace FSMTP::Encoding
 		for (strvec_it it = from; it != to; ++it) {
 			const string &line = *it;
 
-			if (*(line.end() - 1) == '=') result += a(b(line));
-			else result += a(line) + "\r\n";
+			if (*(line.end() - 1) == '=') result += decodeQuotedPrintableLine(b(line));
+			else result += decodeQuotedPrintableLine(line) + "\r\n";
 		}
 
 		return result;		

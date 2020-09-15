@@ -103,15 +103,18 @@ SMTPServer &SMTPServer::startHandler(const bool newThread) {
 		Logger clogger("ESMTP:" + client->getPrefix(), LoggerLevel::DEBUG);
 		DEBUG_ONLY(clogger << "Client connected" << ENDL);
 
-		if (SpamDetection::checkSpamhaus(client->getPrefix())) {
-			session->s_PossSpam = true;
-			DEBUG_ONLY(clogger << "Classified message as soan due to zen.spamhaus.org records" << ENDL);
-		}
+		// if (SpamDetection::checkSpamhaus(client->getPrefix())) {
+		// 	session->s_PossSpam = true;
+		// 	DEBUG_ONLY(clogger << "Classified message as soan due to zen.spamhaus.org records" << ENDL);
+		// }
 
 		ServerResponse response(SMTPResponseType::SRC_GREETING);
 		client->write(response.build());
 
+		size_t itt = 0;
 		for (;;) {
+
+			if (++itt > 60) break;
 			try {
 				string raw = client->readToDelim("\r\n");
 				ClientCommand command(raw);

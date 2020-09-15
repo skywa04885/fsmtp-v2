@@ -200,8 +200,8 @@ namespace FSMTP::Models
   	
   	size_t c = 0;
   	for_each(email.e_Headers.begin(), email.e_Headers.end(), [&](auto &h){
-  		logger << "\t - Header[no: " << c++ << "]: <";
-  		logger << h.e_Key << "> - <" << h.e_Value << ">" << ENDL;
+  		logger << "\t - " << c++ << " -> ";
+  		logger << h.e_Key << ": " << h.e_Value << ENDL;
   	});
 
     c = 0;

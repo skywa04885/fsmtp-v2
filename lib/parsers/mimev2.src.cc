@@ -390,7 +390,6 @@ namespace FSMTP::Parsers {
         tie(contentType, boundary, charset) = parseContentType(value);
       } else if (key == "content-transfer-encoding") {
         contentTransferEncoding = stringToEmailTransferEncoding(value);
-        cout << contentTransferEncodingToString(contentTransferEncoding) << endl;
       }
     });
 
