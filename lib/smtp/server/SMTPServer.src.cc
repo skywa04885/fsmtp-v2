@@ -611,6 +611,8 @@ bool SMTPServer::handleCommand(
 				DEBUG_ONLY(FullEmail::print(session->s_TransportMessage, clogger));
 			} catch (const runtime_error &e) {
 				throw SMTPSyntaxException(string("Parsing failed: ") + e.what());
+			} catch (...) {
+				throw SMTPSyntaxException("An system error occured while parsing");
 			}
 
 			// Builds and sends the final response
