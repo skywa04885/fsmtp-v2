@@ -1,454 +1,453 @@
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; s=200608; d=e.mozilla.org;
- h=From:To:Subject:Date:List-Unsubscribe:MIME-Version:Reply-To:List-ID:
- X-CSA-Complaints:Message-ID:Content-Type; i=Mozilla@e.mozilla.org;
- bh=/Qjk5Dhay5dmd+PnapC+kgqZUYnufU1NizCzdiY4lhs=;
- b=phG6t0lrvOOS7g8LUfOXKtQAEsE18VKE4Zy852+MN/mfDDcdy0yHe8tQTD7kYcW0Gl8/ua4GUsrs
-   GSLoGvXWMl+gjq7hjTroOs5AwbZdGkBjq7uvzLz0Ud/q3s54eOsNRgulGpFXJRg/ePCtgAHhW478
-   o7qhbXWbtlqk9j9hhjY=
-Received: by mta4.e.mozilla.org id hck2k82fmd45 for <webmaster@fannst.nl>; Fri, 18 Sep 2020 19:06:43 +0000 (envelope-from <bounce-100_HTML-655440841-5339569-1065730-1991@bounce.e.mozilla.org>)
-From: "Mozilla" <Mozilla@e.mozilla.org>
-To: <webmaster@fannst.nl>
-Subject: This week's internet news, from awesome to awful
-Date: Fri, 18 Sep 2020 13:07:04 -0600
-List-Unsubscribe: <mailto:leave-fd5a1570750b5c392848-fe2a12757060007d7d1071-fe871173766d017b7c-fe9915707361037e75-ff2b15797c65@leave.e.mozilla.org>
-MIME-Version: 1.0
-Reply-To: "Mozilla" <reply-fe871173766d017b7c-100_HTML-655440841-1065730-1991@e.mozilla.org>
-List-ID: <1065730.xt.local>
-X-CSA-Complaints: whitelist-complaints@eco.de
-X-SFMC-Stack: 4
-x-job: 1065730_5339569
-Message-ID: <d761f6a0-5310-46c1-9151-90b803751c64@las1s04mta928.xt.local>
-Content-Type: multipart/alternative;
-  boundary="hZWGOPDjoDZi=_?:"
-X-Fannst-Conn: SSL
-X-Fannst-Auth: spf=pass (address 199.122.127.164 is listed by bounce.e.mozilla.org); 
-       dkim=fail(signature[0]: is invalid)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; 
+  d=stackoverflow.email; 
+  h=content-type:from:mime-version:to:subject; s=s1; 
+   bh=NOBJYnYpIMqsSGXt1efP7fy2Vn1xazL59Hu3HUEkUa4=; b=dsllV64lwcKNy
+   Z6TCuD/6FrNDwivClb/reRBmpWWlngtriUyG+mlelqveJyERDNI02lUJu537Gj5E
+   dF7q81iEwXqgJu0I5zwEC/lesFC5REAeUVGmI5pMIOFiFvaM4x1mGEFwmeRDnE+h
+  p4scX0Kt0P0dtwZ5nrrW0fUoBn+nfs=
+Received: by filter0546p1iad2.sendgrid.net with SMTP id filter0546p1iad2-32384-5F69DA41-4A
+        2020-09-22 11:04:33.792074138 +0000 UTC m=+318294.157369396
+Received: from MzU1Mzk4OA (unknown)
+  by geopod-ismtpd-2-6 (SG) with HTTP id 29t9wtzbQlaUOfgp3GRZAA
+  Tue, 22 Sep 2020 11:04:33.799 +0000 (UTC)
+Content-Type: multipart/alternative; boundary=08ae7e827fe0512269c6b9db8aefa7c2b9de4f229262ad38828b291c95a5
+Date: Tue, 22 Sep 2020 11:04:36 +0000 (UTC)
+From: "Stack Overflow" <do-not-reply@stackoverflow.email>
+Mime-Version: 1.0
+To: webmaster@fannst.nl
+Message-ID: <29t9wtzbQlaUOfgp3GRZAA@geopod-ismtpd-2-6>
+Subject: Complete Registration With Stack Overflow
+X-SG-EID: 2wCWvsSNp9YunM7PUI3ZZIxE4HS0OxMSvwVfXdRoOKNjsthdHKZAzBkzXYkS63ANiWtEVku0zj/w1j
+ J4H/z2xUydoYsRgTzwM04WYW8qJBjfEYcflfCZHOVtRc49ZbfYadi4XyjkWgu34lA5AvG2yzYxIwkA
+ Kwi5PCXnRpi42NFUYenG8uzTkM7116BmuS2OL1zbo5FuMNZ0ggR5U1qgFkh7aS6wUvwQbGnjnKGGdw
+ oO1ygLZyphaqh9POGD80ty
+X-SG-ID: tWwKjAWlO12NM4ybPxEswaj8gkSSxAkNrqLooyunFuJAl2TMKh2qVFNRwSVwnsGRbCfLGYr4dCfAe6
+ +rpVfA4kCiA+mTsNfPS7fIK42NbsIRTat1SZJMx57xtZYrOqJD8JFCnSp+DP+xNt4e4YZ6lM7jvqQ9
+ m6tODKEp3R7M1JM75g7XPaIZJyzWiKAQziWzKOU1wdgawzDvvcAzgKQnfnciLP7UBAOBODD9xholn3
+ Ajxk+JSAvcUMLEuhovbI6huZTrlGy+4947Gsd6Pic78WHrUlmtbkoVI9nHIbXcRg/r7Rreg19yjaes
+ b0pAfo39
 
+--08ae7e827fe0512269c6b9db8aefa7c2b9de4f229262ad38828b291c95a5
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8
+Mime-Version: 1.0
 
-This is a multi-part message in MIME format.
+You're almost done!
+[Click here to complete your registration](https://stackoverflow.com/users/=
+signup-finish?email=3Dwebmaster%40fannst.nl&name=3DFannst+Webmaster&token=
+=3D101da55c-7689-47b4-837d-f6ec17227f44%3aY80TsWYwHq8nCCmgB7IiX7d0H9U%3d&ti=
+d=3Dd76d2261-d340-f143-74bf-ac0b368da371&sus=3Dhead&returnurl=3D%2fusers%2f=
+story%2fcurrent&authCode=3D59%3a3%3a817%2c16%3aee605bf5010f7bee%2c10%3a1600=
+772673%2c16%3a7829f1561922e208%2c6b65a21cd3a931b3d85023e3199948e8d676574782=
+672d2645e12f8e8d296c77)
 
---hZWGOPDjoDZi=_?:
-Content-Type: text/plain;
-  charset="utf-8"
-Content-Transfer-Encoding: 8bit
+Stack Overflow, 110 William Street, 28th floor, New York, NY 10038 <3=
 
-Welcome to the Mozilla News Beat, a glance at the best and worst internet news of the week. We hope you enjoy it!
- 
-Picture Perfect. The Comedy Wildlife Photography Awards isn't letting a pandemic hold it back. This year's finalists for funniest animal photos are in and you need to see them all. What's your favorite? |  via Digg
-https://click.e.mozilla.org/?qs=1dfec7565d8274deece6222f6a07e2ab1ea95ffbd7690ce8f6ebb2137e481da3150381782ac0be0de3845666f4928c93976205c1ea34e64e
- 
-Riches to Rags. The multi-billionaire who anonymously gave away $8 billion (not million, billion) to charity has closed-up shop and is now telling his story. Your move, Bezos. |  via Forbes
-https://click.e.mozilla.org/?qs=1dfec7565d8274decece96b754af83b7589ce92e24b833a86d08d4a19567d976e0456e8c1976a43db6bd25a8bc218d282d0bc99480e10875
- 
-Robotic Voyage. These folks certainly had time on their hands. A boat with no passengers, powered by AI, will attempt to recreate the journey charted by the Mayflower back in 1620. Colonization not included. |  via AP News
-https://click.e.mozilla.org/?qs=1dfec7565d8274de7f1c5f874f90695391dd65e34b7ceec4e7fd71226276fa941293e0a747a2affb5597b2d04305a050ca94331ecc9c0308
- 
-Greetings, Venusians. The pronounced greenhouse gas effect on Venus makes its surface uninhabitable, but scientists may have found life elsewhere on the planet. A closer look at its atmosphere shows us a cloud of gas that may have been produced by microbial life. |  via NPR
-https://click.e.mozilla.org/?qs=1dfec7565d8274de9c4b0b09a14001cdb46f4ab962bc661965fb6625eaba01876f34586ae22c023baa85b89acb83be8c7a9daa6605286172
- 
-Snap the Vote. Snapchat successfully converted over 400,000 of its users into newly registered voters via a Register To Vote tool within its app. Instagram, if you're listening, please steal this feature too! |  via Axios
-https://click.e.mozilla.org/?qs=1dfec7565d8274def0bea270a6ca852ed5c39f3ed5a6625804a90fb312f87ccd772cfaf96d1f0443c78b26811e2ea46d03e0d2efd65120b5
- 
-Regrets Reporter. YouTube's recommendation algorithm is known to recommend questionable content. What's worse: we've no idea how it works. That's why we launched Regrets Reporter, letting you send us the video suggestions you regret receiving. |  via The Verge
-https://click.e.mozilla.org/?qs=1dfec7565d8274dee3c52ffb5b944a58ef7d8a3982260924c21ec4f725a3018d15df30db2f1682558b483aa7c555cb87cabe628e42afa3c8
- & Mozilla
-https://click.e.mozilla.org/?qs=1dfec7565d8274deb6250e5937afb10f9d72d20cef798442acac858e32f785040b5d1466d895953a85c11c7d0b1f4bbd9361388378763eec
- 
-Did it Matter? Mark Facebook as one fewer place where you can keep up with the Kardashians — for one day, anyway. Joining the #StopHateForProfit campaign, celebrities froze their Facebook and Instagram accounts for a day to protest the service's profiting off of hate speech. |  via Buzzfeed News
-https://click.e.mozilla.org/?qs=1dfec7565d8274dee8fe5fe2b239f6c5329eab2f9424426b782aae9012ef864a6a5bc3770c161ed7c82525644bb847b4f898d57e5f7a4b3f
- 
-Wildfire Misinformation. A lot's happened since the Australian fires back in January (yes, that was this year). Not only are the fires in the U.S. shaping up to be as bad, the misinformation surrounding the fires is spreading just as quickly. |  via Gizmodo
-https://click.e.mozilla.org/?qs=1dfec7565d8274dedd6d29f319b2f83b043aaa41c571c0bea1f1f7738eeae49f5ba1be4701cef3a5dc4898e723bbf3814f8a4a91e82862eb
- 
-Self-Driving Dilemma. When an autonomous vehicle kills a pedestrian, who's at fault? In the case of the Uber self-driving vehicle that struck Elaine Herzberg in 2018, not Uber. Rafaela Vasquez, the safety driver in the driver seat at the time, was deemed at fault for Herzberg's death. |  via The Guardian
-https://click.e.mozilla.org/?qs=1dfec7565d8274de5190819151992f05ce63e1da1427783734670b8e7a9272d86cd91d3b6e520258465e3e0ef24111f56ffb1e60ff7d002d
- 
-Trump Tracking. A new report out of MIT notes that while both U.S. presidential candidates offer smartphone apps, the "Trump 2020" app collects and uses much more data than Biden's "Team Joe" app. |  via MIT Technology Review
-https://click.e.mozilla.org/?qs=1dfec7565d8274de56ec61decd43f49385681d3273b22187e1915a8ff4827c7445de3fa52072f01b048a283d4b79976a3666f42eab56ffd5
- 
-Conspiracy Woes. Conspiracy theorists won't let up. A report by TIME notes how those who share false information sow distrust in traditional institutions while newer platforms like Facebook and YouTube profit. |  via Time
-https://click.e.mozilla.org/?qs=1dfec7565d8274de0ea652c3b4d95664705ab2e3d9971c9a2a8a650b5b97fa0f43f60aa5884b30a9b450d80cc4d75a8ff39356f886ef6286
- 
-Pathetic. Domestic abuse is up since lockdown started and this increase has translated to revenge porn. U.K. domestic violence charity Refuge noted 1-in-7 women are receiving threats that their intimate photos would be shared online. |  via BBC
-https://click.e.mozilla.org/?qs=1dfec7565d8274de26dba8ba3053e0caab0d10e66bb1c05a794ac46047fa4e81c4af58aeb8888987e5e8211e888525ab07125808879f4a7d
- 
-
-
-You can also follow Mozilla News Beat on the Mozilla blog (https://foundation.mozilla.org/en/blog/), or on Instagram (https://www.instagram.com/mozilla/).
-
-Want more? See stories that just missed making the News Beat on our Pocket:
-https://click.e.mozilla.org/?qs=1dfec7565d8274dea7454e8f696aed34f7491c9567beeb8ebc9087bd07667dca267ae8770ec59dd2e86ba8a1310d05b6a15690133cd06d11
-
-Connect with us:
-
-https://click.e.mozilla.org/?qs=1dfec7565d8274de74175da1e881fda42d9c478e441f8eb9f428b6253633fea444deef0a96b05c7b4c9cb0acd3b568d6293513529ba49939
-
-https://click.e.mozilla.org/?qs=1dfec7565d8274de02545397f645747d05c35eb2f95d9a060c4fc27886aaa888355d2e498313c3515e985ea6d19592294f98ae964fc34885
-
-https://click.e.mozilla.org/?qs=1dfec7565d8274de80add37764e2f0a6ca9860182b0277422896ed7e211514ff3522d2db9cafaaee6a8ae490c231269e7098403ad6acfa98
-
-Thanks for reading!
-
-
-
-You're receiving this email because we think you’re neat, AND you subscribed to hear from us. If our emails aren’t sparking joy, we’ll understand if you unsubscribe.
-https://click.e.mozilla.org/?qs=1dfec7565d8274deceb9953e85652c8207b309b2710e76d8d7606fc56df6385c4499c33211391a8f97808cc991a35cedfc3d05a3eb7f0a19
-
-You can also update your email preferences  at any time.
-https://click.e.mozilla.org/?qs=1dfec7565d8274deceb9953e85652c8207b309b2710e76d8d7606fc56df6385c4499c33211391a8f97808cc991a35cedfc3d05a3eb7f0a19
-
-
-https://click.e.mozilla.org/?qs=1dfec7565d8274dea6d2128c48fbe1b035c5d4704818a11927c305a3aea16396d8d5d7f47ed51076e4ed7921e2c2f5eb4dff158e77fe81e2
-
-Donate to Mozilla
-https://click.e.mozilla.org/?qs=1dfec7565d8274de2b04c81bff3ac623bb875c3b55187ec9b66a4a54caad00cbdd1263c82584dbf7157997f5da08feac5e21a0d9d7e48063
-
-Download Firefox
-https://click.e.mozilla.org/?qs=1dfec7565d8274de16196f648e04e3b57c97cabaf21c7937f7bbe594a25acceeafb0fea426c4dd9d87b36feb93f49827cd892ed95657be03
-
-331 E. Evelyn Avenue Mountain View CA 94041
-
-Legal
-https://click.e.mozilla.org/?qs=1dfec7565d8274dee96a4f9ea83cd473c468bb13340c3eb700e5676f084e22b249bd27ad65c52de4df6e7f7570bc847f76f14bd14b345f56
-Privacy
-https://click.e.mozilla.org/?qs=1dfec7565d8274de4f64738295c7d0326b78d35bc05c75b9d0befce6422c7f1c136af5e95be82a3ef99afa688428507ea0dc157e6823f0e2
-
---hZWGOPDjoDZi=_?:
-Content-Type: text/html;
-  charset="utf-8"
-Content-Transfer-Encoding: 8bit
+--08ae7e827fe0512269c6b9db8aefa7c2b9de4f229262ad38828b291c95a5
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/html; charset=UTF-8
+Mime-Version: 1.0
 
 <!DOCTYPE html>
-<html>
-
+<html lang=3D"en" xmlns=3D"http://www.w3.org/1999/xhtml" xmlns:o=3D"urn:sch=
+emas-microsoft-com:office:office" xmlns:v=3D"urn:schemas-microsoft-com:vml">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta charset=3D"utf-8">
+    <meta name=3D"viewport" content=3D"width=3Ddevice-width">
+    <meta http-equiv=3D"X-UA-Compatible" content=3D"IE=3Dedge">
+    <meta name=3D"x-apple-disable-message-reformatting">
+    <meta name=3D"format-detection" content=3D"telephone=3Dno,address=3Dno,=
+email=3Dno,date=3Dno,url=3Dno">=20
+    <style>
+        html,
+        body {
+            margin: 0 auto !important;
+            padding: 0 !important;
+            height: 100% !important;
+            width: 100% !important;
+        }
+
+        * {
+            -ms-text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        div[style*=3D"margin: 16px 0"] {
+            margin:0 !important;
+        }
+
+        table,
+        td {
+            mso-table-lspace: 0pt !important;
+            mso-table-rspace: 0pt !important;
+        }
+
+        table {
+            border: 0;
+            border-spacing: 0;
+            border-collapse: collapse
+        }
+
+        #MessageViewBody,
+        #MessageWebViewDiv{
+            width: 100% !important;
+        }
+
+        img {
+            -ms-interpolation-mode:bicubic;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        a[x-apple-data-detectors],
+        .unstyle-auto-detected-links a,
+        .aBn {
+            border-bottom: 0 !important;
+            cursor: default !important;
+            color: inherit !important;
+            text-decoration: none !important;
+            font-size: inherit !important;
+            font-family: inherit !important;
+            font-weight: inherit !important;
+            line-height: inherit !important;
+        }
+        u + #body a,=20=20=20=20=20=20=20=20
+        #MessageViewBody a=20=20
+        {
+           color: inherit;
+           text-decoration: none;
+           font-size: inherit;
+           font-family: inherit;
+           font-weight: inherit;
+           line-height: inherit;
+        }
+
+        .im {
+            color: inherit !important;
+        }
+
+        .a6S {
+            display: none !important;
+            opacity: 0.01 !important;
+        }
+        img.g-img + div {
+            display:none !important;
+        }
+
+
+        @media only screen and (min-device-width: 320px) and (max-device-wi=
+dth: 374px) {
+            u ~ div .email-container {
+                min-width: 320px !important;
+            }
+        }
+        @media only screen and (min-device-width: 375px) and (max-device-wi=
+dth: 413px) {
+            u ~ div .email-container {
+                min-width: 375px !important;
+            }
+        }
+        @media only screen and (min-device-width: 414px) {
+            u ~ div .email-container {
+                min-width: 414px !important;
+            }
+        }
+    </style>
+    <!--[if gte mso 9]>
+    <xml>
+        <o:OfficeDocumentSettings>
+            <o:AllowPNG/>
+            <o:PixelsPerInch>96</o:PixelsPerInch>
+        </o:OfficeDocumentSettings>
+        </xml>
+    <![endif]-->
+
 
     <style>
+        .s-btn__primary:hover {
+            background: #0077CC !important;
+            border-color: #0077CC !important;
+        }
+        .s-btn__white:hover {
+            background: #EFF0F1 !important;
+            border-color: #EFF0F1 !important;
+        }
+        .s-btn__outlined:hover {
+            background: rgba(0,119,204,.05) !important;
+            color: #005999 !important;
+        }
+        .s-tag:hover,
+        .post-tag:hover {
+            border-color: #cee0ed !important;
+            background: #cee0ed !important;
+        }
 
-        body {margin:0; padding:0; -webkit-text-size-adjust:none; -ms-text-size-adjust:none;} img{line-height:100%; outline:none; text-decoration:none; -ms-interpolation-mode: bicubic;} a img{border: none;} #backgroundTable {margin:0; padding:0; width:100% !important; } a, a:link{color:#2A5DB0; text-decoration: underline;} table td {border-collapse:collapse;} span {color: inherit; border-bottom: none;} span:hover { background-color: transparent; }
+        .has-markdown a,
+        .has-markdown a:visited {
+            color: #0077CC !important;
+            text-decoration: none !important;
+        }
 
+        code {
+            padding: 1px 5px;
+            background-color: #EFF0F1;
+            color: #242729;
+            font-size: 13px;
+            line-height: inherit;
+            font-family: Consolas, Menlo, Monaco, Lucida Console, Liberatio=
+n Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace,=
+ sans-serif;
+        }
+        pre {
+            margin: 0 0 15px;
+            line-height: 17px;
+            background-color: #EFF0F1;
+            padding: 4px 8px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        pre code {
+            margin: 0 0 15px;
+            padding: 0;
+            line-height: 17px;
+            background-color: none;
+        }
+
+        blockquote {
+            margin: 0 0 15px;
+            padding: 4px 10px;
+            background-color: #FFF8DC;
+            border-left: 2px solid #ffeb8e;
+        }
+        blockquote p {
+            padding: 4px 0;
+            margin: 0;
+            overflow-wrap: break-word;
+        }
+
+        .bar {
+            border-radius: 5px;
+        }
+        .btr {
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+        }
+        .bbr {
+            border-bottom-left-radius: 5px;
+            border-bottom-right-radius: 5px;
+        }
+
+        @media screen and (max-width: 680px) {
+            .stack-column,
+            .stack-column-center {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                direction: ltr !important;
+            }
+            .stack-column-center {
+                text-align: center !important;
+            }
+
+            .hide-on-mobile {
+                display: none !important;
+                max-height: 0 !important;
+                overflow: hidden !important;
+                visibility: hidden !important;
+            }
+
+            .sm-p   {padding: 20px !important;}
+            .sm-pt  {padding-top: 20px !important;}
+            .sm-pb  {padding-bottom: 20px !important;}
+            .sm-pr  {padding-right: 20px !important;}
+            .sm-pl  {padding-left: 20px !important;}
+            .sm-px  {padding-left: 20px !important; padding-right: 20px !im=
+portant;}
+            .sm-py  {padding-top: 20px !important; padding-bottom: 20px !im=
+portant;}
+            .sm-mb  {margin-bottom: 20px !important;}
+
+            .bar,
+            .btr,
+            .bbr {
+                border-top-left-radius: 0;
+                border-top-right-radius: 0;
+                border-bottom-left-radius: 0;
+                border-bottom-right-radius: 0;
+            }
+        }
     </style>
-
-    <style>
- .scalable-image img{max-width:100% !important;height:auto !important}.button a{transition:background-color .25s, border-color .25s}.button a:hover{background-color:#e1e1e1 !important;border-color:#0976a5 !important}@media only screen and (max-width: 400px){.preheader{font-size:12px !important;text-align:center !important}.header--white{text-align:center}.header--white .header__logo{display:block;margin:0 auto;width:118px !important;height:auto !important}.header--left .header__logo{display:block;width:118px !important;height:auto !important}}@media screen and (-webkit-device-pixel-ratio), screen and (-moz-device-pixel-ratio){.sub-story__image,.sub-story__content{display:block
- !important}.sub-story__image{float:left !important;width:200px}.sub-story__content{margin-top:30px !important;margin-left:200px !important}}@media only screen and (max-width: 550px){.sub-story__inner{padding-left:30px !important}.sub-story__image,.sub-story__content{margin:0 auto !important;float:none !important;text-align:center}.sub-story .button{padding-left:0 !important}}@media only screen and (max-width: 400px){.featured-story--top table,.featured-story--top td{text-align:left}.featured-story--top__heading td,.sub-story__heading td{font-size:18px !important}.featured-story--bottom:nth-child(2) .featured-story--bottom__inner{padding-top:10px
- !important}.featured-story--bottom__inner{padding-top:20px !important}.featured-story--bottom__heading td{font-size:28px !important;line-height:32px !important}.featured-story__copy td,.sub-story__copy td{font-size:14px !important;line-height:20px !important}.sub-story table,.sub-story td{text-align:center}.sub-story__hero img{width:100px !important;margin:0 auto}}@media only screen and (max-width: 400px){.footer td{font-size:12px !important;line-height:16px !important}}
-     @media screen and (max-width:600px) {
-    table[class="columns"] {
-        margin: 0 auto !important;float:none !important;padding:10px 0 !important;
-    }
-    td[class="left"] {
-     padding: 0px 0 !important;
-    </style>
-
 </head>
 
-<body style="background: #e1e1e1;font-family:Arial, Helvetica, sans-serif; font-size:1em;"><style type="text/css">
-div.preheader 
-{ display: none !important; } 
-</style>
-<div class="preheader" style="font-size: 1px; display: none !important;">Destruction of democracy. Reporting of regrets. Impolite turtles. This is the Mozilla News Beat.</div>
-    <table id="backgroundTable" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#e1e1e1;">
+<body width=3D"100%" style=3D"margin: 0; padding: 0 !important; background:=
+ #f3f3f5; mso-line-height-rule: exactly;">
+  <center style=3D"width: 100%; background: #f3f3f5;">
+  <!--[if mso | IE]>
+  <table role=3D"presentation" border=3D"0" cellpadding=3D"0" cellspacing=3D=
+"0" width=3D"100%" style=3D"background-color: #f3f3f5;">
+  <tr>
+  <td>
+  <![endif]-->
+    <div lang=3D"en" class=3D"email-container" style=3D"max-width: 680px; mar=
+gin: 0 auto;">
+      <!--[if mso]>
+      <table role=3D"presentation" cellspacing=3D"0" cellpadding=3D"0" border=
+=3D"0" width=3D"680" align=3D"center">
+      <tr>
+      <td>
+      <![endif]-->
+      <table border=3D"0" cellpadding=3D"0" cellspacing=3D"0" role=3D"presenta=
+tion" style=3D"max-width: 680px; width:100%">
         <tr>
-            <td class="body" align="center" valign="top" style="background:#e1e1e1;" width="100%">
-                <table cellpadding="0" cellspacing="0">
-                    <tr>
-                        <td width="640">
-                            <table style="min-width: 100%; " class="stylingblock-content-wrapper" width="100%" cellspacing="0" cellpadding="0"><tr><td class="stylingblock-content-wrapper camarker-inner"><table cellspacing="0" cellpadding="0">
- <tr>
-  <td width="640" align="left">
-   <table width="100%" cellspacing="0" cellpadding="0">
-    <tr>
-     <td class="header header--left" style="padding: 20px 10px;" align="left">
-      <a href="https://click.e.mozilla.org/?qs=1dfec7565d8274de7129d8116f8de6cda6aec2a76e07ad3f5b9d96928732ec2c9b083760a8e9492d3aba9fc326a279bd18fab4c78b638909" ><img class="header__logo" src="https://image.e.mozilla.org/lib/fe9915707361037e75/m/3/moz-logo-bw-rgb158.png" alt="Mozilla" style="display: block; border: 0;" width="158" height="45"></a>
-     </td>
-    </tr>
-   </table>
-  </td>
- </tr>
-</table></td></tr></table></td>
-                    </tr>
-                    <tr>
-                        <td class="main" width="640" align="center" style="padding: 0 10px;">
-                            <table style="min-width: 100%; " class="stylingblock-content-wrapper" width="100%" cellspacing="0" cellpadding="0"><tr><td class="stylingblock-content-wrapper camarker-inner"><table style="background-color: #e7ebed; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; width: 100%; margin: 0 auto; padding: 0;" width="100%" cellspacing="0" cellpadding="0" border="0">
-
-<tr>
-<td style="background-color: #ffffff; width: 30px;" width="30">&nbsp;&nbsp;&nbsp;</td>
-
-<td valign="top" align="center">
-<table style="background-color: #ffffff; max-width: 700px!important; min-width: 100%; width: 100%;" cellspacing="0" cellpadding="0" border="0">
-
-<tr>
-<td style="background-color: #ffffff; height: 12px;" valign="top">&nbsp;</td>
-</tr>
-
-<tr>
-<td style="background-color: #ffffff; color: #4b4b4b; font-size: 15px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; text-align: left; line-height: 150%;" valign="top">
-
-<table>
-<tr>
-  <td>
-    <a href="https://click.e.mozilla.org/?qs=1dfec7565d8274de3d70f0a9f2f68b34c9fc8cc2871f66bd3d36bcb2b5e4206e635f81d4863ae77cc146a699d834de7487abb609eeb24e27" > <img src="https://image.e.mozilla.org/lib/fe9915707361037e75/m/6/11cf7cf0-bac9-4586-9e18-f0b5680c0251.png" alt="Mozilla News Beat" style="display: block; border: 0px; outline: none; width: 100%; height: auto; max-width: 640px;" width="640" border="0">
-    </a>
-  </td>
-</tr>
-
-
-
- <tr>
-  <td>
-    <p style="line-height: 140%; color: #4b4b4b;"><em>Welcome to the Mozilla News Beat, a glance at the best and worst internet news of the week. We hope you enjoy it!</em></p>
-  </td>
- </tr>
-
-</table>
-
-<br>
-
-<table style="border: 0px; border-collapse: collapse;" cellspacing="0" cellpadding="5" border="0">
-
-<!-- item row -->
- <tr style="background-color: #ffffff; padding-top: 5px;">
-  <td valign="top" align="center"><img src="https://image.e.mozilla.org/lib/fe9915707361037e75/m/6/755b62a9-d6c6-4f35-889e-7bbdfc75f1ee.png" alt="turtle" width="45">
-  </td>
-  <td style="padding: 5px; text-align: left; line-height: 150%;"><font style="color: #4b4b4b;"><strong>Picture Perfect.</strong> The Comedy Wildlife Photography Awards isn't letting a pandemic hold it back. This year's finalists for funniest animal photos are in and you need to see them all. What's your favorite? | </font><font style="color: #0c99d5;"> via <a style="text-decoration: underline; color: #0c99d5; font-weight: bold;" href="https://click.e.mozilla.org/?qs=1dfec7565d8274defa7bdb233fb768b6ff120381cf31029a20b736d4aa040ed955bd743b339f37012ec1f99aabee60d8cca393f248b0c111" >Digg</a></font></td>
- </tr>
-
-<tr style="height: 5px; background-color: #ffffff; width: 100%;">
-  <td colspan="2"></td>
-</tr>
-
-
-<!-- item row -->
- <tr style="background-color: #ffffff;">
-  <td valign="top" align="center"> <img src="https://image.e.mozilla.org/lib/fe9915707361037e75/m/6/7679244c-899c-4fa1-99df-a42edb2c9576.png" alt="money-wings" width="45">
-  </td>
-  <td style="padding: 5px; text-align: left; line-height: 150%;"><font style="color: #4b4b4b;"><strong>Riches to Rags.</strong> The multi-billionaire who anonymously gave away $8 billion (not million, <strong>billion</strong>) to charity has closed-up shop and is now telling his story. Your move, Bezos. | </font><font style="color: #0c99d5;"> via <a style="text-decoration: underline; color: #0c99d5; font-weight: bold;" href="https://click.e.mozilla.org/?qs=1dfec7565d8274de80d4bbbd64b47c4de56b1dba49ff071ae933fb3bb1e3d0f5d30927f47ebfb1653b11cc2d06e4bd8528ceb73186b1af52" >Forbes</a></font></td>
- </tr>
-
-<tr style="height: 5px; background-color: #ffffff; width: 100%;">
-  <td colspan="2"></td>
-</tr>
-
-<!-- item row -->
- <tr style="background-color: #ffffff;">
-  <td valign="top" align="center"> <img src="https://image.e.mozilla.org/lib/fe9915707361037e75/m/6/a44ebe18-4b6e-4ed2-afbe-884ca80d4d3e.png" alt="ship" width="45">
-  </td>
-  <td style="padding: 5px; text-align: left; line-height: 150%;"><font style="color: #4b4b4b;"><strong>Robotic Voyage.</strong> These folks certainly had time on their hands. A boat with no passengers, powered by AI, will attempt to recreate the journey charted by the Mayflower back in 1620. Colonization not included. | </font><font style="color: #0c99d5;"> via <a style="text-decoration: underline; color: #0c99d5; font-weight: bold;" href="https://click.e.mozilla.org/?qs=1dfec7565d8274de05211ba437d6df55500032bf8542cb445ef3f7b60214fb6c13195b15511baae73e4c3eb2b4fd6ccb61a5562364cce35e" >AP News</a></font></td>
- </tr>
-
-<tr style="height: 5px; background-color: #ffffff; width: 100%;">
-  <td colspan="2"></td>
-</tr>
-
-<!-- item row -->
- <tr style="background-color: #ffffff;">
-  <td valign="top" align="center"><img src="https://image.e.mozilla.org/lib/fe9915707361037e75/m/6/d8958223-8891-45fb-b743-991394f796e4.png" alt="alien" width="45">
-  </td>
-  <td style="padding: 5px; text-align: left; line-height: 150%;"><font style="color: #4b4b4b;"><strong>Greetings, Venusians.</strong> The pronounced greenhouse gas effect on Venus makes its surface uninhabitable, but scientists may have found life elsewhere on the planet. A closer look at its atmosphere shows us a cloud of gas that may have been produced by microbial life. | </font><font style="color: #0c99d5;"> via <a style="text-decoration: underline; color: #0c99d5; font-weight: bold;" href="https://click.e.mozilla.org/?qs=1dfec7565d8274dea1b61d4dde1b770267f3b60a5ad18e1ff6e6379a2113a3b0744db2e61152c55cf132a40f15c05e226478d57bfe664bbd" >NPR</a></font></td>
- </tr>
-
-
-<tr style="height: 5px; background-color: #ffffff; width: 100%;">
-  <td colspan="2"></td>
-</tr>
-
-<!-- item row -->
- <tr style="background-color: #ffffff;">
-  <td valign="top" align="center"><img src="https://image.e.mozilla.org/lib/fe9915707361037e75/m/6/a46e3c19-8a42-4172-8157-6f45723a2255.png" alt="ghost" width="45">
-  </td>
-  <td style="padding: 5px; text-align: left; line-height: 150%;"><font style="color: #4b4b4b;"><strong>Snap the Vote.</strong> Snapchat successfully converted over 400,000 of its users into newly registered voters via a Register To Vote tool within its app. Instagram, if you're listening, please steal this feature too! | </font><font style="color: #0c99d5;"> via <a style="text-decoration: underline; color: #0c99d5; font-weight: bold;" href="https://click.e.mozilla.org/?qs=1dfec7565d8274dece658442f0d5ab65e4cc7235d8fbe214439dab4facf13113ece599de2cb866f2dcb3846a8d2dfd5ef7afd247d0f8033f" >Axios</a></font></td>
- </tr>
-
- <tr style="height: 5px; background-color: #ffffff; width: 100%;">
-   <td colspan="2"></td>
- </tr>
-
- <!-- item row -->
-  <tr style="background-color: #ffffff;">
-   <td valign="top" align="center"><img src="https://image.e.mozilla.org/lib/fe9915707361037e75/m/6/82fcaec5-4da4-4672-a884-01ce5e68f0a4.png" alt="play" width="45">
-   </td>
-   <td style="padding: 5px; text-align: left; line-height: 150%;"><font style="color: #4b4b4b;"><strong>Regrets Reporter.</strong> YouTube's recommendation algorithm is known to recommend questionable content. What's worse: we've no idea how it works. That's why we launched Regrets Reporter, letting you send us the video suggestions you regret receiving. | </font><font style="color: #0c99d5;"> via <a style="text-decoration: underline; color: #0c99d5; font-weight: bold;" href="https://click.e.mozilla.org/?qs=1dfec7565d8274deddbb33042c8d588c1b9ff3c7d780a0d6fc28b3daaab52cb3f60e710191e7259cb0b1f63f3b3970f703af64455eac47f5" >The Verge</a> &amp; <a style="text-decoration: underline; color: #0c99d5; font-weight: bold;" href="https://click.e.mozilla.org/?qs=1dfec7565d8274de8579915272af313d5a11efc5da3606f79706761335ff5eb67f5fb2bce315f3939c58f369f4ae26dd66d6f3ede5e643cb" >Mozilla
-</a></font></td>
-  </tr>
-
-<tr style="height: 5px; background-color: #ffffff; width: 100%;">
-  <td colspan="2"></td>
-</tr>
-
-<!-- item row -->
- <tr style="background-color: #ffffff;">
-  <td valign="top" align="center"><img src="https://image.e.mozilla.org/lib/fe9915707361037e75/m/6/302f2ceb-2b87-4cb8-8161-ce14e0f9819b.png" alt="prohibited" width="45">
-  </td>
-  <td style="padding: 5px; text-align: left; line-height: 150%;"><font style="color: #4b4b4b;"><strong>Did it Matter?</strong> Mark Facebook as one fewer place where you can keep up with the Kardashians &mdash; for one day, anyway. Joining the #StopHateForProfit campaign, celebrities froze their Facebook and Instagram accounts for a day to protest the service's profiting off of hate speech. | </font><font style="color: #0c99d5;"> via <a style="text-decoration: underline; color: #0c99d5; font-weight: bold;" href="https://click.e.mozilla.org/?qs=1dfec7565d8274de807dad29b86792ee17357d3f41dda5076d79a89b5361616ba63b17b18811af0390e35efff43d8ca7b23fb8923cf0a884" >Buzzfeed News</a></font></td>
- </tr>
-
-
-<tr style="height: 5px; background-color: #ffffff; width: 100%;">
-  <td colspan="2"></td>
-</tr>
-
-<!-- item row -->
- <tr style="background-color: #ffffff;">
-  <td valign="top" align="center"><img src="https://image.e.mozilla.org/lib/fe9915707361037e75/m/6/f5460401-19a4-46b0-9fc2-f96b4b50fc3f.png" alt="fire" height="45">
-  </td>
-  <td style="padding: 5px; text-align: left; line-height: 150%;"><font style="color: #4b4b4b;"><strong>Wildfire Misinformation.</strong> A lot's happened since the Australian fires back in January (yes, that was this year). Not only are the fires in the U.S. shaping up to be as bad, the misinformation surrounding the fires is spreading just as quickly. | </font><font style="color: #0c99d5;"> via <a style="text-decoration: underline; color: #0c99d5; font-weight: bold;" href="https://click.e.mozilla.org/?qs=1dfec7565d8274debf0ee4becc6dfa13c85c2bbf24cffae5a82ceaa2179ebc91c3e964afe4f0823080f311143405ba78a9f2e5c9bc57ae89" >Gizmodo</a></font></td>
- </tr>
-
-
-<tr style="height: 5px; background-color: #ffffff; width: 100%;">
-  <td colspan="2"></td>
-</tr>
-
-<!-- item row -->
- <tr style="background-color: #ffffff;">
-  <td valign="top" align="center"><img src="https://image.e.mozilla.org/lib/fe9915707361037e75/m/6/942d4743-04cc-43cd-b24a-29c5185e232e.png" alt="auto" width="45">
-  </td>
-  <td style="padding: 5px; text-align: left; line-height: 150%;"><font style="color: #4b4b4b;"><strong>Self-Driving Dilemma.</strong> When an autonomous vehicle kills a pedestrian, who's at fault? In the case of the Uber self-driving vehicle that struck Elaine Herzberg in 2018, not Uber. Rafaela Vasquez, the safety driver in the driver seat at the time, was deemed at fault for Herzberg's death. | </font><font style="color: #0c99d5;"> via <a style="text-decoration: underline; color: #0c99d5; font-weight: bold;" href="https://click.e.mozilla.org/?qs=1dfec7565d8274de9f4223ee45a4f500d7eed63258e442a30da0052df35063c11c2c36030bab545fc030abadcff73c485d5ae7a54c429dd9" >The Guardian</a></font></td>
- </tr>
-
-
-<tr style="height: 5px; background-color: #ffffff; width: 100%;">
-  <td colspan="2"></td>
-</tr>
-
-<!-- item row -->
- <tr style="background-color: #ffffff;">
-  <td valign="top" align="center"><img src="https://image.e.mozilla.org/lib/fe9915707361037e75/m/6/da4d5525-7371-4762-bdb0-cbab2e1da8b9.png" alt="magnifying-glass" width="45">
-  </td>
-  <td style="padding: 5px; text-align: left; line-height: 150%;"><font style="color: #4b4b4b;"><strong>Trump Tracking.</strong> A new report out of MIT notes that while both U.S. presidential candidates offer smartphone apps, the "Trump 2020" app collects and uses much more data than Biden's "Team Joe" app. | </font><font style="color: #0c99d5;"> via <a style="text-decoration: underline; color: #0c99d5; font-weight: bold;" href="https://click.e.mozilla.org/?qs=1dfec7565d8274def60a71cb7abb69212caefd11ad76e3201b4c953b14fae7df5b25e6ab08bd4d3c60d1d80e9250b8d39a3b51e17d8c2dea" >MIT Technology Review</a></font></td>
- </tr>
-
-
-<tr style="height: 5px; background-color: #ffffff; width: 100%;">
-  <td colspan="2"></td>
-</tr>
-
-<!-- item row -->
- <tr style="background-color: #ffffff;">
-  <td valign="top" align="center"><img src="https://image.e.mozilla.org/lib/fe9915707361037e75/m/6/7cb234f3-7583-4783-8e26-5abdcc8fbf8c.png" alt="Q" width="45">
-  </td>
-  <td style="padding: 5px; text-align: left; line-height: 150%;"><font style="color: #4b4b4b;"><strong>Conspiracy Woes.</strong> Conspiracy theorists won't let up. A report by TIME notes how those who share false information sow distrust in traditional institutions while newer platforms like Facebook and YouTube profit. | </font><font style="color: #0c99d5;"> via <a style="text-decoration: underline; color: #0c99d5; font-weight: bold;" href="https://click.e.mozilla.org/?qs=1dfec7565d8274ded1cc7910e4b1446e127e89845fcaa5046d57c5833a0111f35811c41bebf6c7b983359ff70380606559986cb20759149b" >Time</a></font></td>
- </tr>
-
-
-<tr style="height: 5px; background-color: #ffffff; width: 100%;">
-  <td colspan="2"></td>
-</tr>
-
-<!-- item row -->
- <tr style="background-color: #ffffff;">
-  <td valign="top" align="center"><img src="https://image.e.mozilla.org/lib/fe9915707361037e75/m/6/c898e737-30ba-43f0-a652-ae73fcd9d090.png" alt="facepalm" width="45">
-  </td>
-  <td style="padding: 5px; text-align: left; line-height: 150%;"><font style="color: #4b4b4b;"><strong>Pathetic.</strong> Domestic abuse is up since lockdown started and this increase has translated to revenge porn. U.K. domestic violence charity Refuge noted 1-in-7 women are receiving threats that their intimate photos would be shared online. | </font><font style="color: #0c99d5;"> via <a style="text-decoration: underline; color: #0c99d5; font-weight: bold;" href="https://click.e.mozilla.org/?qs=1dfec7565d8274de6cad315cd8b10b051190c3b5a896ac744fd0b420fb25a348874e01273ae863c3a186ff0dac828931b265a243b26ee1bc" >BBC</a></font></td>
- </tr>
-
-</table>
-
-<br>
-
-<p style="text-align: center;"><a style="background-color: #0c99d5; display: inline-block; padding: 10px 42px; margin-bottom: 10px; line-height: 200%; min-height: 32px; height: auto; color: #fff; font-size: 16px; font-weight: bold; text-transform: uppercase; text-align: center; text-decoration: none;" href="https://click.e.mozilla.org/?qs=1dfec7565d8274ded4ae2747a8286dbab61b73c0c648868d7631c1677dd62cd98ed35e9cc21cf1d49dbcb55e4f44cb8558df7a8d4b6e44dc" >&nbsp;&nbsp;Share Mozilla News Beat on Facebook&nbsp;&nbsp;</a></p>
-
-<p style="text-align: center;"><a style="background-color: #0c99d5; display: inline-block; padding: 10px 42px; margin-bottom: 10px; line-height: 200%; min-height: 32px; height: auto; color: #fff; font-size: 16px; font-weight: bold; text-transform: uppercase; text-align: center; text-decoration: none;" href="https://click.e.mozilla.org/?qs=1dfec7565d8274deab27ffb4c58fd9bee3055b212fa38f9ddb7dae1263546994ff3e8811947a30973e8207a7ac3f3fa89ebf88bcebb9d60b" >&nbsp;&nbsp;Share Mozilla News Beat on Twitter &nbsp;&nbsp;</a></p>
-
-<table style="background-color: #FFFFFF">
- <tr>
-  <td>
-
-    <p style="line-height: 150%"><em>You can also follow Mozilla News Beat on the <a style="text-decoration: underline; color: #0c99d5;" href="https://click.e.mozilla.org/?qs=1dfec7565d8274de7bc4c6158fdc33cca843e6ba6236500e0e23d381bd0e3de8d6ebdcc7621314d1b3e2a65dd4367be4862aa9e6a5f24050" >Mozilla blog</a>, or on <a style="text-decoration: underline; color: #0c99d5;" href="https://click.e.mozilla.org/?qs=1dfec7565d8274defc62b012a19fa32932db00e3a527434b91ae1645a11bb9b42605568020d35a3c7f4e730f5686fd25166c62830e287cb8" >Instagram</a>. <!--We use <a style="text-decoration: underline; color: #0c99d5;" href="https://twemoji.twitter.com/" alias="Twemoji">Twemoji</a> licensed under the CC-BY 4.0 open source license. --> </em></p>
-
-    <p style="line-height: 150%"><em>Want more? See stories that just missed making the News Beat on our <a style="text-decoration: underline; color: #0c99d5;" href="https://click.e.mozilla.org/?qs=1dfec7565d8274deae0d71552bc8b4495f0b56cee084231f0aa92fa252e755cf655b81dcbb692158f4617f7aa7d55a8f500971570a5b5f0f" >Pocket</a>.</em></p>
-
-    <p style="line-height: 150%"><em>If you would prefer <strong>not</strong> to receive Mozilla News Beat by email in the future, <a style="text-decoration: underline; color: #0c99d5;" href="https://click.e.mozilla.org/?qs=1dfec7565d8274debb4746fafc4adf605865c0e98f95a2fce1a016379ff9e519a04152ee76a39ad80a1d1df05aae862cb46962bd00ab1511" >please click here</a> to be excluded from future sends.</em></p>
-
-  </td>
- </tr>
-</table>
-
-
-
-</td>
-</tr>
-<tr>
-<td style="background-color: #ffffff; height: 30px;" colspan="3">&nbsp;</td>
-</tr>
-
-</table>
-</td>
-<td style="background-color: #ffffff; width: 30px;" width="30">&nbsp;&nbsp;&nbsp;</td>
-</tr>
-
-</table>
-<p>&nbsp;</p>
-</td></tr></table><table style="min-width: 100%; " class="stylingblock-content-wrapper" width="100%" cellspacing="0" cellpadding="0"><tr><td class="stylingblock-content-wrapper camarker-inner"><br>
-<table cellspacing="0" cellpadding="0" align="center">
-     <tr>
-<td colspan="3" style="font-family: 'Gill Sans MT', Calibri, sans-serif; font-size: 22px; color: #6e899e; padding-bottom: 15px;" align="center">
-      Connect with us
-      </td>
-     </tr>
-     <tr>
-      <td style="padding: 0 10px;" align="right">
-      <a href="https://click.e.mozilla.org/?qs=1dfec7565d8274dec983c0ae185ba6d7ff83be9bc25f2a597cee4466c40b1515e58a2dcf7426f000211181ab7f9bb1d2890add02bc84af96"  target="_blank"><img src="https://image.e.mozilla.org/lib/fe9915707361037e75/m/3/youtube-icon-blue-transparent.png" alt="YouTube" style="display: block; border: 0;" width="45"></a>
-      </td>
-      <td style="padding: 0 12px;" align="center">
-      <a href="https://click.e.mozilla.org/?qs=1dfec7565d8274de5e62c819fb972ef6c4e1706aae2d38dcc5b0531bae6abe64aaf3a253f382ff88ad1cdcf3c182359e548e0085bb72a1e4"  target="_blank"><img src="https://image.e.mozilla.org/lib/fe9915707361037e75/m/2/mozilla-email-twitter.png" alt="Twitter" style="display: block; border: 0;" width="45"></a>
-      </td>
-             <td style="padding: 0 12px;" align="left">
-      <a href="https://click.e.mozilla.org/?qs=1dfec7565d8274de775cef77ad708c239a213abe412807d3346a7b282f7ef16130b5377cce16b5898e24df1e48c82217646ddb43e150f66e"  target="_blank"><img src="https://image.e.mozilla.org/lib/fe9915707361037e75/m/5/8624d65d-230d-4423-9f8e-dde004af246d.png" alt="Instagram" style="display: block; border: 0;" width="45"></a>
-      </td>
-      
-     </tr>
-    </table>
-</td></tr></table></td>
-                    </tr>
-                    <tr>
-                     <td class="footer" width="640" align="center" style="padding-top: 10px;">
-                      <table cellspacing="0" cellpadding="0">
-                       <tr>
-                        <td align="center" style="font-family: Geneva, Tahoma, Verdana, sans-serif; font-size: 14px; line-height: 18px; color: #738597; padding: 0 20px 40px;">
-                                      <br>      <br>
-<strong>Thanks for reading!</strong>
-
-<br> 
-
-You're receiving this email because we think you’re neat, AND you subscribed to hear from us. If our emails aren’t sparking joy, we’ll understand if you  <a href="https://click.e.mozilla.org/?qs=1dfec7565d8274defb0da5974493e0f623da79a50644e320e38336917bb391a2adde77202e3834ced2df4554b18d19fbeb11703cea4b1368"  style="color: #0c99d5;">unsubscribe.</a>
-
-<br>
-<br>
-You can also <a href="https://click.e.mozilla.org/?qs=1dfec7565d8274dea24a04bc82c73b395c2b01d8fb7ef2b5bd61e453d9842efb9ec75a97ad8c60569fff6a89da35cbd634de6420f9a9369f"  style="color: #0c99d5;">update your email preferences</a> at any time.
-<br>
-<br>
-
-
-
-                         <br>
-<a href="https://click.e.mozilla.org/?qs=1dfec7565d8274de511edf28efde7c565620c046ca157f9a99226ead19e22f1faf71ca965d3e7368dfde50fd2711aa35e7315b1f522dd134"  target="_blank"><img src="https://image.e.mozilla.org/lib/fe9915707361037e75/m/3/Mozilla-Logo-2017.png" alt="Mozilla" style="display: block; border: 0;" width="100"></a>
-      <br>
-<strong><a href="https://click.e.mozilla.org/?qs=1dfec7565d8274de20e6aea15c8121e5befa97dba393653286f04af60aeba916a3b759f6725faaf886f2dc5106859c1288deefcb3d654c23" style="color: #0c99d5;"  target="_blank">Donate to Mozilla</a></strong>
-&nbsp;&nbsp;|&nbsp;&nbsp;
-<strong><a href="https://click.e.mozilla.org/?qs=1dfec7565d8274de782e382d0f976d1bfb73d18703d7d81c43d4ba6c8e3ef4d3cafbc781cba626dbd58e24b1bd3b1eafd5d7fced2af70b68" style="color: #0c99d5;"  target="_blank">Download Firefox</a></strong>
-<br><br>
-
-
-                         331 E. Evelyn Avenue Mountain View CA 94041 
-                         <br>
-                         <a href="https://click.e.mozilla.org/?qs=1dfec7565d8274de44ec3426d0c95b1e45470216849e39f85b87f8e95f8064842d4daf94581f16ac0cf92e9017a3d84ec92bef818f5b3398"  style="color: #0c99d5;">Legal</a> • <a href="https://click.e.mozilla.org/?qs=1dfec7565d8274de76cc5c2beda1b3239fbe9bdf9b3e6abe0c1d5aa084ca677c4ad1bfbf881f69aefeaa7a8b39af68c09984ae179f9a343a"  style="color: #0c99d5;">Privacy</a>
-
-                        </td>
-                       </tr>
-                      </table>
-                     </td>
-                    </tr>
-                </table>
-            </td>
+          <td style=3D"padding: 20px 30px; text-align: left;" class=3D"sm-px">
+            <a href=3D"https://sg-links.stackoverflow.email/ls/click?upn=3DFhKQFe=
+mTFIJzn5ywFPMHvni76Wx7eeSM4UTVwzVAAnAID4xNQ1Vt2v7-2BpJtuKw5nBx3U_IrVKFt61B0=
+RSPoIcLeWyNo0vDB5UjTWosCdhmH1BecdylPl1U39n15TjFr9M3QAierxFj54eQFQSDktellJcD=
+Tw2un7mkKNrLJFP67bZaL3GYSMvyec7-2FxJrCBOH1Qo9p7Ie3IGdNTE2JcXiyE7JFBbECHFmkW=
+Ltt8ghhvVfDz-2Bi4rVMfBiCc9QdT5rbMdvFrQARSHfLfIgZH3mwGhKL9EZbXl-2BKfULRQdx1F=
+zNHVr3t-2BQCs8fiBQpa-2FEikrsDuOb8T6So7Y2qdnWsu2Kq7rmAFx0eJwGzPT3qbhYUrj6san=
+7uUPe2u33t60uGMT2fOZR-2FMjLqQRVuSq1m8eUrHOMqOtICyqAoeZhWXHytzEvdfD5QDqYVnRQ=
+ig-2FJ3-2BqcIBSaE-2Br2-2BKg1knDsQBmWnvj56aBB4u2F1wisq2grszCaLtCV-2F1QIKUUtk=
+Wy0E-2BSvU1c7uTnp8iW82F1IzAcFGxybeYmznxrLKQcM2D500Z84-2ByFWSa1pksGrryz9HBjq=
+qChOmpwGhPOfiWBC7NfBuX6ug-3D-3D">
+                <img src=3D"https://sstatic.stackoverflow.email/Sites/stackoverflow=
+/Img/LogoEmail.png?v=3D754ed0a800c4" alt=3D"Stack Overflow" border=3D"0" st=
+yle=3D"font-family: arial, sans-serif; font-size: 15px; line-height: 15px; =
+color: #54595F;" height=3D"36" width=3D"146">
+            </a>
+          </td>
         </tr>
-    </table>
 
-    <!-- Exact Target tracking code -->
-    <img src="https://click.e.mozilla.org/open.aspx?ffcb10-fe871173766d017b7c-fdf816747464007b711c7671-fe9915707361037e75-ff6e157075-fe2a12757060007d7d1071-ff2b15797c65&d=40114" width="1" height="1">
-</custom></body>
+
+      <tr>
+  <td style=3D"padding: 30px 30px 0; background-color: #ffffff;" class=3D"sm=
+-px sm-pt btr">
+    <h1 style=3D"font-family: arial, sans-serif; font-weight: bold; font-size=
+: 21px; line-height: 24px; color: #242629; margin: 0;">
+      You&#x27;re almost done.
+    </h1>
+  </td>
+</tr>
+<tr>
+  <td style=3D"padding: 20px 30px 30px; background-color: #ffffff" class=3D"=
+sm-px sm-pt bbr">
+    <table align=3D"left" border=3D"0" cellpadding=3D"0" cellspacing=3D"0" ro=
+le=3D"presentation">
+      <tr>
+        <td class=3D"s-btn s-btn__primary" style=3D"border-radius: 4px; backgro=
+und: #0095ff;">
+          <a class=3D"s-btn s-btn__primary" href=3D"https://sg-links.stackoverfl=
+ow.email/ls/click?upn=3DFhKQFemTFIJzn5ywFPMHvni76Wx7eeSM4UTVwzVAAnAGhXJkCn4=
+dMPljtjLuUvHBBA5lBgzadnXLKey7bYixO-2FmZkkM0X809-2FTxHGhruztU9JGWdUiA9FLbk1c=
+1N1QwBYq7Y3H4ZFqy737-2FBvDyitQBmMSugbu-2FZu3QWmoikoqMAV4IPEdBFePgmJNSZRtOyn=
+kLajE1lNbN8ugeDCKevt9CjmGWD9Jslrpt5yVFhYVvB9D8bWBwMdw9lJ9GkFAtijExMdt9BXbZP=
+VR2xIT026IHf5-2FMbqPjpMlW8ZsiUcuFdd4qJHgaV8BLXl1U1J1m7mITlUV9mFkl0BCdzNNhcc=
+4gyNz3iJfOVPfe-2FGCoZBKBWBUgiodEuf62n0zLX7ip9FJNv4z3gLp9lkwPvmofHtSKruyz6qZ=
+pP-2BtUbPpHpGPxfeYDutECIfksLwFtWo8-2BIvxxadpCSufuoF5TAnuP0GO7Pyu-2BjNytYDI3=
+S17zap6SzIiKqERagYQFQPkkSVUue6KpQ2p6Qc3Z5aut6DTe44OXeto-2BPElH3CyNd-2FGLuwu=
+LW-2FDQe7rXXHB5vvozam3wAlQFp_IrVKFt61B0RSPoIcLeWyNo0vDB5UjTWosCdhmH1BecdylP=
+l1U39n15TjFr9M3QAierxFj54eQFQSDktellJcDTw2un7mkKNrLJFP67bZaL3GYSMvyec7-2FxJ=
+rCBOH1Qo9p7Ie3IGdNTE2JcXiyE7JFBbECHFmkWLtt8ghhvVfDz-2Bi4rVMfBiCc9QdT5rbMdvF=
+rQARSHfLfIgZH3mwGhKL9EZbXl-2BKfULRQdx1FzNHVr3t-2BQCs8fiBQpa-2FEikrsDuOb8T6S=
+o7Y2qdnWsu2Kq7rmAFx0eJwGzPT3qbhYUrj6sb9hxRNNwJUPQ9596JJ5cosCe-2B86cUEhA4LTa=
+UlHvHC7u9p4u5hhRSPFtfDZSQzSVYrBsnYK3041mT7w46e0tO8wI12EekGX1pqw4NP6qRnaF4US=
+wy9vgH27aS5FLdg5ndqoQPT2Vn5vngunEO93xYHy9JR4U-2BbDmBYwIogoxJFyLDYCemrkTpOmc=
+fdF1uD2-2Bt1g0EqlyukKTfklwVbDn9Wvz9IGBs6xnRH8pZnbvPpBw-3D-3D" style=3D"back=
+ground: #0095FF; border: 1px solid #0077cc; box-shadow: inset 0 1px 0 0 rgb=
+a(102,191,255,.75), 0 0 0 0 rgba(0,149,255,0); font-family: arial, sans-ser=
+if; font-size: 17px; line-height: 17px; color: #ffffff; text-align: center;=
+ text-decoration: none; padding: 13px 17px; display: block; border-radius: =
+4px;">
+            Complete your registration
+          </a>
+        </td>
+      </tr>
+    </table>
+  </td>
+</tr>
+
+
+        <tr>
+          <td style=3D"padding: 30px;" class=3D"sm-p">
+            <table align=3D"left" border=3D"0" cellpadding=3D"0" cellspacing=3D"0=
+" role=3D"presentation" width=3D"100%">
+              <tr>
+                <td style=3D"padding-bottom: 10px; font-family: arial, sans-serif; =
+font-size: 12px; line-height: 15px; color: #93999F; text-align: left;">
+                </td>
+              </tr>
+              <tr>
+                <td style=3D"font-size: 12px; line-height: 15px; font-family: arial=
+, sans-serif; color: #93999F; text-align: left;">
+                </td>
+              </tr>
+              <tr>
+                <td style=3D"padding: 20px 0;" width=3D"100%" class=3D"sm-py">
+                  <table aria-hidden=3D"true" border=3D"0" cellpadding=3D"0" cellspa=
+cing=3D"0" role=3D"presentation" style=3D"width:100%">
+                    <tr>
+                      <td height=3D"1" width=3D"100%" style=3D"font-size: 0px; line-he=
+ight: 0px; border-top: 1px solid #D6D8DB;">&nbsp;</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style=3D"padding-bottom: 5px; text-align: left;">
+                  <img src=3D"https://sstatic.stackoverflow.email/Img/logo-so-gray@2=
+x.png?v=3D43e3e57a3d3e" align=3D"left" alt=3D"Stack Overflow" border=3D"0" =
+width=3D"111" height=3D"22" style=3D"display: block;">
+                </td>
+              </tr>
+              <tr>
+                <td style=3D"padding-bottom: 5px; font-size: 12px; line-height: 15p=
+x; font-family: arial, sans-serif; color: #93999F; text-align: left;"><stro=
+ng>Stack&nbsp;Overflow</strong>, <span class=3D"unstyle-auto-detected-links=
+">110 William Street, 28th Floor, New York, NY 10038</span></td>
+              </tr>
+              <tr>
+                <td>
+                  <table align=3D"left" border=3D"0" cellpadding=3D"0" cellspacing=
+=3D"0" role=3D"presentation" style=3D"background:#ffffff; border-radius:1px=
+; line-height:0px">
+                    <tr>
+                      <td>
+                        <div style=3D"border-radius: 1px; border: 1px solid #D6D9DC; pa=
+dding: 4px 6px 3px 6px; font-size: 11px; line-height: 11px; font-family: Co=
+nsolas, monospace; color: #E06C77;" title=3D"because we care">&lt;3</div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </div>
+  <!--[if mso | IE]>
+  </td>
+  </tr>
+  </table>
+  <![endif]-->
+  </center>
+
+<img src=3D"https://sg-links.stackoverflow.email/wf/open?upn=3DQ7QzZ7iXo-2F=
+BXM79C9lXioGUU0J04QFdUqJrkOB5QCRK6hzWnAXIyxmUZTEr13nX3mbnANQz6MKyXGxa6VYeOk=
+fGH89t-2BhKyr14XXP5N-2Bq0vUzvyFowI98fToCiBzs7t2HKJRRdlOClD2pxIfbpFJkmk-2F5v=
+50n99a2dtVEEJWuQzR4ZSXw6-2BKDtnPHlJM4dj7iHewneanALk-2FTB7f2t7NqnG9mnpIVEF8j=
+h3wZakmmlJ1w-2B5C2l5JXvaQW6tQvNITVo7EAb6s41zxRnljR2fFXVUvVJ-2FTeOel-2FX-2BG=
+eHYs1cuTeI330-2Fz1ir6zRLUu9rUl6i5v8Qzd-2FC2KrVIbtFMNdDeiIkLnCTyFgW1sF6kM8hD=
+GtWNDYWI0uOv2GNpyTINFEM7RyxxPsr43tcZBWKEiM2WeUlhUI4fjzy23ZLuTxWQStCDSg5kTBl=
+ag8Jroagox0TIOfF-2BEJDe5JrYMas1h-2FAxl6-2Bqypo80JYpMDWlyQSE-2Flp7BXHHiuyIjs=
+HuYQVaLsGSFzeZyoLcadV-2F1X6k7Gw-3D-3D" alt=3D"" width=3D"1" height=3D"1" bo=
+rder=3D"0" style=3D"height:1px !important;width:1px !important;border-width=
+:0 !important;margin-top:0 !important;margin-bottom:0 !important;margin-rig=
+ht:0 !important;margin-left:0 !important;padding-top:0 !important;padding-b=
+ottom:0 !important;padding-right:0 !important;padding-left:0 !important;"/>
+</body>
 </html>
 
---hZWGOPDjoDZi=_?:--
+--08ae7e827fe0512269c6b9db8aefa7c2b9de4f229262ad38828b291c95a5--

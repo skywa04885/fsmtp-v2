@@ -169,6 +169,7 @@ namespace FSMTP::DKIM_Verifier {
 		//  hash of the signature
 		// ==================================
 
+		cout<< canonicalizedBody << endl;
 		string generatedBodyHash = Hashes::sha256base64(canonicalizedBody);
 
 		DEBUG_ONLY(logger << "Body hash, generated: '" << generatedBodyHash << "', original: '" 
