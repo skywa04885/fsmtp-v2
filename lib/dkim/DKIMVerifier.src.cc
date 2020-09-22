@@ -106,12 +106,22 @@ namespace FSMTP::DKIM_Verifier {
 				return (h.e_Key == hKey);
 			});
 
-			if (it == headers.end()) throw runtime_error(EXCEPT_DEBUG(
+			if (it == headers.end()) return; /*throw runtime_error(EXCEPT_DEBUG(
 				string("Could not find DKIM Specified header in real headers: ") + hKey
-			));
+			));*/
 
 			signatureSpecifiedHeaders << it->e_Key << ": " << it->e_Value << "\r\n";
 		});
+		// for_each(headers.begin(), headers.end(), [&](const EmailHeader &h) {
+		// 	vector<string>::const_iterator it = find_if(parsedHeader.s_Headers.begin(), parsedHeader.s_Headers.end(), [&](const string &str) {
+		// 		cout << str << ", " << h.e_Key << endl;
+		// 		return (str == h.e_Key);
+		// 	});
+
+		// 	if (it == parsedHeader.s_Headers.end()) return;
+
+		// 	signatureSpecifiedHeaders << h.e_Key << ": " << h.e_Value << "\r\n";
+		// });
 
 		// Appends the dkim signature itself to the headers
 		//  but then with the signature field left out, since
@@ -122,15 +132,7 @@ namespace FSMTP::DKIM_Verifier {
 			const string &key = get<0>(tup);
 			const string &val = get<1>(tup);
 
-			if (key == "h") {
-				string lowercaseVal = val;
-				transform(lowercaseVal.begin(), lowercaseVal.end(), lowercaseVal.begin(), [](const char c) {
-					return tolower(c);
-				});
-
-				signatureSpecifiedHeaders << "h=" << lowercaseVal << "; ";
-			}	
-			else if (key == "b") signatureSpecifiedHeaders << "b=";
+			if (key == "b") signatureSpecifiedHeaders << "b=";
 			else signatureSpecifiedHeaders << key << '=' << val << "; ";	
 		});
 
@@ -147,7 +149,7 @@ namespace FSMTP::DKIM_Verifier {
 				// Performs the canonicalization, and after that we remove
 				//  the final <CR><LF> from the headers result, since the signature
 				//  is not known, and we do not want a new line.
-				canonicalizedHeaders = DKIM::_canonicalizeHeadersRelaxed(signatureSpecifiedHeaders.str());
+				canonicalizedHeaders = DKIM::_canonicalizeHeadersRelaxed(signatureSpecifiedHeaders.str(), false);
 				canonicalizedBody = DKIM::_canonicalizeBodyRelaxed(body);
 
 				canonicalizedHeaders.erase(canonicalizedHeaders.end()-2, canonicalizedHeaders.end());
@@ -224,6 +226,8 @@ namespace FSMTP::DKIM_Verifier {
 
 		try {		
 			isSignatureValid = Hashes::RSASha256verify(parsedHeader.s_Signature, canonicalizedHeaders, publicKey);
+			if (!isSignatureValid)
+				DEBUG_ONLY(logger << ERROR << "Signature invalid" << ENDL);
 		} catch (const runtime_error &e) {
 			DEBUG_ONLY(logger << ERROR << "Failed to verify signature: " << e.what() << ENDL);
 			return DKIMVerifyResponse::DVR_FAIL_SYSTEM;
@@ -372,4 +376,3 @@ namespace FSMTP::DKIM_Verifier {
 		else return dkim_record;
 	}
 }
-

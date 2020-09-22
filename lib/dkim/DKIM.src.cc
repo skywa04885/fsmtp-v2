@@ -173,23 +173,16 @@ namespace FSMTP::DKIM
 		string line;
 		while (getline(stream, line, '\n')) {
 			if (!line.empty() && line[line.size() - 1] == '\r') line.pop_back();
-			lines.push_back(move(line));
+			lines.push_back(line);
 		}
 
-		// Removes the prefix white lines, these cause issues later on
-		// for (list<string>::iterator it = lines.begin(); it != lines.end();) {
-		// 	if ((*it).empty()) lines.erase(it++);
-		// 	else break;
-		// }
-
-		// Trims all the lines and removes
-		//  the extra spaces
+		// Trims the extra whitespace, and removes the dots at the beginning of lines
 		size_t i = 0;
 		size_t lastLineWithContent = 0;
 		for_each(lines.begin(), lines.end(), [&](string &line) {
 			// Removes the whitespace at the end of the line
 			line.erase(line.find_last_not_of(' ') + 1);
-			line.erase(0, line.find_first_not_of(' '));
+			if (line[0] == '.' && line[1] == '.') line.erase(0, 1);
 
 			// Checks if the line is empty, if so
 			//  just continue, else report it as the
@@ -223,7 +216,7 @@ namespace FSMTP::DKIM
 	 * @Param {const std::string &} raw
 	 * @Return {std::string}
 	 */
-	std::string _canonicalizeHeadersRelaxed(const std::string &raw)
+	std::string _canonicalizeHeadersRelaxed(const std::string &raw, bool signingCheck)
 	{
 		std::string res;
 
@@ -260,7 +253,7 @@ namespace FSMTP::DKIM
 			});
 
 			// Checks if we should use the header
-			if (!shouldUseHeader(key)) continue;
+			if (signingCheck && !shouldUseHeader(key)) continue;
 
 			// Constructs the header, and pushes it back to
 			// - the res

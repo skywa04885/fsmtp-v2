@@ -96,7 +96,7 @@ namespace FSMTP::DKIM
 	 * @Param {const std::string &} raw
 	 * @Return {std::string}
 	 */
-	std::string _canonicalizeHeadersRelaxed(const std::string &raw);
+	std::string _canonicalizeHeadersRelaxed(const std::string &raw, bool signingCheck = true);
 
 	/**
 	 * Checks if we should use an specified header

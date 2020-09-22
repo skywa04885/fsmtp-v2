@@ -23,19 +23,21 @@ static const char *FALLBACK_CONFIG_FILE = "../fallback/config.json";
 
 int main(const int argc, const char **argv)
 {
-	Logger asd("Test", DEBUG);
+	// Logger asd("Test", DEBUG);
 
-	ifstream file("../emls/quore.eml");
-	string total, line;
-	while (getline(file, line)) {
-		total += line + "\r\n";
-	}
+	// ifstream file("../emls/quore.eml");
+	// string total, line;
+	// while (getline(file, line)) {
+	// 	total += line + "\r\n";
+	// }
 
-	FullEmail email;
-	Parsers::parseMIME(total, email);
-	FullEmail::print(email, asd);
+	// FullEmail email;
+	// Parsers::parseMIME(total, email);
+	// // FullEmail::print(email, asd);
 
-	return 0;
+	// cout << FSMTP::DKIM_Verifier::verify(total)[0] << endl;
+
+	// return 0;
 
 	// ==================================
 	// Default main
