@@ -98,11 +98,16 @@ namespace FSMTP {
 							break;
 					}
 
-					// Writes the log to the disk
+
 
 					oss << this->l_Stream.str();
 					Logger::saveToDisk(oss.str());
-					
+
+					if (a == LoggerOpts::FLUSH)
+						cout << oss.str() << flush;
+					else
+						cout << oss.str() << endl;
+
 					this->l_Stream.str("");
 					this->l_Stream.clear();
 					break;
