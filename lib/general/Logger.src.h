@@ -98,20 +98,11 @@ namespace FSMTP {
 							break;
 					}
 
+					// Writes the log to the disk
+
 					oss << this->l_Stream.str();
-					if (this->l_Level == LoggerLevel::FATAL || this->l_Level == LoggerLevel::ERROR) {
-						Logger::saveToDisk(oss.str());
-					}
-
-					// Prints the message with the specified method, after this
-					//  we clear the internal buffer
-
-					if (a == LoggerOpts::FLUSH) {
-						cout << oss.str() << flush;
-					} else {
-						cout << oss.str() << endl;
-					}
-
+					Logger::saveToDisk(oss.str());
+					
 					this->l_Stream.str("");
 					this->l_Stream.clear();
 					break;
