@@ -36,6 +36,8 @@
 #include <list>
 #include <chrono>
 #include <random>
+#include <unordered_map>
+#include <future>
 
 // ==== Other C++ Library's ====
 #include <json/json.h>

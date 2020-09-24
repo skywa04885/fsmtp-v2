@@ -8,6 +8,7 @@ subdir('smtp')
 subdir('workers')
 subdir('args')
 subdir('dns')
+subdir('spam')
 
 sources += files (
   'default.cc'

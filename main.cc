@@ -15,14 +15,70 @@
 */
 
 #include "main.h"
-#include "lib/dkim/DKIMVerifier.src.h"
-#include "lib/smtp/server/SMTPSpamDetection.src.h"
+#include "lib/spam/NaiveBayes.src.h"
+#include "lib/spam/WordEncoder.src.h"
+
+using namespace FSMTP::Spam::Preprocessing;
 
 static const char *CONFIG_FILE = "../config.json";
 static const char *FALLBACK_CONFIG_FILE = "../fallback/config.json";
 
 int main(const int argc, const char **argv)
 {
+	// Logger l("MAIN", LoggerLevel::INFO);
+
+	// vector<string> stopWords = {};
+	// {
+	// 	Json::Value temp;
+	// 	ifstream file("../datasets/EN_STOPWORDS.json", ios::in);
+	// 	DEFER(file.close());
+	// 	file >> temp;
+
+	// 	Json::Value defaultValue;
+	// 	for (size_t i = 0; i < temp.size(); ++i) {
+	// 		Json::Value row = temp.get(i, defaultValue);
+	// 		stopWords.push_back(row.asString());
+	// 	}
+	// }
+
+	// // Reads the json file with the spam and ham messages
+	// //  into the memory, which will be parsed later on
+	// Json::Value spamHam;
+	// ifstream file("../datasets/EN_SMS-SPAM.json", ios::in);
+	// DEFER(file.close());
+	// file >> spamHam;
+
+	// // Starts looping over the rows, and pushing the messages
+	// //  into the according vectors
+	// vector<string> spamMessages = {};
+	// vector<string> hamMessages = {};
+
+	// Json::Value defaultValue;
+	// for (size_t i = 0; i < spamHam.size(); ++i) {
+	// 	Json::Value row = spamHam.get(i, defaultValue);
+	// 	if (row["class"].asString() == "ham") hamMessages.push_back(row["value"].asString());
+	// 	else spamMessages.push_back(row["value"].asString());
+	// }
+
+	// // Starts joining the messages, this will be used to count the
+	// //  words for each category, and create the histogram
+	// string spam, ham;
+	// for_each(spamMessages.begin(), spamMessages.end(), [&](const string &a) { spam += a + '\n'; });
+	// for_each(hamMessages.begin(), hamMessages.end(), [&](const string &a) { ham += a + '\n'; });
+
+	// // Parses some stuff
+	// vector<string> words = {};
+	// WordEncoder::splitString(spam, words);
+
+	// WordEncoder encoder;
+	// encoder.fit(words, [&](const string &str) {
+	// 	if (str.length() < 3) return false;
+	// 	else if (find(stopWords.begin(), stopWords.end(), str) != stopWords.end()) return false;
+	// 	else return true;
+	// }).print(l);
+
+	// return 0;
+
 	// ==================================
 	// Default main
 	// ==================================

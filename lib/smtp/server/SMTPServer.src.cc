@@ -103,44 +103,45 @@ SMTPServer &SMTPServer::startHandler(const bool newThread) {
 		Logger clogger("ESMTP:" + client->getPrefix(), LoggerLevel::DEBUG);
 		DEBUG_ONLY(clogger << "Client connected" << ENDL);
 
-		// if (SpamDetection::checkSpamhaus(client->getPrefix())) {
-		// 	session->s_PossSpam = true;
-		// 	DEBUG_ONLY(clogger << "Classified message as soan due to zen.spamhaus.org records" << ENDL);
-		// }
+		try {
+			ServerResponse response(SMTPResponseType::SRC_GREETING);
+			client->write(response.build());
 
-		ServerResponse response(SMTPResponseType::SRC_GREETING);
-		client->write(response.build());
+			size_t itt = 0;
+			for (;;) {
 
-		size_t itt = 0;
-		for (;;) {
+				if (++itt > 60) break;
+				try {
+					string raw = client->readToDelim("\r\n");
+					ClientCommand command(raw);
 
-			if (++itt > 60) break;
-			try {
-				string raw = client->readToDelim("\r\n");
-				ClientCommand command(raw);
-
-				if (this->handleCommand(client, command, session, clogger)) {
+					if (this->handleCommand(client, command, session, clogger)) {
+						break;
+					}
+				} catch (const SMTPOrderException &err) {
+					ServerResponse response(SMTPResponseType::SRC_ORDER_ERR, err.what(), nullptr, nullptr);
+					client->write(response.build());
+				} catch (const SMTPSyntaxException &err) {
+					ServerResponse response(SMTPResponseType::SRC_SYNTAX_ERR, err.what(), nullptr, nullptr);
+					client->write(response.build());
+				} catch (const SMTPInvalidCommand &err) {
+					ServerResponse response(SMTPResponseType::SRC_INVALID_COMMAND, err.what(), nullptr, nullptr);
+					client->write(response.build());
+				} catch (const SMTPFatalException &err) {
+					clogger << FATAL << "An error occured: " << err.what() << ENDL << CLASSIC;
+					break;
+				} catch (const runtime_error &err) {
+					clogger << ERROR << "An error occured: " << err.what() << ENDL << CLASSIC;
+					break;
+				} catch (...) {
+					clogger << ERROR << "An other error occured, breaking ..." << ENDL << CLASSIC;
 					break;
 				}
-			} catch (const SMTPOrderException &err) {
-				ServerResponse response(SMTPResponseType::SRC_ORDER_ERR, err.what(), nullptr, nullptr);
-				client->write(response.build());
-			} catch (const SMTPSyntaxException &err) {
-				ServerResponse response(SMTPResponseType::SRC_SYNTAX_ERR, err.what(), nullptr, nullptr);
-				client->write(response.build());
-			} catch (const SMTPInvalidCommand &err) {
-				ServerResponse response(SMTPResponseType::SRC_INVALID_COMMAND, err.what(), nullptr, nullptr);
-				client->write(response.build());
-			} catch (const SMTPFatalException &err) {
-				clogger << FATAL << "An error occured: " << err.what() << ENDL << CLASSIC;
-				break;
-			} catch (const runtime_error &err) {
-				clogger << ERROR << "An error occured: " << err.what() << ENDL << CLASSIC;
-				break;
-			} catch (...) {
-				clogger << ERROR << "An other error occured, breaking ..." << ENDL << CLASSIC;
-				break;
 			}
+		} catch (const runtime_error &e) {
+			clogger << ERROR << "An runtime error occured: " << e.what() << ENDL << CLASSIC;
+		} catch (...) {
+			clogger << ERROR << "An unknown error occured" << ENDL << CLASSIC;
 		}
 
 		size_t end = duration_cast<milliseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
