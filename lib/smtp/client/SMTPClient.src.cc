@@ -121,7 +121,7 @@ SMTPClient &SMTPClient::addError(
 
 SMTPClient &SMTPClient::beSocial(void) {
 	unique_ptr<SSLContext> sslCtx = make_unique<SSLContext>();
-	sslCtx->method(SSLv23_client_method()).justCreate();
+	sslCtx->method(SSLv23_method()).justCreate();
 	auto &conf = Global::getConfig();
 	string domain = conf["smtp"]["client"]["domain"].asCString();
 
@@ -187,8 +187,31 @@ SMTPClient &SMTPClient::beSocial(void) {
 
 			if (_performParse) {
 				try {
-					string line = client.readToDelim("\r\n");
-					tie(code, args) = ServerResponse::parseResponse(line);
+					// Reads all the command
+					string raw;
+					for (size_t i = 0; i < 400; ++i) {
+						string line = client.readToDelim("\r\n");
+						cout << "asd" << line << endl;
+
+						// Checks if we need to quit after this round, this is important
+						//  since the dash will be removed
+						bool shouldQuit = false;
+						if (line[3] == ' ') shouldQuit = true;
+
+						// Appends the line, and removes the dash or the number in total
+						//  if required
+						if (i > 0) raw += line.substr(4);
+						else {
+							if (line[3] == '-') line[3] = ' ';
+							raw += line;
+						}
+
+						// Quits the loop if required
+						if (shouldQuit) break;
+					}
+
+					// Parses the response, and prints it to the console
+					tie(code, args) = ServerResponse::parseResponse(raw);
 					DEBUG_ONLY(this->printReceived(code, args));
 				} catch(const runtime_error &e) {
 					_run = false;

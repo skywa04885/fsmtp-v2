@@ -126,16 +126,18 @@ namespace FSMTP::ARG_ACTIONS {
       mailComposerConfig.m_From.push_back(EmailAddress(from));
       mailComposerConfig.m_Subject = subject;
     } else {
-      mailComposerConfig.m_From.push_back(EmailAddress("Luke Rieff", "luke.rieff@gmail.com"));
-      mailComposerConfig.m_To.push_back(EmailAddress("Luke Rieff", "lr@missfunfitt.com"));
-      mailComposerConfig.m_Subject = "Test email";
+      mailComposerConfig.m_From.push_back(EmailAddress("webmaster", "webmaster@fannst.nl"));
+      mailComposerConfig.m_To.push_back(EmailAddress("Contabo Support", "support@contabo.com"));
+      mailComposerConfig.m_Subject = "Testing TLS, since your system is outdated, great test";
     }
 
     // Sends the email to the target server, if this fails
     //  we print an error message to the console
 
     try {
-      SMTPClient(true).prepare(mailComposerConfig).beSocial();
+      SMTPClient client(true);
+      client.prepare(mailComposerConfig).beSocial();
+      logger << ERROR << "Errorlog: " << client.s_ErrorLog << ENDL << CLASSIC;
     } catch (const runtime_error &e) {
       logger << FATAL << "Could not send email: " << e.what() << ENDL << CLASSIC;
     }

@@ -98,6 +98,8 @@ int32_t ClientSocket::write(const std::string &msg) {
 int32_t ClientSocket::read(char *buffer, const size_t bufferSize) {
   int32_t rc;
 
+  // cout << "SockRead: " << string(buffer, bufferSize) << endl;
+
   if (this->s_SSLCtx) {
     if ((rc = SSL_read(this->s_SSL, buffer, bufferSize)) <= 0) {
       throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
