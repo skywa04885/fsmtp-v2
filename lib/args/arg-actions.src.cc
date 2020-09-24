@@ -50,6 +50,7 @@ namespace FSMTP::ARG_ACTIONS {
     // Creates the local domain instance, and stores it
     LocalDomain localDomain(domain2add);
     localDomain.saveRedis(redis.get());
+    localDomain.saveCassandra(cassandra);
 
     exit(0);
   }
