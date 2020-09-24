@@ -624,7 +624,7 @@ bool SMTPServer::handleCommand(
 
 			// Builds and sends the final response
 			ostringstream message;
-			message << '<' << session->s_TransportMessage.e_MessageID << "> [Node=" << Global::getConfig()["node_name"] << "] " << session->s_RawBody.length()
+			message << session->s_TransportMessage.e_MessageID << " [Node=" << Global::getConfig()["node_name"] << "] " << session->s_RawBody.length()
 				<< " bytes in " << (static_cast<float>(end - start) / 1000 / 1000) << ", " << kbsec << " KB/sec queued email for delivery.";
 
 			ServerResponse response (
