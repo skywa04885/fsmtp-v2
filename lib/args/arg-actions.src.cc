@@ -17,6 +17,43 @@
 #include "arg-actions.src.h"
 
 namespace FSMTP::ARG_ACTIONS {
+  /**
+   * Registers an new domain available for usage
+   */
+  void addDomain() {
+    Logger logger("DOMAIN_ADDER", LoggerLevel::INFO);
+
+    // Asks the admin for the domain name which needs to be added to the database
+    //  we do not have a default one tho
+    string domain2add;
+    logger << "Enter domain: " << FLUSH;
+    getline(cin, domain2add);
+
+    // Connects to apache cassandra and redis, so we can store the domain in permanent
+    //  storage and the cache
+    unique_ptr<CassandraConnection> cassandra;
+    try {
+      cassandra = Global::getCassandra();
+    } catch (const runtime_error &e) {
+      logger << FATAL << "Could not connect to cassandra: " << e.what() << ENDL << CLASSIC;
+      exit(-1);
+    }
+
+    unique_ptr<RedisConnection> redis;
+    try {
+      redis = Global::getRedis();
+    } catch (const runtime_error &e) {
+      logger << FATAL << "Could not connect to redis: " << e.what() << ENDL << CLASSIC;
+      exit(-1);
+    }
+
+    // Creates the local domain instance, and stores it
+    LocalDomain localDomain(domain2add);
+    localDomain.saveRedis(redis.get());
+
+    exit(0);
+  }
+
   void testArgAction(void) {
     Logger logger("test", LoggerLevel::INFO);
 

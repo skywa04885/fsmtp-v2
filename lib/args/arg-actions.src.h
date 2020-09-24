@@ -41,4 +41,9 @@ namespace FSMTP::ARG_ACTIONS
 {
   void testArgAction(void);
   void mailTestArgAction(void);
+
+  /**
+   * Registers an new domain available for usage
+   */
+  void addDomain();
 }

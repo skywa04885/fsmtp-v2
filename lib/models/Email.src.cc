@@ -48,6 +48,8 @@ namespace FSMTP::Models
     // Validates the raw address before proceeding with further parsing,
     //  this is to detect an error early, and safe computational power
 
+    cout << raw << endl;
+
 		if (raw.find_first_of('@') == string::npos) {
 			throw runtime_error("Could not find @");
     } else if (raw.find_last_of('.') == string::npos) {

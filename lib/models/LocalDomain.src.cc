@@ -30,6 +30,23 @@ namespace FSMTP::Models
 		l_Domain()
 	{}
 
+
+	void LocalDomain::saveCassandra(CassandraConnection *cass) {
+		const char *query = R"(INSERT INTO fannst.local_domain (e_domain, e_domain_uuid) VALUES (?, ?))";
+
+		CassStatement *statement = cass_statement_new(query, 2);
+		DEFER(cass_statement_free(statement));
+		cass_statement_bind_string(statement, 0, this->l_Domain.c_str());
+		cass_statement_bind_uuid(statement, 1, this->l_UUID);
+
+		CassFuture *future = cass_session_execute(cass->c_Session, statement);
+		DEFER(cass_future_free(future));
+		cass_future_wait(future);
+
+		if (cass_future_error_code(future) != CASS_OK)
+			throw DatabaseException("cass_session_execute() failed: " + CassandraConnection::getError(future));
+	}
+
 	void LocalDomain::saveRedis(RedisConnection *redis) {
 		char command[256], prefix[128], uuid[CASS_UUID_STRING_LENGTH];
 

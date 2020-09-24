@@ -70,11 +70,9 @@ namespace FSMTP
 
 		for (CMDArg &arg : arguments)
 		{
-			if (arg.compare("test"))
-				ARG_ACTIONS::testArgAction();
-
-			if (arg.compare("mailtest"))
-				ARG_ACTIONS::mailTestArgAction();
+			if (arg.compare("test")) ARG_ACTIONS::testArgAction();
+			else if (arg.compare("mailtest")) ARG_ACTIONS::mailTestArgAction();
+			else if (arg.compare("domainadd")) ARG_ACTIONS::addDomain();
 
 			if (arg.compare("help"))
 			{
@@ -85,7 +83,7 @@ namespace FSMTP
 				cout << "-h, -help: " << "\tPrint de lijst met beschikbare opdrachten." << endl;
 				cout << "-t, -test: " << "\tVoer tests uit op de vitale functies van de server, zoals database verbinding." << endl;
 				cout << "-s, -sync: " << "\tSynchroniseerd de redis database met die van cassandra" << endl;
-				cout << "-a, -adduser:" << "\tAdds an new user to the email server." << endl;
+				cout << "-d, -domainadd:" << "\tAdds an new domain." << endl;
 				cout << "-m, -mailtest: " << "\tSends an email." << endl;
 				cout << "-r, -run=type: " << "\tWelke server er gestart moet worden, 'smtp' of 'pop3'" << endl;
 
