@@ -83,7 +83,7 @@ int32_t ClientSocket::write(const char *msg, const size_t len) {
       throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
     }
   } else {
-    if ((rc = send(this->s_SocketFD, msg, len, 0)) < 0) {
+    if ((rc = send(this->s_SocketFD, msg, len, 0)) == -1) {
       throw runtime_error(EXCEPT_DEBUG(strerror(errno)));
     }
   }
