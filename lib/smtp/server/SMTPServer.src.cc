@@ -522,7 +522,13 @@ bool SMTPServer::handleCommand(
 			//  we add the message to the correct queue, and send the 
 			//  success message to the client.
 
+			uint64_t start = duration_cast<chrono::microseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
 			session->s_RawBody = client->readToDelim("\r\n.\r\n");
+			uint64_t end = duration_cast<chrono::microseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
+			float kbsec = static_cast<float>(session->s_RawBody.length()) / (static_cast<float>(end - start) / 1000 / 1000);
+
+			// Prints some debug info
+			DEBUG_ONLY(clogger << DEBUG << "Received " << session->s_RawBody.length() << "KB, " << kbsec << "KB/sec" << ENDL << CLASSIC);
 
 			// Performs the message validation, like checking the SPF and DKIM
 			//  records, we will set the headers accordingly. Also if this fails
@@ -617,10 +623,13 @@ bool SMTPServer::handleCommand(
 			}
 
 			// Builds and sends the final response
+			ostringstream message;
+			message << '<' << session->s_TransportMessage.e_MessageID << "> [Node=" << Global::getConfig()["node_name"] << "] " << session->s_RawBody.length()
+				<< " bytes in " << (static_cast<float>(end - start) / 1000 / 1000) << ", " << kbsec << " KB/sec queued email for delivery.";
 
 			ServerResponse response (
-				SMTPResponseType::SRC_DATA_END, "",
-				reinterpret_cast<const void *>(session->s_TransportMessage.e_MessageID.c_str()), nullptr
+				SMTPResponseType::SRC_DATA_END, message.str(),
+				nullptr, nullptr
 			);
 			client->write(response.build());
 
