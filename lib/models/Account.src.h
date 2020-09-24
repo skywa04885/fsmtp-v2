@@ -32,6 +32,7 @@ namespace FSMTP::Models
 
 		void save(CassandraConnection *cassandra);
 		void generateKeypair();
+		void generateUUID();
 		static int64_t getBucket();
 		static tuple<string, string> getPassAndPublicKey(
 			CassandraConnection *client,

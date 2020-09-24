@@ -32,6 +32,12 @@ namespace FSMTP::Models
 		return now / 1000 / 1000 / 10;
 	}
 
+	void Account::generateUUID() {
+		CassUuidGen *uuidGen = cass_uuid_gen_new();
+		cass_uuid_gen_time(uuidGen, &this->a_UUID);
+		cass_uuid_gen_free(uuidGen);
+	}
+
 	tuple<string, string> Account::getPassAndPublicKey(
 		CassandraConnection *client,
 		const string &domain,

@@ -46,4 +46,9 @@ namespace FSMTP::ARG_ACTIONS
    * Registers an new domain available for usage
    */
   void addDomain();
+
+	/**
+   * Registers an new user under an specified domain
+   */
+  void addUser();
 }

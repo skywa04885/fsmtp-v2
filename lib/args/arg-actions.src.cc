@@ -29,21 +29,22 @@ namespace FSMTP::ARG_ACTIONS {
     logger << "Enter domain: " << FLUSH;
     getline(cin, domain2add);
 
-    // Connects to apache cassandra and redis, so we can store the domain in permanent
-    //  storage and the cache
+    // Connects to apache cassandra and redis
     unique_ptr<CassandraConnection> cassandra;
     try {
       cassandra = Global::getCassandra();
+      logger << _BASH_SUCCESS_MARK << "Connected to cassandra" << ENDL;
     } catch (const runtime_error &e) {
-      logger << FATAL << "Could not connect to cassandra: " << e.what() << ENDL << CLASSIC;
+      logger << FATAL << _BASH_FAIL_MARK << "Could not connect to cassandra: " << e.what() << ENDL << CLASSIC;
       exit(-1);
     }
 
     unique_ptr<RedisConnection> redis;
     try {
       redis = Global::getRedis();
+      logger << _BASH_SUCCESS_MARK << "Connected to redis" << ENDL;
     } catch (const runtime_error &e) {
-      logger << FATAL << "Could not connect to redis: " << e.what() << ENDL << CLASSIC;
+      logger << FATAL << _BASH_FAIL_MARK << "Could not connect to redis: " << e.what() << ENDL << CLASSIC;
       exit(-1);
     }
 
@@ -51,6 +52,144 @@ namespace FSMTP::ARG_ACTIONS {
     LocalDomain localDomain(domain2add);
     localDomain.saveRedis(redis.get());
     localDomain.saveCassandra(cassandra.get());
+
+    exit(0);
+  }
+
+  /**
+   * Registers an new user under an specified domain
+   */
+  void addUser() {
+    Logger logger("USER_ADDER", LoggerLevel::INFO);
+
+    // ===================================
+    // Gathers required account information
+    // ===================================
+
+    // Asks for the basic user information such as the username, full name
+    //  domain etcetera
+    string username, password, fullname, domain;
+    logger << "Enter username: " << FLUSH;
+    getline(cin, username);
+
+    logger << "Enter password: " << FLUSH;
+    getline(cin, password);
+
+    logger << "Enter fullname: " << FLUSH;
+    getline(cin, fullname);
+
+    logger << "Enter domain: " << FLUSH;
+    getline(cin, domain);
+
+    // Connects to apache cassandra and redis
+    unique_ptr<CassandraConnection> cassandra;
+    try {
+      cassandra = Global::getCassandra();
+      logger << _BASH_SUCCESS_MARK << "Connected to cassandra" << ENDL;
+    } catch (const runtime_error &e) {
+      logger << FATAL << _BASH_FAIL_MARK << "Could not connect to cassandra: " << e.what() << ENDL << CLASSIC;
+      exit(-1);
+    }
+
+    unique_ptr<RedisConnection> redis;
+    try {
+      redis = Global::getRedis();
+      logger << _BASH_SUCCESS_MARK << "Connected to redis" << ENDL;
+    } catch (const runtime_error &e) {
+      logger << FATAL << _BASH_FAIL_MARK << "Could not connect to redis: " << e.what() << ENDL << CLASSIC;
+      exit(-1);
+    }
+
+    // ===================================
+    // Checks if domain exists, and if ac
+    //  count already exists
+    // ===================================
+
+    try {
+      LocalDomain::get(domain, cassandra.get(), redis.get());      
+    } catch (const DatabaseException &e) {
+      logger << FATAL << "Database operation failed: " << e.what() << ENDL << CLASSIC;
+      exit(-1);
+    } catch (const EmptyQuery &e) {
+      logger << FATAL << "Specified domain not on target server: " << e.what() << ENDL << CLASSIC;
+    }
+
+    try {
+      AccountShortcut::find(cassandra.get(), redis.get(), domain, username);
+      logger << FATAL << "Account already exists, crap lol" << ENDL << CLASSIC;
+      exit(-1);
+    } catch (const DatabaseException &e) {
+      logger << FATAL << "Database operation failed: " << e.what() << ENDL << CLASSIC;
+      exit(-1);
+    } catch (const EmptyQuery &e) {
+      logger << "Account does not exist, so yeah.. Creating one" << ENDL;
+      // No wories, this is what we want
+    }
+
+    // ===================================
+    // Performs the storage of the account
+    // ===================================
+
+    // Creates the account and the account shortcut
+    Account account;
+    account.a_Username = username;
+    account.a_Domain = domain;
+    account.a_FullName = fullname;
+    account.a_Gas = 5.0f;
+    account.a_Type = 0;
+    account.a_Flags = 0;
+    account.a_StorageUsedInBytes = 0;
+    account.a_StorageMaxInBytes = 5 * 1024 * 1024 * 1024; // 5GB
+    account.a_PictureURI = "def";
+    account.a_BirthDate = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();
+    account.a_CreationDate = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();
+    account.a_Password = passwordHash(password);
+    account.a_Bucket = Account::getBucket();
+    account.generateUUID();
+    account.generateKeypair();
+
+    AccountShortcut accountShortcut(
+      account.a_Bucket, account.a_Domain,
+      account.a_Username, account.a_UUID
+    );
+
+    // Stores the account and the account shortcut
+    try {
+      account.save(cassandra.get());
+      logger << _BASH_SUCCESS_MARK << "Account created !" << ENDL; 
+      accountShortcut.saveRedis(redis.get());
+      accountShortcut.save(cassandra.get());
+      logger << _BASH_SUCCESS_MARK << "Account shortcut created !" << ENDL; 
+    } catch (const DatabaseException &e) {
+      logger << FATAL << "Database operation failed: " << e.what() << ENDL << CLASSIC;
+      exit(-1);
+    }
+
+    // ===================================
+    // Creates the default mailboxes
+    // ===================================
+
+    auto createMailbox = [&](const char *path, int32_t flags) {
+      try {
+        Mailbox(
+          account.a_Bucket, account.a_Domain,
+          account.a_UUID, path,
+          true, 0, flags, true
+        ).save(cassandra.get());
+
+        logger << _BASH_SUCCESS_MARK << "Mailbox '" << path << "' created !" << ENDL; 
+      } catch (const DatabaseException &e) {
+        logger << FATAL << "Database operation failed: " << e.what() << ENDL << CLASSIC;
+      }
+    };
+
+    // Creates all the default mailboxes
+    createMailbox("INBOX", 0x0);
+    createMailbox("INBOX.Sent", _MAILBOX_FLAG_SENT | _MAILBOX_FLAG_UNMARKED);
+    createMailbox("INBOX.Spam", _MAILBOX_FLAG_MARKED | _MAILBOX_FLAG_JUNK);
+    createMailbox("INBOX.Archive", _MAILBOX_FLAG_UNMARKED | _MAILBOX_FLAG_ARCHIVE);
+    createMailbox("INBOX.Drafts", _MAILBOX_FLAG_UNMARKED | _MAILBOX_FLAG_DRAFT);
+    createMailbox("INBOX.Trash", _MAILBOX_FLAG_MARKED | _MAILBOX_FLAG_TRASH);
 
     exit(0);
   }
