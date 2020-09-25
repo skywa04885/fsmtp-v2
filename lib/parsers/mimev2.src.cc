@@ -299,8 +299,9 @@ namespace FSMTP::Parsers {
         if (boundaryHit == 2 || boundaryHit == 1) {
           if (i++ > 0) {
             result.push_back(make_pair(++prev, it));
-            prev = it;
           }
+
+          prev = it;
         }
         
         if (boundaryHit == 2) break;
