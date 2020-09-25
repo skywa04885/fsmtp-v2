@@ -525,7 +525,7 @@ bool SMTPServer::handleCommand(
 			uint64_t start = duration_cast<chrono::microseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
 			session->s_RawBody = client->readToDelim("\r\n.\r\n");
 			uint64_t end = duration_cast<chrono::microseconds>(chrono::high_resolution_clock::now().time_since_epoch()).count();
-			float kbsec = static_cast<float>(session->s_RawBody.length()) / (static_cast<float>(end - start) / 1000 / 1000);
+			float kbsec = static_cast<float>(session->s_RawBody.length()) / 1000 / (static_cast<float>(end - start) / 1000 / 1000);
 
 			// Prints some debug info
 			DEBUG_ONLY(clogger << DEBUG << "Received " << session->s_RawBody.length() << "KB, " << kbsec << "KB/sec" << ENDL << CLASSIC);
