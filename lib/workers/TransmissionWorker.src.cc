@@ -71,6 +71,7 @@ namespace FSMTP::Workers
 
 			queueMutex.lock();
 			shared_ptr<SMTPServerSession> task = transmissionQueue.front();
+			transmissionQueue.pop_front();
 			queueMutex.unlock();
 
 			// Attempts to send the message to the client/clients, if this fails
@@ -95,8 +96,6 @@ namespace FSMTP::Workers
 			} catch (const runtime_error &e) {
 				this->w_Logger << FATAL << "Could not send email: " << e.what() << ENDL << CLASSIC;
 			}
-
-			transmissionQueue.pop_front();
 		}
 	}
 }
