@@ -50,6 +50,7 @@ namespace FSMTP::Workers
 		while (databaseQueue.size() > 0) {
 			databaseMutex.lock();
 			auto &session = databaseQueue.front();
+			databaseQueue.pop_back();
 			databaseMutex.unlock();
 
 			auto &fullEmail = session->s_TransportMessage;
@@ -130,12 +131,6 @@ namespace FSMTP::Workers
 
 				DEBUG_ONLY(logger << DEBUG << "Stored 1 message !" << ENDL << CLASSIC);
 			});
-
-			// Removes the currently processed element from the database queue
-			//  we also lock the mutex to make it memory safe
-			databaseMutex.lock();
-			databaseQueue.pop_back();
-			databaseMutex.unlock();
 		}
 	}
 }
