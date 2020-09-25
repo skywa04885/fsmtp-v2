@@ -129,11 +129,13 @@ namespace FSMTP::Workers
 				}
 
 				DEBUG_ONLY(logger << DEBUG << "Stored 1 message !" << ENDL << CLASSIC);
-
-				databaseMutex.lock();
-				databaseQueue.pop_back();
-				databaseMutex.unlock();
 			});
+
+			// Removes the currently processed element from the database queue
+			//  we also lock the mutex to make it memory safe
+			databaseMutex.lock();
+			databaseQueue.pop_back();
+			databaseMutex.unlock();
 		}
 	}
 }
