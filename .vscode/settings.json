@@ -15,6 +15,7 @@
     "regex": "cpp",
     "valarray": "cpp",
     "bitset": "cpp",
-    "utility": "cpp"
+    "utility": "cpp",
+    "iostream": "cpp"
   }
 }

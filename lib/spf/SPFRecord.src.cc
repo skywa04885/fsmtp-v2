@@ -235,6 +235,8 @@ namespace FSMTP::SPF {
         return false;
       }
       catch (const runtime_error &e) {}
+
+      return true;
     });
 
     // Checks if an SPF record was found, else just

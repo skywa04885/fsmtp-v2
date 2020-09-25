@@ -21,6 +21,7 @@
 #include "lib/dmarc/DMARCRecord.src.h"
 #include "lib/spf/SPFRecord.src.h"
 #include "lib/spf/SPFValidator.src.h"
+#include "lib/dkim/DKIMRecord.src.h"
 
 using namespace FSMTP::Spam::Preprocessing;
 

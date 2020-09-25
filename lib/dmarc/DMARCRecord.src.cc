@@ -68,11 +68,6 @@ namespace FSMTP::DMARC {
 	{}
 
 	DMARCRecord &DMARCRecord::parse(const string &raw) {
-		#ifdef _SMTP_DEBUG
-		Logger logger("DMARCRecord::parse", LoggerLevel::DEBUG);
-		logger << "Parsing record: '" << raw << '\'' << ENDL;
-		#endif
-
 		// ==================================
 		// Splits the record into segments
 		// ==================================

@@ -24,6 +24,7 @@
 #include "../models/Email.src.h"
 #include "DKIMHashes.src.h"
 #include "DKIM.src.h"
+#include "DKIMRecord.src.h"
 
 using namespace FSMTP::Parsers;
 using namespace FSMTP::DKIM;
@@ -56,11 +57,6 @@ namespace FSMTP::DKIM_Verifier {
 	 * Verifies an message which possibly contains some DKIM-Signature header
 	 */
 	vector<DKIMVerifyResponse> verify(const string &raw);
-
-	/**
-	 * Gets the public key from an domain, which is needed to decode the signature
-	 */
-	string resolveRecord(const string &domain, const string &keySeletor);
 }
 
 #endif

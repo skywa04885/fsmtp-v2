@@ -86,8 +86,6 @@ namespace FSMTP::DNS {
 			ns_parserr(&this->m_NsMsg, ns_s_an, i, &record);
 			dn_expand(ns_msg_base(this->m_NsMsg), ns_msg_end(this->m_NsMsg),
 				ns_rr_rdata(record) + 2, data, sizeof (data));
-			
-			string s(reinterpret_cast<const char *>(ns_rr_rdata(record) + 1), ns_rr_rdlen(record) - 1);
 
 			result.push_back(RR(
 				ns_rr_ttl(record), ns_rr_class(record), ns_rr_type(record),
@@ -101,16 +99,16 @@ namespace FSMTP::DNS {
 		vector<RR> Resolver::getTXTRecords() {
 		vector<RR> result = {};
 		ns_rr record;
-		char data[2048];
 
 		for (int32_t i = 0; i < this->m_ResponseCount; ++i) {
 			ns_parserr(&this->m_NsMsg, ns_s_an, i, &record);
-			dn_expand(ns_msg_base(this->m_NsMsg), ns_msg_end(this->m_NsMsg),
-				ns_rr_rdata(record) + 2, data, sizeof (data));
-			
+
+			string data(reinterpret_cast<const char *>(ns_rr_rdata(record) + 1), ns_rr_rdlen(record) - 1);
+			if (data.length() > 255) data.erase(data.begin() + 255, data.begin() + 256);
+
 			result.push_back(RR(
 				ns_rr_ttl(record), ns_rr_class(record), ns_rr_type(record),
-				ns_rr_name(record), string(reinterpret_cast<const char *>(ns_rr_rdata(record) + 1), ns_rr_rdlen(record) - 1)
+				ns_rr_name(record), move(data)
 			));
 		}
 

@@ -181,52 +181,27 @@ namespace FSMTP::DKIM_Verifier {
 		// Resolves the DKIM Records
 		// ==================================
 
-		map<string, string> dkimRecord = {};
+		DKIM::DKIMRecord record;
 		try {
-			// Resolves and parses the records
-			stringstream stream(resolveRecord(parsedHeader.s_Domain, parsedHeader.s_KeySelector));
-			string segment;
-			while (getline(stream, segment, ';')) {
-				// Tries to get the separator and split the segment into a
-				//  key/value pair. Since the header key may be prefixed with whitespace
-				//  we attempt to remove it using the erase method
-				size_t sep = segment.find_first_of('=');
-				if (sep == string::npos) throw runtime_error(EXCEPT_DEBUG("Invalid header k/v pair"));
+			// Resolve the record
+			string query = parsedHeader.s_Domain;
+			query += '._domainkey.';
+			query += parsedHeader.s_KeySelector;
+			record = DKIM::DKIMRecord::fromDNS(query.c_str());
 
-				string key = segment.substr(0, sep);
-				if (*(key.begin()) == ' ') key.erase(key.begin());
-
-				// Pushes the key/value pair into the dkim record map, which
-				//  we later use to access these values
-				dkimRecord.insert(make_pair(key, segment.substr(++sep)));
-			}
-
-			// Prints the resolved record if we're in debug
-			//  just to make debugging easier
-			#ifdef _SMTP_DEBUG
-			logger << "Resolved record: " << ENDL;
-			
-			size_t i = 0;
-			for_each(dkimRecord.begin(), dkimRecord.end(), [&](const pair<string, string> &p) {
-				logger << '\t' << i++ << " -> " << p.first << ": " << p.second << ENDL;
-			});
-			#endif
+			// If debug enabled, print the record
+			DEBUG_ONLY(record.print(logger));
 		} catch (const runtime_error &e) {
 			DEBUG_ONLY(logger << ERROR << "Failed to resolve/parse record: " << e.what() << ENDL << CLASSIC);
 			return DKIMVerifyResponse::DVR_FAIL_RECORD;
 		}
-
-		// Checks if there actually is an public key in the record, if not
-		//  return an record error
-		if (dkimRecord.count("p") <= 0) return DKIMVerifyResponse::DVR_FAIL_RECORD;
-		const string &publicKey = dkimRecord.find("p")->second;
 
 		// ==================================
 		// Verifies the signature
 		// ==================================
 
 		try {		
-			isSignatureValid = Hashes::RSASha256verify(parsedHeader.s_Signature, canonicalizedHeaders, publicKey);
+			isSignatureValid = Hashes::RSASha256verify(parsedHeader.s_Signature, canonicalizedHeaders, record.getPublicKey());
 			if (!isSignatureValid)
 				DEBUG_ONLY(logger << ERROR << "Signature invalid" << ENDL);
 		} catch (const runtime_error &e) {
@@ -302,78 +277,5 @@ namespace FSMTP::DKIM_Verifier {
 		});
 
 		return verificationResponses;
-	}
-
-	string resolveRecord(const string &domain, const string &keySeletor) {		
-		string resolveFor = keySeletor;
-		resolveFor += "._domainkey.";
-		resolveFor += domain;
-
-		#ifdef _SMTP_DEBUG
-		Logger logger("DKIM_RESOLV", LoggerLevel::DEBUG);
-		logger << "Resolving for: " << resolveFor << ENDL;
-		#endif
-
-		struct __res_state state;
-		if (res_ninit(&state) < 0) {
-			throw runtime_error(EXCEPT_DEBUG(
-				string("Failed to initialize resolver state: ") + strerror(errno)
-			));
-		}
-		DEFER(res_nclose(&state));
-
-		// Performs the query for the DKIM Record
-		u_char answer[8096];
-		int32_t answer_len;
-		if ((answer_len = res_nquery(&state, resolveFor.c_str(), 
-				ns_c_in, ns_t_txt, answer, 
-				sizeof (answer))) <= 0) {
-			throw runtime_error(EXCEPT_DEBUG(
-				string("Failed to resolve records: ") + strerror(errno)
-			));
-		}
-
-		// Parses the response, and gets the number of records
-		//  which later will be checked for DKIM
-		ns_msg msg;
-		int32_t record_count;
-		if ((ns_initparse(answer, answer_len, &msg)) < 0) {
-			throw runtime_error(EXCEPT_DEBUG(
-				string("Failed to initialize parser: ") + strerror(errno)
-			));
-		}
-
-		if ((record_count = ns_msg_count(msg, ns_s_an)) <= 0) {
-			throw runtime_error(EXCEPT_DEBUG("DKIM Record not found"));
-		}
-
-		// Starts looping over the records, until a valid DKIM record has been found
-		//  we then proceed by parsing it
-		ns_rr record;
-		string dkim_record;
-		for (int32_t i = 0; i < record_count; ++i) {
-			if (ns_parserr(&msg, ns_s_an, i, &record)) {
-				throw runtime_error(EXCEPT_DEBUG("Failed to parse record"));
-			}
-
-			// Gets the text value from the dkm record, and prints
-			//  the content if we're in debug mode
-			string rdata = string(reinterpret_cast<const char *>(ns_rr_rdata(record) + 1), ns_rr_rdlen(record) - 1);
-			DEBUG_ONLY(logger << "Checking record: " << rdata << ENDL);
-
-			// Checks if the record is actually DKIM Like, else just continue
-			if (rdata.substr(0, 7) != "v=DKIM1" && rdata.substr(0, 5) != "k=rsa") continue;
-
-			// Filters away the non-ascii crap, since this indicates the switch between UDP
-			//  and TCP
-			dkim_record.reserve(rdata.length());
-			for (unsigned char c : rdata) {
-				if (c >= 32 && c <= 126) dkim_record += c;
-			}
-		}
-
-		// Returns the resolved record
-		if (dkim_record.empty()) throw runtime_error(EXCEPT_DEBUG("No record found !"));
-		else return dkim_record;
 	}
 }
