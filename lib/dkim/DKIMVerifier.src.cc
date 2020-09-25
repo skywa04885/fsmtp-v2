@@ -184,9 +184,9 @@ namespace FSMTP::DKIM_Verifier {
 		DKIM::DKIMRecord record;
 		try {
 			// Resolve the record
-			string query = parsedHeader.s_Domain;
+			string query = parsedHeader.s_KeySelector;
 			query += '._domainkey.';
-			query += parsedHeader.s_KeySelector;
+			query += parsedHeader.s_Domain;
 			record = DKIM::DKIMRecord::fromDNS(query.c_str());
 
 			// If debug enabled, print the record
