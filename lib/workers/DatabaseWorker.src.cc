@@ -49,7 +49,7 @@ namespace FSMTP::Workers
 
 		while (databaseQueue.size() > 0) {
 			databaseMutex.lock();
-			auto &session = databaseQueue.front();
+			auto session = databaseQueue.front();
 			databaseQueue.pop_back();
 			databaseMutex.unlock();
 
