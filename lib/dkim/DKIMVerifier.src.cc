@@ -16,7 +16,6 @@
 
 #include "DKIMVerifier.src.h"
 #include <csignal>
-#include <openssl/ssl3.h>
 
 namespace FSMTP::DKIM_Verifier {
 	void parseDkimHeader(const string &raw, vector<tuple<string, string>> &header) {
@@ -187,7 +186,7 @@ namespace FSMTP::DKIM_Verifier {
 			string query = parsedHeader.s_KeySelector;
 			query += '._domainkey.';
 			query += parsedHeader.s_Domain;
-			DEBUG_ONLY("Resolving DKIM Record for: '" << query << '\'' << ENDL);
+			DEBUG_ONLY(logger << "Resolving DKIM Record for: '" << query << '\'' << ENDL);
 			record = DKIM::DKIMRecord::fromDNS(query.c_str());
 
 			// If debug enabled, print the record
