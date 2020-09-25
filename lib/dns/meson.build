@@ -3,6 +3,5 @@ sources += files(
 	'DNSServer.src.cc',
 	'DNSServerSocket.src.cc',
 	'DNSZone.src.cc',
-	'SPF.src.cc',
 	'Resolver.src.cc'
 )
