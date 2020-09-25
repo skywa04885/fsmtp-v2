@@ -263,9 +263,8 @@ namespace FSMTP::Parsers {
     else if (key == "date") {
       struct tm t;
       if (strptime(value.c_str(), "%a, %d %b %Y %T %Z", &t) == nullptr) {
-        throw runtime_error(EXCEPT_DEBUG("Invalid date format"));
-      }
-      email.e_Date = timegm(&t);
+        email.e_Date = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();
+      } else email.e_Date = timegm(&t);
     } else if (key == "from") email.e_From = EmailAddress::parseAddressList(value);
     else if (key == "to") email.e_To = EmailAddress::parseAddressList(value);
   }
