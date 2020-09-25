@@ -428,7 +428,6 @@ namespace FSMTP::Parsers {
     #ifdef _SMTP_DEBUG
     Logger logger("MIMEV2", LoggerLevel::DEBUG);
     Timer timer("parseMIME()", logger);
-    logger << "Parsing message: '" << ENDL << raw << ENDL << "'" << ENDL;
     #endif
 
     // Splits the message into lines, which later can be used
