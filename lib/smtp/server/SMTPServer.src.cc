@@ -604,7 +604,7 @@ bool SMTPServer::handleCommand(
 				parseMIME(session->s_RawBody, session->s_TransportMessage);
 				DEBUG_ONLY(FullEmail::print(session->s_TransportMessage, clogger));
 			} catch (const runtime_error &e) {
-				throw SMTPSyntaxException(string("Parsing failed: ") + e.what());
+				throw SMTPFatalException(string("Parsing failed: ") + e.what());
 			} catch (...) {
 				throw SMTPSyntaxException("An system error occured while parsing");
 			}
