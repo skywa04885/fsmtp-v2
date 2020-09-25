@@ -21,7 +21,7 @@
 #include "../networking/sockets/ClientSocket.src.h"
 #include "../networking/sockets/SSLContext.src.h"
 #include "../general/Global.src.h"
-#include "../networking/DNS.src.h"
+#include "../dns/Resolver.src.h"
 #include "../general/Logger.src.h"
 #include "../general/cleanup.src.h"
 #include "../models/Email.src.h"

@@ -22,12 +22,10 @@
 #include "../parsers/mime.src.h"
 #include "../parsers/mimev2.src.h"
 #include "../models/Email.src.h"
-#include "../networking/DNS.src.h"
 #include "DKIMHashes.src.h"
 #include "DKIM.src.h"
 
 using namespace FSMTP::Parsers;
-using namespace FSMTP::DNS;
 using namespace FSMTP::DKIM;
 
 namespace FSMTP::DKIM_Verifier {

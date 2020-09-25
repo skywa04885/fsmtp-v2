@@ -62,14 +62,14 @@ SMTPClient &SMTPClient::configureRecipients(const vector<EmailAddress> &addresse
 			// - result vector
 			SMTPClientTarget target;
 			target.t_Address = address;
-			vector<DNS::Record> records = DNS::resolveDNSRecords(domain, 
-				DNS::RT_MX); 
+			DNS::Resolver resolver;
+			vector<DNS::RR> records = resolver.query(domain.c_str(), ns_t_mx).initParse().getRecords();
 			
-			for (DNS::Record &record : records) {
-				string server = DNS::resolveHostname(record.r_Value.c_str());
+			for_each(records.begin(), records.end(), [&](const DNS::RR &r) {
+				string server = DNS::resolveHostname(r.getData());
 				target.t_Servers.push_back(server);
 				if (!s_Silent) this->s_Logger << "Server toegevoegd: " << server << ENDL;
-			}
+			});
 			
 			this->s_Targets.push_back(target);
 		} catch(const runtime_error &e) {

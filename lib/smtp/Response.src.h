@@ -20,7 +20,7 @@
 #include "../general/Global.src.h"
 
 #include "../general/cleanup.src.h"
-#include "../networking/DNS.src.h"
+#include "../dns/Resolver.src.h"
 
 using namespace FSMTP::Cleanup;
 

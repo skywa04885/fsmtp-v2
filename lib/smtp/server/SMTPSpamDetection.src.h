@@ -17,9 +17,6 @@
 #pragma once
 
 #include "../../default.h"
-#include "../../networking/DNS.src.h"
-
-using namespace FSMTP::DNS;
 
 namespace FSMTP::Server::SpamDetection {
 	bool checkSpamhaus(string ip);

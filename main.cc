@@ -17,6 +17,7 @@
 #include "main.h"
 #include "lib/spam/NaiveBayes.src.h"
 #include "lib/spam/WordEncoder.src.h"
+#include "lib/dns/Resolver.src.h"
 
 using namespace FSMTP::Spam::Preprocessing;
 

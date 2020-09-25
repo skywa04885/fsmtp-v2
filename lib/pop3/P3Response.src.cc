@@ -71,7 +71,8 @@ namespace FSMTP::POP3
 			case POP3ResponseType::PRT_GREETING:
 			{
 				std::string ret = "Fannst POP3 Server ready, ";
-				ret += '[';
+				ret += DNS::getHostnameByAddress(reinterpret_cast<const struct sockaddr_in *>(this->p_U));
+				ret += " ";
 				ret += inet_ntoa(reinterpret_cast<const struct sockaddr_in *>(this->p_U)->sin_addr);
 				ret += ']';
 				return ret;

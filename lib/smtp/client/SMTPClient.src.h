@@ -22,7 +22,7 @@
 #include "../../networking/sockets/ClientSocket.src.h"
 #include "../../models/Email.src.h"
 #include "../../general/Logger.src.h"
-#include "../../networking/DNS.src.h"
+#include "../../dns/Resolver.src.h"
 #include "../Response.src.h"
 #include "../Command.src.h"
 #include "../../dkim/DKIM.src.h"
