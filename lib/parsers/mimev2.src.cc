@@ -159,11 +159,9 @@ namespace FSMTP::Parsers {
     //  pairs, if a key is missing, throw syntax error
     size_t sep;
     for_each(joinedHeaders.begin(), joinedHeaders.end(), [&](const string &header) {
-      if (header.empty()) return;
-
       sep = header.find_first_of(':');
       if (sep == string::npos) {
-        throw runtime_error(EXCEPT_DEBUG("Could not find k/v pair for header"));
+        throw runtime_error(EXCEPT_DEBUG("Could not find k/v pair for header: " + header));
       }
 
       auto key = a(header.substr(0, sep));
