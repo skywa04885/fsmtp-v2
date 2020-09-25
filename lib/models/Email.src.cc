@@ -47,9 +47,7 @@ namespace FSMTP::Models
 
     // Validates the raw address before proceeding with further parsing,
     //  this is to detect an error early, and safe computational power
-
-    cout << raw << endl;
-
+		
 		if (raw.find_first_of('@') == string::npos) {
 			throw runtime_error("Could not find @");
     } else if (raw.find_last_of('.') == string::npos) {
@@ -67,8 +65,15 @@ namespace FSMTP::Models
 
 			string clean;
 			reduceWhitespace(this->e_Name, clean);
-			removeFirstAndLastWhite(clean);
-			removeStringQuotes(clean);
+
+			// Removes the extra whitespace from the name
+			if (*clean.begin() == ' ') clean.erase(clean.begin(), clean.begin() + 1);
+			if (*(clean.end() - 1) == ' ') clean.pop_back();
+
+			// Removes the quotes from the name
+			if (*clean.begin() == '"') clean.erase(clean.begin(), clean.begin() + 1);
+			if (*(clean.end() - 1) == '"') clean.pop_back();
+
 			this->e_Name = clean;
 		} else if (
 			(openBracket == string::npos && closeBracket != string::npos) ||
@@ -83,15 +88,26 @@ namespace FSMTP::Models
 	}
 
   vector<EmailAddress> EmailAddress::parseAddressList(const string &raw) {
-    stringstream stream(raw);
-    string token;
-    vector<EmailAddress> result = {};
+		vector<EmailAddress> result = {};
 
-    while (getline(stream, token, ',')) {
-      result.push_back(EmailAddress(token));
-    }
+		// Starts looping over the string, and checks if an string sequence starts
+		//  if so we want to ignore the comma, since it is part of the name, when
+		//  an string sequence ended and an comma is reached, we parse the address
+		bool stringSequenceStarted = false;
+		string addressBuffer;
+		for_each(raw.begin(), raw.end(), [&](const char c) {
+			if (c == '"' && !stringSequenceStarted) stringSequenceStarted = true;
+			else if (c == '"' && stringSequenceStarted) stringSequenceStarted = false;
 
-    return result;
+			if (c == ',' && !stringSequenceStarted) {
+				result.push_back(EmailAddress(addressBuffer));
+				addressBuffer.clear();
+			} else addressBuffer += c;
+		});
+
+		if (!addressBuffer.empty()) result.push_back(EmailAddress(addressBuffer));
+
+		return result;
   }
 
   string EmailAddress::addressListToString(const vector<EmailAddress> &addresses) {

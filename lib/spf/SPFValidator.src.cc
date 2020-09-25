@@ -168,9 +168,9 @@ namespace FSMTP::SPF {
     string result;
 
     switch (this->m_Result.type) {
-      case SPFValidatorResultType::ResultTypeAllowed: result += "pass: "; break;
-      case SPFValidatorResultType::ResultTypeDenied: result += "fail: "; break;
-      case SPFValidatorResultType::ResultTypeSystemFailure: result += "neutral: "; break;
+      case SPFValidatorResultType::ResultTypeAllowed: result += "pass "; break;
+      case SPFValidatorResultType::ResultTypeDenied: result += "fail "; break;
+      case SPFValidatorResultType::ResultTypeSystemFailure: result += "neutral "; break;
     }
 
     result += '(' + this->m_Result.details + ')';

@@ -206,6 +206,8 @@ namespace FSMTP::SPF {
 
     logger << "}" << ENDL;
     logger << CLASSIC;
+
+    return *this;
   }
 
   SPFRecord SPFRecord::fromDNS(const char *query) {
