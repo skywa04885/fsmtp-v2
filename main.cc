@@ -19,6 +19,8 @@
 #include "lib/spam/WordEncoder.src.h"
 #include "lib/dns/Resolver.src.h"
 #include "lib/dmarc/DMARCRecord.src.h"
+#include "lib/spf/SPFRecord.src.h"
+#include "lib/spf/SPFValidator.src.h"
 
 using namespace FSMTP::Spam::Preprocessing;
 
@@ -27,13 +29,6 @@ static const char *FALLBACK_CONFIG_FILE = "../fallback/config.json";
 
 int main(const int argc, const char **argv)
 {
-	Logger l("MAIN", LoggerLevel::INFO);
-
-	DMARC::DMARCRecord r = DMARC::DMARCRecord::fromDNS("_dmarc.fannst.nl");
-	r.print(l);
-
-	return 0;
-
 	// vector<string> stopWords = {};
 	// {
 	// 	Json::Value temp;

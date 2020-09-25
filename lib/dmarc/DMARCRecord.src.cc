@@ -1,3 +1,19 @@
+/*
+	Copyright [2020] [Luke A.C.A. Rieff]
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+*/
+
 #include "DMARCRecord.src.h"
 
 namespace FSMTP::DMARC {
@@ -71,13 +87,6 @@ namespace FSMTP::DMARC {
 			start = end + 1;
 			end = raw.find_first_of(';', start);
 		}
-
-		// Prints the segments for debug purposes
-		#ifdef _SMTP_DEBUG
-		for_each(segments.begin(), segments.end(), [&](const string &seg) {
-			logger << "Found segment: '" << seg << '\'' << ENDL;
-		});
-		#endif
 
 		// ==================================
 		// Makes sense of the segments
@@ -259,7 +268,7 @@ namespace FSMTP::DMARC {
 		logger << "\tReport format: " << this->getReportFormatString() << ENDL;
 		logger << "\tFiltering percentage: " << this->m_FilteringPercentage << '%' << ENDL;
 		logger << "\tReport interval: " << this->m_ReportInterval << " seconds" << ENDL;
-		logger << "\tReport options: " << this->getReportOptionsString() << " seconds" << ENDL;
+		logger << "\tReport options: " << this->getReportOptionsString() << ENDL;
 		logger << ENDL;
 		logger << "\tFailure report targets: " << ENDL;
 		printTargets(this->m_FailReportTargets);

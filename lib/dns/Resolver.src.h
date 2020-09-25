@@ -47,6 +47,7 @@ namespace FSMTP::DNS {
 		Resolver &initParse();
 		vector<RR> getRecords();
 		vector<RR> getTXTRecords();
+		Resolver &reset();
 
 		~Resolver();
 	private:
@@ -58,6 +59,7 @@ namespace FSMTP::DNS {
 
 	string resolveHostname(const string &hostname);
 	string getHostnameByAddress(const struct sockaddr_in *a);
+	vector<string> resolveAllFromHostname(const string &hostname);
 }
 
 #endif

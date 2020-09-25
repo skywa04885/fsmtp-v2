@@ -10,6 +10,7 @@ subdir('args')
 subdir('dns')
 subdir('spam')
 subdir('dmarc')
+subdir('spf')
 
 sources += files (
   'default.cc'

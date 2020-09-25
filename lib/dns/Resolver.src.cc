@@ -88,7 +88,6 @@ namespace FSMTP::DNS {
 				ns_rr_rdata(record) + 2, data, sizeof (data));
 			
 			string s(reinterpret_cast<const char *>(ns_rr_rdata(record) + 1), ns_rr_rdlen(record) - 1);
-			cout << s << endl;
 
 			result.push_back(RR(
 				ns_rr_ttl(record), ns_rr_class(record), ns_rr_type(record),
@@ -118,6 +117,13 @@ namespace FSMTP::DNS {
 		return result;
 	}
 
+	Resolver &Resolver::reset() {
+		this->m_Buffer[0] = '\0';
+		this->m_ResponseCount = 0;
+		this->m_AnswerLen = 0;
+		return *this;
+	}
+
 	Resolver::~Resolver() {
 		res_nclose(&this->m_State);
 	}
@@ -137,5 +143,18 @@ namespace FSMTP::DNS {
 			sizeof (struct sockaddr), hostname,
 			sizeof (hostname), nullptr, 0, NI_NAMEREQD);
 		return hostname;
+	}
+
+	vector<string> resolveAllFromHostname(const string &hostname) {
+		vector<string> result = {};
+
+		struct hostent *h = nullptr;
+		if ((h = gethostbyname(hostname.c_str())) == nullptr)
+			throw runtime_error("Could not resolve jostname" + hostname);
+
+		struct in_addr **p = reinterpret_cast<struct in_addr **>(h->h_addr_list);
+		for (; *p != nullptr; ++p) result.push_back(inet_ntoa(**p));
+
+		return result;
 	}
 }

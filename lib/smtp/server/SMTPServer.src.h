@@ -31,8 +31,8 @@
 #include "../../models/LocalDomain.src.h"
 #include "../../workers/TransmissionWorker.src.h"
 #include "SMTPSpamDetection.src.h"
-#include "./SMTPSU.src.h"
 #include "../../dkim/DKIMVerifier.src.h"
+#include "../../spf/SPFValidator.src.h"
 
 using namespace FSMTP::Parsers;
 using namespace FSMTP;

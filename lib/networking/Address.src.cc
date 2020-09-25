@@ -17,6 +17,35 @@
 #include "Address.src.h"
 
 namespace FSMTP::Networking {
+	bool isAddress(const string &a, AddrType type) {
+		auto isNumber = [](const string &str) {
+			return !str.empty() && (str.find_first_not_of("[0123456789]") == string::npos);
+		};
+
+		if (type == AddrType::AT_IPv4) {
+			vector<string> segments = {};
+
+			// Parses the address into segments, so we can later
+			//  check if it really is an valid ip address
+			size_t start = 0, end = a.find_first_of('.');
+			for (;;) {
+				segments.push_back(a.substr(start, end - start));
+				if (end == string::npos) break;
+
+				start = end + 1;
+				end = a.find_first_of('.', start);
+			}
+
+			// Checks if the address is a valid IPv4 address
+			if (segments.size() != 4) return false;
+			for (auto &seg : segments) {
+				int32_t segNumber = stoi(seg);
+				if (!isNumber(seg) || segNumber < 0 || segNumber > 255) return false;
+			}
+			return true;
+		}
+	}
+
 	uint32_t bin_from_ipv4(const string &ip) {
 		uint32_t result = 0x0;
 		stringstream stream(ip);

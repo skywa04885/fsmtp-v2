@@ -533,31 +533,18 @@ bool SMTPServer::handleCommand(
 			// Performs the message validation, like checking the SPF and DKIM
 			//  records, we will set the headers accordingly. Also if this fails
 			//  the message is possible spam, and we put it in the spam.
-			bool possibleSpamSPF = true, possibleSpamDKIM = true;
+			bool possibleSpamSPF, possibleSpamDKIM = true;
 			vector<EmailHeader> authResults = {};
 
-			switch (SU::checkSU(session->s_TransportMessage.e_TransportFrom.getDomain(), client->getPrefix())) {
-				case SU::CheckSUReturnCode::CSC_ALLOWED:
-					authResults.push_back({"spf", string("pass (address ") + client->getPrefix() + " is listed by " + session->s_TransportMessage.e_TransportFrom.getDomain() + ")"});
-					possibleSpamSPF = false;
-					break;
-				case SU::CheckSUReturnCode::CSC_NOT_ALLOWED:
-					authResults.push_back({"spf", string("fail (address ") + client->getPrefix() + " is not listed by " + session->s_TransportMessage.e_TransportFrom.getDomain() + ")"});
-					break;
-				case SU::CheckSUReturnCode::CSC_DEPRECATED:
-					authResults.push_back({"spf", "neutral (one or more deprecated features, all traffic allowed)"});
-					possibleSpamSPF = false;
-					break;
-				case SU::CheckSUReturnCode::CSC_ALL_ALLOWED:
-					possibleSpamSPF = false;
-					authResults.push_back({"spf", "neutral (all traffic allowed)"});
-					break;
-				case SU::CheckSUReturnCode::CSC_SYSTEM_ERROR:
-					possibleSpamSPF = false;
-					authResults.push_back({"spf", "neutral (system error)"});
-					break;
-				default: break;
+			SPF::SPFValidator validator;
+			validator.validate(session->s_TransportMessage.e_TransportFrom.getDomain(), client->getPrefix());
+			switch (validator.getResult().type) {
+				case SPF::SPFValidatorResultType::ResultTypeAllowed: possibleSpamSPF = false; break;
+				case SPF::SPFValidatorResultType::ResultTypeDenied: possibleSpamSPF = true; break;
+				case SPF::SPFValidatorResultType::ResultTypeSystemFailure: possibleSpamSPF = false; break;
 			}
+
+			authResults.push_back({"spf", validator.getResultString()});
 
 			if (session->getFlag(_SMTP_SERV_SESSION_SU)) {
 				authResults.push_back({"su", string("pass (access granted for ") + client->getPrefix() + " , using FSMTP-V2 extensions)"});
@@ -649,7 +636,11 @@ bool SMTPServer::handleCommand(
 		case ClientCommandType::CCT_SU: {
 			auto &conf = Global::getConfig();
 			auto prefix = client->getPrefix();
-			if (prefix != "0.0.0.0" && prefix != "127.0.0.1" && !SU::checkSU(conf["domain"].asCString(), prefix)) {
+
+			SPF::SPFValidator validator;
+			validator.validate(conf["domain"].asString(), prefix);
+
+			if (prefix != "0.0.0.0" && prefix != "127.0.0.1" && validator.getResult().type != SPF::SPFValidatorResultType::ResultTypeAllowed) {
 				client->write(ServerResponse(SMTPResponseType::SRC_SU_DENIED).build());
 				return true;
 			}
