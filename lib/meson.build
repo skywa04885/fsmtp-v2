@@ -9,6 +9,7 @@ subdir('workers')
 subdir('args')
 subdir('dns')
 subdir('spam')
+subdir('dmarc')
 
 sources += files (
   'default.cc'
