@@ -96,15 +96,23 @@ namespace FSMTP::DNS {
 		return result;
 	}
 
-		vector<RR> Resolver::getTXTRecords() {
+	vector<RR> Resolver::getTXTRecords() {
 		vector<RR> result = {};
 		ns_rr record;
 
 		for (int32_t i = 0; i < this->m_ResponseCount; ++i) {
 			ns_parserr(&this->m_NsMsg, ns_s_an, i, &record);
 
-			string data(reinterpret_cast<const char *>(ns_rr_rdata(record) + 1), ns_rr_rdlen(record) - 1);
-			if (data.length() > 255) data.erase(data.begin() + 255, data.begin() + 256);
+			string raw(reinterpret_cast<const char *>(ns_rr_rdata(record) + 1), ns_rr_rdlen(record) - 1);
+			string data;
+			data.reserve(raw.length());
+			for (char c : raw) {
+				if (c >= 0 && c <= 127) data += c;
+				
+			}
+
+			cout << raw << endl;
+			cout << endl << data << endl;
 
 			result.push_back(RR(
 				ns_rr_ttl(record), ns_rr_class(record), ns_rr_type(record),

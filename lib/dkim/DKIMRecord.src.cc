@@ -76,6 +76,59 @@ namespace FSMTP::DKIM {
 		// Makes sense of the segments
 		// ==================================
 
+    auto parseHashAlgorithms = [&](const string &val) {
+      start = 0, end = val.find_first_of(':');
+
+      for (;;) {
+        string seg = val.substr(start, end - start);
+        transform(seg.begin(), seg.end(), seg.begin(), [](const char c) { return tolower(c); });
+        if (*seg.begin() == ' ') seg.erase(seg.begin(), seg.begin() + 1);
+        if (*(seg.end() - 1) == ' ') seg.pop_back();
+
+        if (seg == "sha1") this->m_Flags |= _FSMTP_DKIM_RECORD_FLAG_ALLOWED_HASH_ALGO_SHA1;
+        else if (seg == "sha256") this->m_Flags |= _FSMTP_DKIM_RECORD_FLAG_ALLOWED_HASH_ALGO_SHA256;
+        
+        if (end == string::npos) break;
+        start = end + 1;
+        end = val.find_first_of(':', start);
+      }
+    };
+
+    auto parseServices = [&](const string &val) {
+      start = 0, end = val.find_first_of(':');
+
+      for (;;) {
+        string seg = val.substr(start, end - start);
+        transform(seg.begin(), seg.end(), seg.begin(), [](const char c) { return tolower(c); });
+        if (*seg.begin() == ' ') seg.erase(seg.begin(), seg.begin() + 1);
+        if (*(seg.end() - 1) == ' ') seg.pop_back();
+
+        if (seg == "email") this->m_Flags |= _FSMTP_DKIM_RECORD_FLAG_ALLOWED_SERVICE_EMAIL;
+        
+        if (end == string::npos) break;
+        start = end + 1;
+        end = val.find_first_of(':', start);
+      }
+    };
+
+    auto parseTags = [&](const string &val) {
+      start = 0, end = val.find_first_of(':');
+
+      for (;;) {
+        string seg = val.substr(start, end - start);
+        transform(seg.begin(), seg.end(), seg.begin(), [](const char c) { return tolower(c); });
+        if (*seg.begin() == ' ') seg.erase(seg.begin(), seg.begin() + 1);
+        if (*(seg.end() - 1) == ' ') seg.pop_back();
+
+        if (seg == "y") this->m_Flags |= _FSMTP_DKIM_RECORD_FLAG_TESTING;
+        else if (seg == "s") this->m_Flags |= _FSMTP_DKIM_RECORD_FLAG_SAME_DOMAIN;
+
+        if (end == string::npos) break;
+        start = end + 1;
+        end = val.find_first_of(':', start);
+      }
+    };
+
     for_each(segments.begin(), segments.end(), [&](const string &seg) {
       if (seg.empty()) return;
 
@@ -90,62 +143,8 @@ namespace FSMTP::DKIM {
 			if (*key.begin() == ' ') key.erase(key.begin(), key.begin() + 1);
 			if (*(key.end() - 1) == ' ') key.pop_back();
 			
-			transform(val.begin(), val.end(), val.begin(), [](const char c) { return tolower(c); });
 			if (*val.begin() == ' ') val.erase(val.begin(), val.begin() + 1);
 			if (*(val.end() - 1) == ' ') val.pop_back();
-
-      auto parseHashAlgorithms = [&](const string &val) {
-        start = 0, end = val.find_first_of(':');
-
-        for (;;) {
-          string seg = val.substr(start, end - start);
-          transform(seg.begin(), seg.end(), seg.begin(), [](const char c) { return tolower(c); });
-          if (*seg.begin() == ' ') seg.erase(seg.begin(), seg.begin() + 1);
-          if (*(seg.end() - 1) == ' ') seg.pop_back();
-
-          if (seg == "sha1") this->m_Flags |= _FSMTP_DKIM_RECORD_FLAG_ALLOWED_HASH_ALGO_SHA1;
-          else if (seg == "sha256") this->m_Flags |= _FSMTP_DKIM_RECORD_FLAG_ALLOWED_HASH_ALGO_SHA256;
-          
-          if (end == string::npos) break;
-          start = end + 1;
-          end = val.find_first_of(':', start);
-        }
-      };
-
-      auto parseServices = [&](const string &val) {
-        start = 0, end = val.find_first_of(':');
-
-        for (;;) {
-          string seg = val.substr(start, end - start);
-          transform(seg.begin(), seg.end(), seg.begin(), [](const char c) { return tolower(c); });
-          if (*seg.begin() == ' ') seg.erase(seg.begin(), seg.begin() + 1);
-          if (*(seg.end() - 1) == ' ') seg.pop_back();
-
-          if (seg == "email") this->m_Flags |= _FSMTP_DKIM_RECORD_FLAG_ALLOWED_SERVICE_EMAIL;
-          
-          if (end == string::npos) break;
-          start = end + 1;
-          end = val.find_first_of(':', start);
-        }
-      };
-
-      auto parseTags = [&](const string &val) {
-        start = 0, end = val.find_first_of(':');
-
-        for (;;) {
-          string seg = val.substr(start, end - start);
-          transform(seg.begin(), seg.end(), seg.begin(), [](const char c) { return tolower(c); });
-          if (*seg.begin() == ' ') seg.erase(seg.begin(), seg.begin() + 1);
-          if (*(seg.end() - 1) == ' ') seg.pop_back();
-
-          if (seg == "y") this->m_Flags |= _FSMTP_DKIM_RECORD_FLAG_TESTING;
-          else if (seg == "s") this->m_Flags |= _FSMTP_DKIM_RECORD_FLAG_SAME_DOMAIN;
-
-          if (end == string::npos) break;
-          start = end + 1;
-          end = val.find_first_of(':', start);
-        }
-      };
 
       // Checks the key and then stores the value inside of the current
       //  class instance, so we can read it later
@@ -213,16 +212,8 @@ namespace FSMTP::DKIM {
     //  dkim data
     bool found = false;
     any_of(records.begin(), records.end(), [&](const DNS::RR &rr) {
-      if (rr.getData().length() < 6) return true;
-
-        cout << rr.getData() << endl;
-
-      // Checks if it is an DKIM record
-      string cmp = rr.getData().substr(rr.getData().find_first_of('v'), 6);
-      transform(cmp.begin(), cmp.end(), cmp.begin(), [](const char c) { return tolower(c); });
-      if (cmp != "v=dkim") return true;
-
-      // Attempts to parse the dkim record
+      // Attempts to parse the dkim record, if this fails we return true
+      //  which means we proceed to the next record
       try {
         result.parse(rr.getData());
         found = true;
@@ -231,6 +222,8 @@ namespace FSMTP::DKIM {
 
       return true;
     });
+
+    if (!found) throw runtime_error(EXCEPT_DEBUG("Failed to resolve DKIM Record"));
 
     return result;
   }
