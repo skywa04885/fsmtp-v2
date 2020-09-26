@@ -110,10 +110,7 @@ namespace FSMTP::DNS {
 				if (c >= 0 && c <= 127) data += c;
 				
 			}
-
-			cout << raw << endl;
-			cout << endl << data << endl;
-
+			
 			result.push_back(RR(
 				ns_rr_ttl(record), ns_rr_class(record), ns_rr_type(record),
 				ns_rr_name(record), move(data)
