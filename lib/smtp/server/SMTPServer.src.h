@@ -33,6 +33,7 @@
 #include "SMTPSpamDetection.src.h"
 #include "../../dkim/DKIMValidator.src.h"
 #include "../../spf/SPFValidator.src.h"
+#include "SMTPHeaders.src.h"
 
 using namespace FSMTP::Parsers;
 using namespace FSMTP;

@@ -569,7 +569,11 @@ bool SMTPServer::handleCommand(
 			MIME::splitHeadersAndBody(session->s_RawBody, headers, body);
 			headers += MIME::buildHeaders({
 				{"X-Fannst-Conn", client->usingSSL() ? "SSL" : "Plain"},
-				{"X-Fannst-Auth", MIME::buildHeader(authResults)}
+				{"X-Fannst-Auth", MIME::buildHeader(authResults)},
+				{"Received", SMTP::Server::Headers::buildReceived(
+					DNS::getHostnameByAddress(client->getAddress()), client->getPrefix(),
+					session->s_TransportMessage.e_TransportFrom.e_Address, spfValidator.getResultString()
+				)}
 			});
 			session->s_RawBody = headers;
 			session->s_RawBody += "\r\n";

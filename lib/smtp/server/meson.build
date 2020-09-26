@@ -3,5 +3,6 @@ sources += files(
     'SMTPServer.src.cc',
     'SMTPServerExceptions.src.cc',
     'SMTPServerSession.src.cc',
-    'SMTPSpamDetection.src.cc'
+    'SMTPSpamDetection.src.cc',
+    'SMTPHeaders.src.cc'
 )
