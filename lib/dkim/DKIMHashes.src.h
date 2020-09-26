@@ -27,29 +27,13 @@
 
 namespace FSMTP::DKIM::Hashes
 {
-	/**
-	 * Creates an SHA256-Base64 Hash using openssl
-	 *
-	 * @Param {const std::string &} raw
-	 * @Return {std::string}
-	 */
 	std::string sha256base64(const std::string &raw);
+	string sha1base64(const string &raw);
 
-	/**
-	 * Generates the RSA-SHA256 signature and returns it in
-	 * - base64 format
-	 *
-	 * @param {const std::string &} raw
-	 * @Param {const char *} privateKeyFile
-	 * @return {std::string}
-	 */
 	std::string RSASha256generateSignature(
 		const std::string &raw, 
 		const char *privateKeyFile
 	);
 
-	/**
-	 * Verifies an signature using the public key
-	 */
 	bool RSAverify(const string &signature, const string &raw, const string &pubKey, const EVP_MD *type);
 }

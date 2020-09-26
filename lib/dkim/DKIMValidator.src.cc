@@ -62,10 +62,18 @@ namespace FSMTP::DKIM {
     // Calculates the hash value, either sha1 or sha256, after which we compare it
     //  against the one in the message, if the comparison fails, do not even check the
     //  signature, just return error
-    string bodyHash = Hashes::sha256base64(canonicalizedBody);
+    string bodyHash;
+    switch (header.getHeaderAlgorithm()) {
+      case DKIMHeaderAlgorithm::HeaderAlgoritmRSA_SHA256:
+        bodyHash = Hashes::sha256base64(canonicalizedBody);
+        break;
+      case DKIMHeaderAlgorithm::HeaderAlgorithmRSA_SHA1:
+        bodyHash = Hashes::sha1base64(canonicalizedBody);
+        break;
+    }
 
     if (bodyHash != header.getBodyHash()) {
-      DEBUG_ONLY(logger << WARN << "Body hash invalid, expected: '" << bodyHash << "', got: " << header.getBodyHash() << '\'' << ENDL << CLASSIC);
+      DEBUG_ONLY(logger << WARN << "Body hash invalid, expected: '" << bodyHash << "', got: '" << header.getBodyHash() << '\'' << ENDL << CLASSIC);
       return DKIMSignatureResult {
         DKIMSignatureResultType::DKIMSignatureInvalid,
         "body-hash invalid, expected: " + bodyHash
@@ -73,6 +81,7 @@ namespace FSMTP::DKIM {
     } 
 
     DEBUG_ONLY(logger << "Body hash valid, expected: '" << bodyHash << "', got: '" << header.getBodyHash() << "'" << ENDL);
+
 
     // =================================
     // Gets the DKIM record from DNS
@@ -234,29 +243,61 @@ namespace FSMTP::DKIM {
 
     // Loops over the signatures, and validates each one. If an exception is thrown
     //  we catch it, and put an system failure as result, will result in neutral
-    vector<DKIMSignatureResult> results = {};
     for_each(signatures.begin(), signatures.end(), [&](const string &sig) {
-      try { results.push_back(this->validateSignature(sig, headers, rawBody, rawHeaders)); }
+      try { this->m_SigResults.push_back(this->validateSignature(sig, headers, rawBody, rawHeaders)); }
       catch (const runtime_error &e) {
         DEBUG_ONLY(logger << ERROR << "Signature validation system failure: " << e.what() << ENDL << CLASSIC);
-        results.push_back(DKIMSignatureResult {
+        this->m_SigResults.push_back(DKIMSignatureResult {
           DKIMSignatureResultType::DKIMSignatureSystemFailure,
           string("System failure: ") + e.what()
         });
       } catch (...) {
         DEBUG_ONLY(logger << ERROR << "Signature validation system failure: unknown" << ENDL << CLASSIC);
-        results.push_back(DKIMSignatureResult {
+        this->m_SigResults.push_back(DKIMSignatureResult {
           DKIMSignatureResultType::DKIMSignatureSystemFailure,
           "System failure, error unknown"
         });
       }
     });
-
+    
+    // Checks if one of the signatures is valid, so we can mark the message as valid
+    //  or not valid
+    any_of(this->m_SigResults.end(), this->m_SigResults.end(), [&](const DKIMSignatureResult &res) {
+      if (res.type == DKIMSignatureResultType::DKIMSignatureValid) {
+        this->m_Result.type = DKIMValidatorResultType::DKIMValidationPass;
+        this->m_Result.details = res.details;
+        return false;
+      } else return true;
+    });
     return *this;
   }
 
   const DKIMValidatorResult &DKIMValidator::getResult() {
     return this->m_Result;
+  }
+
+  string DKIMValidator::getResultString() {
+    string result;
+
+    switch (this->m_Result.type) {
+      case DKIMValidatorResultType::DKIMValidationPass: result += "pass ("; break;
+      case DKIMValidatorResultType::DKIMValidationNeutral: result += "neutral ("; break;
+      case DKIMValidatorResultType::DKIMValidationSystemError: result += "error ("; break;
+      case DKIMValidatorResultType::DKIMValidationFail: result += "fail ("; break;
+    }
+
+    if (this->m_SigResults.size() <= 0) result += this->m_Result.details;
+    else {
+      size_t i = 0;
+      for_each(this->m_SigResults.begin(), this->m_SigResults.end(), [&](const DKIMSignatureResult &res) {
+        result += "signature " + to_string(++i) + ": " + res.details;
+        if (i < this->m_SigResults.size()) result += ", ";
+      });
+    }
+
+    result += ')';
+
+    return result;
   }
 
   DKIMValidator::~DKIMValidator() = default;

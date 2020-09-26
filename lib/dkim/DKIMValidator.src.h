@@ -61,10 +61,12 @@ namespace FSMTP::DKIM {
     DKIMValidator &validate(const string &message);
 
     const DKIMValidatorResult &getResult();
+    string getResultString();
 
     ~DKIMValidator();
   private:
     DKIMValidatorResult m_Result;
+    vector<DKIMSignatureResult> m_SigResults;
     Logger m_Logger;
   };
 };

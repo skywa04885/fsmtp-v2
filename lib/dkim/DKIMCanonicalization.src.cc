@@ -45,7 +45,9 @@ namespace FSMTP::DKIM {
       string reducedLine;
       reducedLine.reserve(line.length());
       bool lww = false;
-      for_each(line.begin(), line.end(), [&](const char c) {
+      for_each(line.begin(), line.end(), [&](char c) {
+        if (c == '\t') c = ' ';
+
         if (c == ' ') {
           if (lww) return;
           else lww = true;
@@ -56,7 +58,7 @@ namespace FSMTP::DKIM {
 
       // Removes the whitespace at the end of line, after which
       //  we update the current line
-      if (!reducedLine.empty() && *(reducedLine.end() - 1) == ' ') reducedLine.pop_back();
+      if (*(reducedLine.end() - 1) == ' ') reducedLine.pop_back();
       line = reducedLine;
     });
 
@@ -163,7 +165,8 @@ namespace FSMTP::DKIM {
    */
   string relaxedHeaders(const string &raw, const vector<string> &filter) {
     vector<string> lines = Parsers::getMIMELines(raw);
-    vector<string> result = {};
+    vector<pair<string, string>> result;
+    vector<string> sortedResult = {};
 
     // Processes the lines
     for_each(lines.begin(), lines.end(), [&](const string &line) {
@@ -208,9 +211,27 @@ namespace FSMTP::DKIM {
       string header = key;
       header += ':';
       header += reducedValue;
-      result.push_back(header);
+      result.push_back(make_pair(key, header));
     });
 
-    return Parsers::getStringFromLines(result.begin(), result.end());
+    // Sorts the results to order of the filter
+    for_each(filter.begin(), filter.end(), [&](const string &key) {
+      // Attempts to find the element if the key matches the key from
+      //  the pair
+      vector<pair<string, string>>::iterator element = find_if(result.begin(), result.end(), [&](pair<string, string> &pair) {
+        return (pair.first == key);
+      });
+
+      // If there is no element, throw runtime error since this
+      //  is strictly not allowed
+      if (element == result.end())
+        throw runtime_error(EXCEPT_DEBUG("Filter value not found in headers: '" + key + '\''));
+
+      // Appends the header to the final result
+      sortedResult.push_back(element->second);
+    });
+
+    if (sortedResult.size() <= 0) throw runtime_error(EXCEPT_DEBUG("Nothing left after canonicalizing"));
+    return Parsers::getStringFromLines(sortedResult.begin(), sortedResult.end());
   }
 };

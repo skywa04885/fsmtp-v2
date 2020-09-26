@@ -18,6 +18,55 @@
 
 namespace FSMTP::DKIM::Hashes
 {
+	string sha1base64(const string &raw) {
+		int32_t rc;
+
+		// ==================================
+		// Performs the hash
+		// ==================================
+
+		// Creates the context and initializes it
+		SHA_CTX ctx;
+		rc = SHA1_Init(&ctx);
+		if (rc < 0)
+			throw std::runtime_error("Could not initialize the SHA1 context");
+
+		// Updats the hash
+		rc = SHA1_Update(&ctx, raw.c_str(), raw.size());
+		if (rc < 0)
+			throw std::runtime_error("Could not update the SHA1 context");
+
+		// Digests the hash
+		uint8_t *digest = new uint8_t[SHA_DIGEST_LENGTH];
+		rc = SHA1_Final(digest, &ctx);
+		if (rc < 0)
+			throw std::runtime_error("Could not digest SHA1 context");
+
+		// ==================================
+		// Turn into Base64
+		// ==================================
+
+		BIO *bio = nullptr, *base64 = nullptr;
+		BUF_MEM *bufMem = nullptr;
+
+		// Initializes the base64 encoder and sets the flags
+		base64 = BIO_new(BIO_f_base64());
+		bio = BIO_new(BIO_s_mem());
+		bio = BIO_push(base64, bio);
+		BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
+
+		// Generatest he base64 encoded string
+		BIO_write(bio, digest, SHA_DIGEST_LENGTH);
+		BIO_flush(bio);
+		BIO_get_mem_ptr(bio, &bufMem);
+
+		// Creates the result, and frees the memory
+		std::string res(bufMem->data, bufMem->length);
+		BIO_free_all(bio);
+		delete[] digest;
+		return res;
+	}
+
 	/**
 	 * Creates an SHA256-Base64 Hash using openssl
 	 *

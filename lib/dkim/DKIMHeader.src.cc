@@ -78,6 +78,8 @@ namespace FSMTP::DKIM {
 
 		// Loops over all the segments and makes sense of them
 		for_each(segments.begin(), segments.end(), [&](const string &seg) {
+			if (seg.empty()) return;
+
 			// Splits the segment in to a key value pair
 			size_t sep = seg.find_first_of('=');
 			if (sep == string::npos)
