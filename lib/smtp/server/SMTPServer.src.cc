@@ -16,7 +16,7 @@
 
 #include "SMTPServer.src.h"
 
-using namespace Server;
+using namespace FSMTP::Server;
 
 SMTPServer::SMTPServer() noexcept: s_Logger("FSMTP-V2/ESMTP", LoggerLevel::INFO) {
 	const char *maxSize = "10485760";

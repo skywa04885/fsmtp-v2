@@ -18,6 +18,8 @@
     "utility": "cpp",
     "iostream": "cpp",
     "ostream": "cpp",
-    "stdexcept": "cpp"
+    "stdexcept": "cpp",
+    "optional": "cpp",
+    "variant": "cpp"
   }
 }

@@ -99,7 +99,7 @@ int main(const int argc, const char **argv)
 	// Starts the services
 	// ==================================
 
-	Server::SMTPServer smtpServer;
+	FSMTP::Server::SMTPServer smtpServer;
 	POP3::P3Server pop3Server;
 	unique_ptr<Workers::TransmissionWorker> transmissionWorker = make_unique<Workers::TransmissionWorker>();
 	unique_ptr<Workers::DatabaseWorker> databaseWorker = make_unique<Workers::DatabaseWorker>();
