@@ -282,7 +282,7 @@ namespace FSMTP::DKIM {
       case DKIMValidatorResultType::DKIMValidationPass: result += "pass ("; break;
       case DKIMValidatorResultType::DKIMValidationNeutral: result += "neutral ("; break;
       case DKIMValidatorResultType::DKIMValidationSystemError: result += "error ("; break;
-      case DKIMValidatorResultType::DKIMValidationFail: result += "fail ("; break;
+      default: case DKIMValidatorResultType::DKIMValidationFail: result += "fail ("; break;
     }
 
     if (this->m_SigResults.size() <= 0) result += this->m_Result.details;
