@@ -22,6 +22,7 @@ namespace FSMTP::SMTP::Server::Headers {
     const string &mailFrom, const string &spf,
     int32_t port
   ) {
+    auto &conf = Global::getConfig();
     char dateBuffer[64];
     time_t rawTime;
     struct tm *timeinfo = nullptr;
@@ -34,7 +35,7 @@ namespace FSMTP::SMTP::Server::Headers {
     strftime(dateBuffer, sizeof (dateBuffer), "%a, %-d %b %Y %T (%Z)", timeinfo);
 
     // Formats the received header, not made for human readability
-    result << "from " << from << "([" << fromAddr << "]:" << port << ") by " << by << " with ESMTP (FSMTP-V2 By Luke Rieff) ";
+    result << "from " << from << "([" << fromAddr << "]:" << port << ") by " << conf["smtp_domain"].asCString() << " with ESMTP (FSMTP-V2 By Luke Rieff) ";
     result << "(spf:" << spf << ")(envelope-from:<" << mailFrom << ">); " << dateBuffer;
 
     return result.str();
