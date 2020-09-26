@@ -149,18 +149,22 @@ namespace FSMTP::DKIM {
       // Checks the key and then stores the value inside of the current
       //  class instance, so we can read it later
       if (key == "v") { // The dkim version
+        transform(val.begin(), val.end(), val.begin(), [](const char c) { return tolower(c); });
         if (val == "dkim1") this->m_Version = DKIMRecordVersion::RecordVersionDKIM1;
         else this->m_Version = DKIMRecordVersion::RecordVersionDKIM1;
       } else if (key == "p") { // The public key
         this->m_PublicKey = val;
       } else if (key == "k") { // The key algorithm
+        transform(val.begin(), val.end(), val.begin(), [](const char c) { return tolower(c); });
         if (val == "rsa") this->m_Algorithm = DKIMRecordAlgorithm::RecordAlgorithmRSA;
         else this->m_Algorithm = DKIMRecordAlgorithm::RecordAlgorithmRSA;
       } else if (key == "h") { // The allowed hashing algorithms
         parseHashAlgorithms(val);
       } else if (key == "s") { // The allowed services
+        transform(val.begin(), val.end(), val.begin(), [](const char c) { return tolower(c); });
         parseServices(val);
       } else if (key == "t") { // The tags
+      transform(val.begin(), val.end(), val.begin(), [](const char c) { return tolower(c); });
         parseTags(val);
       }
     });
@@ -172,7 +176,7 @@ namespace FSMTP::DKIM {
     return __dkimRecordVersionToString(this->m_Version);  
   }
   
-  const char *DKIMRecord::getAlgorithmString() {
+  const char *DKIMRecord::getAlgorithmString() {  
     return __dkimRecordAlgorithmToString(this->m_Algorithm);
   }
 
@@ -187,7 +191,7 @@ namespace FSMTP::DKIM {
   const string &DKIMRecord::getPublicKey() {
     return this->m_PublicKey;
   }
-
+  
   DKIMRecord &DKIMRecord::print(Logger &logger) {
     logger << DEBUG;
 
@@ -198,7 +202,7 @@ namespace FSMTP::DKIM {
     logger << "\tAllowed hashes: " << this->getAllowedHashAlgosString() << ENDL;
     logger << "\tAllowed services: " << this->getAllowedServicesString() << ENDL;
     logger << "\tPublic key: " << this->m_PublicKey << ENDL;
-    logger << "}";
+    logger << "}" << ENDL;
 
     logger << CLASSIC;
   }

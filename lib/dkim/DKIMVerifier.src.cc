@@ -201,7 +201,7 @@ namespace FSMTP::DKIM_Verifier {
 		// ==================================
 
 		try {		
-			isSignatureValid = Hashes::RSASha256verify(parsedHeader.s_Signature, canonicalizedHeaders, record.getPublicKey());
+			// isSignatureValid = Hashes::RSASha256verify(parsedHeader.s_Signature, canonicalizedHeaders, record.getPublicKey());
 			if (!isSignatureValid)
 				DEBUG_ONLY(logger << ERROR << "Signature invalid" << ENDL);
 		} catch (const runtime_error &e) {

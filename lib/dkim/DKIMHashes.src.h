@@ -51,5 +51,5 @@ namespace FSMTP::DKIM::Hashes
 	/**
 	 * Verifies an signature using the public key
 	 */
-	bool RSASha256verify(const string &signature, const string &raw, const string &pubKey);
+	bool RSAverify(const string &signature, const string &raw, const string &pubKey, const EVP_MD *type);
 }

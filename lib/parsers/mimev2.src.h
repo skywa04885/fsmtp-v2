@@ -99,6 +99,11 @@ namespace FSMTP::Parsers {
    * Turns the lines into a string
    */
   string getStringFromLines(strvec_it from, strvec_it to);
+
+  /**
+   * Joins an set of headers
+   */
+  vector<string> joinHeaders(strvec_it from, strvec_it to);
 };
 
 #endif

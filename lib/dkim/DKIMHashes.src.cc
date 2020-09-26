@@ -197,7 +197,7 @@ namespace FSMTP::DKIM::Hashes
 	/**
 	 * Verifies an signature using the public key
 	 */
-	bool RSASha256verify(const string &signature, const string &raw, const string &pubKey) {
+	bool RSAverify(const string &signature, const string &raw, const string &pubKey, const EVP_MD *type) {
 		// Formats the key in a way openssl can read, this is in the
 		//  pem format.
 
@@ -270,7 +270,7 @@ namespace FSMTP::DKIM::Hashes
 		// Initializes the signature verifier
 		//  with the public key
 		if (EVP_DigestVerifyInit(
-			rsaVerifyContext, nullptr, EVP_sha256(), 
+			rsaVerifyContext, nullptr, type,
 			nullptr, rsaVerifyKey
 		) < 0) {
 			throw runtime_error(EXCEPT_DEBUG(string("EVP_DigestVerifyInit() failed:") + SSL_STRERROR));

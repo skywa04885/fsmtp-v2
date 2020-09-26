@@ -89,18 +89,11 @@ namespace FSMTP::Parsers {
     return _parseHeaders(from, to, false);
   }
 
-  vector<EmailHeader> _parseHeaders(strvec_it from, strvec_it to, bool lowerKey) {
-    #ifdef _SMTP_DEBUG
-    Logger logger("MIMEV2", LoggerLevel::DEBUG);
-    Timer timer("parseHeaders()", logger);
-    #endif
-
-    vector<EmailHeader> headers = {};
+  /**
+   * Joins an set of headers
+   */
+  vector<string> joinHeaders(strvec_it from, strvec_it to) {
     vector<string> joinedHeaders = {};
-
-    // ================================
-    // Joins headers, if required
-    // ================================
 
     for (strvec_it it = from; it != to; it++) {
       // Checks if the next line contains an indention, if not
@@ -119,9 +112,10 @@ namespace FSMTP::Parsers {
           // Goes to the next line in the iterator, and removes the extra
           //  whitespace from it, after which we append it to the buffer
           ++it;
-          (*it).erase(0, (*it).find_first_not_of(' '));
-          (*it).erase(0, (*it).find_first_not_of('\t'));
-          lineBuffer += *it;
+          string temp = *it;
+          temp.erase(0, temp.find_first_not_of(' '));
+          temp.erase(0, temp.find_first_not_of('\t'));
+          lineBuffer += temp;
         }
 
         // Appends the buffer to the joined headers
@@ -129,6 +123,18 @@ namespace FSMTP::Parsers {
       } else joinedHeaders.push_back(*it);
     }
 
+    return joinedHeaders;
+  }
+
+  vector<EmailHeader> _parseHeaders(strvec_it from, strvec_it to, bool lowerKey) {
+    #ifdef _SMTP_DEBUG
+    Logger logger("MIMEV2", LoggerLevel::DEBUG);
+    Timer timer("parseHeaders()", logger);
+    #endif
+
+    vector<EmailHeader> headers = {};
+    vector<string> joinedHeaders = joinHeaders(from, to);
+    
     // ================================
     // Turns the headers into key/value
     //  pairs
@@ -446,7 +452,7 @@ namespace FSMTP::Parsers {
     stringstream stream(raw);
     string line;
     while (getline(stream, line, '\n')) {
-      if (line[line.length() - 1] == '\r') line.pop_back();
+      if (!line.empty() && line[line.length() - 1] == '\r') line.pop_back();
       lines.push_back(line);
     }
 

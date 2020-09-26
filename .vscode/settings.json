@@ -17,6 +17,7 @@
     "bitset": "cpp",
     "utility": "cpp",
     "iostream": "cpp",
-    "ostream": "cpp"
+    "ostream": "cpp",
+    "stdexcept": "cpp"
   }
 }
