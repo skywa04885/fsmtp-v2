@@ -39,6 +39,7 @@ namespace FSMTP::Sockets {
     string readToDelim(const char *delim);
     int32_t read(char *buffer, const size_t bufferSize);
     int32_t peek(char *buffer, const size_t bufferSize);
+    int32_t getPort();
     bool usingSSL();
   private:
     struct sockaddr_in s_SocketAddr;

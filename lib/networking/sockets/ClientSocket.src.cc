@@ -236,3 +236,7 @@ ClientSocket &ClientSocket::timeout(const int32_t s) {
 
   return *this;
 }
+
+int32_t ClientSocket::getPort() {
+  return ntohs(this->s_SocketAddr.sin_port);
+}
