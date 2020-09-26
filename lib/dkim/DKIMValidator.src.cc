@@ -262,10 +262,9 @@ namespace FSMTP::DKIM {
     
     // Checks if one of the signatures is valid, so we can mark the message as valid
     //  or not valid
-    any_of(this->m_SigResults.end(), this->m_SigResults.end(), [&](const DKIMSignatureResult &res) {
+    any_of(this->m_SigResults.begin(), this->m_SigResults.end(), [&](const DKIMSignatureResult &res) {
       if (res.type == DKIMSignatureResultType::DKIMSignatureValid) {
         this->m_Result.type = DKIMValidatorResultType::DKIMValidationPass;
-        this->m_Result.details = res.details;
         return false;
       } else return true;
     });
