@@ -249,7 +249,7 @@ namespace FSMTP::DKIM {
         DEBUG_ONLY(logger << ERROR << "Signature validation system failure: " << e.what() << ENDL << CLASSIC);
         this->m_SigResults.push_back(DKIMSignatureResult {
           DKIMSignatureResultType::DKIMSignatureSystemFailure,
-          string("System failure: ") + e.what()
+          "System failure, check logs"
         });
       } catch (...) {
         DEBUG_ONLY(logger << ERROR << "Signature validation system failure: unknown" << ENDL << CLASSIC);
@@ -279,10 +279,18 @@ namespace FSMTP::DKIM {
     string result;
 
     switch (this->m_Result.type) {
-      case DKIMValidatorResultType::DKIMValidationPass: result += "pass ("; break;
-      case DKIMValidatorResultType::DKIMValidationNeutral: result += "neutral ("; break;
-      case DKIMValidatorResultType::DKIMValidationSystemError: result += "error ("; break;
-      default: case DKIMValidatorResultType::DKIMValidationFail: result += "fail ("; break;
+      case DKIMValidatorResultType::DKIMValidationPass:
+        result += "pass (";
+        break;
+      case DKIMValidatorResultType::DKIMValidationNeutral:
+        result += "neutral (";
+        break;
+      case DKIMValidatorResultType::DKIMValidationSystemError:
+        result += "error (";
+        break;
+      case DKIMValidatorResultType::DKIMValidationFail: 
+        result += "fail (";
+        break;
     }
 
     if (this->m_SigResults.size() <= 0) result += this->m_Result.details;

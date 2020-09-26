@@ -1,0 +1,40 @@
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1601053787; bh=7vEAgi0RRzjrn+4Le/fcS1k1+tJ/Ro6XDU4TKOlZ0JY=; h=Date:From:To:Subject:References:From:Subject; b=lxdCmHBIsLsoUnr6/rdJpowWwEloFTXsNbKRs/rS3a5o6kuok+7bRVj9t9Pl13KBskD06usTzE1KqMYVq7HhVnYZGpwhF4fqo/jrzvJ+o5dWSeTJ1LsNjyQhX4il+wsadmXpnH5II8KTSHNYtyW1D4Ol5wl5sAMrJxYhNRRXHkNIJ4gxECpP5ko0M8iWFd/VMmMwMCxvDm+rsoG7DUN6UHNoB1YQLP1NCwB3vt03NNdeNFPlmXv53YrLTmAre/v4z54fV2u/Y8V7zkJpA1eBAVT0vQkbgeSdV8gchGUbKmmzPIrt9GXRYSenlETtQSMWOk7ga0mM0dpZwwf1X+qRXQ==
+X-YMail-OSG: w7kCHH8VM1mFoUSbBZ90xsa9MM9h_CNGBdoaT_0AbPpLk.3qlMxvdoZvBmrMINY
+ AIjxCi7fGhW6uh1fQHjlqPURmum73CTApP0U4ttHKB4kuRW07lsy1Y5g3TCFZu5VNnbT0WzS8lJI
+ iajxGUriQ1uq4PI5hLlSxwcr213ZyZFOHhERlrMtP0Q0C0Fp0AgbFllF2FTn8j_VXYSC7LP895j8
+ INuASYiys_TVlQ6ih7wnq_jxRbt0Xea0VJyn.0mjVx0AFYhyNaDBdbWAHmGaXW6yxB5v4MNK88eN
+ 82cpmYp8mZ0h30eyfkvDYlpM9e8PmLwDUogwZEZjsKHTUU6YCibAHLoJQDRu8UosbdbGWwP67s2.
+ 1jHIu9ImhNh1L98sR3i31vNTLB76AJB9MMIYiXY6qzoog3vG5O2DDNIaoV_whSZhEJ40zb0CgEKb
+ YUwzRdLvecYFkzU7Le93Tspzoe9k9TJfJwJ3Oe4HMpknJq4mFs7jMn_ihfGtXzUlNDR3O9ncti3w
+ QgmoRpxqNHSl8_.lqQS9b7_ov1m975WyqLdzYSuLi8q6EkWlemY653KPKB8jnIw7DGdFCZFzAidU
+ AygoMe6lp3YGaSuTIoRHk8aqdhIPHu4UsOanM2dylDro7CQvgZnaLjdoe1Ec5h1k.rV8i6jIaIf1
+ QlZDQimMN7lzO.IdpdBpAKOSTrJY19ouUAdaIGavC8ni8EQ2UioMs.4_jqy3gn.eFUsCn559py8Q
+ kJ250e16CXiR7dJOhhW2iikF59hzWx7DsukFbSB9BbXKp1nxa02e4cpyj13wuQ5E6TpZ32AeS1HB
+ il5z89fOCaYU9i_rTyUyysmgULKfPvh_rD_jBZB.ZSVsn7MYJWN9NW3HESnNfPEMzVn.7w8QeDEw
+ 4JYmU0NZGcFm9o5cHTivJyxuMjNEIwqA0WNY8JrKCxhgCoCeRt4hLJC3a4fLGwPn9XQb9Qs4B9io
+ BWIhheQgDJysbRgKjZ8uWtJV27pAKejqckjLz.eMarMWAuuzlpQuNCWjoom_EK5bYjCR01MumkXC
+ BeYf1UbBH5pRMEiOTsMC_rh2B5KDTO.dYGRI1oUswkfiXUQG0HcRL_82L2hArNzbEndy2UgreSKA
+ _OAEEcV2cKQ7.go2bGgLQ50Z0kw2Y6JB6mQqwcC7.4K0UEcQ0Y5rC__JLQqyXqx5DqHnjP2WBYxl
+ 4_9h3j09rAORch27lD7mFgDmuaNDzHvua4.Icv0axDjLJT_k_hLhCMcwIKDMPwbdCLjZa6EB5uFR
+ 7FFMUNdK3jAlDmeDy21I58VP517Px8wh.x4jJGtBf5Dm.o6ssW3Z6HE1kcEkjVJEZ1TWuBhJ_0tm
+ fK00F_5pB4qcypseQkfxvXFeLPhQDfR.TPRJYdQYy0XemkjyYvy8glf3n22wxkkxueK1BsGLchQp
+ wXxgz_HVVfhqwbZtlOA--
+Received: from sonic.gate.mail.ne1.yahoo.com by sonic309.consmr.mail.ir2.yahoo.com with HTTP; Fri, 25 Sep 2020 17:09:47 +0000
+Date: Fri, 25 Sep 2020 17:09:45 +0000 (UTC)
+From: Luke Rieff <luke.rieff@yahoo.com>
+To: webmaster@fannst.nl
+Message-ID: <36486727.1355796.1601053785863@mail.yahoo.com>
+Subject: sdasd
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+References: <36486727.1355796.1601053785863.ref@mail.yahoo.com>
+X-Mailer: WebService/1.1.16674 YMailNodin Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)
+Content-Length: 9
+X-Fannst-Conn: SSL
+X-Fannst-Auth: spf=pass (Reverse lookup of 77.238.179.83 matches PTR records for _spf.ma
+        il.yahoo.com); 
+       dkim=fail(signature[0]: invalid signature)
+
+
+asdasdasd
