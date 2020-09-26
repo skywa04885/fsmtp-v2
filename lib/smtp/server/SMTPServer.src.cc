@@ -572,7 +572,8 @@ bool SMTPServer::handleCommand(
 				{"X-Fannst-Auth", MIME::buildHeader(authResults)},
 				{"Received", SMTP::Server::Headers::buildReceived(
 					DNS::getHostnameByAddress(client->getAddress()), client->getPrefix(),
-					session->s_TransportMessage.e_TransportFrom.e_Address, spfValidator.getResultString()
+					session->s_TransportMessage.e_TransportFrom.e_Address, spfValidator.getResultString(),
+					client->getPort()
 				)}
 			});
 			session->s_RawBody = headers;
