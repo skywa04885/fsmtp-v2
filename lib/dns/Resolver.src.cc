@@ -108,7 +108,6 @@ namespace FSMTP::DNS {
 			data.reserve(raw.length());
 			for (char c : raw) {
 				if (c >= 0 && c <= 127) data += c;
-				
 			}
 			
 			result.push_back(RR(

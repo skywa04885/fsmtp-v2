@@ -208,6 +208,7 @@ namespace FSMTP::DKIM {
   }
 
   DKIMRecord DKIMRecord::fromDNS(const char *query) {
+    DEBUG_ONLY(Logger logger("DKIMRecord::fromDNS", LoggerLevel::DEBUG));
     DKIMRecord result;
     DNS::Resolver resolver;
     vector<DNS::RR> records = resolver.query(query, ns_t_txt).initParse().getTXTRecords();
@@ -227,7 +228,15 @@ namespace FSMTP::DKIM {
       return true;
     });
 
-    if (!found) throw runtime_error(EXCEPT_DEBUG("Failed to resolve DKIM Record"));
+    // throw runtime_error(EXCEPT_DEBUG("Failed to resolve DKIM Record"));
+    // Since nothing was found we attempt to resolve the cname and see
+    //  if there are any redirects
+    if (!found) {
+      records = resolver.query(query, ns_t_cname).initParse().getTXTRecords();
+      DEBUG_ONLY(DNS::RR::print(logger, records));
+
+      cout << records[0].getData() << endl;
+    }
 
     return result;
   }

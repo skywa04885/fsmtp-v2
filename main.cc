@@ -31,6 +31,14 @@ static const char *FALLBACK_CONFIG_FILE = "../fallback/config.json";
 
 int main(const int argc, const char **argv)
 {
+	ifstream f("../samples/eml/outlook.eml");
+	string total, line;
+	while (getline(f, line)) total += line + '\n';
+
+	DKIM::DKIMValidator v;
+	v.validate(total);
+	return 0;
+
 	// vector<string> stopWords = {};
 	// {
 	// 	Json::Value temp;
