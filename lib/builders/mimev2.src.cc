@@ -128,4 +128,17 @@ namespace FSMTP::Builders {
 
         return result;
     }
+
+    string buildHeaderFromSegments(const char *label, const map<string, string> &segments) {
+        string result = label;
+        result += ": ";
+
+        size_t i = 0;
+        for_each(segments.begin(), segments.end(), [&](const pair<string, string> &p) {
+            result += p.first + '=' + p.second;
+            if (++i < segments.size()) result += "; ";
+        });
+
+        return result;
+    }
 }

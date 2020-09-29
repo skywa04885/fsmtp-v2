@@ -192,6 +192,10 @@ namespace FSMTP::SMTP::Server::Handlers {
 			make_pair("dmarc", buffer)
 		};
 
+		// Inserts the auth header into the joined headers
+		//  vector, which will later be used to build message
+		joinedHeaders.push_back(Builders::buildHeaderFromSegments("Authentication-Results", authResults));
+
 		// Checks if the client was using using SU, if so add the SU
 		//  header to the authResults
 		if (session->getFlag(_SMTP_SERV_SESSION_SU))
