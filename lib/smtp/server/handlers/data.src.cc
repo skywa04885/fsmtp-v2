@@ -47,7 +47,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 
 		// Creates the DMARC resolve query
 		string dmarcQuery = "_dmarc.";
-		dmarcQuery += client->getPrefix();
+		dmarcQuery += session->s_TransportMessage.e_TransportFrom.getDomain();
 
 		// Resolves the DMARC record, if this fails we set the
 		//  check dmarc false, so that we will not verify further 
@@ -220,7 +220,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 		});
 
 		// Appends the message body itself
-		session->s_RawBody += "\r\n" + Parsers::getStringFromLines(bodyBegin, bodyEnd);
+		session->s_RawBody += "\r\n\r\n" + Parsers::getStringFromLines(bodyBegin, bodyEnd);
 		
 		// ========================================
 		// Parses the MIME message
