@@ -176,12 +176,12 @@ namespace FSMTP::SMTP::Server::Handlers {
 		if (dmarcFound) {
 			// Prints the policy, subdomain policy and the query into the buffer
 			//  which will be inserted into the final headers
-			sprintf(buffer, "%s (p=%s sp=%s) query=%s", 
+			sprintf(buffer, "%s (p:%s sp:%s) query:%s", 
 				(!dmarcSpfValid || !dmarcDkimValid ? "fail" : "pass"), dmarcRecord.getPolicyString(),
 				dmarcRecord.getSubdomainPolicyString(), dmarcQuery.c_str());
 		} else {
 			// Prints that dmarc is neutral, since there was no record found
-			sprintf(buffer, "neutral (no record found) query=%s", dmarcQuery.c_str());
+			sprintf(buffer, "neutral (no record found) query:%s", dmarcQuery.c_str());
 		}
 
 		// Builds the auth result header map, which will contain
@@ -199,7 +199,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 		// Checks if the client was using using SU, if so add the SU
 		//  header to the authResults
 		if (session->getFlag(_SMTP_SERV_SESSION_SU))
-			authResults.insert(make_pair("su", "pass (to=" + client->getPrefix() + ")"));
+			authResults.insert(make_pair("su", "pass (to:" + client->getPrefix() + ")"));
 
 		// ========================================
 		// Builds the default message headers
