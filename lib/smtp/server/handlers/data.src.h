@@ -25,6 +25,7 @@
 #include "../../../dmarc/DMARCRecord.src.h"
 #include "../../../networking/sockets/ClientSocket.src.h"
 #include "../../../parsers/mimev2.src.h"
+#include "../../../builders/mimev2.src.h"
 
 using namespace FSMTP::Server;
 

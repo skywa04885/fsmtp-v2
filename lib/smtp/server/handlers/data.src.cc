@@ -199,10 +199,27 @@ namespace FSMTP::SMTP::Server::Handlers {
 		// ========================================
 
 		// Generates the received header
-		
-		// Adds the header to the mime message
 
-		// Return false, so we will not terminate the connection
+		// ========================================
+		// Starts generating the text MIME
+		// ========================================
+
+		// Starts generating the folded headers, these will all be folded
+		//  in our own way
+		session->s_RawBody.clear();
+		for_each(joinedHeaders.begin(), joinedHeaders.end(), [&](const string &header) {
+			session->s_RawBody += Builders::foldHeader(header, 76);
+		});
+
+		// Appends the message body itself
+		session->s_RawBody += "\r\n" + Parsers::getStringFromLines(bodyBegin, bodyEnd);
+		
+		// ========================================
+		// Parses the MIME message
+		// ========================================
+
+		Parsers::parseMIME(session->s_RawBody, session->s_TransportMessage);
+
 		return false;
 	}
 };

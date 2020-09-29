@@ -20,6 +20,7 @@
     "ostream": "cpp",
     "stdexcept": "cpp",
     "optional": "cpp",
-    "variant": "cpp"
+    "variant": "cpp",
+    "*.tcc": "cpp"
   }
 }

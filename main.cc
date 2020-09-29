@@ -32,7 +32,7 @@ static const char *FALLBACK_CONFIG_FILE = "../fallback/config.json";
 
 int main(const int argc, const char **argv)
 {
-	cout << Builders::foldHeader("DKIM-Signature: a=rsa-sha256; c=relaxed/relaxed; d=fannst.nl; s=default;h=subject:date:mime-version:message-id:to:from;bh=7osXINfml3Ixmn7+3jX2h9+V47nUdT0WXUEDDiCwqR4=; b=N6o3hz9Pjtm5jE3jnAGs1EtqW7gj1+lxLlAYSDuF4gwedfHPyWlK0h3SSnteA+VG925beo/dQzuvD7gWIhXBnxG4uvkCV9NLmN1eG7TFA46x8vxkV4nIZxLcHO9mtmp6B188vUUJsavElqJzvtqe0YxEpLJ+9b0QDfWnN3VdSL8jOJIn4yp0rfpX2ihMG5HXG0vZszULk6vOHnhDFShsFDpEhccXnGlc9yeQUsKucmM8eAJbgkJXA8KT82xHcLNVTWrCjj1v22VAjPGZrEGbbUZjIuOX+bD5MutmmugLFX+P/W83wyrZx5l6DSx4gM8pqh5mhdRAkAShrVOe5uAQNw==; v=1", 76);
+	cout << Builders::foldHeader("DKIM-Signature: a=rsa-sha256; c=relaxed/relaxed; d=fannst.nl; s=default;h=subject:date:mime-version:message-id:to:from;bh=7osXINfml3Ixmn7+3jX2h9+V47nUdT0WXUEDDiCwqR4=; b=N6o3hz9Pjtm5jE3jnAGs1EtqW7gj1+lxLlAYSDuF4gwedfHPyWlK0h3SSnteA+VG925beo/dQzuvD7gWIhXBnxG4uvkCV9NLmN1eG7TFA46x8vxkV4nIZxLcHO9mtmp6B188vUUJsavElqJzvtqe0YxEpLJ+9b0QDfWnN3VdSL8jOJIn4yp0rfpX2ihMG5HXG0vZszULk6vOHnhDFShsFDpEhccXnGlc9yeQUsKucmM8eAJbgkJXA8KT82xHcLNVTWrCjj1v22VAjPGZrEGbbUZjIuOX+bD5MutmmugLFX+P/W83wyrZx5l6DSx4gM8pqh5mhdRAkAShrVOe5uAQNw==; v=1; b=N6o3hz9Pjtm5jE3jnAGs1EtqW7gj1+lxLlAYSDuF4gwedfHPyWlK0h3SSnteA+VG925beo/dQzuvD7gWIhXBnxG4uvkCV9NLmN1eG7TFA46x8vxkV4nIZxLcHO9mtmp6B188vUUJsavElqJzvtqe0YxEpLJ+9b0QDfWnN3VdSL8jOJIn4yp0rfpX2ihMG5HXG0vZszULk6vOHnhDFShsFDpEhccXnGlc9yeQUsKucmM8eAJbgkJXA8KT82xHcLNVTWrCjj1v22VAjPGZrEGbbUZjIuOX+bD5MutmmugLFX+P/W83wyrZx5l6DSx4gM8pqh5mhdRAkAShrVOe5uAQNw==;", 76);
 	cout << endl;
 	// ifstream f("../samples/eml/outlook.eml");
 	// string total, line;
