@@ -22,6 +22,8 @@ namespace FSMTP::SMTP::Server::Handlers {
         shared_ptr<SMTPServerSession> session,
 		Logger &clogger
     ) {
+		char buffer[2048];
+
 		// ========================================
 		// Reads the message from socket
 		// ========================================
@@ -168,25 +170,25 @@ namespace FSMTP::SMTP::Server::Handlers {
 		// ========================================
 
 		// Builds the dmarc result header value, this will not be generated
-		//  since the validation of dmarc happens here
-		ostringstream dmarcResult;
-		if (dmarcFound) {
-			// Adds the either failure or pass to the result, this will only
-			//  be pass if both spf and dkim are validated successfully
-			if (!dmarcSpfValid || !dmarcDkimValid) dmarcResult << "fail";
-			else dmarcResult << "pass";
+		//  since the validation of dmarc happens here;
 
-			// Adds the dmarc information to the header, such as policy and query
-			dmarcResult << " (p=" << dmarcRecord.getPolicyString() << " sp=" << dmarcRecord.getSubdomainPolicyString()
-				<< ") query=" << dmarcQuery;
-		} else dmarcResult << "neutral (no record found) query=" << dmarcQuery;
+		if (dmarcFound) {
+			// Prints the policy, subdomain policy and the query into the buffer
+			//  which will be inserted into the final headers
+			sprintf(buffer, "%s (p=%s sp=%s) query=%s", 
+				(!dmarcSpfValid || !dmarcDkimValid ? "fail" : "pass"), dmarcRecord.getPolicyString(),
+				dmarcRecord.getSubdomainPolicyString(), dmarcQuery.c_str());
+		} else {
+			// Prints that dmarc is neutral, since there was no record found
+			sprintf(buffer, "neutral (no record found) query=%s", dmarcQuery.c_str());
+		}
 
 		// Builds the auth result header map, which will contain
 		//  some basic auth results
 		map<string, string> authResults = {
 			make_pair("spf", spfValidator.getResultString()),
 			make_pair("dkim", dkimValidator.getResultString()),
-			make_pair("dmarc", dmarcResult.str())
+			make_pair("dmarc", buffer)
 		};
 
 		// Checks if the client was using using SU, if so add the SU
@@ -198,7 +200,13 @@ namespace FSMTP::SMTP::Server::Handlers {
 		// Builds the default message headers
 		// ========================================
 
-		// Generates the received header
+		// Generates the received header, this will indicate that the message
+		//  went through the FSMTP-V2 Server
+		joinedHeaders.push_back("Received: " + SMTP::Server::Headers::buildReceived(
+			DNS::getHostnameByAddress(client->getAddress()), client->getPrefix(),
+			session->s_TransportMessage.e_TransportFrom.e_Address,
+			spfValidator.getResultString(), client->getPort()
+		));
 
 		// ========================================
 		// Starts generating the text MIME
@@ -218,7 +226,29 @@ namespace FSMTP::SMTP::Server::Handlers {
 		// Parses the MIME message
 		// ========================================
 
+		// Parses the mime message into the final transport message
+		//  this will include things such as the subject, body etcetera
 		Parsers::parseMIME(session->s_RawBody, session->s_TransportMessage);
+
+		// ========================================
+		// Adds the message to the specified queues
+		// ========================================
+
+		if (session->s_StorageTasks.size() > 0) Workers::DatabaseWorker::push(session);
+		if (session->s_RelayTasks.size() > 0) Workers::TransmissionWorker::push(session);
+
+		// ========================================
+		// Sends the response
+		// ========================================
+		
+		// Builds the server response message
+		sprintf(buffer, "%s %d bytes in %lf, %lf KB/sec queued for delivery.",
+			session->s_TransportMessage.e_MessageID, session->s_RawBody.length(), 
+			timeDifference, kbsec);
+
+		// Builds the server response, after which we immediately transfer
+		//  the message to the client, to indicate that we're done
+		client->write(ServerResponse(SMTPResponseType::SRC_DATA_END, buffer, nullptr, nullptr).build());
 
 		return false;
 	}

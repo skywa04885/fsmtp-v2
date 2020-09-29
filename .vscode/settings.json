@@ -21,6 +21,8 @@
     "stdexcept": "cpp",
     "optional": "cpp",
     "variant": "cpp",
-    "*.tcc": "cpp"
+    "*.tcc": "cpp",
+    "system_error": "cpp",
+    "chrono": "cpp"
   }
 }

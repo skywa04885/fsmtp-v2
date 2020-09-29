@@ -26,6 +26,9 @@
 #include "../../../networking/sockets/ClientSocket.src.h"
 #include "../../../parsers/mimev2.src.h"
 #include "../../../builders/mimev2.src.h"
+#include "../SMTPHeaders.src.h"
+#include "../../../workers/DatabaseWorker.src.h"
+#include "../../../workers/TransmissionWorker.src.h"
 
 using namespace FSMTP::Server;
 
