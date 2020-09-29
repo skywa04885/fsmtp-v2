@@ -252,7 +252,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 		
 		// Builds the server response message
 		sprintf(buffer, "%s %d bytes in %lf, %lf KB/sec queued for delivery.",
-			session->s_TransportMessage.e_MessageID, session->s_RawBody.length(), 
+			session->s_TransportMessage.e_MessageID.c_str(), session->s_RawBody.length(), 
 			timeDifference, kbsec);
 
 		// Builds the server response, after which we immediately transfer

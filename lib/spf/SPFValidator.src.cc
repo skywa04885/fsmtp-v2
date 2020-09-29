@@ -130,7 +130,7 @@ namespace FSMTP::SPF {
       // Creates the sockaddr_in version of the input address
       //  so we can perform the reverse lookup
       struct sockaddr_in cmpAddr;
-      memset(&cmpAddr, sizeof (cmpAddr), 0);
+      memset(&cmpAddr, 0, sizeof (cmpAddr));
       cmpAddr.sin_addr.s_addr = inet_addr(cmp.c_str());
       cmpAddr.sin_family = AF_INET;
 
