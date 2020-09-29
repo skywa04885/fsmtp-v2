@@ -194,7 +194,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 
 		// Inserts the auth header into the joined headers
 		//  vector, which will later be used to build message
-		joinedHeaders.push_back(Builders::buildHeaderFromSegments("Authentication-Results", authResults));
+		joinedHeaders.push_back(Builders::buildHeaderFromSegments("X-Fannst-Auth", authResults));
 
 		// Checks if the client was using using SU, if so add the SU
 		//  header to the authResults
