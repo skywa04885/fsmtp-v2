@@ -38,6 +38,7 @@ namespace FSMTP::SPF {
     SPFValidator();
 
     bool validate(const string &query, const string &cmp);
+    bool safeValidate(const string &query, const string &cmp);
     const SPFValidatorResult &getResult();
     string getResultString();
 

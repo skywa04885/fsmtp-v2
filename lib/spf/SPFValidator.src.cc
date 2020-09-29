@@ -163,6 +163,16 @@ namespace FSMTP::SPF {
     return false;
   }
 
+  bool SPFValidator::safeValidate(const string &query, const string &cmp) {
+    try {
+      return this->validate(query, cmp);
+    } catch (...) {
+      this->m_Result.type = SPFValidatorResultType::ResultTypeSystemFailure;
+      this->m_Result.details = "Failed to validate SPF";
+      return false;
+    }
+  }
+
   const SPFValidatorResult &SPFValidator::getResult() { return this->m_Result; }
   string SPFValidator::getResultString() {
     string result;

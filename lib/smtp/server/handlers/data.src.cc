@@ -68,7 +68,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 
 		// Performs the SPF validation
 		SPF::SPFValidator spfValidator;
-		spfValidator.validate(session->s_TransportMessage.e_TransportFrom.getDomain(), 
+		spfValidator.safeValidate(session->s_TransportMessage.e_TransportFrom.getDomain(), 
 			client->getPrefix());
 
 		// Checks the outcome of the spf validation, and sets the SPF valid boolean
@@ -105,7 +105,8 @@ namespace FSMTP::SMTP::Server::Handlers {
 					break;
 				}
 			}
-		} else dmarcSpfValid = true;
+		} else if (!spfValid && !dmarcFound) session->s_PossSpam = true;
+		else if(dmarcFound) dmarcSpfValid = true;
 
 		// Validates the DKIM record
 		DKIM::DKIMValidator dkimValidator;
@@ -147,7 +148,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 					dmarcDkimValid = false;
 					break;
 			}
-		} else dmarcDkimValid = true;
+		} else if (dmarcFound) dmarcDkimValid = true;
 
 		// ========================================
 		// Parses the headers from the message
@@ -184,7 +185,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 				dmarcRecord.getSubdomainPolicyString(), dmarcQuery.c_str());
 		} else {
 			// Prints that dmarc is neutral, since there was no record found
-			sprintf(buffer, "neutral (no record found) query:%s", dmarcQuery.c_str());
+			sprintf(buffer, "fail (no record found) query:%s", dmarcQuery.c_str());
 		}
 
 		// Builds the auth result header map, which will contain
