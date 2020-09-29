@@ -29,6 +29,7 @@
 #include "../SMTPHeaders.src.h"
 #include "../../../workers/DatabaseWorker.src.h"
 #include "../../../workers/TransmissionWorker.src.h"
+#include "../SMTPServerExceptions.src.h"
 
 using namespace FSMTP::Server;
 

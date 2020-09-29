@@ -237,7 +237,11 @@ namespace FSMTP::SMTP::Server::Handlers {
 
 		// Parses the mime message into the final transport message
 		//  this will include things such as the subject, body etcetera
-		Parsers::parseMIME(session->s_RawBody, session->s_TransportMessage);
+		try {
+			Parsers::parseMIME(session->s_RawBody, session->s_TransportMessage);
+		} catch (...) {
+			throw SMTPSyntaxException(EXCEPT_DEBUG("Invalid MIME message"));
+		}
 
 		// ========================================
 		// Adds the message to the specified queues
