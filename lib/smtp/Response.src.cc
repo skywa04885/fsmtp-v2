@@ -197,7 +197,7 @@ const char *ServerResponse::getEnchancedCode(const SMTPResponseType &c_Type) {
 		case SMTPResponseType::SRC_SU_DENIED: return "6.5.1 ";
 		case SMTPResponseType::SRC_AUTH_NOT_ALLOWED: return "5.5.0 ";
 		case SMTPResponseType::SRC_FCAPA_RESP: return "6.1.1 ";
-		case SMTPResponseType::SRC_SPF_REJECT: return "5.7.23";
+		case SMTPResponseType::SRC_SPF_REJECT: return "5.7.23 ";
 		default: throw std::runtime_error("getCode() invalid type");
 	}
 }
