@@ -38,7 +38,7 @@ int main(const int argc, const char **argv)
 
 	// DKIM::DKIMValidator v;
 	// v.validate(total);
-	return 0;
+	// return 0;
 
 	// vector<string> stopWords = {};
 	// {
