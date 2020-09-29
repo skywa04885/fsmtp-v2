@@ -21,6 +21,7 @@
 
 namespace FSMTP::Builders {
     string foldHeader(const string &raw, size_t lineLength);
+	string buildHeaderFromSegments(const map<string, string> &segments);
 }
 
 #endif

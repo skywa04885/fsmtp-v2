@@ -114,19 +114,19 @@ namespace FSMTP::SMTP::Server::Handlers {
 		bool dkimValid;
 		switch (dkimValidator.getResult().type) {
 			case DKIM::DKIMValidatorResultType::DKIMValidationPass:
-				DEBUG_ONLY(logger << DEBUG << "Validator found one or more valid signatures" << ENDL << CLASSIC);
+				DEBUG_ONLY(clogger << DEBUG << "Validator found one or more valid signatures" << ENDL << CLASSIC);
 				dkimValid = true;
 				break;
 			case DKIM::DKIMValidatorResultType::DKIMValidationNeutral:
-				DEBUG_ONLY(logger << DEBUG << "Validator returned neutral" << ENDL << CLASSIC);
+				DEBUG_ONLY(clogger << DEBUG << "Validator returned neutral" << ENDL << CLASSIC);
 				dkimValid = true;
 				break;
 			case DKIM::DKIMValidatorResultType::DKIMValidationSystemError:
-				DEBUG_ONLY(logger << DEBUG << "An system error occured while validating DKIM" << ENDL << CLASSIC);
+				DEBUG_ONLY(clogger << DEBUG << "An system error occured while validating DKIM" << ENDL << CLASSIC);
 				dkimValid = false;
 				break;
 			case DKIM::DKIMValidatorResultType::DKIMValidationFail:
-				DEBUG_ONLY(logger << DEBUG << "All of the signatures are invalid" << ENDL << CLASSIC);
+				DEBUG_ONLY(clogger << DEBUG << "All of the signatures are invalid" << ENDL << CLASSIC);
 				dkimValid = false;
 				break;
 		}
