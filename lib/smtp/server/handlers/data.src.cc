@@ -92,6 +92,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 		if (dmarcFound && !spfValid) {
 			switch (dmarcRecord.getPolicy()) {
 				case DMARC::DMARCPolicy::PolicyNone:
+					session->s_PossSpam = true;
 					dmarcSpfValid = true;
 					break;
 				case DMARC::DMARCPolicy::PolicyQuarantine:
