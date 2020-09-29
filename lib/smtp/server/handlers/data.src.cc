@@ -104,7 +104,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 					break;
 				}
 			}
-		}
+		} else dmarcSpfValid = true;
 
 		// Validates the DKIM record
 		DKIM::DKIMValidator dkimValidator;
@@ -135,16 +135,18 @@ namespace FSMTP::SMTP::Server::Handlers {
 		// Checks the result of the DKIM validator, and how we should
 		//  treat it according to the dmarc record
 		bool dmarcDkimValid;
-		switch (dkimValidator.getResult().type) {
-			case DMARC::DMARCPolicy::PolicyNone:
-				dmarcDkimValid = true;
-				break;
-			// TODO: Make DKIM reliable to reject clients if this fails
-			case DMARC::DMARCPolicy::PolicyQuarantine:
-			case DMARC::DMARCPolicy::PolicyReject:
-				dmarcDkimValid = false;
-				break;
-		}
+		if (dmarcFound && !dkimValid) {
+			switch (dmarcRecord.getPolicy()) {
+				case DMARC::DMARCPolicy::PolicyNone:
+					dmarcDkimValid = true;
+					break;
+				// TODO: Make DKIM reliable to reject clients if this fails
+				case DMARC::DMARCPolicy::PolicyQuarantine:
+				case DMARC::DMARCPolicy::PolicyReject:
+					dmarcDkimValid = false;
+					break;
+			}
+		} else dmarcDkimValid = true;
 
 		// ========================================
 		// Parses the headers from the message
