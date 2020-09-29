@@ -57,6 +57,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 		try {
 			dmarcRecord = DMARC::DMARCRecord::fromDNS(dmarcQuery.c_str());
 			dmarcFound = true;
+			DEBUG_ONLY(dmarcRecord.print(clogger));
 		} catch (const runtime_error &e) {
 			DEBUG_ONLY(clogger << ERROR << "Failed to resolve dmarc from query: '"
 				<< dmarcQuery << "', error: " << e.what() << ENDL << CLASSIC);
