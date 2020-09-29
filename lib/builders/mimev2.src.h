@@ -14,27 +14,13 @@
 	limitations under the License.
 */
 
-#ifndef _LIB_NET_ADDR_H
-#define _LIB_NET_ADDR_H
+#ifndef _LIB_BUILDERS_MIMEV2_H
+#define _LIB_BUILDERS_MIMEV2_H
 
 #include "../default.h"
-#include "../general/hex.src.h"
 
-namespace FSMTP::Networking {
-	enum AddrType {
-		AT_IPv4,
-		AT_IPv6
-	};
-
-	/**
-	 * Compares to addresses with for example support for ranges
-	 *  which is used in SPF.
-	 */
-	bool addr_compare(const string &a, const string &b, const AddrType type);
-	bool isAddress(const string &a, AddrType type);
-
-	uint32_t bin_from_ipv4(const string &ip);
-	uint128_t bin_from_ipv6(const string &ip);
+namespace FSMTP::Builders {
+    string foldHeader(const string &raw, size_t lineLength);
 }
 
 #endif

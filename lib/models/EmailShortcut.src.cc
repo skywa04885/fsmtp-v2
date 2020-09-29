@@ -75,7 +75,6 @@ namespace FSMTP::Models
     const char *query = "SELECT * FROM fannst.email_shortcuts WHERE e_domain=? AND e_mailbox=? AND e_owners_uuid=? LIMIT ?";
     CassStatement *statement = nullptr;
     CassFuture *future = nullptr;
-    CassError rc;
 
     // Limit of 80 emails a time
     if (limit > 80) limit = 80;

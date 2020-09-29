@@ -243,6 +243,15 @@ namespace FSMTP::DMARC {
 		return __dmarcReportOptionsToString(this->m_ReportOptions);
 	}
 
+
+	DMARCPolicy DMARCRecord::getPolicy() {
+		return this->m_Policy;
+	}
+
+	DMARCPolicy DMARCRecord::getSubdomainPolicy() {
+		return this->m_SubdomainPolicy;
+	}
+
 	DMARCRecord &DMARCRecord::print(Logger &logger) {
 		logger << DEBUG;
 

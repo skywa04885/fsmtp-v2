@@ -16,11 +16,7 @@
 
 #pragma once
 
-#include <iostream>
-#include <cstdint>
-
-#include <cassandra.h>
-
+#include "../../default.h"
 #include "../../models/Email.src.h"
 #include "../../models/Account.src.h"
 

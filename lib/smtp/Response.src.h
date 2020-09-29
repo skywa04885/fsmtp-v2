@@ -48,7 +48,8 @@ namespace FSMTP::SMTP
 		SRC_SPAM_ALERT,
 		SRC_SU_ACC,
 		SRC_SU_DENIED,
-		SRC_FCAPA_RESP
+		SRC_FCAPA_RESP,
+		SRC_SPF_REJECT
 	} SMTPResponseType;
 
 	typedef struct {

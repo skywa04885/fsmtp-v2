@@ -84,6 +84,9 @@ namespace FSMTP::DMARC {
 		const char *getVersionString();
 		const char *getReportOptionsString();
 
+		DMARCPolicy getPolicy();
+		DMARCPolicy getSubdomainPolicy();
+
 		static DMARCRecord fromDNS(const char *query);
 
 		~DMARCRecord() noexcept;

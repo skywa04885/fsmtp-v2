@@ -23,12 +23,12 @@
 #include "../general/Logger.src.h"
 
 namespace FSMTP::SPF {
-  typedef enum SPFValidatorResultType {
+  enum SPFValidatorResultType {
     ResultTypeDenied, ResultTypeAllowed,
     ResultTypeSystemFailure
   };
 
-  typedef struct SPFValidatorResult {
+  struct SPFValidatorResult {
     SPFValidatorResultType type;
     string details;
   };

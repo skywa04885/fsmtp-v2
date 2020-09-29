@@ -27,16 +27,16 @@
 namespace FSMTP::SPF {
   string __spfFlagsToString(int32_t f);
 
-  typedef enum {
+  enum SPFVersion {
     SPF1
-  } SPFVersion;
+  };
 
   const char *__spfVersionToString(SPFVersion v);
 
-  typedef enum {
+  enum SPFPolicy {
     PolicyReject, PolicyJunk,
     PolicyNoValidation, PolicyAllowAll
-  } SPFPolicy;
+  };
 
   const char *__spfPolicyToString(SPFPolicy p);
 

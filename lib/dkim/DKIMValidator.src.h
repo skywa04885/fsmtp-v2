@@ -30,22 +30,22 @@
 using namespace FSMTP::Models;
 
 namespace FSMTP::DKIM {
-  typedef enum DKIMSignatureResultType {
+  enum DKIMSignatureResultType {
     DKIMSignatureValid, DKIMSignatureInvalid,
     DKIMSignatureSystemFailure, DKIMSignatureRecordNotFound
   };
 
-  typedef struct DKIMSignatureResult {
+  struct DKIMSignatureResult {
     DKIMSignatureResultType type;
     string details;
   };
 
-  typedef enum DKIMValidatorResultType {
+  enum DKIMValidatorResultType {
     DKIMValidationPass, DKIMValidationFail,
     DKIMValidationSystemError, DKIMValidationNeutral
   };
 
-  typedef struct DKIMValidatorResult {
+  struct DKIMValidatorResult {
     DKIMValidatorResultType type;
     string details;
   };

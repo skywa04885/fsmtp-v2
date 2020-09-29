@@ -28,13 +28,13 @@
 #define _FSMTP_DKIM_RECORD_FLAG_ALLOWED_SERVICE_EMAIL 16
 
 namespace FSMTP::DKIM {
-  typedef enum DKIMRecordVersion {
+  enum DKIMRecordVersion {
     RecordVersionDKIM1
   };
 
   const char *__dkimRecordVersionToString(DKIMRecordVersion v);
 
-  typedef enum DKIMRecordAlgorithm {
+  enum DKIMRecordAlgorithm {
     RecordAlgorithmRSA
   };
 

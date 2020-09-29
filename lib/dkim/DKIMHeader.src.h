@@ -21,20 +21,20 @@
 #include "../general/Logger.src.h"
 
 namespace FSMTP::DKIM {
-  typedef enum DKIMHeaderVersion {
+  enum DKIMHeaderVersion {
     HeaderVersionDKIM1
   };
 
   const char *__dkimHeaderVersionToString(DKIMHeaderVersion v);
 
-  typedef enum DKIMHeaderCanonAlgPair {
+  enum DKIMHeaderCanonAlgPair {
     RelaxedRelaxed, RelaxedSimple, SimpleRelaxed,
     SimpleSimple
   };
 
   const char *__dkimHeaderCanonAlgPairToString(DKIMHeaderCanonAlgPair a);
 
-  typedef enum DKIMHeaderAlgorithm {
+  enum DKIMHeaderAlgorithm {
     HeaderAlgoritmRSA_SHA256, HeaderAlgorithmRSA_SHA1
   };
 

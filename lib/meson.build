@@ -11,6 +11,7 @@ subdir('dns')
 subdir('spam')
 subdir('dmarc')
 subdir('spf')
+subdir('builders')
 
 sources += files (
   'default.cc'

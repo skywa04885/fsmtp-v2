@@ -43,6 +43,8 @@ namespace FSMTP::Networking {
 				if (!isNumber(seg) || segNumber < 0 || segNumber > 255) return false;
 			}
 			return true;
+		} else {
+			return true;
 		}
 	}
 
