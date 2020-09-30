@@ -37,26 +37,74 @@
 
 using namespace FSMTP::Models;
 
-namespace FSMTP::Server
-{
-	class SMTPServerSession
-	{
+namespace FSMTP::Server {
+	enum SMTPServerStorageTarget {
+		StorageTargetIncomming,
+		StorageTargetSent,
+		StorageTargetSpam
+	};
+	
+	struct SMTPServerStorageTask {
+		AccountShortcut account;
+		SMTPServerStorageTarget target;
+	};
+
+	struct SMTPServerRelayTask {
+		EmailAddress target;
+	};
+
+	class SMTPServerSession {
 	public:
-		explicit SMTPServerSession();
+		SMTPServerSession();
+
 		void setFlag(int64_t mask);
 		bool getFlag(int64_t mask);
+
 		void clearAction(int64_t mask);
 		void setAction(int64_t mask);
 		bool getAction(int64_t mask);
 
-		int32_t s_Flags;
-		int64_t s_PerformedActions;
-		FullEmail s_TransportMessage;
+		SMTPServerSession &addStorageTask(const SMTPServerStorageTask &task);
+		SMTPServerSession &addRelayTask(const SMTPServerRelayTask &task);
+		SMTPServerSession &addTransportTo(const EmailAddress &address);
+
+		const vector<SMTPServerStorageTask> &getStorageTasks();
+		const vector<SMTPServerRelayTask> &getRelayTasks();
+		const vector<EmailAddress> &getTransportTo();
+
+		SMTPServerSession &setTransformFrom(const EmailAddress &address);
+
+		const EmailAddress& getTransportFrom();
+
+		string &raw();
+
+		SMTPServerSession &setMessageID(const string &id);
+		SMTPServerSession &setSubject(const string &subject);
+		SMTPServerSession &setSnippet(const string &snippet);
+		SMTPServerSession &generateSnippet(const string &raw);
+
+		const string &getMessageID();
+		const string &getSubject();
+		const string &getSnippet();
 
 		AccountShortcut s_SendingAccount;
 		vector<AccountShortcut> s_StorageTasks;
 		vector<EmailAddress> s_RelayTasks;
 		string s_RawBody;
 		bool s_PossSpam;
+		FullEmail m_Message;
+
+		~SMTPServerSession();
+	private:
+		string m_MessageID, m_Subject, m_Snippet;
+		vector<EmailAddress> m_TransportTo;
+		EmailAddress m_TransportFrom;
+		uint64_t m_Date, m_Size;
+
+		vector<SMTPServerStorageTask> m_StorageTasks;
+		vector<SMTPServerRelayTask> m_RelayTasks;
+		int64_t m_PerformedActions;
+		int32_t m_Flags;
+		string m_Raw;
 	};
 }

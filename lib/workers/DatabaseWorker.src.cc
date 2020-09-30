@@ -53,7 +53,7 @@ namespace FSMTP::Workers
 			databaseQueue.pop_back();
 			databaseMutex.unlock();
 
-			auto &fullEmail = session->s_TransportMessage;
+			auto &fullEmail = session->m_Message;
 		
 			// Generates the email shortcut, this will be used
 			//  for quick message access in front-end applications

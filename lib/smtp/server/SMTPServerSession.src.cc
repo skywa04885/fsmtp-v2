@@ -19,33 +19,103 @@
 using namespace FSMTP::Server;
 
 SMTPServerSession::SMTPServerSession():
-	s_Flags(0x0), s_PerformedActions(0x0), s_PossSpam(false)
+	m_Flags(0x0), m_PerformedActions(0x0), s_PossSpam(false)
 {}
 
 void SMTPServerSession::setFlag(int64_t mask) {
-	this->s_Flags |= mask;
+	this->m_Flags |= mask;
 }
 
 bool SMTPServerSession::getFlag(int64_t mask) {
-	if (BINARY_COMPARE(this->s_Flags, mask)) {
-		return true;
-	} else {
-		return false;
-	}
+	if (BINARY_COMPARE(this->m_Flags, mask)) return true;
+	else return false;
 }
 
 void SMTPServerSession::setAction(int64_t mask) {
-	this->s_PerformedActions |= mask;
+	this->m_PerformedActions |= mask;
 }
 
 void SMTPServerSession::clearAction(int64_t mask) {
-	this->s_PerformedActions &= ~mask;
+	this->m_PerformedActions &= ~mask;
 }
 
 bool SMTPServerSession::getAction(int64_t mask) {
-	if (BINARY_COMPARE(this->s_PerformedActions, mask)) {
-		return true;
-	} else {
-		return false;
-	}
+	if (BINARY_COMPARE(this->m_PerformedActions, mask)) return true;
+	else return false;
 }
+
+SMTPServerSession &SMTPServerSession::addStorageTask(const SMTPServerStorageTask &task) {
+	this->m_StorageTasks.push_back(task);
+	return *this;
+}
+
+SMTPServerSession &SMTPServerSession::addRelayTask(const SMTPServerRelayTask &task) {
+	this->m_RelayTasks.push_back(task);
+	return *this;
+}
+
+SMTPServerSession &SMTPServerSession::addTransportTo(const EmailAddress &address) {
+	this->m_TransportTo.push_back(address);
+	return *this;
+}
+
+const vector<SMTPServerStorageTask> &SMTPServerSession::getStorageTasks() {
+	return this->m_StorageTasks;
+}
+
+const vector<SMTPServerRelayTask> &SMTPServerSession::getRelayTasks() {
+	return this->m_RelayTasks;
+}
+
+const vector<EmailAddress> &SMTPServerSession::getTransportTo() {
+	return this->m_TransportTo;
+}
+
+SMTPServerSession &SMTPServerSession::setTransformFrom(const EmailAddress &address) {
+	this->m_TransportFrom = address;
+	return *this;
+}
+
+const EmailAddress& SMTPServerSession::getTransportFrom() {
+	return this->m_TransportFrom;
+}
+
+string &SMTPServerSession::raw() {
+	return this->m_Raw;
+}
+
+SMTPServerSession &SMTPServerSession::setMessageID(const string &id) {
+	this->m_MessageID = id;
+	return *this;
+}
+
+SMTPServerSession &SMTPServerSession::setSubject(const string &subject) {
+	this->m_Subject = subject;
+	return *this;
+}
+
+SMTPServerSession &SMTPServerSession::setSnippet(const string &snippet) {
+	this->m_Snippet = snippet;
+	return *this;
+}
+
+SMTPServerSession &SMTPServerSession::generateSnippet(const string &raw) {
+	if (raw.length() > 128) this->m_Snippet = raw.substr(0, 128);
+	else this->m_Snippet = raw;
+	return *this;
+}
+
+const string &SMTPServerSession::getMessageID() {
+	return this->m_MessageID;
+}
+
+const string &SMTPServerSession::getSubject() {
+	return this->m_Subject;
+}
+
+const string &SMTPServerSession::getSnippet() {
+	return this->m_Snippet;
+}
+
+
+SMTPServerSession::~SMTPServerSession() = default;

@@ -45,110 +45,137 @@ namespace FSMTP::SMTP::Server::Handlers {
 		// Performs the security checks
 		// ========================================
 
-		// Creates the DMARC resolve query
-		string dmarcQuery = "_dmarc.";
-		dmarcQuery += session->s_TransportMessage.e_TransportFrom.getDomain();
+		map<string, string> authResults = {};
+		if (!session->getFlag(_SMTP_SERV_SESSION_AUTH_FLAG)) {
+			// Creates the DMARC resolve query
+			string dmarcQuery = "_dmarc.";
+			dmarcQuery += session->m_Message.e_TransportFrom.getDomain();
 
-		// Resolves the DMARC record, if this fails we set the
-		//  check dmarc false, so that we will not verify further 
-		//  actions on the system
-		DMARC::DMARCRecord dmarcRecord;
-		bool dmarcFound = false;
-		try {
-			dmarcRecord = DMARC::DMARCRecord::fromDNS(dmarcQuery.c_str());
-			dmarcFound = true;
-			DEBUG_ONLY(dmarcRecord.print(clogger));
-		} catch (const runtime_error &e) {
-			DEBUG_ONLY(clogger << ERROR << "Failed to resolve dmarc from query: '"
-				<< dmarcQuery << "', error: " << e.what() << ENDL << CLASSIC);
-		} catch (...) {
-			DEBUG_ONLY(clogger << ERROR << "Failed to resolve dmarc from query: '"
-				<< dmarcQuery << "', error unknown" << ENDL << CLASSIC);
-		}
+			// Resolves the DMARC record, if this fails we set the
+			//  check dmarc false, so that we will not verify further 
+			//  actions on the system
+			DMARC::DMARCRecord dmarcRecord;
+			bool dmarcFound = false;
+			try {
+				dmarcRecord = DMARC::DMARCRecord::fromDNS(dmarcQuery.c_str());
+				dmarcFound = true;
+				DEBUG_ONLY(dmarcRecord.print(clogger));
+			} catch (const runtime_error &e) {
+				DEBUG_ONLY(clogger << ERROR << "Failed to resolve dmarc from query: '"
+					<< dmarcQuery << "', error: " << e.what() << ENDL << CLASSIC);
+			} catch (...) {
+				DEBUG_ONLY(clogger << ERROR << "Failed to resolve dmarc from query: '"
+					<< dmarcQuery << "', error unknown" << ENDL << CLASSIC);
+			}
 
-		// Performs the SPF validation
-		SPF::SPFValidator spfValidator;
-		spfValidator.safeValidate(session->s_TransportMessage.e_TransportFrom.getDomain(), 
-			client->getPrefix());
+			// Performs the SPF validation
+			SPF::SPFValidator spfValidator;
+			spfValidator.safeValidate(session->getTransportFrom().getDomain(), client->getPrefix());
 
-		// Checks the outcome of the spf validation, and sets the SPF valid boolean
-		//  if the outcome is valid
-		bool spfValid;
-		switch (spfValidator.getResult().type) {
-			case SPF::SPFValidatorResultType::ResultTypeDenied:
-			case SPF::SPFValidatorResultType::ResultTypeSystemFailure:
-				DEBUG_ONLY(clogger << "Server not found in SPF records" << ENDL);
-				spfValid = false;
-				break;
-			case SPF::SPFValidatorResultType::ResultTypeAllowed:
-				DEBUG_ONLY(clogger << "Server found in SPF records" << ENDL);
-				spfValid = true;
-				break;
-		}
-
-		// Checks if the dmarc record exists, and if so check if the policy says
-		//  anything about how we should treat the message
-		bool dmarcSpfValid;
-		if (dmarcFound && !spfValid) {
-			switch (dmarcRecord.getPolicy()) {
-				case DMARC::DMARCPolicy::PolicyNone:
-					session->s_PossSpam = true;
-					dmarcSpfValid = true;
+			// Checks the outcome of the spf validation, and sets the SPF valid boolean
+			//  if the outcome is valid
+			bool spfValid;
+			switch (spfValidator.getResult().type) {
+				case SPF::SPFValidatorResultType::ResultTypeDenied:
+				case SPF::SPFValidatorResultType::ResultTypeSystemFailure:
+					DEBUG_ONLY(clogger << "Server not found in SPF records" << ENDL);
+					spfValid = false;
 					break;
-				case DMARC::DMARCPolicy::PolicyQuarantine:
-					session->s_PossSpam = true;
-					dmarcSpfValid = false;
+				case SPF::SPFValidatorResultType::ResultTypeAllowed:
+					DEBUG_ONLY(clogger << "Server found in SPF records" << ENDL);
+					spfValid = true;
 					break;
-				case DMARC::DMARCPolicy::PolicyReject: {
-					client->write(ServerResponse(SMTPResponseType::SRC_SPF_REJECT).build());
-					return true;
-					break;
+			}
+
+			// Checks if the dmarc record exists, and if so check if the policy says
+			//  anything about how we should treat the message
+			bool dmarcSpfValid;
+			if (dmarcFound && !spfValid) {
+				switch (dmarcRecord.getPolicy()) {
+					case DMARC::DMARCPolicy::PolicyNone:
+						session->s_PossSpam = true;
+						dmarcSpfValid = true;
+						break;
+					case DMARC::DMARCPolicy::PolicyQuarantine:
+						session->s_PossSpam = true;
+						dmarcSpfValid = false;
+						break;
+					case DMARC::DMARCPolicy::PolicyReject: {
+						client->write(ServerResponse(SMTPResponseType::SRC_SPF_REJECT).build());
+						return true;
+						break;
+					}
 				}
-			}
-		} else if (!spfValid && !dmarcFound) session->s_PossSpam = true;
-		else if(dmarcFound) dmarcSpfValid = true;
+			} else if (!spfValid && !dmarcFound) session->s_PossSpam = true;
+			else if(dmarcFound) dmarcSpfValid = true;
 
-		// Validates the DKIM record
-		DKIM::DKIMValidator dkimValidator;
-		dkimValidator.validate(session->s_RawBody);
+			// Validates the DKIM record
+			DKIM::DKIMValidator dkimValidator;
+			dkimValidator.validate(session->s_RawBody);
 
-		// Checks the result of the dkim validator, and prints it to
-		//  the console, while setting the valid boolean based on the result
-		bool dkimValid;
-		switch (dkimValidator.getResult().type) {
-			case DKIM::DKIMValidatorResultType::DKIMValidationPass:
-				DEBUG_ONLY(clogger << DEBUG << "Validator found one or more valid signatures" << ENDL << CLASSIC);
-				dkimValid = true;
-				break;
-			case DKIM::DKIMValidatorResultType::DKIMValidationNeutral:
-				DEBUG_ONLY(clogger << DEBUG << "Validator returned neutral" << ENDL << CLASSIC);
-				dkimValid = true;
-				break;
-			case DKIM::DKIMValidatorResultType::DKIMValidationSystemError:
-				DEBUG_ONLY(clogger << DEBUG << "An system error occured while validating DKIM" << ENDL << CLASSIC);
-				dkimValid = false;
-				break;
-			case DKIM::DKIMValidatorResultType::DKIMValidationFail:
-				DEBUG_ONLY(clogger << DEBUG << "All of the signatures are invalid" << ENDL << CLASSIC);
-				dkimValid = false;
-				break;
-		}
-
-		// Checks the result of the DKIM validator, and how we should
-		//  treat it according to the dmarc record
-		bool dmarcDkimValid;
-		if (dmarcFound && !dkimValid) {
-			switch (dmarcRecord.getPolicy()) {
-				case DMARC::DMARCPolicy::PolicyNone:
-					dmarcDkimValid = true;
+			// Checks the result of the dkim validator, and prints it to
+			//  the console, while setting the valid boolean based on the result
+			bool dkimValid;
+			switch (dkimValidator.getResult().type) {
+				case DKIM::DKIMValidatorResultType::DKIMValidationPass:
+					DEBUG_ONLY(clogger << DEBUG << "Validator found one or more valid signatures" << ENDL << CLASSIC);
+					dkimValid = true;
 					break;
-				// TODO: Make DKIM reliable to reject clients if this fails
-				case DMARC::DMARCPolicy::PolicyQuarantine:
-				case DMARC::DMARCPolicy::PolicyReject:
-					dmarcDkimValid = false;
+				case DKIM::DKIMValidatorResultType::DKIMValidationNeutral:
+					DEBUG_ONLY(clogger << DEBUG << "Validator returned neutral" << ENDL << CLASSIC);
+					dkimValid = true;
+					break;
+				case DKIM::DKIMValidatorResultType::DKIMValidationSystemError:
+					DEBUG_ONLY(clogger << DEBUG << "An system error occured while validating DKIM" << ENDL << CLASSIC);
+					dkimValid = false;
+					break;
+				case DKIM::DKIMValidatorResultType::DKIMValidationFail:
+					DEBUG_ONLY(clogger << DEBUG << "All of the signatures are invalid" << ENDL << CLASSIC);
+					dkimValid = false;
 					break;
 			}
-		} else if (dmarcFound) dmarcDkimValid = true;
+
+			// Checks the result of the DKIM validator, and how we should
+			//  treat it according to the dmarc record
+			bool dmarcDkimValid;
+			if (dmarcFound && !dkimValid) {
+				switch (dmarcRecord.getPolicy()) {
+					case DMARC::DMARCPolicy::PolicyNone:
+						dmarcDkimValid = true;
+						break;
+					// TODO: Make DKIM reliable to reject clients if this fails
+					case DMARC::DMARCPolicy::PolicyQuarantine:
+					case DMARC::DMARCPolicy::PolicyReject:
+						dmarcDkimValid = false;
+						break;
+				}
+			} else if (dmarcFound) dmarcDkimValid = true;
+
+
+			// Builds the dmarc result header value, this will not be generated
+			//  since the validation of dmarc happens here;
+			if (dmarcFound) {
+				// Prints the policy, subdomain policy and the query into the buffer
+				//  which will be inserted into the final headers
+				sprintf(buffer, "%s (p:%s sp:%s) query:%s", 
+					(!dmarcSpfValid || !dmarcDkimValid ? "fail" : "pass"), dmarcRecord.getPolicyString(),
+					dmarcRecord.getSubdomainPolicyString(), dmarcQuery.c_str());
+			} else {
+				// Prints that dmarc is neutral, since there was no record found
+				sprintf(buffer, "fail (no record found) query:%s", dmarcQuery.c_str());
+			}
+
+			// Builds the auth result header map, which will contain
+			//  some basic auth results
+			authResults.insert(make_pair("spf", spfValidator.getResultString()));
+			authResults.insert(make_pair("dkim", dkimValidator.getResultString()));
+			authResults.insert(make_pair("dmarc", buffer));
+
+			// Checks if the client was using using SU, if so add the SU
+			//  header to the authResults
+			if (session->getFlag(_SMTP_SERV_SESSION_SU))
+				authResults.insert(make_pair("su", "pass (to:" + client->getPrefix() + ")"));
+		} else authResults.insert(make_pair("auth", "pass"));
 
 		// ========================================
 		// Parses the headers from the message
@@ -171,39 +198,12 @@ namespace FSMTP::SMTP::Server::Handlers {
 		vector<string> joinedHeaders = Parsers::joinHeaders(headersBegin, headersEnd);
 
 		// ========================================
-		// Builds the su/dkim/dmarc/spf result
+		// Builds the headers
 		// ========================================
-
-		// Builds the dmarc result header value, this will not be generated
-		//  since the validation of dmarc happens here;
-
-		if (dmarcFound) {
-			// Prints the policy, subdomain policy and the query into the buffer
-			//  which will be inserted into the final headers
-			sprintf(buffer, "%s (p:%s sp:%s) query:%s", 
-				(!dmarcSpfValid || !dmarcDkimValid ? "fail" : "pass"), dmarcRecord.getPolicyString(),
-				dmarcRecord.getSubdomainPolicyString(), dmarcQuery.c_str());
-		} else {
-			// Prints that dmarc is neutral, since there was no record found
-			sprintf(buffer, "fail (no record found) query:%s", dmarcQuery.c_str());
-		}
-
-		// Builds the auth result header map, which will contain
-		//  some basic auth results
-		map<string, string> authResults = {
-			make_pair("spf", spfValidator.getResultString()),
-			make_pair("dkim", dkimValidator.getResultString()),
-			make_pair("dmarc", buffer)
-		};
 
 		// Inserts the auth header into the joined headers
 		//  vector, which will later be used to build message
 		joinedHeaders.push_back(Builders::buildHeaderFromSegments("X-Fannst-Auth", authResults));
-
-		// Checks if the client was using using SU, if so add the SU
-		//  header to the authResults
-		if (session->getFlag(_SMTP_SERV_SESSION_SU))
-			authResults.insert(make_pair("su", "pass (to:" + client->getPrefix() + ")"));
 
 		// ========================================
 		// Builds the default message headers
@@ -213,8 +213,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 		//  went through the FSMTP-V2 Server
 		joinedHeaders.push_back("Received: " + SMTP::Server::Headers::buildReceived(
 			DNS::getHostnameByAddress(client->getAddress()), client->getPrefix(),
-			session->s_TransportMessage.e_TransportFrom.e_Address,
-			spfValidator.getResultString(), client->getPort()
+			session->getTransportFrom().e_Address, client->getPort()
 		));
 
 		// ========================================
@@ -225,38 +224,41 @@ namespace FSMTP::SMTP::Server::Handlers {
 		//  in our own way
 		session->s_RawBody.clear();
 		for_each(joinedHeaders.begin(), joinedHeaders.end(), [&](const string &header) {
-			session->s_RawBody += Builders::foldHeader(header, 98) + "\r\n";
+			session->raw() += Builders::foldHeader(header, 98) + "\r\n";
 		});
 
 		// Appends the message body itself
-		session->s_RawBody += "\r\n\r\n" + Parsers::getStringFromLines(bodyBegin, bodyEnd);
+		session->raw() += "\r\n\r\n" + Parsers::getStringFromLines(bodyBegin, bodyEnd);
 		
 		// ========================================
 		// Parses the MIME message
 		// ========================================
 
-		// Parses the mime message into the final transport message
-		//  this will include things such as the subject, body etcetera
-		try {
-			Parsers::parseMIME(session->s_RawBody, session->s_TransportMessage);
-		} catch (...) {
-			throw SMTPSyntaxException(EXCEPT_DEBUG("Invalid MIME message"));
-		}
+		// Parses the MIME email, so we can later
+		//  start getting the content from it
+		FullEmail email;
+		Parsers::parseMIME(session->raw(), email);
 
-		// ========================================
-		// Adds the message to the specified queues
-		// ========================================
+		// Starts storing the basic values of the email inside of the current session
+		session->setMessageID(email.e_MessageID);
+		session->setSubject(email.e_Subject);
 
-		if (session->s_StorageTasks.size() > 0) Workers::DatabaseWorker::push(session);
-		if (session->s_RelayTasks.size() > 0) Workers::TransmissionWorker::push(session);
+		// Finds an useful section of the message body for the snippet
+		//  we want it to be text/plain
+		any_of(email.e_BodySections.begin(), email.e_BodySections.end(), [&](const EmailBodySection &b) {
+			if (b.e_Type == EmailContentType::ECT_TEXT_PLAIN) {
+				session->setSnippet(b.e_Content);
+				return false;
+			} else return true;
+		});
 
 		// ========================================
 		// Sends the response
 		// ========================================
 		
 		// Builds the server response message
-		sprintf(buffer, "%s %d bytes in %lf, %lf KB/sec queued for delivery.",
-			session->s_TransportMessage.e_MessageID.c_str(), session->s_RawBody.length(), 
+		sprintf(buffer, "%s %ld bytes in %lf, %lf KB/sec queued for delivery.",
+			session->getMessageID().c_str(), session->raw().length(), 
 			timeDifference, kbsec);
 
 		// Builds the server response, after which we immediately transfer

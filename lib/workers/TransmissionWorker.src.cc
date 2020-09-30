@@ -78,7 +78,7 @@ namespace FSMTP::Workers
 			//  we will send an error notice to the transmitters mailbox
 
 			auto &to = task->s_RelayTasks;
-			auto &from = task->s_TransportMessage.e_TransportFrom;
+			auto &from = task->m_Message.e_TransportFrom;
 			auto &content = task->s_RawBody;
 
 			try {

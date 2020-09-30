@@ -276,7 +276,6 @@ bool SMTPServer::handleCommand(
 		// Sets the senders address
 		// ========================================
 		case ClientCommandType::CCT_MAIL_FROM: {
-			auto &sessMess = session->s_TransportMessage;
 			auto &sendingAccount = session->s_SendingAccount;
 			EmailAddress from;
 
@@ -337,10 +336,10 @@ bool SMTPServer::handleCommand(
 			// Writes the proceed message to the client, which indicates that everything is fine
 			//  and we're ready for further transport
 			
-			sessMess.e_TransportFrom = from;
+			session->setTransformFrom(from);
 			ServerResponse response(
 				SMTPResponseType::SRC_MAIL_FROM, "",
-				reinterpret_cast<const void *>(sessMess.e_TransportFrom.e_Address.c_str()),
+				reinterpret_cast<const void *>(session->getTransportFrom().e_Address.c_str()),
 				nullptr
 			);
 			client->write(response.build());
@@ -425,10 +424,10 @@ bool SMTPServer::handleCommand(
 			);
 			client->write(response.build());
 
-			if (!relay) {
-				session->s_StorageTasks.push_back(receivingAccount);
-			} else {
-				session->s_RelayTasks.push_back(to);
+			if (!relay) session->addStorageTask(SMTPServerStorageTask {
+				receivingAccount, SMTPServerStorageTarget::StorageTargetIncomming});
+			else {
+				session->addRelayTask(SMTPServerRelayTask{ to });
 
 				// Checks if we've already set the relay flag, if this is the case
 				//  do nothing, else set the relay flag and push the sent email
@@ -485,6 +484,8 @@ bool SMTPServer::handleCommand(
 				sendResponse(SMTPResponseType::SRC_AUTH_FAIL);
 				return true;
 			} else {
+				session->addStorageTask(SMTPServerStorageTask { session->s_SendingAccount, 
+					SMTPServerStorageTarget::StorageTargetSent});
 				sendResponse(SMTPResponseType::SRC_AUTH_SUCCESS);
 			}
 			

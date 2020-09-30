@@ -32,6 +32,7 @@
 #include "../SMTPServerExceptions.src.h"
 
 using namespace FSMTP::Server;
+using namespace FSMTP::Sockets;
 
 namespace FSMTP::SMTP::Server::Handlers {
     bool dataHandler(

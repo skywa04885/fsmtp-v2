@@ -14,17 +14,14 @@
 	limitations under the License.
 */
 
-#ifndef _LIB_SMTP_SERVER_HEADERS_H
-#define _LIB_SMTP_SERVER_HEADERS_H
+#include "from.src.h"
 
-#include "../../default.h"
-#include "../../general/Global.src.h"
+namespace FSMTP::SMTP::Server::Handlers {
+    bool fromHandler(
+        shared_ptr<ClientSocket> client, 
+        shared_ptr<SMTPServerSession> session,
+        const ClientCommand &command
+    ) {
 
-namespace FSMTP::SMTP::Server::Headers {
-  string buildReceived(
-    const string &from, const string &fromAddr,
-    const string &mailFrom, int32_t port 
-  );
-};
-
-#endif
+    }
+}
