@@ -18,7 +18,7 @@
 #include "DatabaseWorker.src.h"
 
 mutex databaseMutex;
-vector<shared_ptr<SMTPServerSession>> databaseQueue;
+deque<shared_ptr<SMTPServerSession>> databaseQueue;
 
 namespace FSMTP::Workers
 {
@@ -43,7 +43,7 @@ namespace FSMTP::Workers
 	}
 
 	void DatabaseWorker::action(void *u) {
-		auto *cass = this->d_Cassandra.get();
+		auto *cassandra = this->d_Cassandra.get();
 		auto *redis = this->d_Redis.get();
 		auto &logger = this->w_Logger;
 
@@ -56,7 +56,10 @@ namespace FSMTP::Workers
 
 			// Checks if there are any emails we have to process
 			//  else just exit the worker action
-			if (databaseQueue.size() <= 0) break;
+			if (databaseQueue.size() <= 0) {
+				databaseMutex.unlock();
+				break;
+			}
 
 			// Gets the last task from the queue, and pops it from it
 			//  so we will not have to process it again
@@ -95,13 +98,46 @@ namespace FSMTP::Workers
 
 				// Increments the UID holder, and gets the UID for the current email
 				//  the UID holder keeps track of the unique id's
-				messageUID = UIDHolder::getAndIncrement(cass, redis, 
-					task.account.getBucket(), task.account.getDomain(), task.account.getUUID());
+				try {
+					messageUID = UIDHolder::getAndIncrement(cassandra, redis, 
+						task.account.getBucket(), task.account.getDomain(), task.account.getUUID());
+				} catch (const runtime_error &e) {
+					logger << ERROR << "Could not update/read UID, runtime error: " << e.what() << ENDL << CLASSIC;
+					return;
+				} catch (const DatabaseException &e) {
+					logger << ERROR << "Could not update/read UID, database exception: " << e.what() << ENDL << CLASSIC;
+					return;
+				} catch (...) {
+					logger << ERROR << "Could not update/read UID, error unknown" << ENDL << CLASSIC;
+					return;
+				}
+
+				// Increments the number of emails for the target mailbox
+				try {
+					MailboxStatus::addOneMessage(redis, cassandra, task.account.getBucket(),
+						task.account.getDomain(), task.account.getUUID(),
+						messageMailbox);
+				} catch (const runtime_error &e) {
+					logger << ERROR << "Could not update mailbox, runtime error: " << e.what() << ENDL << CLASSIC;
+					return;
+				} catch (const DatabaseException &e) {
+					logger << ERROR << "Could not update mailbox, database exception: " << e.what() << ENDL << CLASSIC;
+					return;
+				} catch (...) {
+					logger << ERROR << "Could not update mailbox, error unknown" << ENDL << CLASSIC;
+					return;
+				}
 
 				// Generates the bucket and TimeUUID for the current email
 				//  these will be used to quickly access each specified message
 				messageBucket = FullEmail::getBucket();
 				messageUUID = FullEmail::generateMessageUUID();
+
+				// Prints the message that we attempt to save one message
+				//  to the specified mailbox
+				DEBUG_ONLY(logger << DEBUG << "Saving message to mailbox: '" << 
+					messageMailbox << "', for user: '" << task.account.getUsername() << '@'
+					<< task.account.getDomain() << "'" << ENDL << CLASSIC);
 
 				// Creates the email shortcut, this will be used to quickly
 				//  list all the emails in the databse, without the real
@@ -113,93 +149,26 @@ namespace FSMTP::Workers
 
 				RawEmail raw(messageBucket, task.account.getDomain(), task.account.getUUID(),
 					messageUUID, session->raw());
+
+				// Saves the shortcut and the raw email to the database, if any error
+				//  occures we will just log the error, and proceed with the next one
+				try {
+					shortcut.save(cassandra);
+					raw.save(cassandra);
+				} catch (const runtime_error &e) {
+					logger << ERROR << "Could not store message, runtime error: " << e.what() << ENDL << CLASSIC;
+				} catch (const DatabaseException &e) {
+					logger << ERROR << "Could not store message, database exception: " << e.what() << ENDL << CLASSIC;
+				} catch (...) {
+					logger << ERROR << "Could not store message, unknown error" << ENDL << CLASSIC;
+				}
+
+				// Prints the final message to indicate that the message has been stored
+				//  and no errors occured
+				DEBUG_ONLY(logger << DEBUG << "Saved message to mailbox: '" << 
+					messageMailbox << "', for user: '" << task.account.getUsername() << '@'
+					<< task.account.getDomain() << "'" << ENDL << CLASSIC);
 			});
 		}
-
-		// while (databaseQueue.size() > 0) {
-		// 	databaseMutex.lock();
-		// 	auto session = databaseQueue.front();
-		// 	databaseQueue.pop_back();
-		// 	databaseMutex.unlock();
-
-		// 	auto &fullEmail = session->m_Message;
-		
-		// 	// Generates the email shortcut, this will be used
-		// 	//  for quick message access in front-end applications
-
-		// 	EmailShortcut shortcut;
-		// 	shortcut.e_Subject = fullEmail.e_Subject;
-		// 	shortcut.e_SizeOctets = session->s_RawBody.size();
-		// 	shortcut.e_From = fullEmail.e_From[0].toString();
-
-		// 	// Generates the raw message, this will be used
-		// 	//  for raw access, basically by all the apps, and will parse them.
-
-		// 	RawEmail raw;
-		// 	raw.e_Content = session->s_RawBody;
-
-		// 	// Checks if we can generate an preview, if the preview ends up empty
-		// 	//  we will put a 'No preview' string
-
-		// 	for (const EmailBodySection &section : fullEmail.e_BodySections) {
-		// 		if (section.e_Type == EmailContentType::ECT_TEXT_PLAIN) {
-		// 			shortcut.e_Preview = section.e_Content.substr(
-		// 				0,
-		// 				(section.e_Content.size() > 255 ? 255 : section.e_Content.size())
-		// 			);
-		// 		}
-		// 	}
-
-		// 	if (shortcut.e_Preview.empty()) {
-		// 		shortcut.e_Preview = "No preview available";
-		// 	}
-
-		// 	auto &username = session->s_SendingAccount.a_Username;
-		// 	auto &domain  = session->s_SendingAccount.a_Domain;
-		// 	if (username + '@' + domain	== fullEmail.e_TransportFrom.e_Address) {
-		// 		shortcut.e_Mailbox = "INBOX.Sent";
-		// 	} else if (!session->s_PossSpam) {
-		// 		shortcut.e_Mailbox = "INBOX";
-		// 	} else {
-		// 		shortcut.e_Mailbox = "INBOX.Spam";
-		// 	}
-
-		// 	// Updates the folder status, and gets the new
-		// 	//  uid, which will be stored in the shortcut. 
-		// 	//  the uid is used in POP3
-
-		// 	for_each(session->s_StorageTasks.begin(), session->s_StorageTasks.end(), [&](AccountShortcut &acc) {
-		// 		int64_t bucket = FullEmail::getBucket();
-		// 		CassUuid uuid = FullEmail::generateMessageUUID();
-
-		// 		shortcut.e_OwnersUUID = acc.a_UUID;
-		// 		shortcut.e_Domain = acc.a_Domain;
-		// 		shortcut.e_Bucket = bucket;
-		// 		shortcut.e_EmailUUID = uuid;
-
-		// 		raw.e_Domain = acc.a_Domain;
-		// 		raw.e_OwnersUUID = acc.a_UUID;
-		// 		raw.e_Bucket = bucket;
-		// 		raw.e_EmailUUID = uuid;
-				
-		// 		try {
-		// 			shortcut.e_UID = UIDHolder::getAndIncrement(
-		// 				cass, redis, acc.a_Bucket, acc.a_Domain, acc.a_UUID
-		// 			);
-		// 			MailboxStatus::addOneMessage(redis, cass, acc.a_Bucket, acc.a_Domain, acc.a_UUID, shortcut.e_Mailbox);
-
-		// 			raw.save(cass);
-		// 			shortcut.save(cass);
-		// 		} catch (const runtime_error &e) {
-		// 			logger << FATAL << "Could not store message: " << e.what() << ENDL << CLASSIC;
-		// 		} catch (const EmptyQuery &e) {
-		// 			logger << FATAL << "Could not store message: " << e.what() << ENDL << CLASSIC;
-		// 		} catch (const DatabaseException &e) {
-		// 			logger << FATAL << "Could not store message: " << e.what() << ENDL << CLASSIC;
-		// 		}
-
-		// 		DEBUG_ONLY(logger << DEBUG << "Stored 1 message !" << ENDL << CLASSIC);
-		// 	});
-		// }
 	}
 }

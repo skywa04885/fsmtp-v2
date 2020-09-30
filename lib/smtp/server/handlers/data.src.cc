@@ -49,7 +49,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 		if (!session->getFlag(_SMTP_SERV_SESSION_AUTH_FLAG)) {
 			// Creates the DMARC resolve query
 			string dmarcQuery = "_dmarc.";
-			dmarcQuery += session->m_Message.e_TransportFrom.getDomain();
+			dmarcQuery += session->getTransportFrom().getDomain();
 
 			// Resolves the DMARC record, if this fails we set the
 			//  check dmarc false, so that we will not verify further 
@@ -272,6 +272,9 @@ namespace FSMTP::SMTP::Server::Handlers {
 		// Builds the server response, after which we immediately transfer
 		//  the message to the client, to indicate that we're done
 		client->write(ServerResponse(SMTPResponseType::SRC_DATA_END, buffer, nullptr, nullptr).build());
+
+		if (session->getStorageTasks().size() > 0) Workers::DatabaseWorker::push(session);
+		if (session->getRelayTasks().size() > 0) Workers::TransmissionWorker::push(session);
 
 		return false;
 	}

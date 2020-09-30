@@ -28,7 +28,7 @@ namespace FSMTP::Workers
 	void TransmissionWorker::startupTask(void) {
 		auto &logger = this->w_Logger;
 
-		this->d_Connection = Global::getCassandra();
+		this->m_Cassandra = Global::getCassandra();
 		logger << _BASH_SUCCESS_MARK << "Connected to cassandra" << ENDL;
 	}
 
@@ -40,62 +40,136 @@ namespace FSMTP::Workers
 
 	static inja::Environment env;
 	static inja::Template errorTemplate = env.parse_template("../templates/mailer/error.html");
-	void TransmissionWorker::sendErrorsToSender(const SMTPClient &client) {
+	void TransmissionWorker::sendErrorsToSender(SMTPClient &client) {
+		// Builds the input data for the inja templating engine,
+		//  this will contain the errors the server captured
 		json data = json::object();
 		data["subject"] = "SMTP Delivery failure";
 		data["errors"] = client.s_ErrorLog;
 
+		// Renders the template, and stores the result into a
+		//  string
 		string result = env.render(errorTemplate, data);
 
+		// Creates the message composer config, this will be used to compose
+		//  the message, which will be transmitted to the sender
 		MailComposerConfig composeConfig;
 		composeConfig.m_BodySections.push_back(EmailBodySection {
 			result, EmailContentType::ECT_TEXT_HTML,
 			{}, 0, EmailTransferEncoding::ETE_QUOTED_PRINTABLE
 		});
-		composeConfig.m_From.push_back(EmailAddress(
-			"Delivery Subsystem", 
-			"delivery@fannst.nl"
-		));
+		composeConfig.m_From.push_back(EmailAddress("Delivery Subsystem",  "delivery@fannst.nl"));
 		composeConfig.m_To.push_back(client.s_MailFrom);
 		composeConfig.m_Subject = "SMTP Delivery failure";
-		
-		SMTPClient mailer(true);
-		mailer.prepare(composeConfig).beSocial();
+
+		// Resets the SMTPClient, prepares it and tells it to be social
+		client.reset().prepare(composeConfig).beSocial();
 	}
 
 	void TransmissionWorker::action(void *u) {
-		while (transmissionQueue.size() > 0) {
+		auto *cassandra = this->m_Cassandra.get();
+		auto &logger = this->w_Logger;
 
-			// Gets the first task in the list, the task will tell the
-			//  transmitter where to transmit the message to
+		for (;;) {
+			// ============================
+			// Gets the front of the queue
+			// ============================
 
-			queueMutex.lock();
-			shared_ptr<SMTPServerSession> task = transmissionQueue.front();
-			transmissionQueue.pop_front();
-			queueMutex.unlock();
+			queueMutex.lock(); // Locks the transmission mutex
 
-			// Attempts to send the message to the client/clients, if this fails
-			//  we will send an error notice to the transmitters mailbox
+			// Checks if there is anything to transmit, else just
+			//  exit the worker action and wait
+			if (transmissionQueue.size() <= 0) {
+				queueMutex.unlock();
+				break;
+			}
 
-			auto &to = task->s_RelayTasks;
-			auto &from = task->m_Message.e_TransportFrom;
-			auto &content = task->s_RawBody;
+			// Gets the last task from the queue, and pops it of it
+			//  so we will not have to process it again
+			shared_ptr<SMTPServerSession> session = transmissionQueue.back();
+			transmissionQueue.pop_back();
+
+			queueMutex.unlock(); // Unlocks the transmission queue mutex
+
+			// ============================
+			// Transmits the email
+			// ============================
 
 			try {
+				// Creates an SMTP client, if we're in debug
+				//  we will enable verbose
 				#ifdef _SMTP_DEBUG
-				SMTPClient client(false);
-				#else
 				SMTPClient client(true);
+				#else
+				SMTPClient client(false);
 				#endif
 
-				client.prepare(to, { from }, content).beSocial();
+				// Builds the vector of addresses we will transmit the
+				//  message to, this is required for the prepare method
+				vector<EmailAddress> to = {};
+				auto &tasks = session->getRelayTasks();
+				for_each(tasks.begin(), tasks.end(), [&](const SMTPServerRelayTask &task) {
+					to.push_back(task.target);
+				});
 
+				// Prints the debug message to the console, which will
+				//  tell that we're transmitting one message
+				DEBUG_ONLY(logger << DEBUG << "Transmitting message to " << to.size() << " targets .." 
+					<< ENDL << CLASSIC);
+
+				// Prepares the client for the message transmission, after which we tell
+				//  the client to be social, and talk to the servers
+				client.prepare(to, {
+					session->getTransportFrom()
+				}, session->raw()).beSocial();
+
+				// Checks if there were any errors, if so transmit an error message to the
+				//  sender, since he/she will otherwise not know something went wrong.
 				if (client.s_ErrorCount > 0) {
-					sendErrorsToSender(client);
+					DEBUG_ONLY(logger << ERROR << "Transmission failed, sending error message to sender .." << ENDL << CLASSIC);
+					this->sendErrorsToSender(client);
+				} else {
+					// Prints the debug message that we successfully transmitted to the clients
+					DEBUG_ONLY(logger << DEBUG << "Transmission to " << to.size() << " targets was successfull !" << ENDL << CLASSIC);
 				}
 			} catch (const runtime_error &e) {
-				this->w_Logger << FATAL << "Could not send email: " << e.what() << ENDL << CLASSIC;
+				logger << ERROR << "Failed send message, runtime error: " << e.what() << ENDL << CLASSIC;
+			} catch (...) {
+				logger << ERROR << "Failed send message, unknown error" << ENDL << CLASSIC;
 			}
 		}
+		// while (transmissionQueue.size() > 0) {
+
+		// 	// Gets the first task in the list, the task will tell the
+		// 	//  transmitter where to transmit the message to
+
+		// 	queueMutex.lock();
+		// 	shared_ptr<SMTPServerSession> task = transmissionQueue.front();
+		// 	transmissionQueue.pop_front();
+		// 	queueMutex.unlock();
+
+		// 	// Attempts to send the message to the client/clients, if this fails
+		// 	//  we will send an error notice to the transmitters mailbox
+
+		// 	auto &to = task->s_RelayTasks;
+		// 	auto &from = task->m_Message.e_TransportFrom;
+		// 	auto &content = task->s_RawBody;
+
+		// 	try {
+		// 		#ifdef _SMTP_DEBUG
+		// 		SMTPClient client(false);
+		// 		#else
+		// 		SMTPClient client(true);
+		// 		#endif
+
+		// 		client.prepare(to, { from }, content).beSocial();
+
+		// 		if (client.s_ErrorCount > 0) {
+		// 			sendErrorsToSender(client);
+		// 		}
+		// 	} catch (const runtime_error &e) {
+		// 		this->w_Logger << FATAL << "Could not send email: " << e.what() << ENDL << CLASSIC;
+		// 	}
+		// }
 	}
 }

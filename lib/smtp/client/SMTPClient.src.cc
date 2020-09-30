@@ -48,6 +48,8 @@ SMTPClient &SMTPClient::reset() {
 	this->s_ErrorLog.clear();
 	this->s_ErrorCount = 0;
 
+	this->s_Targets.clear();
+
 	return *this;
 }
 

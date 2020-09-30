@@ -39,9 +39,9 @@ namespace FSMTP::Workers
 		virtual void startupTask(void);
 		virtual void action(void *u);
 
-		static void sendErrorsToSender(const SMTPClient &client);
+		static void sendErrorsToSender(SMTPClient &client);
 		static void push(shared_ptr<SMTPServerSession> session);
 	private:
-		unique_ptr<CassandraConnection> d_Connection;
+		unique_ptr<CassandraConnection> m_Cassandra;
 	};
 }
