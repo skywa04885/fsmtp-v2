@@ -224,7 +224,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 		//  in our own way
 		session->s_RawBody.clear();
 		for_each(joinedHeaders.begin(), joinedHeaders.end(), [&](const string &header) {
-			session->raw() += Builders::foldHeader(header, 98) + "\r\n";
+			session->raw() += Builders::foldHeader(header, 198) + "\r\n";
 		});
 
 		// Appends the message body itself
@@ -251,6 +251,14 @@ namespace FSMTP::SMTP::Server::Handlers {
 				return false;
 			} else return true;
 		});
+
+		// ========================================
+		// Modifies targets if required
+		// ========================================
+
+		// If the message is classified as spam we will change
+		//  the INBOX targets to the SPAM targets
+		if (session->s_PossSpam) session->storageTasksToSpam();
 
 		// ========================================
 		// Sends the response

@@ -107,6 +107,11 @@ namespace FSMTP::Models
 			}
 		}
 
+		int64_t getBucket() const;
+		const string &getDomain() const;
+		const string &getUsername() const;
+		const CassUuid &getUUID() const;
+
 		int64_t a_Bucket;
 		string a_Domain;
 		string a_Username;

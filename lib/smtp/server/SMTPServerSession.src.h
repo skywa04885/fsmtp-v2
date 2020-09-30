@@ -64,6 +64,8 @@ namespace FSMTP::Server {
 		void setAction(int64_t mask);
 		bool getAction(int64_t mask);
 
+		SMTPServerSession &storageTasksToSpam();
+
 		SMTPServerSession &addStorageTask(const SMTPServerStorageTask &task);
 		SMTPServerSession &addRelayTask(const SMTPServerRelayTask &task);
 		SMTPServerSession &addTransportTo(const EmailAddress &address);

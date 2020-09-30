@@ -44,6 +44,15 @@ bool SMTPServerSession::getAction(int64_t mask) {
 	else return false;
 }
 
+SMTPServerSession &SMTPServerSession::storageTasksToSpam() {
+	for_each(this->m_StorageTasks.begin(), this->m_StorageTasks.end(), [](SMTPServerStorageTask &task) {
+		if (task.target == SMTPServerStorageTarget::StorageTargetIncomming)
+			task.target = SMTPServerStorageTarget::StorageTargetSpam;
+	});
+	
+	return *this;
+}
+
 SMTPServerSession &SMTPServerSession::addStorageTask(const SMTPServerStorageTask &task) {
 	this->m_StorageTasks.push_back(task);
 	return *this;

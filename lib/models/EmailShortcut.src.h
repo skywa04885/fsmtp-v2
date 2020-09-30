@@ -35,7 +35,10 @@ namespace FSMTP::Models
   class EmailShortcut
   {
   public:
-    explicit EmailShortcut(void);
+    EmailShortcut(void);
+    EmailShortcut(const string &domain, const string &subject, const string &preview, 
+      const string &from, const CassUuid &owner, const CassUuid &email, int32_t uid,
+      int32_t flags, int64_t bucket, const string &mailbox, int64_t size);
 
     void save(CassandraConnection *cassandra);
 

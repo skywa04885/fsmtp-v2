@@ -15,7 +15,7 @@
 */
 
 #include <catch2/catch.hpp>
-#include "../lib/networking/Address.src.h";
+#include "../lib/networking/Address.src.h"
 
 using FSMTP::Networking::addr_compare;
 using FSMTP::Networking::AddrType;

@@ -6,7 +6,6 @@ project(
 	]
 )
 
-lib_ncurses = dependency('ncurses')
 lib_openssl = dependency('openssl')
 lib_threads = dependency('threads')
 lib_hiredis = dependency('hiredis')
@@ -34,7 +33,6 @@ executable(
 	'fsmtp',
 	sources,
 	dependencies: [
-		lib_ncurses,
 		lib_openssl,
 		lib_cassandra,
 		lib_threads,
@@ -48,7 +46,6 @@ unit_tests = executable(
 	'unit_tests',
 	test_sources,
 	dependencies: [
-		lib_ncurses,
 		lib_openssl,
 		lib_cassandra,
 		lib_threads,

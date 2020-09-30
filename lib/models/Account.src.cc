@@ -388,4 +388,20 @@ namespace FSMTP::Models
       throw DatabaseException(message);
     }
   }
+
+	int64_t AccountShortcut::getBucket() const {
+		return this->a_Bucket;
+	}
+
+	const string &AccountShortcut::getDomain() const {
+		return this->a_Domain;
+	}
+
+	const string &AccountShortcut::getUsername() const {
+		return this->a_Username;
+	}
+
+	const CassUuid &AccountShortcut::getUUID() const {
+		return this->a_UUID;
+	}
 }

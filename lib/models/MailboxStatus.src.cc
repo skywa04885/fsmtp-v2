@@ -254,8 +254,6 @@ namespace FSMTP::Models
 		const CassUuid &uuid,
 		const string &mailboxPath
 	) {
-		int32_t retUID;
-
 		// Gets the old message status, and increments
 		//  the next uuid, the total, the recent and unseen
 		//  these are all effected when a new message is received 

@@ -25,7 +25,9 @@ using namespace FSMTP::Connections;
 namespace FSMTP::Models {
   class RawEmail {
   public:
-    explicit RawEmail();
+    RawEmail();
+    RawEmail(int64_t bucket, const string &domain, const CassUuid &owner,
+      const CassUuid &email, const string &content);
 
     void save(CassandraConnection *cassandra);
 

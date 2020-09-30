@@ -22,6 +22,16 @@ namespace FSMTP::Models
     e_Flags(0)
   {}
 
+  EmailShortcut::EmailShortcut(
+    const string &domain, const string &subject, const string &preview, 
+    const string &from, const CassUuid &owner, const CassUuid &email, int32_t uid,
+    int32_t flags, int64_t bucket, const string &mailbox, int64_t size
+  ):
+    e_Domain(domain), e_Subject(subject), e_Preview(preview),
+    e_From(from), e_OwnersUUID(owner), e_EmailUUID(email), e_UID(uid),
+    e_Flags(flags), e_Bucket(bucket), e_Mailbox(mailbox), e_SizeOctets(size)
+  {}
+
   void EmailShortcut::save(CassandraConnection *cassandra) {
     const char *query = R"(INSERT INTO fannst.email_shortcuts (
       e_domain, e_subject, e_preview,

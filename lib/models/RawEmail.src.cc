@@ -20,6 +20,14 @@ using namespace FSMTP::Models;
 
 RawEmail::RawEmail() {}
 
+RawEmail::RawEmail(
+  int64_t bucket, const string &domain, const CassUuid &owner,
+  const CassUuid &email, const string &content
+):
+  e_Bucket(bucket), e_Domain(domain), e_OwnersUUID(owner),
+  e_EmailUUID(email), e_Content(content)
+{}
+
 void RawEmail::save(CassandraConnection *cassandra) {
   const char *query = R"(INSERT INTO fannst.raw_emails (
     e_domain, e_bucket, e_owners_uuid,
