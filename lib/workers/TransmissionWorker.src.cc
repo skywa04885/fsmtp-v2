@@ -138,38 +138,5 @@ namespace FSMTP::Workers
 				logger << ERROR << "Failed send message, unknown error" << ENDL << CLASSIC;
 			}
 		}
-		// while (transmissionQueue.size() > 0) {
-
-		// 	// Gets the first task in the list, the task will tell the
-		// 	//  transmitter where to transmit the message to
-
-		// 	queueMutex.lock();
-		// 	shared_ptr<SMTPServerSession> task = transmissionQueue.front();
-		// 	transmissionQueue.pop_front();
-		// 	queueMutex.unlock();
-
-		// 	// Attempts to send the message to the client/clients, if this fails
-		// 	//  we will send an error notice to the transmitters mailbox
-
-		// 	auto &to = task->s_RelayTasks;
-		// 	auto &from = task->m_Message.e_TransportFrom;
-		// 	auto &content = task->s_RawBody;
-
-		// 	try {
-		// 		#ifdef _SMTP_DEBUG
-		// 		SMTPClient client(false);
-		// 		#else
-		// 		SMTPClient client(true);
-		// 		#endif
-
-		// 		client.prepare(to, { from }, content).beSocial();
-
-		// 		if (client.s_ErrorCount > 0) {
-		// 			sendErrorsToSender(client);
-		// 		}
-		// 	} catch (const runtime_error &e) {
-		// 		this->w_Logger << FATAL << "Could not send email: " << e.what() << ENDL << CLASSIC;
-		// 	}
-		// }
 	}
 }

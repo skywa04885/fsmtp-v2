@@ -83,11 +83,9 @@ namespace FSMTP
 				cout << endl << "Opdrachten: " << endl;
 				cout << "-h, -help: " << "\tPrint de lijst met beschikbare opdrachten." << endl;
 				cout << "-t, -test: " << "\tVoer tests uit op de vitale functies van de server, zoals database verbinding." << endl;
-				cout << "-s, -sync: " << "\tSynchroniseerd de redis database met die van cassandra" << endl;
 				cout << "-a, -adduser: " << "\tAdds an user to the database" << endl;
 				cout << "-d, -domainadd:" << "\tAdds an new domain." << endl;
 				cout << "-m, -mailtest: " << "\tSends an email." << endl;
-				cout << "-r, -run=type: " << "\tWelke server er gestart moet worden, 'smtp' of 'pop3'" << endl;
 
 				exit(0);
 			}

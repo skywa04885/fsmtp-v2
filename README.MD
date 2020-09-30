@@ -2,28 +2,31 @@
 
 # Fannst ESMTP Server Versie 2.0
 
-Een volledige SMTP / ESMTP Server, die binnen een korte
-periode ook ondersteuning heeft voor relaying en SMTP Authentication.
-Naast dit zal er ook een API bij komen, waarmee emails makkelijk verstuurd
-kunnen worden uit andere applicaties.
+Een volledige SMTP / ESMTP Server, met ondersteuning voor ESMTP Authenticatie, Relaying etcetera. Naast bevat FSMTP-V2 ook alle benodigde spam checks.
 
 ## Wat kan FSMTP nu ?
 
-1. Emails ontvangen, versturen met een STARTTLS verbinding
-1. Emails opslaan met RSA beveiliging per gebruiker
-1. Emails samen stellen, en versturen
-1. Emails parsen
-1. Communiceren met niet bekende ESMTP / SMTP Servers
-1. Communiceren met bijvoorbeeld Thunderbird en andere email clients
-1. Emails relayen vanaf een bestaand account, met authenticatie
-1. Emails versturen met een CLI
+1. Emails ontvangen, versturen en relayen
+1. Emails opslaan
+1. Emails samen stellen ( een MIME bericht )
+1. Emails uitlezen ( parsen )
+1. Emails verzenden naar onbekende systemen
+1. Emails ontvangen van onbekende systemen
+1. SPF validatie uitvoeren op berichten
+1. DKIM validatie uitvoeren op berichten, met RSA-SHA1 of RSA-SHA256, naast dat heeft deze functie ook ondersteuning voor deze canonicalization algoritmes ( Relaxed/Relaxed, Relaxed/Simple, Simple/Relaxed, Simple/Simple )
+1. DMARC validatie uitvoeren op berichten en spam emails behandelen zoals bescheven in DMARC record
+1. Accounts en domeinen toevoegen via de CLI
+1. Emails leveren aan clients via het POP3 protocol
+1. Emails ondertekeken met DKIM
+1. Verzend fouten terug rapporteren naar gebruiker
+1. Met meerdere threads berichten ontvangen
+1. POP3 en ESMTP verbindingen met SSL accepteren
+1. Het weigeren van berichten wanneer deze duidelijk niet van het domein vandaan komen die ze beweren
 
 ## Waar wordt aan gewerkt ?
 
 1. IMAP Server (IMAP4rev1)
-1. Uitbereiding van de ESMTP server
 1. Verbetering leesbaarheid code
-1. DNS Server, die ook DKIM sleutels dagelijks update
 
 ## Wat bibliotheken heb ik nodig ?
 
@@ -35,17 +38,6 @@ kunnen worden uit andere applicaties.
 1. JSONCPP [Github](https://github.com/open-source-parsers/jsoncpp)
 1. Catch2 [Github](https://github.com/catchorg/Catch2)
 
-## Hoe installeer ik het ?
-
-```bash
-sudo apt-get install meson ninja
-chmod +x ./install.sh
-./install.sh
-meson build && cd ./build
-ninja
-./fsmtp
-```
-
 ## Hoe gebruik ik het ?
 
 1. Maak een map genaamd env/keys
@@ -53,10 +45,6 @@ ninja
 1. Doe uw SSL sleutel erin met de naam 'key.pem'
 1. Plaats uw DKIM RSA-Keypair erin met de namen: 'dkim-private.pem', 'dkim-public.pem'
 1. Vergeet niet de publieke sleuten van uw DKIM keypair the plaatsen in uw DNS server onder de naam 'default.\_keyselector'
-
-```bash
-sudo ./fsmtp -n
-```
 
 Bij het gebruiken van de FSMTP server kunt u ook opdrachten meegeven, als u ```-h``` als argument toevoegd, kunt u het help menu zien, deze zal ik hieronder voor het gemak zetten:
 
@@ -67,10 +55,9 @@ sudo fsmtp [arguments]
 Opdrachten: 
 -h, -help: 	Print de lijst met beschikbare opdrachten.
 -t, -test: 	Voer tests uit op de vitale functies van de server, zoals database verbinding.
--s, -sync: 	Synchroniseerd de redis database met die van cassandra
--a, -adduser:	Adds an new user to the email server.
+-a, -adduser: 	Adds an user to the database
+-d, -domainadd:	Adds an new domain.
 -m, -mailtest: 	Sends an email.
--r, -run=type: 	Welke server er gestart moet worden, 'smtp' of 'pop3'
 ```
 
 ## Welke systemen werkt FSMTP-V2 mee ?
@@ -81,7 +68,6 @@ FSMTP-V2 is getest en werkt op deze diensten:
 1. Yahoo Mail
 1. Google Mail
 1. Andere ESMTP & SMTP Servers
-
 
 een voorbeeld van een ESMTP Conversatie ( intern, met FSMTP-V2 Extensions ):
 
