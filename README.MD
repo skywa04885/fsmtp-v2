@@ -38,6 +38,21 @@ Een volledige SMTP / ESMTP Server, met ondersteuning voor ESMTP Authenticatie, R
 1. JSONCPP [Github](https://github.com/open-source-parsers/jsoncpp)
 1. Catch2 [Github](https://github.com/catchorg/Catch2)
 
+## Welke Linux distributies zijn ondersteund ?
+
+1. Debian / Ubuntu / Ubuntu Server
+1. Arch / Manjaro
+
+## Hoe installeer ik het ?
+
+Voor uw gemak is hier een scriptje voor, die alles doet en zelfs de service aanmaakt.
+
+```bash
+git clone https://github.com/skywa04885/fsmtp-v2/
+sudo chmod +x ./install.sh
+./install.sh
+```
+
 ## Hoe gebruik ik het ?
 
 1. Maak een map genaamd env/keys
