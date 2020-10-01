@@ -1,6 +1,7 @@
 #!/bin/python3
 
 import platform
+import argparse
 from enum import Enum
 import sys
 import os
@@ -47,12 +48,13 @@ def install_dependencies(template):
 
 	if (template == InstallationTemplate.ArchLinux):
 		commands.append('pacman -Syyy');
-		commands.append('pacman -S meson ninja python python-pip gcc make cmake openssl')
+		commands.append('pacman -S meson ninja python python-pip gcc make cmake openssl pkg-config')
 	elif (template == InstallationTemplate.DebianLinux):
 		commands.append('apt-get update')
 		commands.append('apt-get upgrade')
-		commands.append('apt-get install ninja-build meson python3 python3-pip gcc make cmake')
+		commands.append('apt-get install ninja-build meson python3 python3-pip gcc make cmake openssl pkg-config')
 
+	commands.append('ldconfig')
 	commands.append('pip3 install pyOpenSSL cassandra-driver || pip install pyOpenSSL cassandra-driver')
 
 	print(f'[DEPENDENCIES] Starting execution of {len(commands)} commands')

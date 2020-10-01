@@ -21,27 +21,11 @@ namespace FSMTP::Server {
 		m_Flags(0x0), m_PerformedActions(0x0), m_PossibleSpam(false)
 	{}
 
-	void SMTPServerSession::setFlag(int64_t mask) {
-		this->m_Flags |= mask;
-	}
-
-	bool SMTPServerSession::getFlag(int64_t mask) {
-		if (BINARY_COMPARE(this->m_Flags, mask)) return true;
-		else return false;
-	}
-
-	void SMTPServerSession::setAction(int64_t mask) {
-		this->m_PerformedActions |= mask;
-	}
-
-	void SMTPServerSession::clearAction(int64_t mask) {
-		this->m_PerformedActions &= ~mask;
-	}
-
-	bool SMTPServerSession::getAction(int64_t mask) {
-		if (BINARY_COMPARE(this->m_PerformedActions, mask)) return true;
-		else return false;
-	}
+	void SMTPServerSession::setFlag(int64_t mask) { this->m_Flags |= mask; }
+	bool SMTPServerSession::getFlag(int64_t mask) { return BINARY_COMPARE(this->m_Flags, mask); }
+	void SMTPServerSession::setAction(int64_t mask) { this->m_PerformedActions |= mask; }
+	void SMTPServerSession::clearAction(int64_t mask) { this->m_PerformedActions &= ~mask; }
+	bool SMTPServerSession::getAction(int64_t mask) { return BINARY_COMPARE(this->m_PerformedActions, mask); }
 
 	SMTPServerSession &SMTPServerSession::storageTasksToSpam() {
 		for_each(this->m_StorageTasks.begin(), this->m_StorageTasks.end(), [](SMTPServerStorageTask &task) {
@@ -77,30 +61,17 @@ namespace FSMTP::Server {
 		return *this;
 	}
 
-	const vector<SMTPServerStorageTask> &SMTPServerSession::getStorageTasks() {
-		return this->m_StorageTasks;
-	}
-
-	const vector<SMTPServerRelayTask> &SMTPServerSession::getRelayTasks() {
-		return this->m_RelayTasks;
-	}
-
-	const vector<EmailAddress> &SMTPServerSession::getTransportTo() {
-		return this->m_TransportTo;
-	}
+	const vector<SMTPServerStorageTask> &SMTPServerSession::getStorageTasks() { return this->m_StorageTasks; }
+	const vector<SMTPServerRelayTask> &SMTPServerSession::getRelayTasks() { return this->m_RelayTasks; }
+	const vector<EmailAddress> &SMTPServerSession::getTransportTo() { return this->m_TransportTo; }
 
 	SMTPServerSession &SMTPServerSession::setTransformFrom(const EmailAddress &address) {
 		this->m_TransportFrom = address;
 		return *this;
 	}
 
-	const EmailAddress& SMTPServerSession::getTransportFrom() {
-		return this->m_TransportFrom;
-	}
-
-	string &SMTPServerSession::raw() {
-		return this->m_Raw;
-	}
+	const EmailAddress& SMTPServerSession::getTransportFrom() { return this->m_TransportFrom; }
+	string &SMTPServerSession::raw() { return this->m_Raw; }
 
 	XFannst::XFannstFlags &SMTPServerSession::xfannst() {
 		return this->m_XFannstFlags;
@@ -127,17 +98,9 @@ namespace FSMTP::Server {
 		return *this;
 	}
 
-	const string &SMTPServerSession::getMessageID() {
-		return this->m_MessageID;
-	}
-
-	const string &SMTPServerSession::getSubject() {
-		return this->m_Subject;
-	}
-
-	const string &SMTPServerSession::getSnippet() {
-		return this->m_Snippet;
-	}
+	const string &SMTPServerSession::getMessageID() { return this->m_MessageID; }
+	const string &SMTPServerSession::getSubject() { return this->m_Subject; }
+	const string &SMTPServerSession::getSnippet() { return this->m_Snippet; }
 
 	SMTPServerSession &SMTPServerSession::setPossibleSpam(bool v) {
 		this->m_PossibleSpam = v;
