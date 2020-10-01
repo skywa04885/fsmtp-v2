@@ -263,7 +263,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 		//  we want it to be text/plain
 		any_of(email.e_BodySections.begin(), email.e_BodySections.end(), [&](const EmailBodySection &b) {
 			if (b.e_Type == EmailContentType::ECT_TEXT_PLAIN) {
-				session->setSnippet(b.e_Content);
+				session->generateSnippet(b.e_Content);
 				return false;
 			} else return true;
 		});
