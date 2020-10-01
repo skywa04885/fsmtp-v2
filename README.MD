@@ -49,8 +49,8 @@ Voor uw gemak is hier een scriptje voor, die alles doet en zelfs de service aanm
 
 ```bash
 git clone https://github.com/skywa04885/fsmtp-v2/
-sudo chmod +x ./install.sh
-./install.sh
+sudo chmod +x ./install.py
+./install.py
 ```
 
 ## Hoe gebruik ik het ?
