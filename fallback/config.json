@@ -30,7 +30,7 @@
 	},
 	"ports": {
 		"smtp_plain": 25,
-		"smtp_secure": 587,
+		"smtp_secure": 465,
 		"imap_plain": 143,
 		"imap_secure": 993,
 		"pop3_plain": 110,
