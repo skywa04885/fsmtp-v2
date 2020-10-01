@@ -60,8 +60,8 @@ namespace FSMTP::POP3
 		auto &sslSocket = this->s_SSLSocket;
 		auto &plainSocket = this->s_PlainSocket;
 
-		int32_t securePort = conf["servers"]["pop3_secure"].asInt();
-		int32_t plainPort = conf["servers"]["pop3_plain"].asInt();
+		int32_t securePort = conf["ports"]["pop3_secure"].asInt();
+		int32_t plainPort = conf["ports"]["pop3_plain"].asInt();
 
 		sslSocket = make_unique<ServerSocket>();
 		plainSocket = make_unique<ServerSocket>();
