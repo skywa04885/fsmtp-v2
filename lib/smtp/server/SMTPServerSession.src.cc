@@ -19,7 +19,7 @@
 using namespace FSMTP::Server;
 
 SMTPServerSession::SMTPServerSession():
-	m_Flags(0x0), m_PerformedActions(0x0), s_PossSpam(false)
+	m_Flags(0x0), m_PerformedActions(0x0), m_PossibleSpam(false)
 {}
 
 void SMTPServerSession::setFlag(int64_t mask) {
@@ -126,5 +126,12 @@ const string &SMTPServerSession::getSnippet() {
 	return this->m_Snippet;
 }
 
+SMTPServerSession &SMTPServerSession::setPossibleSpam(bool v) {
+	this->m_PossibleSpam = v;
+}
+
+bool SMTPServerSession::getPossibleSpam() {
+	return this->m_PossibleSpam;
+}
 
 SMTPServerSession::~SMTPServerSession() = default;

@@ -430,11 +430,12 @@ bool SMTPServer::handleCommand(
 				session->addRelayTask(SMTPServerRelayTask{ to });
 
 				// Checks if we've already set the relay flag, if this is the case
-				//  do nothing, else set the relay flag and push the sent email
-				//  to the storage tasks
+				//  do nothing, when setting the relay flag we also add an storage
+				//  task for sent
 				if (!session->getFlag(_SMTP_SERV_SESSION_RELAY)) {
 					session->setFlag(_SMTP_SERV_SESSION_RELAY);
-					session->s_StorageTasks.push_back(session->s_SendingAccount);
+					session->addStorageTask(SMTPServerStorageTask { session->s_SendingAccount, 
+						SMTPServerStorageTarget::StorageTargetSent });
 				}
 			}
 
@@ -484,8 +485,6 @@ bool SMTPServer::handleCommand(
 				sendResponse(SMTPResponseType::SRC_AUTH_FAIL);
 				return true;
 			} else {
-				session->addStorageTask(SMTPServerStorageTask { session->s_SendingAccount, 
-					SMTPServerStorageTarget::StorageTargetSent});
 				sendResponse(SMTPResponseType::SRC_AUTH_SUCCESS);
 			}
 			

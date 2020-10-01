@@ -31,13 +31,13 @@ namespace FSMTP::SMTP::Server::Handlers {
 		// Reads the message from the socket, while storing the
 		//  start and end time, so we can calculate the speed
 		uint64_t start = duration_cast<microseconds>(high_resolution_clock::now().time_since_epoch()).count();
-		session->s_RawBody = client->readToDelim("\r\n.\r\n");
+		session->raw() = client->readToDelim("\r\n.\r\n");
 		uint64_t end = duration_cast<microseconds>(high_resolution_clock::now().time_since_epoch()).count();
 
 		// Calculates the time difference so we can calculate the speed
 		//  of transmission
 		double timeDifference = static_cast<double>(end - start) / 1000 / 1000;
-		double kbsec = static_cast<float>(session->s_RawBody.length()) / timeDifference;
+		double kbsec = static_cast<float>(session->raw().length()) / timeDifference;
 		DEBUG_ONLY(clogger << DEBUG << "MIME-Message received in " << timeDifference
 			<< " seconds, with " << kbsec << "kb/sec" << ENDL << CLASSIC);
 
@@ -93,11 +93,11 @@ namespace FSMTP::SMTP::Server::Handlers {
 			if (dmarcFound && !spfValid) {
 				switch (dmarcRecord.getPolicy()) {
 					case DMARC::DMARCPolicy::PolicyNone:
-						session->s_PossSpam = true;
+						session->setPossibleSpam(true);
 						dmarcSpfValid = true;
 						break;
 					case DMARC::DMARCPolicy::PolicyQuarantine:
-						session->s_PossSpam = true;
+						session->setPossibleSpam(true);
 						dmarcSpfValid = false;
 						break;
 					case DMARC::DMARCPolicy::PolicyReject: {
@@ -106,12 +106,12 @@ namespace FSMTP::SMTP::Server::Handlers {
 						break;
 					}
 				}
-			} else if (!spfValid && !dmarcFound) session->s_PossSpam = true;
+			} else if (!spfValid && !dmarcFound) session->setPossibleSpam(true);
 			else if(dmarcFound) dmarcSpfValid = true;
 
 			// Validates the DKIM record
 			DKIM::DKIMValidator dkimValidator;
-			dkimValidator.validate(session->s_RawBody);
+			dkimValidator.validate(session->raw());
 
 			// Checks the result of the dkim validator, and prints it to
 			//  the console, while setting the valid boolean based on the result
@@ -183,7 +183,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 
 		// Splits the raw body into lines, so we can perform
 		//  further processing on it later
-		vector<string> lines = Parsers::getMIMELines(session->s_RawBody);
+		vector<string> lines = Parsers::getMIMELines(session->raw());
 
 		// Splits the headers and the body, so we can append our
 		//  own headers to it
@@ -222,7 +222,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 
 		// Starts generating the folded headers, these will all be folded
 		//  in our own way
-		session->s_RawBody.clear();
+		session->raw().clear();
 		for_each(joinedHeaders.begin(), joinedHeaders.end(), [&](const string &header) {
 			session->raw() += Builders::foldHeader(header, 198) + "\r\n";
 		});
@@ -258,7 +258,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 
 		// If the message is classified as spam we will change
 		//  the INBOX targets to the SPAM targets
-		if (session->s_PossSpam) session->storageTasksToSpam();
+		if (session->getPossibleSpam()) session->storageTasksToSpam();
 
 		// ========================================
 		// Sends the response

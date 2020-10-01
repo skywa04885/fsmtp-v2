@@ -89,12 +89,11 @@ namespace FSMTP::Server {
 		const string &getSubject();
 		const string &getSnippet();
 
+		SMTPServerSession &setPossibleSpam(bool v);
+
+		bool getPossibleSpam();
+
 		AccountShortcut s_SendingAccount;
-		vector<AccountShortcut> s_StorageTasks;
-		vector<EmailAddress> s_RelayTasks;
-		string s_RawBody;
-		bool s_PossSpam;
-		FullEmail m_Message;
 
 		~SMTPServerSession();
 	private:
@@ -108,5 +107,6 @@ namespace FSMTP::Server {
 		int64_t m_PerformedActions;
 		int32_t m_Flags;
 		string m_Raw;
+		bool m_PossibleSpam;
 	};
 }
