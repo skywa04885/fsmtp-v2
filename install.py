@@ -47,7 +47,7 @@ def install_dependencies(template):
 
 	if (template == InstallationTemplate.ArchLinux):
 		commands.append('pacman -Syyy');
-		commands.append('pacman -S meson ninja python python-pip gcc make cmake')
+		commands.append('pacman -S meson ninja python python-pip gcc make cmake openssl')
 	elif (template == InstallationTemplate.DebianLinux):
 		commands.append('apt-get update')
 		commands.append('apt-get upgrade')
