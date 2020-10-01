@@ -117,5 +117,5 @@ WantedBy=multi-user.target"""
 with open('/lib/systemd/system/fsmtp.service', 'w+') as f:
 	f.write(service)
 
-os.system('systemd daemon-reload')
+os.system('systemctl daemon-reload')
 os.system('systemctl enable fsmtp && systemctl start fsmtp')
