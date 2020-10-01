@@ -19,6 +19,7 @@
 #include "../../default.h"
 #include "../../models/Email.src.h"
 #include "../../models/Account.src.h"
+#include "../../xfannst/XFannstFlags.src.h"
 
 #define _SMTP_SERV_SESSION_AUTH_FLAG 1
 #define _SMTP_SERV_SESSION_SSL_FLAG 2
@@ -65,6 +66,7 @@ namespace FSMTP::Server {
 		bool getAction(int64_t mask);
 
 		SMTPServerSession &storageTasksToSpam();
+		SMTPServerSession &removeSentTasks();
 
 		SMTPServerSession &addStorageTask(const SMTPServerStorageTask &task);
 		SMTPServerSession &addRelayTask(const SMTPServerRelayTask &task);
@@ -79,6 +81,7 @@ namespace FSMTP::Server {
 		const EmailAddress& getTransportFrom();
 
 		string &raw();
+		XFannst::XFannstFlags &xfannst();
 
 		SMTPServerSession &setMessageID(const string &id);
 		SMTPServerSession &setSubject(const string &subject);
@@ -97,6 +100,7 @@ namespace FSMTP::Server {
 
 		~SMTPServerSession();
 	private:
+		XFannst::XFannstFlags m_XFannstFlags;
 		string m_MessageID, m_Subject, m_Snippet;
 		vector<EmailAddress> m_TransportTo;
 		EmailAddress m_TransportFrom;
@@ -105,8 +109,8 @@ namespace FSMTP::Server {
 		vector<SMTPServerStorageTask> m_StorageTasks;
 		vector<SMTPServerRelayTask> m_RelayTasks;
 		int64_t m_PerformedActions;
+		bool m_PossibleSpam;
 		int32_t m_Flags;
 		string m_Raw;
-		bool m_PossibleSpam;
 	};
 }

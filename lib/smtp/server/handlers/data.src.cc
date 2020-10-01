@@ -238,6 +238,22 @@ namespace FSMTP::SMTP::Server::Handlers {
 		//  start getting the content from it
 		FullEmail email;
 		Parsers::parseMIME(session->raw(), email);
+		for_each(email.e_Headers.begin(), email.e_Headers.end(), [&](const EmailHeader &header) {
+			string lower = header.e_Key;
+			transform(lower.begin(), lower.end(), lower.begin(), [](const char c) { return tolower(c); });
+
+			if (lower == "x-fannst-flags") {
+				try {
+					DEBUG_ONLY(clogger << DEBUG << "Found 'X-Fannst-Flags' header, parsing .." << ENDL << CLASSIC);
+					session->xfannst().parse(header.e_Value);
+					DEBUG_ONLY(session->xfannst().print(clogger));
+				} catch (const runtime_error &e) {
+					clogger << ERROR << "Parsing failed for 'X-Fannst-Flags', runtime_error: " << e.what() << ENDL << CLASSIC;
+				} catch (...) {
+					clogger << ERROR << "Parsing failed for 'X-Fannst-Flags', error unknown" << ENDL << CLASSIC;
+				}
+			}
+		});
 
 		// Starts storing the basic values of the email inside of the current session
 		session->setMessageID(email.e_MessageID);
@@ -259,6 +275,10 @@ namespace FSMTP::SMTP::Server::Handlers {
 		// If the message is classified as spam we will change
 		//  the INBOX targets to the SPAM targets
 		if (session->getPossibleSpam()) session->storageTasksToSpam();
+
+		// Checks if the fannst flags state we should not store the
+		//  message as sent, if so remove the Sent target from the storage tasks
+		if (session->xfannst().getNoStore()) session->removeSentTasks();
 
 		// ========================================
 		// Sends the response

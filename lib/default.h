@@ -143,4 +143,6 @@ private: string err; \
 
 #define FATAL_ERROR(A) std::cerr << "\033[32m" << __LINE__ << '@' << __FILE__ << "\033[31m" << ": " << A << "\033[0m" << std::endl
 
+#define _BV(A) (1 << A)
+
 #endif

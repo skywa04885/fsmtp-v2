@@ -101,7 +101,6 @@ namespace FSMTP {
 
 
 					oss << this->l_Stream.str();
-					Logger::saveToDisk(oss.str());
 
 					if (a == LoggerOpts::FLUSH)
 						cout << oss.str() << flush;

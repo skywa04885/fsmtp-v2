@@ -12,6 +12,7 @@ subdir('spam')
 subdir('dmarc')
 subdir('spf')
 subdir('builders')
+subdir('xfannst')
 
 sources += files (
   'default.cc'

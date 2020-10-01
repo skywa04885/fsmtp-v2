@@ -126,8 +126,12 @@ namespace FSMTP::Workers
 				// Checks if there were any errors, if so transmit an error message to the
 				//  sender, since he/she will otherwise not know something went wrong.
 				if (client.s_ErrorCount > 0) {
-					DEBUG_ONLY(logger << ERROR << "Transmission failed, sending error message to sender .." << ENDL << CLASSIC);
-					this->sendErrorsToSender(client);
+					if (!session->xfannst().getNoError()) {
+						DEBUG_ONLY(logger << ERROR << "Transmission failed, sending error message to sender .." << ENDL << CLASSIC);
+						this->sendErrorsToSender(client);
+					} else {
+						DEBUG_ONLY(logger << ERROR << "Transmission failed, sending no error message since 'nerror' flag is set" << ENDL << CLASSIC);
+					}
 				} else {
 					// Prints the debug message that we successfully transmitted to the clients
 					DEBUG_ONLY(logger << DEBUG << "Transmission to " << to.size() << " targets was successfull !" << ENDL << CLASSIC);
