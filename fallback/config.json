@@ -19,16 +19,6 @@
 		"dkim_public": "../env/keys/dkim-public.pem",
 		"dkim_private": "../env/keys/dkim-private.pem"
 	},
-	"servers": {
-		"esmtp": {
-			"secure": 465,
-			"plain": 25
-		},
-		"pop3": {
-			"secure": 995,
-			"plain": 110
-		}
-	},
 	"smtp": {
 		"client": {
 			"mailer_port": 25,
@@ -38,36 +28,13 @@
 			"domain": "smtp.fannst.nl"
 		}
 	},
-	"zone": [
-		{
-			"domain": "fannst.nl",
-			"admin": "luke.rieff@gmail.com",
-			"records": {
-				"a": [
-					{
-						"record_data": "86.89.30.158",
-						"record_root": "@",
-						"record_ttl": 100
-					}
-				],
-				"mx": [
-					{
-						"record_data": "smtp.fannst.nl",
-						"record_root": "@",
-						"record_ttl": 100
-					}
-				]
-			}
-		}
-	],
 	"ports": {
 		"smtp_plain": 25,
 		"smtp_secure": 587,
 		"imap_plain": 143,
 		"imap_secure": 993,
 		"pop3_plain": 110,
-		"pop3_secure": 995,
-		"dns_gen": 53
+		"pop3_secure": 995
 	},
 	"sockets": {
 		"queue_max": 400

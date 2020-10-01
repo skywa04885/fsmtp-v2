@@ -60,16 +60,16 @@ namespace FSMTP::POP3
 		auto &sslSocket = this->s_SSLSocket;
 		auto &plainSocket = this->s_PlainSocket;
 
-		int32_t securePort = conf["servers"]["pop3"]["secure"].asInt();
-		int32_t plainPort = conf["servers"]["pop3"]["plain"].asInt();
+		int32_t securePort = conf["servers"]["pop3_secure"].asInt();
+		int32_t plainPort = conf["servers"]["pop3_plain"].asInt();
 
 		sslSocket = make_unique<ServerSocket>();
 		plainSocket = make_unique<ServerSocket>();
 
-		sslSocket->queue(250).useSSL(sslCtx.get()).listenServer(995);
-		plainSocket->queue(250).listenServer(110);
-
-		logger << "listening on SSL:" << securePort << ", PLAIN:" << plainPort << ENDL;
+		logger << "Creating sockets { SSL: " << securePort << ", Plain: " << plainPort << " }" << ENDL;
+		sslSocket->queue(250).useSSL(sslCtx.get()).listenServer(securePort);
+		plainSocket->queue(250).listenServer(plainPort);
+		logger << "Listening on { SSL: " << securePort << ", Plain: " << plainPort << " }" << ENDL;
 
 		return *this;
 	}

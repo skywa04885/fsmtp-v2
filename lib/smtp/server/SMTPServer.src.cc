@@ -70,16 +70,16 @@ SMTPServer &SMTPServer::listenServer() {
 	auto &sslSocket = this->s_SSLSocket;
 	auto &plainSocket = this->s_PlainSocket;
 
-	int32_t sslPort = config["servers"]["esmtp"]["secure"].asInt();
-	int32_t plainPort = config["servers"]["esmtp"]["plain"].asInt();
+	int32_t sslPort = config["ports"]["smtp_secure"].asInt();
+	int32_t plainPort = config["ports"]["smtp_plain"].asInt();
 
 	sslSocket = make_unique<ServerSocket>();
 	plainSocket = make_unique<ServerSocket>();
 
+	logger << "Creating sockets { SSL: " << sslPort << ", Plain: " << plainPort << " }" << ENDL;
 	sslSocket->queue(250).useSSL(this->s_SSLContext.get()).listenServer(sslPort);
 	plainSocket->queue(250).listenServer(plainPort);
-
-	logger << "listening on SSL:" << sslPort << ", PLAIN:" << plainPort << ENDL;
+	logger << "Listening on { SSL: " << sslPort << ", Plain: " << plainPort << " }" << ENDL;
 
 	return *this;
 }

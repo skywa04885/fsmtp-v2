@@ -11,7 +11,7 @@ from OpenSSL import crypto, SSL
 config = {
     'email_address': 'someone@example.com',
     'common_name': 'example.com',
-    'country_name': 'Country',
+    'country_name': 'CN',
     'locality_name': 'Locality',
     'state_name': 'State',
     'organization_name': 'Organization',
@@ -19,8 +19,8 @@ config = {
     'serial_number': 0,
     'validity_start_in_seconds': 0,
     'validity_end_in_seconds': 10 * 365 * 24 * 60 * 60,
-    'cert_out': '../env/keys/cert.pem',
-    'key_out': '../env/keys/key.pem'
+    'cert_out': './env/keys/cert.pem',
+    'key_out': './env/keys/key.pem'
 }
 
 # Generates the key

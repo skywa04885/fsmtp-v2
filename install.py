@@ -64,6 +64,7 @@ def install_dependencies(template):
 def install():
 	commands = list()
 
+	commands.append('mkdir -p env && mkdir -p env/keys')
 	commands.append('python ./initdb.py')
 	commands.append('python ./gencert.py')
 
