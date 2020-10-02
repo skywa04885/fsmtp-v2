@@ -109,7 +109,8 @@ namespace FSMTP::DKIM {
 
 		// Appends the presign signature to the final headers
 		//  so we can start signing them
-		string headers = Parsers::getStringFromLines(headersBegin, headersEnd);
+		vector<string> joinedHeaders = Parsers::joinHeaders(headersBegin, headersEnd);
+		string headers = Parsers::getStringFromLines(joinedHeaders.begin(), joinedHeaders.end());
 		headers += presignSignature;
 
 		// ==============================

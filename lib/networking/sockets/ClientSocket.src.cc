@@ -168,7 +168,6 @@ string ClientSocket::readToDelim(const char *delim, size_t maxSize) {
 
     searchString.append(buffer, readLen);
     if ((searchIndex = searchString.find(delim)) != string::npos) {
-      cout << "end" << endl;
       endFound = true;
     }
 
