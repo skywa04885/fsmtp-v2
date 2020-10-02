@@ -63,7 +63,9 @@ namespace FSMTP::DKIM {
 			.setDomain(this->m_Config.domain)
 			.setHeaders(this->m_Config.headerFilter)
 			.setHeaderAlgo(this->m_Config.signAlgorithm)
-			.setCanonAlgoPair(this->m_Config.algorithmPair);
+			.setCanonAlgoPair(this->m_Config.algorithmPair)
+			.setSignDate(this->m_Config.signTime)
+			.setExpireDate(this->m_Config.expireTime);
 
 		// Since the result headers have been set, we can now insert
 		//  the dkim record in the allowed headers, since we do not want

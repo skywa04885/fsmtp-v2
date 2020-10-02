@@ -42,7 +42,8 @@ namespace FSMTP::DKIM {
 	DKIMHeader::DKIMHeader():
 		m_Version(DKIMHeaderVersion::HeaderVersionDKIM1),
 		m_CanonAlgoPair(DKIMHeaderCanonAlgPair::RelaxedRelaxed),
-		m_HeaderAlgorithm(DKIMHeaderAlgorithm::HeaderAlgoritmRSA_SHA256)
+		m_HeaderAlgorithm(DKIMHeaderAlgorithm::HeaderAlgoritmRSA_SHA256),
+		m_ExpireDate(0), m_SignDate(0)
 	{}
 
 	DKIMHeader &DKIMHeader::parse(const string &raw) {
@@ -120,6 +121,12 @@ namespace FSMTP::DKIM {
 				this->m_Signature = val;
 			} else if (key == "h") {
 				parseHeaders(val);
+			} else if (key == "x") {
+				try { this->m_ExpireDate = stol(val); }
+				catch (...) { this->m_ExpireDate = 0; }
+			} else if (key == "t") {
+				try { this->m_SignDate = stol(val); }
+				catch (...) { this->m_SignDate = 0; }
 			}
 		});
 
@@ -189,17 +196,31 @@ namespace FSMTP::DKIM {
     DKIMHeader &DKIMHeader::setHeaderAlgo(const DKIMHeaderAlgorithm &algo)
     { this->m_HeaderAlgorithm = algo; return *this; }
 
+	DKIMHeader &DKIMHeader::setExpireDate(int64_t t)
+	{ this->m_ExpireDate = t; return *this; }
+    
+	DKIMHeader &DKIMHeader::setSignDate(int64_t t)
+	{ this->m_SignDate = t; return *this; }
+
     string DKIMHeader::build() const {
-    	return Builders::buildHeaderFromSegments("DKIM-Signature", {
+		vector<pair<string, string>> values = {
     		make_pair("v", __dkimHeaderVersionToString(this->m_Version)),
     		make_pair("s", this->m_KeySelector),
 			make_pair("h", this->getHeaderString()),
     		make_pair("d", this->m_Domain),
     		make_pair("c", __dkimHeaderCanonAlgPairToString(this->m_CanonAlgoPair)),
-    		make_pair("a", __dkimHeaderAlgToString(this->m_HeaderAlgorithm)),
-    		make_pair("bh", this->m_BodyHash),
-    		make_pair("b", this->m_Signature)
-    	});
+    		make_pair("a", __dkimHeaderAlgToString(this->m_HeaderAlgorithm))
+		};
+
+		if (this->m_ExpireDate != 0 && this->m_SignDate != 0) {
+			values.push_back(make_pair("t", to_string(this->m_SignDate)));
+			values.push_back(make_pair("x", to_string(this->m_ExpireDate)));
+		}
+
+		values.push_back(make_pair("bh", this->m_BodyHash));
+		values.push_back(make_pair("b", this->m_Signature));
+
+    	return Builders::buildHeaderFromSegments("DKIM-Signature", values);
     }
 
 	DKIMHeader &DKIMHeader::print(Logger &logger) {
@@ -213,6 +234,8 @@ namespace FSMTP::DKIM {
 		logger << "\tKey selector: " << this->m_KeySelector << ENDL;
 		logger << "\tBody hash: " << this->m_BodyHash << ENDL;
 		logger << "\tSignature: " << this->m_Signature << ENDL;
+		logger << "\tSign date: " << this->m_SignDate << ENDL;
+		logger << "\tExpire date: " << this->m_ExpireDate << ENDL;
 		logger << ENDL;
 		logger << "\tHeaders: " << ENDL;
 		size_t i = 0;

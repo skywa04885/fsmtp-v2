@@ -69,6 +69,8 @@ namespace FSMTP::DKIM {
     DKIMHeader &setHeaders(const vector<string> &headers);
     DKIMHeader &setCanonAlgoPair(const DKIMHeaderCanonAlgPair &canonAlgo);
     DKIMHeader &setHeaderAlgo(const DKIMHeaderAlgorithm &algo);
+    DKIMHeader &setExpireDate(int64_t t);
+    DKIMHeader &setSignDate(int64_t t);
 
     string build() const;
 
@@ -79,6 +81,7 @@ namespace FSMTP::DKIM {
     DKIMHeaderVersion m_Version;
     DKIMHeaderCanonAlgPair m_CanonAlgoPair;
     DKIMHeaderAlgorithm m_HeaderAlgorithm;
+    int64_t m_ExpireDate, m_SignDate;
   };
 }
 

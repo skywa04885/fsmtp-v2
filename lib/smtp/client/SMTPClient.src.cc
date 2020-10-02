@@ -28,7 +28,7 @@ SMTPClient &SMTPClient::sign(const string &message) {
 
 	// Gets the current time so that we can set the signing
 	//  expire and sign date
-	uint64_t now = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();
+	int64_t now = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();
 
 	// Prepares the signer, by setting the default parameters
 	//  which will be used in the signing process
