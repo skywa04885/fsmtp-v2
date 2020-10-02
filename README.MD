@@ -6,6 +6,7 @@ Een volledige SMTP / ESMTP Server, met ondersteuning voor ESMTP Authenticatie, R
 
 ## Wat kan FSMTP nu ?
 
+1. IPv6 en IPv4 ondersteuning
 1. Emails ontvangen, versturen en relayen
 1. Emails opslaan
 1. Emails samen stellen ( een MIME bericht )
