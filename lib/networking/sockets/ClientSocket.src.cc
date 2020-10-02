@@ -199,7 +199,7 @@ string ClientSocket::getPrefix() {
     }
     case SocketAddrType::SockAddrType_IPv6: {
       char buffer[INET6_ADDRSTRLEN];
-      if (inet_ntop(AF_INET, &this->m_IPv6Addr.sin6_addr, buffer, sizeof (buffer)) == nullptr)
+      if (inet_ntop(AF_INET6, &this->m_IPv6Addr.sin6_addr, buffer, sizeof (buffer)) == nullptr)
         throw runtime_error(EXCEPT_DEBUG(string("inet_ntop() failed: ") + strerror(errno)));
       return buffer;
     }
