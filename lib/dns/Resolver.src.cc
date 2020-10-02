@@ -139,14 +139,6 @@ namespace FSMTP::DNS {
 		return inet_ntoa(*p);
 	}
 
-	string getHostnameByAddress(const struct sockaddr_in *a) {
-		char hostname[512];
-		getnameinfo(reinterpret_cast<const struct sockaddr *>(a), 
-			sizeof (struct sockaddr), hostname,
-			sizeof (hostname), nullptr, 0, NI_NAMEREQD);
-		return hostname;
-	}
-
 	vector<string> resolveAllFromHostname(const string &hostname) {
 		vector<string> result = {};
 

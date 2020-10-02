@@ -44,8 +44,7 @@ namespace FSMTP::POP3
 	private:
 		unique_ptr<RedisConnection> s_Redis;
 		unique_ptr<CassandraConnection> s_Cassandra;
-		unique_ptr<ServerSocket> s_SSLSocket;
-		unique_ptr<ServerSocket> s_PlainSocket;
+		unique_ptr<ServerSocket> s_SSLSocket, s_PlainSocket;
 		unique_ptr<SSLContext> s_SSLContext;
 		Logger s_Logger;
 		atomic<bool> s_Run;

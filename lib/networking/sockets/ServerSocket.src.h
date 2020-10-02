@@ -23,9 +23,15 @@
 #include "ClientSocket.src.h"
 
 namespace FSMTP::Sockets {
+  enum ServerSocketAddrType {
+    ServerSocketAddr_IPv6,
+    ServerSocketAddr_IPv4
+  };
+
   class ServerSocket {
   public:
     ServerSocket() noexcept;
+    ServerSocket(ServerSocketAddrType type);
     ~ServerSocket() noexcept;
 
     ServerSocket &useSSL(SSLContext *sslCtx);
@@ -34,8 +40,13 @@ namespace FSMTP::Sockets {
     ServerSocket &handler(function<void(shared_ptr<ClientSocket>)> callback);
     ServerSocket &startAcceptor(const bool newThread);
   private:
+    union {
+      struct sockaddr_in m_IPv4Addr;
+      struct sockaddr_in6 m_IPv6Addr;
+    };
+
+    ServerSocketAddrType m_Type;
     SSLContext *s_SSLContext;
-    struct sockaddr_in s_SocketAddr;
     int32_t s_SocketFD, s_QueueLen;
     function<void(shared_ptr<ClientSocket>)> s_Callback;
   };

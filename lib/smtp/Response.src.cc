@@ -96,8 +96,7 @@ string ServerResponse::getMessage(const SMTPResponseType c_Type) {
 			break;
 		case SMTPResponseType::SRC_SU_ACC:
 			stream << "Access granted for ";
-			stream << DNS::getHostnameByAddress(reinterpret_cast<const struct sockaddr_in *>(this->c_U));
-			stream << " [" << inet_ntoa(reinterpret_cast<const struct sockaddr_in *>(this->c_U)->sin_addr) << ']';
+			stream << reinterpret_cast<const char *>(this->c_U);
 			break;
 		case SMTPResponseType::SRC_SU_DENIED:
 			stream << "Access denied, closing transmission channel.";
@@ -123,8 +122,7 @@ string ServerResponse::getMessage(const SMTPResponseType c_Type) {
 		case SMTPResponseType::SRC_HELO:
 		case SMTPResponseType::SRC_EHLO: {
 			stream << conf["smtp"]["server"]["domain"].asCString() << ", at your service ";
-			stream << DNS::getHostnameByAddress(reinterpret_cast<const struct sockaddr_in *>(this->c_U));
-			stream << " [" << inet_ntoa(reinterpret_cast<const struct sockaddr_in *>(this->c_U)->sin_addr) << ']';
+			stream << reinterpret_cast<const char *>(this->c_U);
 			break;
 		}
 		case SMTPResponseType::SRC_MAIL_FROM:

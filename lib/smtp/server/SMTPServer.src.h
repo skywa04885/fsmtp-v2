@@ -64,8 +64,7 @@ namespace FSMTP::Server
 		vector<SMTPServiceFunction> s_PlainServices;
 		vector<SMTPServiceFunction> s_SecureServices;
 	private:
-		unique_ptr<ServerSocket> s_SSLSocket;
-		unique_ptr<ServerSocket> s_PlainSocket;
+		unique_ptr<ServerSocket> s_SSLSocket, s_PlainSocket;
 		unique_ptr<SSLContext> s_SSLContext;
 		unique_ptr<CassandraConnection> s_Cassandra;
 		unique_ptr<RedisConnection> s_Redis;

@@ -212,7 +212,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 		// Generates the received header, this will indicate that the message
 		//  went through the FSMTP-V2 Server
 		joinedHeaders.push_back("Received: " + SMTP::Server::Headers::buildReceived(
-			DNS::getHostnameByAddress(client->getAddress()), client->getPrefix(),
+			client->getReverseLookup(), client->getPrefix(),
 			session->getTransportFrom().e_Address, client->getPort()
 		));
 

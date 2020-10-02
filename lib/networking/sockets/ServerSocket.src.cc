@@ -19,7 +19,11 @@
 using namespace FSMTP::Sockets;
 
 ServerSocket::ServerSocket() noexcept:
-  s_SSLContext(nullptr)
+  s_SSLContext(nullptr), m_Type(ServerSocketAddrType::ServerSocketAddr_IPv4)
+{}
+
+ServerSocket::ServerSocket(ServerSocketAddrType type):
+  s_SSLContext(nullptr), m_Type(type)
 {}
 
 ServerSocket::~ServerSocket() noexcept {
@@ -37,31 +41,72 @@ ServerSocket &ServerSocket::queue(const int32_t queueLen) {
 }
 
 ServerSocket &ServerSocket::listenServer(const int32_t port) {
-  int32_t flag;
   int32_t &fd = this->s_SocketFD;
-  struct sockaddr_in &addr = this->s_SocketAddr;
+  int32_t flag;
 
-  fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if (fd == -1) {
-    throw runtime_error(EXCEPT_DEBUG(strerror(errno)));
+  // Creates the socket FD with either AF_INET or AF_INET6
+  int32_t type = 0;
+  switch (this->m_Type) {
+    case ServerSocketAddrType::ServerSocketAddr_IPv4: type = AF_INET; break;
+    case ServerSocketAddrType::ServerSocketAddr_IPv6: type = AF_INET6; break;
+    default: throw runtime_error(EXCEPT_DEBUG("Invalid address enum"));
+  }
+  fd = socket(type, SOCK_STREAM, IPPROTO_TCP);
+  if (fd == -1)
+    throw runtime_error(EXCEPT_DEBUG(
+      string("Could not creat esocket: ") + strerror(errno)));
+
+  // Prepares the server socket address for listening
+  //  we will set stuff like the port here
+  switch (this->m_Type) {
+    case ServerSocketAddrType::ServerSocketAddr_IPv4:
+      memset(&this->m_IPv4Addr, 0, sizeof (struct sockaddr_in));
+      this->m_IPv4Addr.sin_family = AF_INET;
+      this->m_IPv4Addr.sin_port = htons(port);
+      this->m_IPv4Addr.sin_addr.s_addr = INADDR_ANY;
+      break;
+    case ServerSocketAddrType::ServerSocketAddr_IPv6:
+      memset(&this->m_IPv6Addr, 0, sizeof (struct sockaddr_in6));
+      this->m_IPv6Addr.sin6_family = AF_INET6;
+      this->m_IPv6Addr.sin6_port = htons(port);
+      this->m_IPv6Addr.sin6_addr = in6addr_any;
+      break;
+    default: throw runtime_error(EXCEPT_DEBUG("Invalid address enum"));
   }
 
+  // Sets the reuse address flag, so we may re-use existing addresses
   flag = 1;
-  if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<char *>(&flag), sizeof(flag)) == -1) {
-    throw runtime_error(EXCEPT_DEBUG(strerror(errno)));
+  if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<char *>(&flag), sizeof(flag)) == -1)
+    throw runtime_error(EXCEPT_DEBUG(
+      string("setsockopt(SO_REUSEADDR) failed: ") + strerror(errno)));
+
+  // Gets the struct sockaddr * variable, we also get the length
+  //  of the structure, required for binding
+  struct sockaddr *addr = nullptr;
+  socklen_t len = 0;
+  switch (this->m_Type) {
+    case ServerSocketAddrType::ServerSocketAddr_IPv4:
+      addr = reinterpret_cast<struct sockaddr *>(&this->m_IPv4Addr);
+      len = sizeof(struct sockaddr_in);
+      break;
+    case ServerSocketAddrType::ServerSocketAddr_IPv6:
+      addr = reinterpret_cast<struct sockaddr *>(&this->m_IPv6Addr);
+      len = sizeof(struct sockaddr_in6);
+      break;
+    default: throw runtime_error(EXCEPT_DEBUG("Invalid address enum"));
   }
 
-  memset(&addr, 0, sizeof (addr));
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(port);
-  addr.sin_addr.s_addr = INADDR_ANY;
+  // Binds the socket, after which we check if any error occured
+  //  if so we will throw the error
+  if (bind(fd, addr, len) == -1)
+    throw runtime_error(EXCEPT_DEBUG(
+      string("bind() failed: ") + strerror(errno)));
 
-  if (bind(fd, reinterpret_cast<struct sockaddr *>(&addr), sizeof (struct sockaddr)) == -1) {
-    throw runtime_error(EXCEPT_DEBUG(strerror(errno)));
-  } else if (listen(fd, this->s_QueueLen) == -1) {
-    throw runtime_error(EXCEPT_DEBUG(strerror(errno)));
-  }
-
+  // Listens the socket, and throws an error if this fails
+  if (listen(fd, this->s_QueueLen) == -1)
+    throw runtime_error(EXCEPT_DEBUG(
+      string("listen() failed: ") + strerror(errno)));
+  
   return *this;
 }
 
@@ -74,8 +119,20 @@ ServerSocket &ServerSocket::startAcceptor(const bool newThread)
 {
   auto acceptor = [&]() {
     for (;;) {
-      shared_ptr<ClientSocket> client = make_shared<ClientSocket>();
+      shared_ptr<ClientSocket> client;
 
+      // Creates the client based uppon the ip address type we're using
+      //  currently only IPv4 and IPv6
+      switch (this->m_Type) {
+        case ServerSocketAddrType::ServerSocketAddr_IPv4:
+          client = make_shared<ClientSocket>(SocketAddrType::SockAddrType_IPv4); break;
+        case ServerSocketAddrType::ServerSocketAddr_IPv6:
+          client = make_shared<ClientSocket>(SocketAddrType::SockAddrType_IPv6); break;
+        default: throw runtime_error("Invalid address enum");
+      }
+      
+      // Starts accepting an socket to the just created
+      //  client socket
       try {
         client->acceptAsServer(this->s_SocketFD);
         if (this->s_SSLContext) {

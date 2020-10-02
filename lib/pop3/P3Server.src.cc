@@ -54,22 +54,40 @@ namespace FSMTP::POP3
 	}
 
 	P3Server &P3Server::listenServer() {
-		auto &conf = Global::getConfig();
+		auto &config = Global::getConfig();
 		auto &sslCtx = this->s_SSLContext;
 		auto &logger = this->s_Logger;
 		auto &sslSocket = this->s_SSLSocket;
 		auto &plainSocket = this->s_PlainSocket;
 
-		int32_t securePort = conf["ports"]["pop3_secure"].asInt();
-		int32_t plainPort = conf["ports"]["pop3_plain"].asInt();
+		int32_t securePort = config["ports"]["pop3_secure"].asInt();
+		int32_t plainPort = config["ports"]["pop3_plain"].asInt();
 
-		sslSocket = make_unique<ServerSocket>();
-		plainSocket = make_unique<ServerSocket>();
+		// ==============================
+		// Creates the IPv4 listeners
+		// ==============================
 
-		logger << "Creating sockets { SSL: " << securePort << ", Plain: " << plainPort << " }" << ENDL;
-		sslSocket->queue(250).useSSL(sslCtx.get()).listenServer(securePort);
-		plainSocket->queue(250).listenServer(plainPort);
-		logger << "Listening on { SSL: " << securePort << ", Plain: " << plainPort << " }" << ENDL;
+		if (!config["ipv6"].asBool()) {
+			sslSocket = make_unique<ServerSocket>(ServerSocketAddrType::ServerSocketAddr_IPv4);
+			plainSocket = make_unique<ServerSocket>(ServerSocketAddrType::ServerSocketAddr_IPv4);
+
+			sslSocket->queue(250).useSSL(sslCtx.get()).listenServer(securePort);
+			plainSocket->queue(250).listenServer(plainPort);
+			logger << "IPv4 Listening on { SSL: " << securePort << ", Plain: " << plainPort << " }" << ENDL;
+		}
+
+		// ==============================
+		// Creates the IPv6 listeners
+		// ==============================
+
+		if (config["ipv6"].asBool()) {
+			sslSocket = make_unique<ServerSocket>(ServerSocketAddrType::ServerSocketAddr_IPv6);
+			plainSocket = make_unique<ServerSocket>(ServerSocketAddrType::ServerSocketAddr_IPv6);
+		
+			sslSocket->queue(250).useSSL(sslCtx.get()).listenServer(securePort);
+			plainSocket->queue(250).listenServer(plainPort);
+			logger << "IPv6 Listening on { SSL: " << securePort << ", Plain: " << plainPort << " }" << ENDL;
+		}
 
 		return *this;
 	}
@@ -80,10 +98,11 @@ namespace FSMTP::POP3
 			Logger clogger("POP3:" + client->getPrefix(), LoggerLevel::DEBUG);
 			DEBUG_ONLY(clogger << "Client connected" << ENDL);
 
+			string hostname = client->getReverseLookup();
 			client->write(P3Response(
 				true, POP3ResponseType::PRT_GREETING, 
 				"", nullptr, nullptr,
-				reinterpret_cast<void *>(client->getAddress())
+				reinterpret_cast<const void *>(hostname.c_str())
 			).build());
 			
 
@@ -171,13 +190,8 @@ namespace FSMTP::POP3
 			}
 		};
 
-		if (!newThread) {
-			this->s_SSLSocket->handler(handler).startAcceptor(true);
-			this->s_PlainSocket->handler(handler).startAcceptor(false);
-		} else {
-			this->s_SSLSocket->handler(handler).startAcceptor(true);
-			this->s_PlainSocket->handler(handler).startAcceptor(true);
-		}
+		this->s_SSLSocket->handler(handler).startAcceptor(true);
+		this->s_PlainSocket->handler(handler).startAcceptor(newThread);
 
 		return *this;
 	}
@@ -283,12 +297,7 @@ namespace FSMTP::POP3
 			// =========================================
 			case POP3CommandType::PCT_STLS:
 			{
-				client->write(P3Response(
-					true,
-					POP3ResponseType::PRT_STLS_START,
-					"", nullptr, nullptr,
-					reinterpret_cast<void *>(client->getAddress())
-				).build());
+				client->write(P3Response(true, POP3ResponseType::PRT_STLS_START).build());
 				clogger << "Upgrading to STARTTLS" << ENDL;
 				client->useSSL(this->s_SSLContext.get()).upgradeAsServer();
 				clogger << "Upgraded to STARTTLS" << ENDL;

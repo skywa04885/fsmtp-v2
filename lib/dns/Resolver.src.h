@@ -58,7 +58,15 @@ namespace FSMTP::DNS {
 	};
 
 	string resolveHostname(const string &hostname);
-	string getHostnameByAddress(const struct sockaddr_in *a);
+	
+	template<typename T>
+	string getHostnameByAddress(const T *a) {
+		char hostname[512];
+		getnameinfo(reinterpret_cast<const struct sockaddr *>(a), 
+			sizeof (T), hostname,
+			sizeof (hostname), nullptr, 0, NI_NAMEREQD);
+		return hostname;
+	}
 	vector<string> resolveAllFromHostname(const string &hostname);
 }
 

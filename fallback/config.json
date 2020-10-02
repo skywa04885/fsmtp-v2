@@ -38,5 +38,6 @@
 	},
 	"sockets": {
 		"queue_max": 400
-	}
+	},
+	"ipv6": true
 }

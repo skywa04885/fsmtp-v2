@@ -73,21 +73,38 @@ SMTPServer &SMTPServer::listenServer() {
 	int32_t sslPort = config["ports"]["smtp_secure"].asInt();
 	int32_t plainPort = config["ports"]["smtp_plain"].asInt();
 
-	sslSocket = make_unique<ServerSocket>();
-	plainSocket = make_unique<ServerSocket>();
+	// ==============================
+	// Creates the IPv4 listeners
+	// ==============================
 
-	logger << "Creating sockets { SSL: " << sslPort << ", Plain: " << plainPort << " }" << ENDL;
-	sslSocket->queue(250).useSSL(this->s_SSLContext.get()).listenServer(sslPort);
-	plainSocket->queue(250).listenServer(plainPort);
-	logger << "Listening on { SSL: " << sslPort << ", Plain: " << plainPort << " }" << ENDL;
+	if (!config["ipv6"].asBool()) {
+		sslSocket = make_unique<ServerSocket>(ServerSocketAddrType::ServerSocketAddr_IPv4);
+		plainSocket = make_unique<ServerSocket>(ServerSocketAddrType::ServerSocketAddr_IPv4);
+
+		sslSocket->queue(250).useSSL(this->s_SSLContext.get()).listenServer(sslPort);
+		plainSocket->queue(250).listenServer(plainPort);
+		logger << "IPv4 Listening on { SSL: " << sslPort << ", Plain: " << plainPort << " }" << ENDL;
+	}
+
+	// ==============================
+	// Creates the IPv6 listeners
+	// ==============================
+
+	if (config["ipv6"].asBool()) {
+		sslSocket = make_unique<ServerSocket>(ServerSocketAddrType::ServerSocketAddr_IPv6);
+		plainSocket = make_unique<ServerSocket>(ServerSocketAddrType::ServerSocketAddr_IPv6);
+
+		sslSocket->queue(250).useSSL(this->s_SSLContext.get()).listenServer(sslPort);
+		plainSocket->queue(250).listenServer(plainPort);
+		logger << "IPv6 Listening on { SSL: " << sslPort << ", Plain: " << plainPort << " }" << ENDL;
+	}
 
 	return *this;
 }
 
 SMTPServer &SMTPServer::startHandler(const bool newThread) {
+	auto &config = Global::getConfig();
 	auto &logger = this->s_Logger;
-	auto &sslSocket = this->s_SSLSocket;
-	auto &plainSocket = this->s_PlainSocket;
 
 	auto handler = [&](shared_ptr<ClientSocket> client) {
 		DEBUG_ONLY(size_t start = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count());
@@ -158,15 +175,10 @@ SMTPServer &SMTPServer::startHandler(const bool newThread) {
 	//  separate ones
 
 	logger << "handlers started" << ENDL;
-	
-	if (!newThread) {
-		sslSocket->handler(handler).startAcceptor(true);
-		plainSocket->handler(handler).startAcceptor(false);
-	} else {
-		sslSocket->handler(handler).startAcceptor(true);
-		plainSocket->handler(handler).startAcceptor(true);
-	}
 
+	this->s_SSLSocket->handler(handler).startAcceptor(true);
+	this->s_PlainSocket->handler(handler).startAcceptor(newThread);
+	
 	return *this;
 }
 
@@ -216,9 +228,10 @@ bool SMTPServer::handleCommand(
 			}
 
 			string prefix = client->getPrefix();
+			string hostname = client->getReverseLookup();
 			ServerResponse response(
 				SMTPResponseType::SRC_HELO, "",
-				reinterpret_cast<const void *>(client->getAddress()), nullptr
+				reinterpret_cast<const void *>(hostname.c_str()), nullptr
 			);
 			client->write(response.build());
 
@@ -238,10 +251,11 @@ bool SMTPServer::handleCommand(
 			}
 
 			string prefix = client->getPrefix();
+			string hostname = client->getReverseLookup();
 			ServerResponse response(
 				SMTPResponseType::SRC_EHLO,
 				"",
-				reinterpret_cast<const void *>(client->getAddress()),
+				reinterpret_cast<const void *>(hostname.c_str()),
 				(client->usingSSL() ? &this->s_SecureServices : &this->s_PlainServices)
 			);
 			client->write(response.build());
@@ -546,9 +560,10 @@ bool SMTPServer::handleCommand(
 
 			// Writes the greeting to our comrade, and grants
 			//  full SMTP access.
+			string hostname = client->getReverseLookup();
 			ServerResponse response(
 				SMTPResponseType::SRC_SU_ACC, "", 
-				reinterpret_cast<const void *>(client->getAddress()), nullptr
+				reinterpret_cast<const void *>(hostname.c_str()), nullptr
 			);
 			client->write(response.build());
 			session->setFlag(_SMTP_SERV_SESSION_SU);

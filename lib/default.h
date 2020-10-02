@@ -62,6 +62,7 @@
 #include <assert.h>
 #include <sys/sysinfo.h>
 #include <sys/ioctl.h>
+#include <unistd.h>
 
 // ==== Using namespaces ====
 using namespace std;

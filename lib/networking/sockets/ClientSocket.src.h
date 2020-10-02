@@ -19,11 +19,23 @@
 
 #include "../../default.h"
 #include "./SSLContext.src.h"
+#include "../../dns/Resolver.src.h"
 
 namespace FSMTP::Sockets {
+  union __SockAddrReturnP {
+    struct sockaddr_in *ipv4;
+    struct sockaddr_in6 *ipv6;
+  };
+
+  enum SocketAddrType {
+    SockAddrType_IPv6,
+    SockAddrType_IPv4
+  };
+
   class ClientSocket {
   public:
     ClientSocket() noexcept;
+    ClientSocket(SocketAddrType type) noexcept;
     ~ClientSocket() noexcept;
 
     ClientSocket &upgradeAsServer();
@@ -33,7 +45,9 @@ namespace FSMTP::Sockets {
     ClientSocket &connectAsClient(const char *host, const int32_t port);
     ClientSocket &timeout(const int32_t s);
     string getPrefix();
-    struct sockaddr_in *getAddress();
+    string getReverseLookup();
+    string getString();
+    __SockAddrReturnP getAddress();
     int32_t write(const char *msg, const size_t len);
     int32_t write(const std::string &msg);
     string readToDelim(const char *delim);
@@ -42,7 +56,13 @@ namespace FSMTP::Sockets {
     int32_t getPort();
     bool usingSSL();
   private:
-    struct sockaddr_in s_SocketAddr;
+    union {
+      struct sockaddr_in6 m_IPv6Addr;
+      struct sockaddr_in m_IPv4Addr;
+    };
+
+    SocketAddrType m_Type;
+
     SSLContext *s_SSLCtx;
     SSL *s_SSL;
     int32_t s_SocketFD;
