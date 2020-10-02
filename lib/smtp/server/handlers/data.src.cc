@@ -258,6 +258,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 		// Starts storing the basic values of the email inside of the current session
 		session->setMessageID(email.e_MessageID);
 		session->setSubject(email.e_Subject);
+		session->setFrom(email.e_From[0]);
 
 		// Finds an useful section of the message body for the snippet
 		//  we want it to be text/plain

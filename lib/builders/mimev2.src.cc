@@ -119,8 +119,11 @@ namespace FSMTP::Builders {
     }
 
     string buildHeaderFromSegments(const char *label, const vector<pair<string, string>> &segments) {
-        string result = label;
-        result += ": ";
+        string result;
+        if (label != nullptr) {
+            result += label;
+            result += ": ";
+        }
 
         size_t i = 0;
         for_each(segments.begin(), segments.end(), [&](const pair<string, string> &p) {

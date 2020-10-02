@@ -73,6 +73,9 @@ namespace FSMTP::Server {
 	const EmailAddress& SMTPServerSession::getTransportFrom() { return this->m_TransportFrom; }
 	string &SMTPServerSession::raw() { return this->m_Raw; }
 
+	const EmailAddress &SMTPServerSession::getFrom()
+	{ return this->m_From; }
+
 	XFannst::XFannstFlags &SMTPServerSession::xfannst() {
 		return this->m_XFannstFlags;
 	}
@@ -95,6 +98,11 @@ namespace FSMTP::Server {
 	SMTPServerSession &SMTPServerSession::generateSnippet(const string &raw) {
 		if (raw.length() > 128) this->m_Snippet = raw.substr(0, 128);
 		else this->m_Snippet = raw;
+		return *this;
+	}
+
+	SMTPServerSession &SMTPServerSession::setFrom(const EmailAddress &addr) {
+		this->m_From = addr;
 		return *this;
 	}
 

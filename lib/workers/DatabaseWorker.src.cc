@@ -142,8 +142,9 @@ namespace FSMTP::Workers
 				// Creates the email shortcut, this will be used to quickly
 				//  list all the emails in the databse, without the real
 				//  data inside of it
+				EmailAddress from = (session->getFrom().e_Address.empty() ? session->getTransportFrom() : session->getFrom());
 				EmailShortcut shortcut(task.account.getDomain(), session->getSubject(), 
-					session->getSnippet(), session->getTransportFrom().toString(), 
+					session->getSnippet(), from.toString(), 
 					task.account.a_UUID, messageUUID, messageUID, 0x0, messageBucket,
 					messageMailbox, session->raw().size());
 

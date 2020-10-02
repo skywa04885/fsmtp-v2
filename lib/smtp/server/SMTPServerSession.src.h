@@ -78,7 +78,8 @@ namespace FSMTP::Server {
 
 		SMTPServerSession &setTransformFrom(const EmailAddress &address);
 
-		const EmailAddress& getTransportFrom();
+		const EmailAddress &getTransportFrom();
+		const EmailAddress &getFrom();
 
 		string &raw();
 		XFannst::XFannstFlags &xfannst();
@@ -87,6 +88,7 @@ namespace FSMTP::Server {
 		SMTPServerSession &setSubject(const string &subject);
 		SMTPServerSession &setSnippet(const string &snippet);
 		SMTPServerSession &generateSnippet(const string &raw);
+		SMTPServerSession &setFrom(const EmailAddress &addr);
 
 		const string &getMessageID();
 		const string &getSubject();
@@ -104,6 +106,7 @@ namespace FSMTP::Server {
 		string m_MessageID, m_Subject, m_Snippet;
 		vector<EmailAddress> m_TransportTo;
 		EmailAddress m_TransportFrom;
+		EmailAddress m_From;
 		uint64_t m_Date, m_Size;
 
 		vector<SMTPServerStorageTask> m_StorageTasks;
