@@ -22,6 +22,8 @@
 #include "../../dns/Resolver.src.h"
 
 namespace FSMTP::Sockets {
+  CUSTOM_EXCEPTION(SocketReadLimit);
+
   union __SockAddrReturnP {
     struct sockaddr_in *ipv4;
     struct sockaddr_in6 *ipv6;
@@ -50,7 +52,7 @@ namespace FSMTP::Sockets {
     __SockAddrReturnP getAddress();
     int32_t write(const char *msg, const size_t len);
     int32_t write(const std::string &msg);
-    string readToDelim(const char *delim);
+    string readToDelim(const char *delim, size_t maxSize = 10000000);
     int32_t read(char *buffer, const size_t bufferSize);
     int32_t peek(char *buffer, const size_t bufferSize);
     int32_t getPort();

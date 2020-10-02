@@ -145,14 +145,13 @@ int32_t ClientSocket::peek(char *buffer, const size_t bufferSize) {
   return rc;
 }
 
-string ClientSocket::readToDelim(const char *delim) {
+string ClientSocket::readToDelim(const char *delim, size_t maxSize) {
   size_t delimSize = strlen(delim), searchIndex;
   size_t bufferSize = delimSize + 255;
   char *buffer = new char[bufferSize];
   bool endFound = false;
   int32_t readLen;
   string result;
-  size_t itt = 0;
 
   // Keeps reading from the client untill delimiter is reached
   //  then we return from the method. We use peek so we can
@@ -176,7 +175,11 @@ string ClientSocket::readToDelim(const char *delim) {
     result.append(buffer, readLen);
 
     // Prevents too long loop
-    if (++itt > 10000) endFound = true;
+    if (result.size() > maxSize) {
+      delete[] buffer;
+      throw SocketReadLimit("Buffer exceeded max size");
+    }
+    endFound = true;
   }
 
   // cout << "SockRead: " << buffer << endl;
