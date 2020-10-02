@@ -168,6 +168,7 @@ string ClientSocket::readToDelim(const char *delim, size_t maxSize) {
 
     searchString.append(buffer, readLen);
     if ((searchIndex = searchString.find(delim)) != string::npos) {
+      cout << "end" << endl;
       endFound = true;
     }
 
@@ -179,10 +180,8 @@ string ClientSocket::readToDelim(const char *delim, size_t maxSize) {
       delete[] buffer;
       throw SocketReadLimit("Buffer exceeded max size");
     }
-    endFound = true;
   }
 
-  // cout << "SockRead: " << buffer << endl;
   delete[] buffer;
   return result.substr(0, result.length() - delimSize);
 }
