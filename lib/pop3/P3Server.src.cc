@@ -98,11 +98,11 @@ namespace FSMTP::POP3
 			Logger clogger("POP3:" + client->getPrefix(), LoggerLevel::DEBUG);
 			DEBUG_ONLY(clogger << "Client connected" << ENDL);
 
-			string hostname = client->getReverseLookup();
+			string clientString = client->getString();
 			client->write(P3Response(
 				true, POP3ResponseType::PRT_GREETING, 
 				"", nullptr, nullptr,
-				reinterpret_cast<const void *>(hostname.c_str())
+				reinterpret_cast<const void *>(clientString.c_str())
 			).build());
 			
 

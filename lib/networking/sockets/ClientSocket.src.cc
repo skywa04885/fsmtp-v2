@@ -216,6 +216,15 @@ string ClientSocket::getReverseLookup() {
   }
 }
 
+string ClientSocket::getString() {
+  string result;
+
+  result = this->getReverseLookup();
+  result += " [" + this->getPrefix() + "]:" + to_string(this->getPort());
+
+  return result;
+}
+
 __SockAddrReturnP ClientSocket::getAddress() {
   __SockAddrReturnP ret;
   switch (this->m_Type) {

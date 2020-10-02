@@ -227,11 +227,10 @@ bool SMTPServer::handleCommand(
 				throw SMTPSyntaxException("Empty HELO command not allowed");
 			}
 
-			string prefix = client->getPrefix();
-			string hostname = client->getReverseLookup();
+			string clientString = client->getString();
 			ServerResponse response(
 				SMTPResponseType::SRC_HELO, "",
-				reinterpret_cast<const void *>(hostname.c_str()), nullptr
+				reinterpret_cast<const void *>(clientString.c_str()), nullptr
 			);
 			client->write(response.build());
 
@@ -250,12 +249,11 @@ bool SMTPServer::handleCommand(
 				throw SMTPSyntaxException("Empty HELO command not allowed");
 			}
 
-			string prefix = client->getPrefix();
-			string hostname = client->getReverseLookup();
+			string clientString = client->getString();
 			ServerResponse response(
 				SMTPResponseType::SRC_EHLO,
 				"",
-				reinterpret_cast<const void *>(hostname.c_str()),
+				reinterpret_cast<const void *>(clientString.c_str()),
 				(client->usingSSL() ? &this->s_SecureServices : &this->s_PlainServices)
 			);
 			client->write(response.build());
@@ -560,10 +558,10 @@ bool SMTPServer::handleCommand(
 
 			// Writes the greeting to our comrade, and grants
 			//  full SMTP access.
-			string hostname = client->getReverseLookup();
+			string clientString = client->getString();
 			ServerResponse response(
 				SMTPResponseType::SRC_SU_ACC, "", 
-				reinterpret_cast<const void *>(hostname.c_str()), nullptr
+				reinterpret_cast<const void *>(clientString.c_str()), nullptr
 			);
 			client->write(response.build());
 			session->setFlag(_SMTP_SERV_SESSION_SU);
