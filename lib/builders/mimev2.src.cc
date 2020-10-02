@@ -66,17 +66,6 @@ namespace FSMTP::Builders {
                 if (seg.length() > lineLength || seg.length() + currentLineLength > lineLength) {
                     size_t left = seg.length(), done = 0;
 
-                    // Checks how much data we can put on the current line, if it is
-                    //  too low, we just start on a new line
-                    bool firstInline = false;
-                    int64_t leftInCurrentLine = lineLength - currentLineLength;
-                    if (leftInCurrentLine > 10) {
-                        result += seg.substr(done, leftInCurrentLine);
-                        left -= leftInCurrentLine;
-                        done += leftInCurrentLine;
-                        firstInline = true;
-                    }
-
                     // Starts appending the segments which are longer than the specified
                     //  line length, after which we will append the final piece
                     size_t it = 0;
@@ -100,8 +89,8 @@ namespace FSMTP::Builders {
                         // Checks if the iterator is zero ( message shorter than line length )
                         //  and if there was no first inline ( if so this means we have to indent 7)
                         //  then we indent 6
-                        if (it == 0 && !firstInline) result += "\r\n      ";
-                        else result += "\r\n       ";
+                        if (it > 0) result += "\r\n       ";
+                        else result += "\r\n      ";
 
                         // Appends the last segment to the result string
                         //  after which we update the current line length

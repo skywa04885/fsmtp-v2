@@ -52,6 +52,8 @@ namespace FSMTP::DKIM {
     const char *getCanonAlgPairString();
     const char *getHeaderAlgString();
 
+    string getHeaderString() const;
+
     DKIMHeaderCanonAlgPair getCanonAlgorithmPair();
     DKIMHeaderAlgorithm getHeaderAlgorithm();
     const string &getBodyHash();

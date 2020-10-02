@@ -25,7 +25,7 @@ namespace FSMTP::DKIM {
 	{ this->m_Config.domain = domain; return *this; }
 
 	DKIMSigner &DKIMSigner::setKeySelector(const string &keySelector)
-	{ this->m_Config.setKeySelector = setKeySelector; return *this; }
+	{ this->m_Config.keySelector = keySelector; return *this; }
 	
 	DKIMSigner &DKIMSigner::setPrivateKeyPath(const string &privateKeyPath)
 	{ this->m_Config.privateKeyPath = privateKeyPath; return *this; }
@@ -49,7 +49,7 @@ namespace FSMTP::DKIM {
 	{ this->m_Config.headerFilter = filter; return *this; }
 
 	DKIMSigner &DKIMSigner::headerFilterPush(const string &header)
-	{ this->m_Config.headerFilter.push(header); return *this; }
+	{ this->m_Config.headerFilter.push_back(header); return *this; }
 
 	DKIMSigner &DKIMSigner::sign(const string &mime) {
 		DEBUG_ONLY(auto &logger = this->m_Logger);
@@ -58,11 +58,17 @@ namespace FSMTP::DKIM {
 		// Sets result values
 		// ==============================
 
+		// Sets the default values such as the headers
 		this->m_Result.setKeySelector(this->m_Config.keySelector)
 			.setDomain(this->m_Config.domain)
 			.setHeaders(this->m_Config.headerFilter)
 			.setHeaderAlgo(this->m_Config.signAlgorithm)
 			.setCanonAlgoPair(this->m_Config.algorithmPair);
+
+		// Since the result headers have been set, we can now insert
+		//  the dkim record in the allowed headers, since we do not want
+		//  it in the final header, but do want it in the signature
+		this->m_Config.headerFilter.push_back("dkim-signature");
 
 		// ==============================
 		// Parses the MIME message
@@ -76,7 +82,7 @@ namespace FSMTP::DKIM {
 		//  be stored as iterators
 		strvec_it headersBegin, headersEnd, bodyBegin, bodyEnd;
 		tie(headersBegin, headersEnd, bodyBegin, 
-			bodyEnd) = Parsers::splitMIMEBodyAndHeaders(lines.begin(), lines.end)
+			bodyEnd) = Parsers::splitMIMEBodyAndHeaders(lines.begin(), lines.end());
 
 		// ==============================
 		// Generates the body hash
@@ -102,7 +108,7 @@ namespace FSMTP::DKIM {
 		// Appends the presign signature to the final headers
 		//  so we can start signing them
 		string headers = Parsers::getStringFromLines(headersBegin, headersEnd);
-		headers += presignSignature + "\r\n";
+		headers += presignSignature;
 
 		// ==============================
 		// Generates the signature
@@ -111,6 +117,15 @@ namespace FSMTP::DKIM {
 		// Generates the signature based on the algorithm
 		//  specified in the config
 		this->generateSignature(headers);
+
+		// ==============================
+		// Builds the signed message
+		// ==============================
+
+		this->m_SignedMessage = Parsers::getStringFromLines(headersBegin, headersEnd);
+		this->m_SignedMessage += Builders::foldHeader(this->m_Result.build(), 128);
+		this->m_SignedMessage += "\r\n\r\n";
+		this->m_SignedMessage += Parsers::getStringFromLines(bodyBegin, bodyEnd);
 
 		return *this;
 	}
@@ -158,16 +173,28 @@ namespace FSMTP::DKIM {
 		string canonicalizedHeaders;
 		switch (this->m_Config.algorithmPair) {
 			case DKIMHeaderCanonAlgPair::RelaxedRelaxed:
-			case DKIMHeaderCanonAlgPair::SimpleRelaxed:
-				DEBUG_ONLY(logger << "Processing headers with relaxed canonicalization" << ENDL);
-				canonicalizedHeaders = simpleHeaders(headers, hf);
-				break;
 			case DKIMHeaderCanonAlgPair::RelaxedSimple:
-			case DKIMHeaderCanonAlgPair::SimpleSimple:
-				DEBUG_ONLY(logger << "Processing headers with simple canonicalization" << ENDL);
+				DEBUG_ONLY(logger << "Processing headers with relaxed canonicalization" << ENDL);
 				canonicalizedHeaders = relaxedHeaders(headers, hf);
 				break;
+			case DKIMHeaderCanonAlgPair::SimpleRelaxed:
+			case DKIMHeaderCanonAlgPair::SimpleSimple:
+				DEBUG_ONLY(logger << "Processing headers with simple canonicalization" << ENDL);
+				canonicalizedHeaders = simpleHeaders(headers, hf);
+				break;
 		}
+
+		// Removes the last endline from the canonicalized headers, since the
+		//  signature is not complete
+		canonicalizedHeaders.erase(canonicalizedHeaders.end() - 2, canonicalizedHeaders.end());
+
+		// Prints the debug message with the canonicalized headers
+		//  inside of them
+		#ifdef _SMTP_DEBUG
+		logger << "Canonicalized headers: '" << FLUSH;
+		cout << canonicalizedHeaders;
+		cout << '\'' << endl;
+		#endif
 
 		// Performs the signing of the canonicalized headers, this will be
 		//  set as the final signature in the header
@@ -175,16 +202,16 @@ namespace FSMTP::DKIM {
 			case DKIMHeaderAlgorithm::HeaderAlgorithmRSA_SHA1:
 				DEBUG_ONLY(logger << "Generating signature with RSA-SHA1" << ENDL);
 				this->m_Result.setSignature(Hashes::RSAShagenerateSignature(canonicalizedHeaders,
-					this->m_Config.privateKeyPath, EVP_sha1())); break;
+					this->m_Config.privateKeyPath.c_str(), EVP_sha1())); break;
 			case DKIMHeaderAlgorithm::HeaderAlgoritmRSA_SHA256:
 				DEBUG_ONLY(logger << "Generating signature with RSA-SHA256" << ENDL);
 				this->m_Result.setSignature(Hashes::RSAShagenerateSignature(canonicalizedHeaders,
-					this->m_Config.privateKeyPath, EVP_sha256())); break;
+					this->m_Config.privateKeyPath.c_str(), EVP_sha256())); break;
 		}
 	}
 
-	const DKIMHeader &DKIMSigner::getResult() const
-	{ return this->m_Result; }
+	const string &DKIMSigner::getResult() const
+	{ return this->m_SignedMessage; }
 
 	DKIMSigner::~DKIMSigner() = default;
 }

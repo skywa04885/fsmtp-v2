@@ -136,6 +136,17 @@ namespace FSMTP::DKIM {
 	const char *DKIMHeader::getHeaderAlgString()
 	{ return __dkimHeaderAlgToString(this->m_HeaderAlgorithm); }
 
+	string DKIMHeader::getHeaderString() const {
+		string result;
+
+		for_each(this->m_Headers.begin(), this->m_Headers.end(), [&](const string &h) {
+			result += h + ':';
+		});
+
+		result.pop_back();
+		return result;
+	}
+
 	DKIMHeaderCanonAlgPair DKIMHeader::getCanonAlgorithmPair()
 	{ return this->m_CanonAlgoPair; }
 
@@ -182,6 +193,7 @@ namespace FSMTP::DKIM {
     	return Builders::buildHeaderFromSegments("DKIM-Signature", {
     		make_pair("v", __dkimHeaderVersionToString(this->m_Version)),
     		make_pair("s", this->m_KeySelector),
+			make_pair("h", this->getHeaderString()),
     		make_pair("d", this->m_Domain),
     		make_pair("c", __dkimHeaderCanonAlgPairToString(this->m_CanonAlgoPair)),
     		make_pair("a", __dkimHeaderAlgToString(this->m_HeaderAlgorithm)),

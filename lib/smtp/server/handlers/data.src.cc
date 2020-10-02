@@ -224,7 +224,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 		//  in our own way
 		session->raw().clear();
 		for_each(joinedHeaders.begin(), joinedHeaders.end(), [&](const string &header) {
-			session->raw() += Builders::foldHeader(header, 198) + "\r\n";
+			session->raw() += Builders::foldHeader(header, 128) + "\r\n";
 		});
 
 		// Appends the message body itself

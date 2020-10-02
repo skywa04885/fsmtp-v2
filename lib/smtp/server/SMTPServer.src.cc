@@ -133,6 +133,8 @@ SMTPServer &SMTPServer::startHandler(const bool newThread) {
 				} catch (const runtime_error &err) {
 					clogger << ERROR << "An error occured: " << err.what() << ENDL << CLASSIC;
 					break;
+				}  catch (const DatabaseException &err) {
+					clogger << ERROR << "An database exception occured: '" << err.what() << '\'' << ENDL << CLASSIC;
 				} catch (...) {
 					clogger << ERROR << "An other error occured, breaking ..." << ENDL << CLASSIC;
 					break;

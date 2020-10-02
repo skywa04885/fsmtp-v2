@@ -24,6 +24,8 @@ SMTPClient::SMTPClient(bool s_Silent): s_Logger("SMTPClient", LoggerLevel::INFO)
 }
 
 SMTPClient &SMTPClient::sign(const string &message) {
+	auto &conf = Global::getConfig();
+
 	// Gets the current time so that we can set the signing
 	//  expire and sign date
 	uint64_t now = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();
@@ -40,10 +42,10 @@ SMTPClient &SMTPClient::sign(const string &message) {
 		.setSignAlgo(DKIM::DKIMHeaderAlgorithm::HeaderAlgoritmRSA_SHA256)
 		.headerFilterPush("subject").headerFilterPush("from")
 		.headerFilterPush("to").headerFilterPush("date")
-		.headerFilterPush("mime-version").headerFilterPush("dkim-signature");
+		.headerFilterPush("mime-version").headerFilterPush("message-id");
 
 	// Signs the email, and stores it inside the transport message
-	this->s_TransportMessage = sign.sign(message).getResult().build();
+	this->s_TransportMessage = sign.sign(message).getResult();
 	return *this;
 }
 
@@ -52,8 +54,6 @@ SMTPClient &SMTPClient::prepare(
 	const vector<EmailAddress> from,
 	const string &message
 ) {
-	auto &conf = Global::getConfig();
-
 	if (!s_Silent) this->s_Logger << "Voorbereiden ..." << ENDL;
 
 	this->sign(message);
@@ -107,17 +107,12 @@ SMTPClient &SMTPClient::configureRecipients(const vector<EmailAddress> &addresse
 }
 
 SMTPClient &SMTPClient::prepare(MailComposerConfig &config) {
-	auto &conf = Global::getConfig();
-
 	if (!s_Silent) this->s_Logger << "Voorbereiden ..." << ENDL;
 
 	this->sign(compose(config));
 	this->s_MailFrom = config.m_From[0];
 
-	cout << this->s_TransportMessage << endl;
-
 	this->configureRecipients(config.m_To);
-
 	return *this;
 }
 

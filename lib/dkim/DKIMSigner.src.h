@@ -17,6 +17,8 @@
 #ifndef _LIB_DKIM_SIGNER_H
 #define _LIB_DKIM_SIGNER_H
 
+#include "../default.h"
+
 #include "DKIMHeader.src.h"
 #include "DKIMCanonicalization.src.h"
 #include "DKIMHashes.src.h"
@@ -51,7 +53,7 @@ namespace FSMTP::DKIM {
 
 		DKIMSigner &sign(const string &mime);
 
-		const DKIMHeader &getResult() const;
+		const string &getResult() const;
 
 		~DKIMSigner();
 	protected:
@@ -60,6 +62,7 @@ namespace FSMTP::DKIM {
 	private:
 		DKIMSignerConfig m_Config;
 		DKIMHeader m_Result;
+		string m_SignedMessage;
 		Logger m_Logger;
 	};
 }

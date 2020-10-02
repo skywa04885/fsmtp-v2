@@ -27,6 +27,7 @@
     "tuple": "cpp",
     "dense_hash_map": "cpp",
     "dense_hash_set": "cpp",
-    "hash_set": "cpp"
+    "hash_set": "cpp",
+    "functional": "cpp"
   }
 }
