@@ -4,5 +4,6 @@ sources += files(
     'DKIMRecord.src.cc',
     'DKIMValidator.src.cc',
     'DKIMHeader.src.cc',
-    'DKIMCanonicalization.src.cc'
+    'DKIMCanonicalization.src.cc',
+    'DKIMSigner.src.h'
 )

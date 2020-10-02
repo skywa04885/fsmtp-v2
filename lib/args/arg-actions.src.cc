@@ -139,7 +139,7 @@ namespace FSMTP::ARG_ACTIONS {
     account.a_Type = 0;
     account.a_Flags = 0;
     account.a_StorageUsedInBytes = 0;
-    account.a_StorageMaxInBytes = 5 * 1024 * 1024 * 1024; // 5GB
+    account.a_StorageMaxInBytes = 5L * 1024L * 1024L * 1024L; // 5GB
     account.a_PictureURI = "def";
     account.a_BirthDate = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();
     account.a_CreationDate = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();

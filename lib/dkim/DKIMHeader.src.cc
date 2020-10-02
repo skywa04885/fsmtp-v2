@@ -19,7 +19,7 @@
 namespace FSMTP::DKIM {
 	const char *__dkimHeaderVersionToString(DKIMHeaderVersion v) {
 		switch (v) {
-			case DKIMHeaderVersion::HeaderVersionDKIM1: return "DKIM1";
+			case DKIMHeaderVersion::HeaderVersionDKIM1: return "1";
 		}
 	}
 
@@ -127,45 +127,68 @@ namespace FSMTP::DKIM {
 	}
 
 
-	const char *DKIMHeader::getVersionString() {
-		return __dkimHeaderVersionToString(this->m_Version);
-	}
+	const char *DKIMHeader::getVersionString()
+	{ return __dkimHeaderVersionToString(this->m_Version); }
 
-	const char *DKIMHeader::getCanonAlgPairString() {
-		return __dkimHeaderCanonAlgPairToString(this->m_CanonAlgoPair);
-	}
+	const char *DKIMHeader::getCanonAlgPairString()
+	{ return __dkimHeaderCanonAlgPairToString(this->m_CanonAlgoPair); }
 
-	const char *DKIMHeader::getHeaderAlgString() {
-		return __dkimHeaderAlgToString(this->m_HeaderAlgorithm);
-	}
+	const char *DKIMHeader::getHeaderAlgString()
+	{ return __dkimHeaderAlgToString(this->m_HeaderAlgorithm); }
 
-	DKIMHeaderCanonAlgPair DKIMHeader::getCanonAlgorithmPair() {
-		return this->m_CanonAlgoPair;
-	}
+	DKIMHeaderCanonAlgPair DKIMHeader::getCanonAlgorithmPair()
+	{ return this->m_CanonAlgoPair; }
 
-	DKIMHeaderAlgorithm DKIMHeader::getHeaderAlgorithm() {
-		return this->m_HeaderAlgorithm;
-	}
+	DKIMHeaderAlgorithm DKIMHeader::getHeaderAlgorithm()
+	{ return this->m_HeaderAlgorithm; }
 
-	const string &DKIMHeader::getBodyHash() {
-		return this->m_BodyHash;
-	}
+	const string &DKIMHeader::getBodyHash()
+	{ return this->m_BodyHash; }
 
-	const string &DKIMHeader::getKeySelector() {
-		return this->m_KeySelector;
-	}
+	const string &DKIMHeader::getKeySelector()
+	{ return this->m_KeySelector; }
 	
-	const string &DKIMHeader::getDomain() {
-		return this->m_Domain;
-	}
+	const string &DKIMHeader::getDomain()
+	{ return this->m_Domain; }
 
-	const string &DKIMHeader::getSignature() {
-		return this->m_Signature;
-	}
+	const string &DKIMHeader::getSignature()
+	{ return this->m_Signature; }
 
-  const vector<string> &DKIMHeader::getHeaders() {
-    return this->m_Headers;
-  }
+	const vector<string> &DKIMHeader::getHeaders()
+	{ return this->m_Headers; }
+
+	DKIMHeader &DKIMHeader::setBodyHash(const string &bodyHash)
+	{ this->m_BodyHash = bodyHash; return *this; }
+
+	DKIMHeader &DKIMHeader::setSignature(const string &signature)
+	{ this->m_Signature = signature; return *this; }
+
+    DKIMHeader &DKIMHeader::setDomain(const string &domain)
+    { this->m_Domain = domain; return *this; }
+    
+    DKIMHeader &DKIMHeader::setKeySelector(const string &keySelector)
+    { this->m_KeySelector = keySelector; return *this; }
+
+    DKIMHeader &DKIMHeader::setHeaders(const vector<string> &headers)
+    { this->m_Headers = headers; return *this; }
+
+    DKIMHeader &DKIMHeader::setCanonAlgoPair(const DKIMHeaderCanonAlgPair &canonAlgo)
+    { this->m_CanonAlgoPair = canonAlgo; return *this; }
+
+    DKIMHeader &DKIMHeader::setHeaderAlgo(const DKIMHeaderAlgorithm &algo)
+    { this->m_HeaderAlgorithm = algo; return *this; }
+
+    string DKIMHeader::build() const {
+    	return Builders::buildHeaderFromSegments("DKIM-Signature", {
+    		make_pair("v", __dkimHeaderVersionToString(this->m_Version)),
+    		make_pair("s", this->m_KeySelector),
+    		make_pair("d", this->m_Domain),
+    		make_pair("c", __dkimHeaderCanonAlgPairToString(this->m_CanonAlgoPair)),
+    		make_pair("a", __dkimHeaderAlgToString(this->m_HeaderAlgorithm)),
+    		make_pair("bh", this->m_BodyHash),
+    		make_pair("b", this->m_Signature)
+    	});
+    }
 
 	DKIMHeader &DKIMHeader::print(Logger &logger) {
 		logger << DEBUG;

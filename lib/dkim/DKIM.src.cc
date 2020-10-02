@@ -134,9 +134,10 @@ namespace FSMTP::DKIM
 
 		// Creates the signature
 		DEBUG_ONLY(logger << "Raw signature: \r\n\033[41m'" << cannedHeaders << "'\033[0m" << ENDL);
-		segments.s_Signature = Hashes::RSASha256generateSignature(
+		segments.s_Signature = Hashes::RSAShagenerateSignature(
 			cannedHeaders, 
-			config.c_PrivateKeyPath
+			config.c_PrivateKeyPath,
+			EVP_sha256()
 		);
 		DEBUG_ONLY(logger << "Generated signature: " << segments.s_Signature << ENDL);
 

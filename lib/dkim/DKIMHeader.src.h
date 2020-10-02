@@ -19,6 +19,7 @@
 
 #include "../default.h"
 #include "../general/Logger.src.h"
+#include "../builders/mimev2.src.h"
 
 namespace FSMTP::DKIM {
   enum DKIMHeaderVersion {
@@ -58,6 +59,16 @@ namespace FSMTP::DKIM {
     const string &getDomain();
     const string &getSignature();
     const vector<string> &getHeaders();
+
+    DKIMHeader &setBodyHash(const string &bodyHash);
+    DKIMHeader &setSignature(const string &signature);
+    DKIMHeader &setDomain(const string &domain);
+    DKIMHeader &setKeySelector(const string &keySelector);
+    DKIMHeader &setHeaders(const vector<string> &headers);
+    DKIMHeader &setCanonAlgoPair(const DKIMHeaderCanonAlgPair &canonAlgo);
+    DKIMHeader &setHeaderAlgo(const DKIMHeaderAlgorithm &algo);
+
+    string build() const;
 
     ~DKIMHeader();
   private:

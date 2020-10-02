@@ -45,7 +45,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 		// Performs the security checks
 		// ========================================
 
-		map<string, string> authResults = {};
+		vector<pair<string, string>> authResults = {};
 		if (!session->getFlag(_SMTP_SERV_SESSION_AUTH_FLAG)) {
 			// Creates the DMARC resolve query
 			string dmarcQuery = "_dmarc.";
@@ -167,15 +167,15 @@ namespace FSMTP::SMTP::Server::Handlers {
 
 			// Builds the auth result header map, which will contain
 			//  some basic auth results
-			authResults.insert(make_pair("spf", spfValidator.getResultString()));
-			authResults.insert(make_pair("dkim", dkimValidator.getResultString()));
-			authResults.insert(make_pair("dmarc", buffer));
+			authResults.push_back(make_pair("spf", spfValidator.getResultString()));
+			authResults.push_back(make_pair("dkim", dkimValidator.getResultString()));
+			authResults.push_back(make_pair("dmarc", buffer));
 
 			// Checks if the client was using using SU, if so add the SU
 			//  header to the authResults
 			if (session->getFlag(_SMTP_SERV_SESSION_SU))
-				authResults.insert(make_pair("su", "pass (to:" + client->getPrefix() + ")"));
-		} else authResults.insert(make_pair("auth", "pass"));
+				authResults.push_back(make_pair("su", "pass (to:" + client->getPrefix() + ")"));
+		} else authResults.push_back(make_pair("auth", "pass"));
 
 		// ========================================
 		// Parses the headers from the message

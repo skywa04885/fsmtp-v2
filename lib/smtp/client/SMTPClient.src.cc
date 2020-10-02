@@ -23,6 +23,30 @@ SMTPClient::SMTPClient(bool s_Silent): s_Logger("SMTPClient", LoggerLevel::INFO)
 	if (!s_Silent) this->s_Logger << "SMTPClient initialized !" << ENDL;
 }
 
+SMTPClient &SMTPClient::sign(const string &message) {
+	// Gets the current time so that we can set the signing
+	//  expire and sign date
+	uint64_t now = duration_cast<milliseconds>(high_resolution_clock::now().time_since_epoch()).count();
+
+	// Prepares the signer, by setting the default parameters
+	//  which will be used in the signing process
+	DKIM::DKIMSigner sign;
+	sign.setDomain(conf["dkim"]["domain"].asString())
+		.setKeySelector(conf["dkim"]["keyselector"].asString())
+		.setPrivateKeyPath(conf["dkim"]["dkim_private"].asString())
+		.setSignTime(now)
+		.setExpireTime(now + (1000 * 60 * 60))
+		.setAlgoPair(DKIM::DKIMHeaderCanonAlgPair::RelaxedRelaxed)
+		.setSignAlgo(DKIM::DKIMHeaderAlgorithm::HeaderAlgoritmRSA_SHA256)
+		.headerFilterPush("subject").headerFilterPush("from")
+		.headerFilterPush("to").headerFilterPush("date")
+		.headerFilterPush("mime-version").headerFilterPush("dkim-signature");
+
+	// Signs the email, and stores it inside the transport message
+	this->s_TransportMessage = sign.sign(message).getResult().build();
+	return *this;
+}
+
 SMTPClient &SMTPClient::prepare(
 	const vector<EmailAddress> to,
 	const vector<EmailAddress> from,
@@ -32,11 +56,7 @@ SMTPClient &SMTPClient::prepare(
 
 	if (!s_Silent) this->s_Logger << "Voorbereiden ..." << ENDL;
 
-	DKIM::DKIMConfig dkimConfig;
-	dkimConfig.c_KeySelector =  conf["dkim"]["keyselector"].asCString();
-	dkimConfig.c_Domain = conf["dkim"]["domain"].asCString();
-	dkimConfig.c_PrivateKeyPath = conf["dkim"]["dkim_private"].asCString();
-	this->s_TransportMessage = DKIM::sign(message, dkimConfig);
+	this->sign(message);
 	this->s_MailFrom = from[0];
 
 	this->configureRecipients(to);
@@ -91,13 +111,7 @@ SMTPClient &SMTPClient::prepare(MailComposerConfig &config) {
 
 	if (!s_Silent) this->s_Logger << "Voorbereiden ..." << ENDL;
 
-	string plain = compose(config);
-
-	DKIM::DKIMConfig dkimConfig;
-	dkimConfig.c_KeySelector =  conf["dkim"]["keyselector"].asCString();
-	dkimConfig.c_Domain = conf["dkim"]["domain"].asCString();
-	dkimConfig.c_PrivateKeyPath = conf["dkim"]["dkim_private"].asCString();
-	this->s_TransportMessage = DKIM::sign(plain, dkimConfig);
+	this->sign(compose(config));
 	this->s_MailFrom = config.m_From[0];
 
 	cout << this->s_TransportMessage << endl;

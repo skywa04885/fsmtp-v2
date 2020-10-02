@@ -17,28 +17,50 @@
 #ifndef _LIB_DKIM_SIGNER_H
 #define _LIB_DKIM_SIGNER_H
 
+#include "DKIMHeader.src.h"
+#include "DKIMCanonicalization.src.h"
+#include "DKIMHashes.src.h"
+
+#include "../general/Logger.src.h"
+#include "../parsers/mimev2.src.h"
+
 namespace FSMTP::DKIM {
-	enum DKIMSignerAlgoPair {
-		DKIMSignerRelaxedRelaxed,
-		DKIMSignerRelaxedSimple,
-		DKIMSignerSimpleRelaxed,
-		DKIMSignerSimpleSimple
-	};
-
-	enum DKIMSignerSignAlgo {
-		DKIMSignerRSA_SHA1,
-		DKIMSignerRSA_SHA256
-	};
-
 	struct DKIMSignerConfig {
-		const char *domain;
-		const char *keySelector;
-		size_t signTime, expireTime;
+		string domain, keySelector, privateKeyPath;
+		int64_t signTime, expireTime;
+		DKIMHeaderCanonAlgPair algorithmPair;
+		DKIMHeaderAlgorithm signAlgorithm;
+		vector<string> headerFilter;
 	};
 
 	class DKIMSigner {
 	public:
+		DKIMSigner();
+
+		DKIMSigner &setDomain(const string &domain);
+		DKIMSigner &setKeySelector(const string &keySelector);
+		DKIMSigner &setPrivateKeyPath(const string &privateKeyPath);
+		DKIMSigner &setSignTime(int64_t signTime);
+		DKIMSigner &setExpireTime(int64_t expireTime);
+		DKIMSigner &setAlgoPair(DKIMHeaderCanonAlgPair algorithmPair);
+		DKIMSigner &setSignAlgo(DKIMHeaderAlgorithm signAlgorithm);
+		DKIMSigner &setHeaderFilter(const vector<string> &filter);
+		DKIMSigner &headerFilterPush(const string &header);
+
+		DKIMSigner &setConfig(const DKIMSignerConfig &config);
+
+		DKIMSigner &sign(const string &mime);
+
+		const DKIMHeader &getResult() const;
+
+		~DKIMSigner();
+	protected:
+		void generateBodyHash(const string &body);
+		void generateSignature(const string &headers);
 	private:
+		DKIMSignerConfig m_Config;
+		DKIMHeader m_Result;
+		Logger m_Logger;
 	};
 }
 

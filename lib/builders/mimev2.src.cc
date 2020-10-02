@@ -129,7 +129,7 @@ namespace FSMTP::Builders {
         return result;
     }
 
-    string buildHeaderFromSegments(const char *label, const map<string, string> &segments) {
+    string buildHeaderFromSegments(const char *label, const vector<pair<string, string>> &segments) {
         string result = label;
         result += ": ";
 

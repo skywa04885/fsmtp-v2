@@ -16,18 +16,18 @@
 
 #pragma once
 
+#include "SMTPMessageComposer.src.h"
+#include "SMTPClientSession.src.h"
+
 #include "../../default.h"
 #include "../../general/Global.src.h"
-
 #include "../../networking/sockets/ClientSocket.src.h"
 #include "../../models/Email.src.h"
 #include "../../general/Logger.src.h"
 #include "../../dns/Resolver.src.h"
+#include "../../dkim/DKIMSigner.src.h"
 #include "../Response.src.h"
 #include "../Command.src.h"
-#include "../../dkim/DKIM.src.h"
-#include "SMTPMessageComposer.src.h"
-#include "SMTPClientSession.src.h"
 
 using namespace FSMTP::Sockets;
 using namespace FSMTP::Models;
@@ -65,6 +65,7 @@ namespace FSMTP::Mailer::Client {
 		SMTPClient &printReceived(const int32_t code, const string &args);
 		SMTPClient &printSent(const string &mess);
 		SMTPClient &reset();
+		SMTPClient &sign(const string &message);
 
 		bool s_Silent;
 		Logger s_Logger;

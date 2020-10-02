@@ -130,19 +130,7 @@ namespace FSMTP::DKIM::Hashes
 		return res;
 	}
 
-	/**
-	 * Generates the RSA-SHA256 signature and returns it in
-	 * - base64 format
-	 *
-	 * @param {const std::string &} raw
-	 * @Param {const char *} privateKeyFile
-	 * @return {std::string}
-	 */
-	std::string RSASha256generateSignature(
-		const std::string &raw, 
-		const char *privateKeyFile
-	)
-	{
+	string RSAShagenerateSignature(const string &raw, const char *pkey, const EVP_MD *type) {
 		int32_t rc;
 
 		// =====================================
@@ -154,7 +142,7 @@ namespace FSMTP::DKIM::Hashes
 		// =====================================
 
 		// Creates the file pointer (rt = read text)
-		FILE *privateKey = fopen(privateKeyFile, "rt");
+		FILE *privateKey = fopen(pkey, "rt");
 		if (!privateKey)
 		{
 			std::string message = "fopen() failed: ";
@@ -183,13 +171,7 @@ namespace FSMTP::DKIM::Hashes
 		EVP_PKEY_assign_RSA(evpPrivateKey, rsa);
 
 		// Initializes the signer
-		rc = EVP_DigestSignInit(
-			rsaSignContext,
-			nullptr,
-			EVP_sha256(),
-			nullptr,
-			evpPrivateKey
-		);
+		rc = EVP_DigestSignInit(rsaSignContext, nullptr, type, nullptr, evpPrivateKey);
 		if (rc < 0)
 			throw std::runtime_error("EVP_DigestSignInit() failed");
 
