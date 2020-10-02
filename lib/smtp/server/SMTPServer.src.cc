@@ -19,7 +19,7 @@
 using namespace FSMTP::Server;
 
 SMTPServer::SMTPServer() noexcept: s_Logger("FSMTP-V2/ESMTP", LoggerLevel::INFO) {
-	const char *maxSize = "10485760";
+	const char *maxSize = "10000000";
 	
 	this->s_PlainServices.push_back({"AUTH", {"PLAIN"}});
 	this->s_PlainServices.push_back({"STARTTLS", {}});

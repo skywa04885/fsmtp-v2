@@ -101,6 +101,7 @@ string ServerResponse::getMessage(const SMTPResponseType c_Type) {
 		case SMTPResponseType::SRC_SU_DENIED:
 			stream << "Access denied, closing transmission channel.";
 			break;
+		case SMTPResponseType::SRC_MESSAGE_TOO_LARGE: stream << "Message too large"; break;
 		case SMTPResponseType::SRC_GREETING: {
 			struct tm *timeInfo = nullptr;
 			char dateBuffer[128];
@@ -167,6 +168,7 @@ int32_t ServerResponse::getCode(const SMTPResponseType c_Type) {
 		case SMTPResponseType::SRC_SU_DENIED: return 651;
 		case SMTPResponseType::SRC_FCAPA_RESP: return 601;
 		case SMTPResponseType::SRC_SPF_REJECT: return 550;
+		case SMTPResponseType::SRC_MESSAGE_TOO_LARGE: return 556;
 		default: throw std::runtime_error("getCode() invalid type");
 	}
 }
@@ -196,6 +198,7 @@ const char *ServerResponse::getEnchancedCode(const SMTPResponseType &c_Type) {
 		case SMTPResponseType::SRC_AUTH_NOT_ALLOWED: return "5.5.0 ";
 		case SMTPResponseType::SRC_FCAPA_RESP: return "6.1.1 ";
 		case SMTPResponseType::SRC_SPF_REJECT: return "5.7.23 ";
+		case SMTPResponseType::SRC_MESSAGE_TOO_LARGE: return "5.3.4 ";
 		default: throw std::runtime_error("getCode() invalid type");
 	}
 }

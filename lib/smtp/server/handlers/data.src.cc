@@ -31,7 +31,11 @@ namespace FSMTP::SMTP::Server::Handlers {
 		// Reads the message from the socket, while storing the
 		//  start and end time, so we can calculate the speed
 		uint64_t start = duration_cast<microseconds>(high_resolution_clock::now().time_since_epoch()).count();
-		session->raw() = client->readToDelim("\r\n.\r\n");
+		try {
+			session->raw() = client->readToDelim("\r\n.\r\n", 10000000);
+		} catch (const SocketReadLimit &e) {
+			
+		}
 		uint64_t end = duration_cast<microseconds>(high_resolution_clock::now().time_since_epoch()).count();
 
 		// Calculates the time difference so we can calculate the speed

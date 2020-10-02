@@ -49,7 +49,8 @@ namespace FSMTP::SMTP
 		SRC_SU_ACC,
 		SRC_SU_DENIED,
 		SRC_FCAPA_RESP,
-		SRC_SPF_REJECT
+		SRC_SPF_REJECT,
+		SRC_MESSAGE_TOO_LARGE
 	} SMTPResponseType;
 
 	typedef struct {

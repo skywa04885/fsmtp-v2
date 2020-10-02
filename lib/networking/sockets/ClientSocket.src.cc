@@ -175,7 +175,7 @@ string ClientSocket::readToDelim(const char *delim, size_t maxSize) {
     result.append(buffer, readLen);
 
     // Prevents too long loop
-    if (result.size() > maxSize) {
+    if (result.length() > maxSize) {
       delete[] buffer;
       throw SocketReadLimit("Buffer exceeded max size");
     }
