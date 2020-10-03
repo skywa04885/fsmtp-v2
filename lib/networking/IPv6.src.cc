@@ -49,8 +49,8 @@ namespace FSMTP::Networking::IPv6 {
         auto binaryAddress = __ipv6ToBinary(address), binaryCmp = __ipv6ToBinary(cmp);
 
         if (subnetMask != -1) {
-            binaryAddress >>= subnetMask;
-            binaryCmp >>= subnetMask;
+            binaryAddress >>= 128 - subnetMask;
+            binaryCmp >>= 128 - subnetMask;
         }
 
         return (binaryAddress == binaryCmp);
@@ -59,7 +59,7 @@ namespace FSMTP::Networking::IPv6 {
 	bool compare(const struct in6_addr &address, string cmp) {
         int32_t subnetMask = __parseSubnetMask(cmp);
         struct in6_addr parsedCmp;
-
+        
         __ipv6FromString(cmp, parsedCmp);
         return compare(address, parsedCmp, subnetMask);
     }

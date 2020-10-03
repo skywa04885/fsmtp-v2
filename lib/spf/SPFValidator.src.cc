@@ -160,6 +160,9 @@ namespace FSMTP::SPF {
   bool SPFValidator::validateIPv6(const string &query, const struct in6_addr &addr, const vector<string> &compareAddresses) {
     for (const string &compareAddress : compareAddresses) {
       try {
+        char b[128];
+        inet_ntop(AF_INET6, &addr, b, 128);
+        cout << b << ", " << compareAddress << endl;
         if (Networking::IPv6::compare(addr, compareAddress)) {
           this->m_Result.type = SPFValidatorResultType::ResultTypeAllowed;
 
