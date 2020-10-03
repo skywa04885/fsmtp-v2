@@ -180,7 +180,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 			// Checks if the client was using using SU, if so add the SU
 			//  header to the authResults
 			if (session->getFlag(_SMTP_SERV_SESSION_SU))
-				authResults.push_back(make_pair("su", "pass (to: [" + client->getPrefix() + "]:" + to_String(client->getPort()) + ")"));
+				authResults.push_back(make_pair("su", "pass (to: [" + client->getPrefix() + "]:" + to_string(client->getPort()) + ")"));
 		} else authResults.push_back(make_pair("auth", "pass"));
 
 		// ========================================
