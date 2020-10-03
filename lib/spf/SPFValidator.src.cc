@@ -137,6 +137,17 @@ namespace FSMTP::SPF {
   }
 
   bool SPFValidator::safeValidate(const string &query, string cmp) {
+    auto &logger = this->m_Logger;
+
+    #ifdef _SMTP_DEBUG
+    switch (this->m_Protocol) {
+      case Networking::IP::Protocol::Protocol_IPv4:
+        logger << DEBUG << "Using IPv4" << ENDL << CLASSIC; break;
+      case Networking::IP::Protocol::Protocol_IPv6:
+        logger << DEBUG << "Using IPv6" << ENDL << CLASSIC; break;
+    }
+    #endif
+
     try {
       return this->validate(query, cmp);
     } catch (...) {
