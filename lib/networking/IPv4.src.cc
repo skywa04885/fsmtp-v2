@@ -40,8 +40,8 @@ namespace FSMTP::Networking::IPv4 {
         uint32_t binaryAddress = address.s_addr, binaryCmp = cmp.s_addr;
 
         if (subnetMask != -1) {
-            binaryAddress >>= 24 - subnetMask;
-            binaryCmp >>= 24 - subnetMask;
+            binaryAddress <<= subnetMask;
+            binaryCmp <<= subnetMask;
         }
 
         return (binaryAddress == binaryCmp);
