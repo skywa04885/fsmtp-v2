@@ -549,6 +549,7 @@ bool SMTPServer::handleCommand(
 			auto prefix = client->getPrefix();
 
 			SPF::SPFValidator validator;
+			validator.setProtocol(client->getRealProtocol());
 			validator.validate(conf["domain"].asString(), prefix);
 
 			if (prefix != "0.0.0.0" && prefix != "127.0.0.1" && validator.getResult().type != SPF::SPFValidatorResultType::ResultTypeAllowed) {
