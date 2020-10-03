@@ -49,8 +49,8 @@ namespace FSMTP::Networking::IPv6 {
         auto binaryAddress = __ipv6ToBinary(address), binaryCmp = __ipv6ToBinary(cmp);
 
         if (subnetMask != -1) {
-            binaryAddress <<= subnetMask;
-            binaryCmp <<= subnetMask;
+            binaryAddress <<= 128 - subnetMask;
+            binaryCmp <<= 128 - subnetMask;
         }
 
         return (binaryAddress == binaryCmp);
