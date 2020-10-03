@@ -15,8 +15,6 @@
 */
 
 #include "main.h"
-#include "lib/spam/NaiveBayes.src.h"
-#include "lib/spam/WordEncoder.src.h"
 #include "lib/dns/Resolver.src.h"
 #include "lib/dmarc/DMARCRecord.src.h"
 #include "lib/spf/SPFRecord.src.h"
@@ -24,8 +22,7 @@
 #include "lib/dkim/DKIMRecord.src.h"
 #include "lib/dkim/DKIMValidator.src.h"
 #include "lib/builders/mimev2.src.h"
-
-using namespace FSMTP::Spam::Preprocessing;
+#include "lib/networking/IPv6.src.h"
 
 static const char *CONFIG_FILE = "../config.json";
 static const char *FALLBACK_CONFIG_FILE = "../fallback/config.json";

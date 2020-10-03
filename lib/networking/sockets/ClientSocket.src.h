@@ -20,6 +20,7 @@
 #include "../../default.h"
 #include "./SSLContext.src.h"
 #include "../../dns/Resolver.src.h"
+#include "../IP.src.h"
 
 namespace FSMTP::Sockets {
   CUSTOM_EXCEPTION(SocketReadLimit);
@@ -29,15 +30,10 @@ namespace FSMTP::Sockets {
     struct sockaddr_in6 *ipv6;
   };
 
-  enum SocketAddrType {
-    SockAddrType_IPv6,
-    SockAddrType_IPv4
-  };
-
   class ClientSocket {
   public:
     ClientSocket() noexcept;
-    ClientSocket(SocketAddrType type) noexcept;
+    ClientSocket(Networking::IP::Protocol type) noexcept;
     ~ClientSocket() noexcept;
 
     ClientSocket &upgradeAsServer();
@@ -46,16 +42,21 @@ namespace FSMTP::Sockets {
     ClientSocket &acceptAsServer(const int32_t server);
     ClientSocket &connectAsClient(const char *host, const int32_t port);
     ClientSocket &timeout(const int32_t s);
-    string getPrefix();
+
+    string getPrefix(bool clean = true);
     string getReverseLookup();
     string getString();
+    Networking::IP::Protocol getRealProtocol();
+
     __SockAddrReturnP getAddress();
+    string readToDelim(const char *delim, size_t maxSize = 10000000);
+
     int32_t write(const char *msg, const size_t len);
     int32_t write(const std::string &msg);
-    string readToDelim(const char *delim, size_t maxSize = 10000000);
     int32_t read(char *buffer, const size_t bufferSize);
     int32_t peek(char *buffer, const size_t bufferSize);
     int32_t getPort();
+    
     bool usingSSL();
   private:
     union {
@@ -63,7 +64,8 @@ namespace FSMTP::Sockets {
       struct sockaddr_in m_IPv4Addr;
     };
 
-    SocketAddrType m_Type;
+    Networking::IP::Protocol m_Type;
+    Networking::IP::Protocol m_RealType;
 
     SSLContext *s_SSLCtx;
     SSL *s_SSL;

@@ -95,7 +95,7 @@ namespace FSMTP::POP3
 	P3Server &P3Server::startHandler(const bool newThread) {
 		auto handler = [&](shared_ptr<ClientSocket> client) {
 			P3ServerSession session;
-			Logger clogger("POP3:" + client->getPrefix(), LoggerLevel::DEBUG);
+			Logger clogger("POP3[" + client->getPrefix() + ']', LoggerLevel::DEBUG);
 			DEBUG_ONLY(clogger << "Client connected" << ENDL);
 
 			string clientString = client->getString();

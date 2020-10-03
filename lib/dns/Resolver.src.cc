@@ -139,11 +139,11 @@ namespace FSMTP::DNS {
 		return inet_ntoa(*p);
 	}
 
-	vector<string> resolveAllFromHostname(const string &hostname) {
+	vector<string> resolveAllFromHostname(const string &hostname, int32_t af) {
 		vector<string> result = {};
 
 		struct hostent *h = nullptr;
-		if ((h = gethostbyname(hostname.c_str())) == nullptr)
+		if ((h = gethostbyname2(hostname.c_str(), af)) == nullptr)
 			throw runtime_error("Could not resolve jostname" + hostname);
 
 		struct in_addr **p = reinterpret_cast<struct in_addr **>(h->h_addr_list);

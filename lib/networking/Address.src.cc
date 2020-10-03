@@ -107,7 +107,12 @@ namespace FSMTP::Networking {
 				return aBinary == bBinary;
 			} else return a == b;
 		} else {
+			// Checks if the address we need to compare to contains
+			//  an subnet, if so we need to treat it differently,
+			//  else just compare as strings
+			if (b.find_first_of('/') != string::npos) {
 
+			} else return a == b;
 		}
 	}	
 }

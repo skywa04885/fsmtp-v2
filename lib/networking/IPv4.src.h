@@ -14,16 +14,15 @@
 	limitations under the License.
 */
 
-#include "NaiveBayes.src.h"
+#ifndef _LIB_NETWORKING_IPV4_H
+#define _LIB_NETWORKING_IPV4_H
 
-namespace FSMTP::Spam::Supervised {
-	NaiveBayes::NaiveBayes(vector<unordered_map<size_t, size_t>> &data):
-		m_Data(data)
-	{
+#include "../default.h"
 
-	}
-
-	NaiveBayes::~NaiveBayes() {
-
-	}
+namespace FSMTP::Networking::IPv4 {
+    bool compare(const struct in_addr &address, const struct in_addr &cmp, int32_t subnetMask = -1);
+	bool compare(const struct in_addr &address, string cmp);
+	bool compare(const string &address, string cmp);
 }
+
+#endif

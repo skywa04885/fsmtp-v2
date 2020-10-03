@@ -14,25 +14,15 @@
 	limitations under the License.
 */
 
-#ifndef _LIB_SPAM_WORD_ENCODER_H
-#define _LIB_SPAM_WORD_ENCODER_H
+#ifndef _LIB_NETWORKING_IPv6_H
+#define _LIB_NETWORKING_IPv6_H
 
 #include "../default.h"
-#include "../general/Logger.src.h"
 
-namespace FSMTP::Spam::Preprocessing {
-	class WordEncoder {
-	public:
-		WordEncoder();
-
-		static void splitString(const string &raw, vector<string> &words);
-		WordEncoder &fit(const vector<string> &words, function<bool(const string &)> filter);
-		WordEncoder &print(Logger &logger);
-
-		~WordEncoder();
-	private:
-		unordered_map<string, pair<size_t, size_t>> m_Words;
-	};
-}
+namespace FSMTP::Networking::IPv6 {
+	bool compare(const struct in6_addr &address, const struct in6_addr &cmp, int32_t subnetMask = -1);
+	bool compare(const struct in6_addr &address, string cmp);
+	bool compare(const string &address, string cmp);
+};
 
 #endif

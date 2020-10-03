@@ -125,9 +125,9 @@ ServerSocket &ServerSocket::startAcceptor(const bool newThread)
       //  currently only IPv4 and IPv6
       switch (this->m_Type) {
         case ServerSocketAddrType::ServerSocketAddr_IPv4:
-          client = make_shared<ClientSocket>(SocketAddrType::SockAddrType_IPv4); break;
+          client = make_shared<ClientSocket>(Networking::IP::Protocol::Protocol_IPv4); break;
         case ServerSocketAddrType::ServerSocketAddr_IPv6:
-          client = make_shared<ClientSocket>(SocketAddrType::SockAddrType_IPv6); break;
+          client = make_shared<ClientSocket>(Networking::IP::Protocol::Protocol_IPv6); break;
         default: throw runtime_error("Invalid address enum");
       }
       

@@ -19,8 +19,10 @@
 
 #include "../default.h"
 #include "SPFRecord.src.h"
-#include "../networking/Address.src.h"
 #include "../general/Logger.src.h"
+#include "../networking/IP.src.h"
+#include "../networking/IPv4.src.h"
+#include "../networking/IPv6.src.h"
 
 namespace FSMTP::SPF {
   enum SPFValidatorResultType {
@@ -38,12 +40,23 @@ namespace FSMTP::SPF {
     SPFValidator();
 
     bool validate(const string &query, const string &cmp);
-    bool safeValidate(const string &query, const string &cmp);
+    bool safeValidate(const string &query, string cmp);
+    
+    bool validateIPv6(const string &query, const struct in6_addr &addr, const vector<string> &compareAddresses);
+    bool validateIPv4(const string &query, const struct in_addr &addr, const vector<string> &compareAddresses);
+    bool validateMX(DNS::Resolver &resolver, const void *cmp, const string &domain);
+    bool validateA(DNS::Resolver &resolver, const void *cmp, const string &query);
+    bool validatePTR(const void *cmp, const vector<string> &names);
+    bool compare(const void *addr, const string &cmp);
+
     const SPFValidatorResult &getResult();
     string getResultString();
 
+    SPFValidator &setProtocol(Networking::IP::Protocol p);
+
     ~SPFValidator();
   private:
+    Networking::IP::Protocol m_Protocol;
     SPFValidatorResult m_Result;
     Logger m_Logger;
   };

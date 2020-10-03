@@ -62,12 +62,16 @@ namespace FSMTP::DNS {
 	template<typename T>
 	string getHostnameByAddress(const T *a) {
 		char hostname[512];
-		getnameinfo(reinterpret_cast<const struct sockaddr *>(a), 
+		
+		if (getnameinfo(
+			reinterpret_cast<const struct sockaddr *>(a), 
 			sizeof (T), hostname,
-			sizeof (hostname), nullptr, 0, NI_NAMEREQD);
+			sizeof (hostname), nullptr, 0, NI_NAMEREQD
+		) != 0) return "";
+
 		return hostname;
 	}
-	vector<string> resolveAllFromHostname(const string &hostname);
+	vector<string> resolveAllFromHostname(const string &hostname, int32_t af = AF_INET);
 }
 
 #endif

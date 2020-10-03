@@ -10,6 +10,7 @@ lib_openssl = dependency('openssl')
 lib_threads = dependency('threads')
 lib_hiredis = dependency('hiredis')
 lib_catch2 = dependency('catch2')
+lib_boost = dependency('boost')
 
 subdir('env')
 
@@ -38,7 +39,8 @@ executable(
 		lib_threads,
 		lib_hiredis,
 		lib_resolv,
-		lib_jsoncpp
+		lib_jsoncpp,
+		lib_boost
 	]
 )
 
@@ -52,7 +54,8 @@ unit_tests = executable(
 		lib_hiredis,
 		lib_resolv,
 		lib_jsoncpp,
-		lib_catch2
+		lib_catch2,
+		lib_boost
 	]
 )
 

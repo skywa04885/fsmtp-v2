@@ -44,6 +44,7 @@
 #include <cassandra.h>
 #include <inja/inja.hpp>
 #include <nlohmann/json.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
 
 // ==== C Libraries ====
 #include <sys/socket.h>

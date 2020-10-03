@@ -117,7 +117,7 @@ SMTPServer &SMTPServer::startHandler(const bool newThread) {
 		//  after this we write the first command to the client, which will contain
 		//  the greeting.
 
-		Logger clogger("ESMTP:" + client->getPrefix(), LoggerLevel::DEBUG);
+		Logger clogger("ESMTP[" + client->getPrefix() + ']', LoggerLevel::DEBUG);
 		DEBUG_ONLY(clogger << "Client connected" << ENDL);
 
 		try {

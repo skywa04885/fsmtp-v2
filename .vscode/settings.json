@@ -28,6 +28,11 @@
     "dense_hash_map": "cpp",
     "dense_hash_set": "cpp",
     "hash_set": "cpp",
-    "functional": "cpp"
+    "functional": "cpp",
+    "compare": "cpp",
+    "istream": "cpp",
+    "memory_resource": "cpp",
+    "ratio": "cpp",
+    "type_traits": "cpp"
   }
 }

@@ -75,6 +75,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 
 			// Performs the SPF validation
 			SPF::SPFValidator spfValidator;
+			spfValidator.setProtocol(client->getRealProtocol());
 			spfValidator.safeValidate(session->getTransportFrom().getDomain(), client->getPrefix());
 
 			// Checks the outcome of the spf validation, and sets the SPF valid boolean

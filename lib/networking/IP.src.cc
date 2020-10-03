@@ -14,19 +14,18 @@
 	limitations under the License.
 */
 
-#ifndef _LIB_SPAM_NAIVE_BAYES_H
-#define _LIB_SPAM_NAIVE_BAYES_H
+#include "IP.src.h"
 
-#include "../default.h"
-
-namespace FSMTP::Spam::Supervised {
-	class NaiveBayes {
-	public:
-		NaiveBayes(vector<unordered_map<size_t, size_t>> &data);
-		~NaiveBayes();
-	private:
-		vector<unordered_map<size_t, size_t>> m_Data;
-	};
+namespace FSMTP::Networking::IP {
+    bool compare(const string &addr, const string &cmp) {
+        try {
+            return IPv4::compare(addr, cmp);
+        } catch (...) {
+            try {
+                return IPv6::compare(addr, cmp);
+            } catch (...) {
+                return false;
+            }
+        }
+    }
 }
-
-#endif
