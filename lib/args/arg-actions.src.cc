@@ -304,7 +304,7 @@ namespace FSMTP::ARG_ACTIONS {
       mailComposerConfig.m_Subject = subject;
     } else {
       mailComposerConfig.m_From.push_back(EmailAddress("webmaster", "webmaster@fannst.nl"));
-      mailComposerConfig.m_To.push_back(EmailAddress("Contabo Support", "support@contabo.com"));
+      mailComposerConfig.m_To.push_back(EmailAddress("Luke Rieff", "luke.rieff@gmail.com"));
       mailComposerConfig.m_Subject = "Testing TLS, since your system is outdated, great test";
     }
 

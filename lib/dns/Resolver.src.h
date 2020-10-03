@@ -57,7 +57,7 @@ namespace FSMTP::DNS {
 		ns_msg m_NsMsg;
 	};
 
-	string resolveHostname(const string &hostname);
+	string resolveHostname(const string &hostname, int32_t af = AF_INET);
 	
 	template<typename T>
 	string getHostnameByAddress(const T *a) {

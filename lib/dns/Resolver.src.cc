@@ -130,13 +130,40 @@ namespace FSMTP::DNS {
 		res_nclose(&this->m_State);
 	}
 
-	string resolveHostname(const string &hostname) {
+	string resolveHostname(const string &hostname, int32_t af) {
 		struct hostent *h = nullptr;
-		if ((h = gethostbyname(hostname.c_str())) == nullptr)
+		if ((h = gethostbyname2(hostname.c_str(), af)) == nullptr)
 			throw runtime_error("Could not resolve hostname: " + hostname);
-
+		
 		struct in_addr *p = reinterpret_cast<struct in_addr *>(h->h_addr);
-		return inet_ntoa(*p);
+
+		// Checks AF, if it is AF_INET we will get the IPv4 address
+		//  else we will get the IPv6 address string, else runtime_error
+		switch (af) {
+			case AF_INET: {
+				char buffer[INET_ADDRSTRLEN];
+
+				// Turns the IPv4 address into an string, if anything goes
+				//  wrong throw error
+				if (inet_ntop(AF_INET, p, buffer, INET_ADDRSTRLEN) == nullptr)
+					throw runtime_error(EXCEPT_DEBUG(
+						string("inet_ntop() failed: ") + strerror(errno)));
+
+				return buffer;
+			}
+			case AF_INET6: {
+				char buffer[INET6_ADDRSTRLEN];
+
+				// Turns the IPv6 address into an string, if anything goes
+				//  wrong, throw an error
+				if (inet_ntop(AF_INET6, p, buffer, INET6_ADDRSTRLEN) == nullptr)
+					throw runtime_error(EXCEPT_DEBUG(
+						string("inet_ntop() failed: ") + strerror(errno)));
+				
+				return buffer;
+			}
+			default: throw invalid_argument("af needs to be either AF_INET or AF_INET6");
+		}
 	}
 
 	vector<string> resolveAllFromHostname(const string &hostname, int32_t af) {

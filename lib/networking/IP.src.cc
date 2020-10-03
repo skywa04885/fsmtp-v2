@@ -17,6 +17,13 @@
 #include "IP.src.h"
 
 namespace FSMTP::Networking::IP {
+    const char *__protocolString(Protocol p) {
+        switch (p) {
+            case Protocol::Protocol_IPv4: return "IPv4";
+            case Protocol::Protocol_IPv6: return "IPv6";
+        }
+    }
+
     bool compare(const string &addr, const string &cmp) {
         try {
             return IPv4::compare(addr, cmp);

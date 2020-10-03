@@ -28,6 +28,7 @@
 #include "../../dkim/DKIMSigner.src.h"
 #include "../Response.src.h"
 #include "../Command.src.h"
+#include "../../networking/IP.src.h"
 
 using namespace FSMTP::Sockets;
 using namespace FSMTP::Models;
@@ -35,19 +36,33 @@ using namespace FSMTP::SMTP;
 using namespace FSMTP::Mailer::Composer;
 
 namespace FSMTP::Mailer::Client {
-	typedef enum : uint32_t {
+	enum SMTPClientActionType {
 		SAT_HELO,
 		SAT_START_TLS,
 		SAT_EHLO,
 		SAT_MAIL_FROM,
 		SAT_RCPT_TO,
 		SAT_DATA
-	} SMTPClientActionType;
+	};
 
-	typedef struct {
-		vector<string> t_Servers;
-		EmailAddress t_Address;
-	} SMTPClientTarget;
+	struct SMTPClientServer {
+		string address;
+		Networking::IP::Protocol protocol;
+	};
+
+	void __smtpClientServerLog(Logger &logger, const SMTPClientServer &server);
+	
+	template<typename T>
+	void __smtpClientsServerLog(Logger &logger, const T &server) {
+		for_each(server.begin(), server.end(), [&](const SMTPClientServer &server) {
+			__smtpClientServerLog(logger, server);
+		});
+	}
+
+	struct SMTPClientTarget {
+		vector<SMTPClientServer> servers;
+		EmailAddress address;
+	};
 
 	class SMTPClient {
 	public:
@@ -58,6 +73,7 @@ namespace FSMTP::Mailer::Client {
 			const vector<EmailAddress> from,
 			const string &message
 		);
+		vector<SMTPClientServer> getServers(const string &domain);
 		SMTPClient &prepare(MailComposerConfig &config);
 		SMTPClient &beSocial(void);
 		SMTPClient &configureRecipients(const vector<EmailAddress> &addresses);

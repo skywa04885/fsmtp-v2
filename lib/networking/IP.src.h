@@ -27,6 +27,8 @@ namespace FSMTP::Networking::IP {
 		Protocol_IPv6
 	};
 
+	const char *__protocolString(Protocol p);
+
     bool compare(const string &addr, const string &cmp);
 }
 
