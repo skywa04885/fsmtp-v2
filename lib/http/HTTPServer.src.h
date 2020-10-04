@@ -14,25 +14,35 @@
 	limitations under the License.
 */
 
-#pragma once
+#ifndef _LIB_HTTP_SERVER_H
+#define _LIB_HTTP_SERVER_H
 
 #include "../default.h"
+#include "../general/Logger.src.h"
+#include "../general/Global.src.h"
 #include "../networking/sockets/ServerSocket.src.h"
 #include "../networking/sockets/ClientSocket.src.h"
 #include "../networking/sockets/SSLContext.src.h"
-#include "../general/Global.src.h"
-#include "../dns/Resolver.src.h"
-#include "../general/Logger.src.h"
-#include "../general/cleanup.src.h"
-#include "../models/Email.src.h"
-#include "../general/connections.src.h"
-#include "../models/LocalDomain.src.h"
-#include "../models/Account.src.h"
-#include "../general/Passwords.src.h"
-#include "../models/RawEmail.src.h"
-#include "../models/EmailShortcut.src.h"
-#include "../mime/mimev2.src.h"
-#include "../general/exceptions.src.h"
-#include "./P3Exceptions.src.h"
 
-using namespace FSMTP::Cleanup;
+#include "HTTPRequest.src.h"
+
+namespace FSMTP::HTTP {
+	class HTTPServer {
+	public:
+		HTTPServer();
+
+		HTTPServer &listenServer();
+		HTTPServer &createContext();
+		HTTPServer &connectDatabases();
+		HTTPServer &startHandler(bool newThread);
+
+		~HTTPServer();
+	private:
+		Logger m_Logger;
+		unique_ptr<Sockets::ServerSocket> m_HTTPS, m_HTTP;
+		unique_ptr<Sockets::SSLContext> m_SSLContext;
+	};
+}
+
+#endif
+

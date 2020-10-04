@@ -15,7 +15,7 @@
 */
 
 #include "Email.src.h"
-
+#include "../mime/mimev2.src.h"
 
 namespace FSMTP::Models
 {
@@ -219,7 +219,7 @@ namespace FSMTP::Models
   	size_t c = 0;
   	for_each(email.e_Headers.begin(), email.e_Headers.end(), [&](auto &h){
   		logger << "\t - " << c++ << " -> ";
-  		logger << h.e_Key << ": " << h.e_Value << ENDL;
+  		logger << h.key << ": " << h.value << ENDL;
   	});
 
     c = 0;

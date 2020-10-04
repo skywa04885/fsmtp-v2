@@ -1,3 +1,5 @@
 sources += files (
-    'HTTPRequest.src.cc'
+    'HTTP.src.cc',
+    'HTTPRequest.src.cc',
+    'HTTPServer.src.cc'
 )

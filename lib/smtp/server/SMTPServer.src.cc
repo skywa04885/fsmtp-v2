@@ -74,7 +74,7 @@ SMTPServer &SMTPServer::listenServer() {
 	int32_t plainPort = config["ports"]["smtp_plain"].asInt();
 
 	// ==============================
-	// Creates the IPv4 listeners
+	// Uses IPv4 if IPv6 disabled
 	// ==============================
 
 	if (!config["ipv6"].asBool()) {
@@ -87,7 +87,7 @@ SMTPServer &SMTPServer::listenServer() {
 	}
 
 	// ==============================
-	// Creates the IPv6 listeners
+	// Uses IPv6 if enabled
 	// ==============================
 
 	if (config["ipv6"].asBool()) {

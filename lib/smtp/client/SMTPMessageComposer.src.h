@@ -23,6 +23,7 @@
 #include "../../general/hex.src.h"
 #include "../../general/cleanup.src.h"
 #include "../../general/Timer.src.h"
+#include "../../mime/mimev2.src.h"
 
 using namespace FSMTP::Models;
 using namespace FSMTP::Cleanup;
@@ -35,26 +36,26 @@ namespace FSMTP::Mailer::Composer {
 	*/
 	typedef struct
 	{
-		std::vector<EmailAddress> m_From = {};
-		std::vector<EmailAddress> m_To = {};
-		std::vector<EmailBodySection> m_BodySections = {};
-		std::vector<EmailHeader> m_Headers = {};
-		std::string m_Subject;
+		vector<EmailAddress> m_From = {};
+		vector<EmailAddress> m_To = {};
+		vector<EmailBodySection> m_BodySections = {};
+		vector<MIME::MIMEHeader> m_Headers = {};
+		string m_Subject;
 	} MailComposerConfig;
 
-	std::string compose(MailComposerConfig &config);
-	std::string generateMessageID(void);
-	std::string generateTextFromHTML(const std::string &raw);
-	std::string generateHeaders(const std::vector<EmailHeader> &headers);
-	std::string encodeMessageBody(
-		const std::string &raw, 
+	string compose(MailComposerConfig &config);
+	string generateMessageID(void);
+	string generateTextFromHTML(const string &raw);
+	string generateHeaders(const vector<MIME::MIMEHeader> &headers);
+	string encodeMessageBody(
+		const string &raw, 
 		const EmailTransferEncoding encoding
 	);
-	std::string generateBodySection(
-		const std::string &body,
+	string generateBodySection(
+		const string &body,
 		const EmailTransferEncoding encoding,
-		const std::vector<EmailHeader> &headers
+		const vector<MIME::MIMEHeader> &headers
 	);
-	std::string generateBoundary(void);
-	std::string normalizeMessageBody(const std::string &raw);
+	string generateBoundary(void);
+	string normalizeMessageBody(const string &raw);
 }

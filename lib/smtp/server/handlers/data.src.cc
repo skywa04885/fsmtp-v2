@@ -189,7 +189,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 
 		// Splits the raw body into lines, so we can perform
 		//  further processing on it later
-		vector<string> lines = Parsers::getMIMELines(session->raw());
+		vector<string> lines = MIME::getMIMELines(session->raw());
 
 		// Splits the headers and the body, so we can append our
 		//  own headers to it
@@ -197,11 +197,11 @@ namespace FSMTP::SMTP::Server::Handlers {
 		tie(
 			headersBegin, headersEnd,
 			bodyBegin, bodyEnd
-		) = Parsers::splitMIMEBodyAndHeaders(lines.begin(), lines.end());
+		) = MIME::splitMIMEBodyAndHeaders(lines.begin(), lines.end());
 
 		// Joins the header lines, so they will not contain any non-wantend
 		//  indentions, after which we parse them
-		vector<string> joinedHeaders = Parsers::joinHeaders(headersBegin, headersEnd);
+		vector<string> joinedHeaders = MIME::joinHeaders(headersBegin, headersEnd);
 
 		// ========================================
 		// Builds the headers
@@ -234,7 +234,7 @@ namespace FSMTP::SMTP::Server::Handlers {
 		});
 
 		// Appends the message body itself
-		session->raw() += "\r\n\r\n" + Parsers::getStringFromLines(bodyBegin, bodyEnd);
+		session->raw() += "\r\n\r\n" + MIME::getStringFromLines(bodyBegin, bodyEnd);
 		
 		// ========================================
 		// Parses the MIME message
@@ -243,15 +243,15 @@ namespace FSMTP::SMTP::Server::Handlers {
 		// Parses the MIME email, so we can later
 		//  start getting the content from it
 		FullEmail email;
-		Parsers::parseMIME(session->raw(), email);
-		for_each(email.e_Headers.begin(), email.e_Headers.end(), [&](const EmailHeader &header) {
-			string lower = header.e_Key;
+		MIME::parseMIME(session->raw(), email);
+		for_each(email.e_Headers.begin(), email.e_Headers.end(), [&](const MIME::MIMEHeader &header) {
+			string lower = header.key;
 			transform(lower.begin(), lower.end(), lower.begin(), [](const char c) { return tolower(c); });
 
 			if (lower == "x-fannst-flags") {
 				try {
 					DEBUG_ONLY(clogger << DEBUG << "Found 'X-Fannst-Flags' header, parsing .." << ENDL << CLASSIC);
-					session->xfannst().parse(header.e_Value);
+					session->xfannst().parse(header.value);
 					DEBUG_ONLY(session->xfannst().print(clogger));
 				} catch (const runtime_error &e) {
 					clogger << ERROR << "Parsing failed for 'X-Fannst-Flags', runtime_error: " << e.what() << ENDL << CLASSIC;

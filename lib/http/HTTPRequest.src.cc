@@ -17,80 +17,11 @@
 #include "HTTPRequest.src.h"
 
 namespace FSMTP::HTTP {
-    const char *__httpMethodToString(HTTPMethod method) {
-        assert(method > HTTPMethod::MethodStart && method < HTTPMethod::MethodEnd);
-        switch (method) {
-            case HTTPMethod::Get: return "GET";
-            case HTTPMethod::Post: return "POST";
-            case HTTPMethod::Put: return "PUT";
-            case HTTPMethod::Head: return "HEAD";
-            case HTTPMethod::Delete: return "DELETE";
-            case HTTPMethod::Patch: return "PATCH";
-            case HTTPMethod::Options: return "OPTIONS";
-        }
-    }
-
-    HTTPMethod __htmlMethodFromString(string str) {
-        transform(str.begin(), str.end(), str.begin(), [](const char c){
-            return tolower(c);
-        });
-
-        if (str == "get") return HTTPMethod::Get;
-        else if (str == "post") return HTTPMethod::Post;
-        else if (str == "put") return HTTPMethod::Put;
-        else if (str == "head") return HTTPMethod::Head;
-        else if (str == "delete") return HTTPMethod::Delete;
-        else if (str == "patch") return HTTPMethod::Patch;
-        else if (str == "options") return HTTPMethod::Options;
-        else throw runtime_error(EXCEPT_DEBUG(
-            "HTTP Method not supported: '" + str + '\''));
-    }
-
-    const char *__httpVersionToString(HTTPVersion version) {
-        assert(version > HTTPVersion::VersionStart && version < HTTPVersion::VersionEnd);
-        switch (version) {
-            case HTTPVersion::Http09: return "HTTP/0.9";
-            case HTTPVersion::Http10: return "HTTP/1.0";
-            case HTTPVersion::Http11: return "HTTP/1.1";
-            case HTTPVersion::Http2: return "HTTP/2";
-            case HTTPVersion::Http3: return "HTTP/3";
-        }
-    }
-
-    HTTPVersion __httpVersionFromString(string str) {
-        transform(str.begin(), str.end(), str.begin(), [](const char c){
-            return tolower(c);
-        });
-
-        if (str == "http/0.9") return HTTPVersion::Http09;
-        else if (str == "http/1.0") return HTTPVersion::Http10;
-        else if (str == "http/1.1") return HTTPVersion::Http11;
-        else if (str == "http/2") return HTTPVersion::Http2;
-        else if (str == "http/3") return HTTPVersion::Http3;
-        else throw runtime_error(EXCEPT_DEBUG(
-            "HTTP version not supported: '" + str + '\''));
-    }
-
-    const char *__httpProtocolToString(HTTPProtocol protocol) {
-        assert(protocol > HTTPProtocol::ProtocolStart && protocol < HTTPProtocol::ProtocolEnd);
-        switch (protocol) {
-            case HTTPProtocol::Http: return "http";
-            case HTTPProtocol::Https: return "https";
-        }
-    }
-
-    HTTPProtocol __httpProtocolFromString(string str) {
-        transform(str.begin(), str.end(), str.begin(), [](const char c){
-            return tolower(c);
-        });
-
-        if (str == "https") return HTTPProtocol::Https;
-        else if (str == "http") return HTTPProtocol::Http;
-        else throw runtime_error(EXCEPT_DEBUG(
-            "HTTP protocol not supported: '" + str + '\''));
-    }
-
-    HTTPRequest::HTTPRequest() = default;
+    HTTPRequest::HTTPRequest():
+        m_Method(HTTPMethod::Get),
+        m_Version(HTTPVersion::Http11),
+        m_Connection(HTTPConnection::ConnectionClose)
+    {};
 
     string HTTPRequest::build() {
 
@@ -105,42 +36,50 @@ namespace FSMTP::HTTP {
     }
 
     HTTPRequest &HTTPRequest::parse(const string &raw) {
-        vector<string> lines = Parsers::getMIMELines(raw);
+        vector<string> lines = MIME::getMIMELines(raw);
         if (lines.size() <= 0)
             throw runtime_error(EXCEPT_DEBUG("HTTPRequest is empty"));
 
-        // Parses the head of the http request, after which
-        //  we pop it of the final lines
+        // Parses the head of the http request
         this->parseHead(lines[0]);
-        lines.pop_back();
+        lines.erase(lines.begin(), lines.begin() + 1);
 
         // Checks the HTTP version, and if we even should parse
         //  the headers from it
         if (this->m_Version == HTTPVersion::Http09) return *this;
 
-        // Since we checked if we should parse headers, we now check
-        //  if there are any, after which we separate them from the body
+        // Checks if there are any headers, if so start parsing
+        //  them and store them into the current request
         if (lines.size() <= 0) return *this;
+        this->parseHeaders(lines.begin(), lines.end());
 
-        strvec_it headersBegin, headersEnd, bodyBegin, bodyEnd;
-        tie(headersBegin, headersEnd, bodyBegin, 
-            bodyEnd) = Parsers::splitMIMEBodyAndHeaders(lines.begin(), lines.end());
+        // Loops over the headers, and checks if there is valueable
+        //  information in them, about the request
+        for_each(this->m_Headers.begin(), this->m_Headers.end(), [&](const MIME::MIMEHeader &h) {
+            if (h.key == "host")
+                this->m_URI.hostname = h.value;
+            else if (h.key == "connection")
+                this->m_Connection = __httpConnectionFromString(h.value);
+        });
 
-        // Parses the MIME headers into key / value pairs
+        return *this;
     }
 
     HTTPRequest &HTTPRequest::parseHeaders(strvec_it begin, strvec_it end) {
+        this->m_Headers = MIME::_parseHeaders(begin, end, true);
 
+        return *this;
     }
 
     HTTPRequest &HTTPRequest::parseHead(const string &raw) {
         size_t start = 0, end = raw.find_first_of(' ');
-
+        
         for (size_t i = 0; i < 3; ++i) {
             string seg = raw.substr(start, end - start);
             switch (i) {
-                case 0: this->m_Method = __htmlMethodFromString(seg); break;
+                case 0: this->m_Method = __httpMethodFromString(seg); break;
                 case 1: this->m_URI = HTTPUri::parse(seg); break;
+                case 2: this->m_Version = __httpVersionFromString(seg); break;
             }
 
             // Checks if we're at the end, else we proceed
@@ -149,6 +88,37 @@ namespace FSMTP::HTTP {
             start = end + 1;
             end = raw.find_first_of(' ', start);
         }
+
+        return *this;
+    }
+
+    HTTPRequest &HTTPRequest::print(Logger &logger) {
+        logger << DEBUG;
+
+        logger << "HTTPRequest {" << ENDL;
+        logger << "\tMethod: " << __httpMethodToString(this->m_Method) << ENDL;
+        logger << "\tVersion: " << __httpVersionToString(this->m_Version) << ENDL;
+        
+        logger << "\tURI: " << ENDL;
+        logger << "\t\tPath: " << this->m_URI.path << ENDL;
+        logger << "\t\tHostname: " << this->m_URI.hostname << ENDL;
+        logger << "\t\tSearch: " << this->m_URI.search << ENDL;
+        logger << "\t\tProtocol: " << __httpProtocolToString(this->m_URI.protocol) << ENDL;
+        logger << "\t\tConnection: " << __httpConnectionToString(this->m_Connection) << ENDL;
+        
+        logger << ENDL << "\tHeaders: " << ENDL;
+
+        size_t i = 0;
+        for_each(this->m_Headers.begin(), this->m_Headers.end(), [&](const MIME::MIMEHeader &h) {
+            logger << "\t\t" << i++ << " -> MIMEHeader { key: '" << h.key 
+                << ", value: '" << h.value << "' }" << ENDL;
+        });
+
+        logger << '}' << ENDL;
+
+        logger << ENDL;
+
+        return *this;
     }
 
     const HTTPUri &HTTPRequest::getURI()

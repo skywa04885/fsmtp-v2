@@ -24,7 +24,7 @@
 #include "DKIMHashes.src.h"
 
 #include "../general/Logger.src.h"
-#include "../parsers/mimev2.src.h"
+#include "../mime/mimev2.src.h"
 
 namespace FSMTP::DKIM {
 	struct DKIMSignerConfig {

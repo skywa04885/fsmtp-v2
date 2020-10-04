@@ -25,7 +25,7 @@
 
 #include "../default.h"
 #include "../general/cleanup.src.h"
-#include "../parsers/mime.src.h"
+#include "../mime/mime.src.h"
 #include "../general/encoding.src.h"
 #include "../general/Timer.src.h"
 #include "DKIMHashes.src.h"

@@ -78,13 +78,13 @@ namespace FSMTP::DKIM {
 
 		// Splits the MIME message into lines so we can process
 		//  them later more easily
-		vector<string> lines = Parsers::getMIMELines(mime);
+		vector<string> lines = MIME::getMIMELines(mime);
 
 		// Gets the header and body from the lines, these will
 		//  be stored as iterators
 		strvec_it headersBegin, headersEnd, bodyBegin, bodyEnd;
 		tie(headersBegin, headersEnd, bodyBegin, 
-			bodyEnd) = Parsers::splitMIMEBodyAndHeaders(lines.begin(), lines.end());
+			bodyEnd) = MIME::splitMIMEBodyAndHeaders(lines.begin(), lines.end());
 
 		// ==============================
 		// Generates the body hash
@@ -92,7 +92,7 @@ namespace FSMTP::DKIM {
 
 		// Generates the body hash with the current canonicalization algorithm
 		//  and signing algorithm
-		this->generateBodyHash(Parsers::getStringFromLines(bodyBegin, bodyEnd));
+		this->generateBodyHash(MIME::getStringFromLines(bodyBegin, bodyEnd));
 
 		// ==============================
 		// Generates the fake signature
@@ -109,8 +109,8 @@ namespace FSMTP::DKIM {
 
 		// Appends the presign signature to the final headers
 		//  so we can start signing them
-		vector<string> joinedHeaders = Parsers::joinHeaders(headersBegin, headersEnd);
-		string headers = Parsers::getStringFromLines(joinedHeaders.begin(), joinedHeaders.end());
+		vector<string> joinedHeaders = MIME::joinHeaders(headersBegin, headersEnd);
+		string headers = MIME::getStringFromLines(joinedHeaders.begin(), joinedHeaders.end());
 		headers += presignSignature;
 
 		// ==============================
@@ -125,10 +125,10 @@ namespace FSMTP::DKIM {
 		// Builds the signed message
 		// ==============================
 
-		this->m_SignedMessage = Parsers::getStringFromLines(headersBegin, headersEnd);
+		this->m_SignedMessage = MIME::getStringFromLines(headersBegin, headersEnd);
 		this->m_SignedMessage += Builders::foldHeader(this->m_Result.build(), 128);
 		this->m_SignedMessage += "\r\n\r\n";
-		this->m_SignedMessage += Parsers::getStringFromLines(bodyBegin, bodyEnd);
+		this->m_SignedMessage += MIME::getStringFromLines(bodyBegin, bodyEnd);
 
 		return *this;
 	}

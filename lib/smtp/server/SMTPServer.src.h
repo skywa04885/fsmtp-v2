@@ -27,7 +27,7 @@
 #include "SMTPServerSession.src.h"
 #include "SMTPServerExceptions.src.h"
 #include "SMTPAuthentication.src.h"
-#include "../../parsers/mimev2.src.h"
+#include "../../mime/mimev2.src.h"
 #include "../../models/LocalDomain.src.h"
 #include "../../workers/TransmissionWorker.src.h"
 #include "SMTPSpamDetection.src.h"
@@ -36,7 +36,6 @@
 #include "SMTPHeaders.src.h"
 #include "handlers/data.src.h"
 
-using namespace FSMTP::Parsers;
 using namespace FSMTP;
 using namespace FSMTP::SMTP;
 using namespace FSMTP::Models;

@@ -34,10 +34,12 @@
 		"imap_plain": 143,
 		"imap_secure": 993,
 		"pop3_plain": 110,
-		"pop3_secure": 995
+		"pop3_secure": 995,
+		"https": 443,
+		"http": 80
 	},
 	"sockets": {
 		"queue_max": 400
 	},
-	"ipv6": true
+	"ipv6": false
 }

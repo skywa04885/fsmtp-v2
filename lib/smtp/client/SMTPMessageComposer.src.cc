@@ -117,15 +117,15 @@ namespace FSMTP::Mailer::Composer
 		reduceWhitespace(config.m_Subject, subject);
 
 		// Prepares the default headers
-		config.m_Headers.push_back(EmailHeader{"X-Mailer", "FSMTP-V2"});
-		config.m_Headers.push_back(EmailHeader{"X-Fannst-NodeID", conf["node_name"].asCString()});
-		config.m_Headers.push_back(EmailHeader{"X-Made-By", "Luke A.C.A. Rieff"});
-		config.m_Headers.push_back(EmailHeader{"Subject", subject});
-		config.m_Headers.push_back(EmailHeader{"Date",  dateValue});
-		config.m_Headers.push_back(EmailHeader{"MIME-Version",  "1.0"});
-		config.m_Headers.push_back(EmailHeader{"Message-ID", messageID});
-		config.m_Headers.push_back(EmailHeader{"To",  messageTo});
-		config.m_Headers.push_back(EmailHeader{"From",  messageFrom});
+		config.m_Headers.push_back(MIME::MIMEHeader{"X-Mailer", "FSMTP-V2"});
+		config.m_Headers.push_back(MIME::MIMEHeader{"X-Fannst-NodeID", conf["node_name"].asCString()});
+		config.m_Headers.push_back(MIME::MIMEHeader{"X-Made-By", "Luke A.C.A. Rieff"});
+		config.m_Headers.push_back(MIME::MIMEHeader{"Subject", subject});
+		config.m_Headers.push_back(MIME::MIMEHeader{"Date",  dateValue});
+		config.m_Headers.push_back(MIME::MIMEHeader{"MIME-Version",  "1.0"});
+		config.m_Headers.push_back(MIME::MIMEHeader{"Message-ID", messageID});
+		config.m_Headers.push_back(MIME::MIMEHeader{"To",  messageTo});
+		config.m_Headers.push_back(MIME::MIMEHeader{"From",  messageFrom});
 
 		// ======================================
 		// Prepares the message body
@@ -183,7 +183,7 @@ namespace FSMTP::Mailer::Composer
 			DEBUG_ONLY(logger << "Text only detected, generating headers ..." << ENDL);
 
 			// Generates the content type, and appends the body
-			config.m_Headers.emplace_back(EmailHeader{
+			config.m_Headers.emplace_back(MIME::MIMEHeader{
 				"Content-Type",
 				contentTypeToString(config.m_BodySections[0].e_Type)
 			});
@@ -198,7 +198,7 @@ namespace FSMTP::Mailer::Composer
 			string contentType = contentTypeToString(EmailContentType::ECT_MULTIPART_ALTERNATIVE);
 			contentType += "; boundary=\"" + boundary + '\"';
 
-			config.m_Headers.emplace_back(EmailHeader{
+			config.m_Headers.emplace_back(MIME::MIMEHeader{
 				"Content-Type",
 				contentType
 			});
@@ -214,12 +214,12 @@ namespace FSMTP::Mailer::Composer
 				if (section.e_Headers.size() == 0) {
 					string contentType = contentTypeToString(section.e_Type);
 					contentType += "; charset=\"utf-8\"";
-					section.e_Headers.push_back(EmailHeader{
+					section.e_Headers.push_back(MIME::MIMEHeader{
 						"Content-Type",
 						contentType
 					});
 
-					section.e_Headers.push_back(EmailHeader{
+					section.e_Headers.push_back(MIME::MIMEHeader{
 						"Content-Transfer-Encoding",
 						contentTransferEncodingToString(section.e_TransferEncoding)
 					});
@@ -252,10 +252,10 @@ namespace FSMTP::Mailer::Composer
 		return res;
 	}
 
-	string generateHeaders(const vector<EmailHeader> &headers) {
+	string generateHeaders(const vector<MIME::MIMEHeader> &headers) {
 		string res;
-		for (const EmailHeader &header : headers)
-			res += header.e_Key + ": " + header.e_Value + "\r\n";
+		for (const MIME::MIMEHeader &header : headers)
+			res += header.key + ": " + header.key + "\r\n";
 		return res;
 	}
 
@@ -286,7 +286,7 @@ namespace FSMTP::Mailer::Composer
 	string generateBodySection(
 		const string &body,
 		const EmailTransferEncoding encoding,
-		const vector<EmailHeader> &headers
+		const vector<MIME::MIMEHeader> &headers
 	) {
 		string res;
 

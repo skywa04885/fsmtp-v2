@@ -255,7 +255,13 @@ namespace FSMTP::POP3
 				// Prepares the email contents, and splits the message
 				// - into the headers and body
 				string headers, body;
-				MIME::splitHeadersAndBody(raw.e_Content, headers, body);
+				strvec_it headersBegin, headersEnd, bodyBegin, bodyEnd;
+				vector<string> lines = MIME::getMIMELines(raw.e_Content);
+				tie(headersBegin, headersEnd, bodyBegin,
+					bodyEnd) = MIME::splitMIMEBodyAndHeaders(lines.begin(), lines.end());
+				
+				headers = MIME::getStringFromLines(headersBegin, headersEnd);
+				body = MIME::getStringFromLines(bodyBegin, bodyEnd);
 
 				// Checks how we should return the data
 				size_t currentLine = 0;

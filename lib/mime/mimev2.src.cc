@@ -16,7 +16,7 @@
 
 #include "mimev2.src.h"
 
-namespace FSMTP::Parsers {
+namespace FSMTP::MIME {
   /**
    * Decodes an piece of text from an email
    */
@@ -83,9 +83,9 @@ namespace FSMTP::Parsers {
   }
 
   /**
-   * Joins MIME headers and parses them into EmailHeader's
+   * Joins MIME headers and parses them into MIME::MIMEHeader's
    */
-  vector<EmailHeader> parseHeaders(strvec_it from, strvec_it to) {
+  vector<MIME::MIMEHeader> parseHeaders(strvec_it from, strvec_it to) {
     return _parseHeaders(from, to, false);
   }
 
@@ -126,13 +126,13 @@ namespace FSMTP::Parsers {
     return joinedHeaders;
   }
 
-  vector<EmailHeader> _parseHeaders(strvec_it from, strvec_it to, bool lowerKey) {
+  vector<MIME::MIMEHeader> _parseHeaders(strvec_it from, strvec_it to, bool lowerKey) {
     #ifdef _SMTP_DEBUG
     Logger logger("MIMEV2", LoggerLevel::DEBUG);
     Timer timer("parseHeaders()", logger);
     #endif
 
-    vector<EmailHeader> headers = {};
+    vector<MIME::MIMEHeader> headers = {};
     vector<string> joinedHeaders = joinHeaders(from, to);
     
     // ================================
@@ -181,7 +181,7 @@ namespace FSMTP::Parsers {
       }
 
       // Pushes the header to the result vector
-      headers.push_back(EmailHeader {
+      headers.push_back(MIME::MIMEHeader {
         key,
         a(header.substr(++sep))
       });
@@ -361,7 +361,7 @@ namespace FSMTP::Parsers {
 
     // Parses the headers into an vector, if we're in the
     //  first round store the headers inside of the email
-    vector<EmailHeader> headers = {};
+    vector<MIMEHeader> headers = {};
     headers = parseHeaders(headersBegin, headersEnd);
     if (!i) email.e_Headers = headers;
 
@@ -371,16 +371,16 @@ namespace FSMTP::Parsers {
     logger << "Found headers: " << ENDL;
     
     size_t j = 0;
-    for_each(headers.begin(), headers.end(), [&](const EmailHeader &h) {
-      logger << j++ << " -> '" << h.e_Key << "': '" << h.e_Value << '\'' << ENDL;
+    for_each(headers.begin(), headers.end(), [&](const MIME::MIMEHeader &h) {
+      logger << j++ << " -> '" << h.key << "': '" << h.value << '\'' << ENDL;
     });
     #endif
 
     // Gets the default fields, such as the date
     //  boundary, subject etcetera
-    for_each(headers.begin(), headers.end(), [&](EmailHeader &h) {
-      auto &key = h.e_Key;
-      auto &value = h.e_Value;
+    for_each(headers.begin(), headers.end(), [&](MIME::MIMEHeader &h) {
+      auto &key = h.key;
+      auto &value = h.value;
 
       // Turns the key into lowercase for easier comparison,
       //  this will be also visible in the result since it modifies

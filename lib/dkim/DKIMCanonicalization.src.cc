@@ -36,7 +36,7 @@ namespace FSMTP::DKIM {
    *     mechanisms.)
    */
   string relaxedBody(const string &raw) {
-    vector<string> lines = Parsers::getMIMELines(raw);
+    vector<string> lines = MIME::getMIMELines(raw);
     
     // Reduces all the whitespace to a single whitespace char
     //  after which we remove the whitespace at the end of line
@@ -72,7 +72,7 @@ namespace FSMTP::DKIM {
     // Erases the lines at the end of the document, after which we
     //  will join the lines and return the result
     lines.erase(lastValidLine + 1, lines.end());
-    return Parsers::getStringFromLines(lines.begin(), lines.end());
+    return MIME::getStringFromLines(lines.begin(), lines.end());
   }
 
   /**
@@ -90,7 +90,7 @@ namespace FSMTP::DKIM {
    * single "CRLF"; that is, the canonicalized length will be 2 octets.
    */
   string simpleBody(const string &raw) {
-    vector<string> lines = Parsers::getMIMELines(raw);
+    vector<string> lines = MIME::getMIMELines(raw);
 
     // Loops over the lines, and stores the index of the
     //  last line with content, so the rest may be removed
@@ -102,7 +102,7 @@ namespace FSMTP::DKIM {
     // Erases the end of the lines vector, so removes the empty lines
     //  after which we join them and return them as an string
     lines.erase(lastValidLine + 1, lines.end());
-    return Parsers::getStringFromLines(lines.begin(), lines.end());
+    return MIME::getStringFromLines(lines.begin(), lines.end());
   }
 
   /**
@@ -115,7 +115,7 @@ namespace FSMTP::DKIM {
    * case folded and whitespace MUST NOT be changed.
    */
   string simpleHeaders(const string &raw, const vector<string> &filter) {
-    vector<string> lines = Parsers::getMIMELines(raw);
+    vector<string> lines = MIME::getMIMELines(raw);
     vector<string> result = {};
 
     for_each(lines.begin(), lines.end(), [&](const string &line) {
@@ -138,7 +138,7 @@ namespace FSMTP::DKIM {
       result.push_back(line);
     });
 
-    return Parsers::getStringFromLines(result.begin(), result.end());
+    return MIME::getStringFromLines(result.begin(), result.end());
   }
 
   /**
@@ -164,7 +164,7 @@ namespace FSMTP::DKIM {
    *     colon separator MUST be retained.
    */
   string relaxedHeaders(const string &raw, const vector<string> &filter) {
-    vector<string> lines = Parsers::getMIMELines(raw);
+    vector<string> lines = MIME::getMIMELines(raw);
     vector<pair<string, string>> result;
     vector<string> sortedResult = {};
 
@@ -232,6 +232,6 @@ namespace FSMTP::DKIM {
     });
 
     if (sortedResult.size() <= 0) throw runtime_error(EXCEPT_DEBUG("Nothing left after canonicalizing"));
-    return Parsers::getStringFromLines(sortedResult.begin(), sortedResult.end());
+    return MIME::getStringFromLines(sortedResult.begin(), sortedResult.end());
   }
 };

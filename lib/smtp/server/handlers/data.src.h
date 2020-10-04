@@ -24,7 +24,7 @@
 #include "../../../dkim/DKIMValidator.src.h"
 #include "../../../dmarc/DMARCRecord.src.h"
 #include "../../../networking/sockets/ClientSocket.src.h"
-#include "../../../parsers/mimev2.src.h"
+#include "../../../mime/mimev2.src.h"
 #include "../../../builders/mimev2.src.h"
 #include "../SMTPHeaders.src.h"
 #include "../../../workers/DatabaseWorker.src.h"

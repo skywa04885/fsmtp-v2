@@ -2,7 +2,7 @@ subdir('models')
 subdir('dkim')
 subdir('general')
 subdir('networking')
-subdir('parsers')
+subdir('mime')
 subdir('pop3')
 subdir('smtp')
 subdir('workers')
@@ -12,6 +12,7 @@ subdir('dmarc')
 subdir('spf')
 subdir('builders')
 subdir('xfannst')
+subdir('http')
 
 sources += files (
   'default.cc'

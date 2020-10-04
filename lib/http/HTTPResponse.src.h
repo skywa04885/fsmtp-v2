@@ -14,18 +14,29 @@
 	limitations under the License.
 */
 
-#ifndef _LIB_DKIM_CANON_H
-#define _LIB_DKIM_CANON_H
+#ifndef _LIB_HTTP_RESPONSE_H
+#define _LIB_HTTP_RESPONSE_H
 
 #include "../default.h"
-#include "../mime/mimev2.src.h"
+#include "../mime/types.src.h"
+#include "HTTPRequest.src.h"
 
-namespace FSMTP::DKIM {
-  string relaxedBody(const string &raw);
-  string simpleBody(const string &raw);
+namespace FSMTP::HTTP {
+  class HTTPResponse {
+  public:
+		HTTPResponse(HTTPRequest &req);
 
-  string simpleHeaders(const string &raw, const vector<string> &filter);
-  string relaxedHeaders(const string &raw, const vector<string> &filter);
-};
+		HTTPResponse &sendHead();
+		HTTPResponse &sendHeaders();
+
+		HTTPResponse &sendFile(const string &file);
+		HTTPResponse &sendText(const string &text, MIME::FileTypes type);
+
+		~HTTPResponse();
+  private:
+		HTTPRequest &m_Request;	
+		vector<MIME::MIMEHeader> m_Headers;
+  };
+}
 
 #endif

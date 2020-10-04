@@ -25,7 +25,7 @@ namespace FSMTP::DKIM {
 
   DKIMSignatureResult DKIMValidator::validateSignature(
     const string &signature, 
-    const vector<EmailHeader> &headers, const string &body,
+    const vector<MIME::MIMEHeader> &headers, const string &body,
     const string &rawHeaders
   ) {
     auto &logger = this->m_Logger;
@@ -199,25 +199,25 @@ namespace FSMTP::DKIM {
 
     // Parses the message into lines, after which we get the body and headers
     //  so we can process them later
-    vector<string> lines = Parsers::getMIMELines(message);
+    vector<string> lines = MIME::getMIMELines(message);
     strvec_it headersBegin, headersEnd, bodyBegin, bodyEnd;
-    tie(headersBegin, headersEnd, bodyBegin, bodyEnd) = Parsers::splitMIMEBodyAndHeaders(lines.begin(), lines.end());
+    tie(headersBegin, headersEnd, bodyBegin, bodyEnd) = MIME::splitMIMEBodyAndHeaders(lines.begin(), lines.end());
 
     // Parses the headers into an vector of email key/value pairs
-    vector<EmailHeader> headers = Parsers::_parseHeaders(headersBegin, headersEnd, true);
+    vector<MIME::MIMEHeader> headers = MIME::_parseHeaders(headersBegin, headersEnd, true);
 
     // Gets the body string, since we will have to canonicalize it 
     //  later on in the process
-    string rawBody = Parsers::getStringFromLines(bodyBegin, bodyEnd);
+    string rawBody = MIME::getStringFromLines(bodyBegin, bodyEnd);
 
     // Gets the raw headers of the message, we will remove the DKIM-Signature ones from
     //  it since it will otherwise confuse the validation process
     vector<string> rawHeadersWithoutSignatures = {};
-    for_each(headers.begin(), headers.end(), [&](const EmailHeader &header) {
-      if (header.e_Key == "dkim-signature") return;
-      else rawHeadersWithoutSignatures.push_back(header.e_Key + ": " + header.e_Value);
+    for_each(headers.begin(), headers.end(), [&](const MIME::MIMEHeader &header) {
+      if (header.key == "dkim-signature") return;
+      else rawHeadersWithoutSignatures.push_back(header.key + ": " + header.value);
     });
-    string rawHeaders = Parsers::getStringFromLines(rawHeadersWithoutSignatures.begin(), rawHeadersWithoutSignatures.end());
+    string rawHeaders = MIME::getStringFromLines(rawHeadersWithoutSignatures.begin(), rawHeadersWithoutSignatures.end());
 
     // =================================
     // Gets the signatures
@@ -225,9 +225,9 @@ namespace FSMTP::DKIM {
 
     // Gets the string references to the signatures
     vector<string> signatures = {};
-    for_each(headers.begin(), headers.end(), [&](const EmailHeader &h) {
-      if (h.e_Key == "dkim-signature")
-        signatures.push_back(h.e_Value);
+    for_each(headers.begin(), headers.end(), [&](const MIME::MIMEHeader &h) {
+      if (h.key == "dkim-signature")
+        signatures.push_back(h.value);
     });
 
     if (signatures.size() <= 0) {

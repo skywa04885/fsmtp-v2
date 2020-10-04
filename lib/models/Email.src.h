@@ -22,8 +22,12 @@
 #include "../general/connections.src.h"
 #include "../general/exceptions.src.h"
 
-using namespace FSMTP::Cleanup;
+// The MIMEHeader prototype
+namespace FSMTP::MIME {
+	struct MIMEHeader;
+}
 
+using namespace FSMTP::Cleanup;
 using namespace FSMTP::Connections;
 
 namespace FSMTP::Models
@@ -81,17 +85,10 @@ namespace FSMTP::Models
 	const char *contentTransferEncodingToString(const EmailTransferEncoding enc);
 	EmailTransferEncoding stringToEmailTransferEncoding(const string &raw);
 
-	struct EmailHeader {
-		string e_Key;
-		string e_Value;
-	};
-
-	typedef struct EmailHeader EmailHeader;
-
 	typedef struct {
 		string e_Content;
 		EmailContentType e_Type;
-		vector<EmailHeader> e_Headers;
+		vector<MIME::MIMEHeader> e_Headers;
 		int32_t e_Index;
 		EmailTransferEncoding e_TransferEncoding;
 	} EmailBodySection;
@@ -111,7 +108,7 @@ namespace FSMTP::Models
 		vector<EmailBodySection> e_BodySections;
 		vector<EmailAddress> e_From;
 		vector<EmailAddress> e_To;
-		vector<EmailHeader> e_Headers;
+		vector<MIME::MIMEHeader> e_Headers;
 		size_t e_Date;
 	};
 }

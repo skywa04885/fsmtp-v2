@@ -21,7 +21,7 @@
 #include "../models/Email.src.h"
 #include "../general/Logger.src.h"
 #include "../general/Timer.src.h"
-#include "../parsers/mimev2.src.h"
+#include "../mime/mimev2.src.h"
 #include "DKIMHeader.src.h"
 #include "DKIMCanonicalization.src.h"
 #include "DKIMHashes.src.h"
@@ -55,7 +55,7 @@ namespace FSMTP::DKIM {
     DKIMValidator();
 
     DKIMSignatureResult validateSignature(const string &signature, 
-      const vector<EmailHeader> &headers, const string &body,
+      const vector<MIME::MIMEHeader> &headers, const string &body,
       const string &rawHeaders);
 
     DKIMValidator &validate(const string &message);

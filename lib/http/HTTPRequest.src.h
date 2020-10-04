@@ -18,44 +18,12 @@
 #define _LIB_HTTP_REQUEST_H
 
 #include "../default.h"
-#include "../parsers/mimev2.src.h"
+#include "../general/Logger.src.h"
+#include "../mime/mimev2.src.h"
+
+#include "HTTP.src.h"
 
 namespace FSMTP::HTTP {
-    enum HTTPMethod {
-        MethodStart,
-        Get, Post, Put, Head,
-        Delete, Patch, Options,
-        MethodEnd
-    };
-
-    const char *__httpMethodToString(HTTPMethod method);
-    HTTPMethod __htmlMethodFromString(string str);
-
-    enum HTTPVersion {
-        VersionStart,
-        Http09, Http10, Http11, Http2, Http3,
-        VersionEnd
-    };
-
-    const char *__httpVersionToString(HTTPVersion version);
-    HTTPVersion __httpVersionFromString(string str);
-
-    enum HTTPProtocol {
-        ProtocolStart,
-        Https, Http,
-        ProtocolEnd
-    };
-
-    const char *__httpProtocolToString(HTTPProtocol protocol);
-    HTTPProtocol __httpProtocolFromString(string str);
-
-    struct HTTPUri {
-        string m_Hostname, m_Path, m_Search;
-        HTTPProtocol m_Protocol;
-
-        static HTTPUri parse(const string &raw);
-    };
-
     class HTTPRequest {
     public:
         HTTPRequest();
@@ -68,6 +36,8 @@ namespace FSMTP::HTTP {
         HTTPRequest &parseHeaders(strvec_it begin, strvec_it end);
         HTTPRequest &parseHead(const string &raw);
 
+        HTTPRequest &print(Logger &logger);
+
         const HTTPUri &getURI();
         HTTPMethod getMethod();
         HTTPVersion getVersion();
@@ -77,6 +47,8 @@ namespace FSMTP::HTTP {
         HTTPUri m_URI;
         HTTPMethod m_Method;
         HTTPVersion m_Version;
+        HTTPConnection m_Connection;
+        vector<MIME::MIMEHeader> m_Headers;
     };
 }
 

@@ -71,9 +71,9 @@ namespace FSMTP::DKIM
 
 		// Parses the headers and gets the keys, then
 		// - we push the keys to the segment headers
-		std::vector<EmailHeader> parsedHeaders = {};
+		std::vector<MIME::MIMEHeader> parsedHeaders = {};
 		MIME::parseHeaders(headersToParse, parsedHeaders, true);
-		for (const EmailHeader &h : parsedHeaders)
+		for (const MIME::MIMEHeader &h : parsedHeaders)
 		{
 			if (shouldUseHeader(h.e_Key))
 				segments.s_Headers.push_back(h.e_Key);
