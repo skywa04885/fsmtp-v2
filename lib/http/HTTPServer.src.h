@@ -23,7 +23,9 @@
 #include "../networking/sockets/ServerSocket.src.h"
 #include "../networking/sockets/ClientSocket.src.h"
 #include "../networking/sockets/SSLContext.src.h"
+#include "../mime/types.src.h"
 
+#include "HTTPResponse.src.h"
 #include "HTTPRequest.src.h"
 
 namespace FSMTP::HTTP {

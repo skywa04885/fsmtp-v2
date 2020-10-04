@@ -18,9 +18,11 @@
 #define _LIB_BUILDERS_MIMEV2_H
 
 #include "../default.h"
+#include "../mime/mimev2.src.h"
 
 namespace FSMTP::Builders {
-    string foldHeader(const string &raw, size_t lineLength);
+	string buildHeaders(const vector<MIME::MIMEHeader> &headers, size_t maxLen);
+	string foldHeader(const string &raw, size_t lineLength);
 	string buildHeaderFromSegments(const char *label, const vector<pair<string, string>> &segments);
 }
 

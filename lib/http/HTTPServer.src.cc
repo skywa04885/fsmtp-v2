@@ -78,8 +78,11 @@ namespace FSMTP::HTTP {
 				//  parse it, and check if we should also read an body, if it is
 				//  not the case, just respond
 				request.parse(client->readToDelim("\r\n\r\n"));
-
 				request.print(clogger);
+
+				// Sends the test response
+				HTTPResponse resp(request, client);
+				resp.sendText(200, request.getUserAgent(), MIME::FileTypes::HypertextMarkupLanguage, HTTPCharset::UTF8);
 			} catch (const runtime_error &e) {
 				clogger << ERROR << "An runtime earror occured: '" << e.what() << '\'' << ENDL;
 			} catch (...) {

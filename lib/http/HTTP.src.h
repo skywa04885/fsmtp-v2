@@ -21,48 +21,72 @@
 
 namespace FSMTP::HTTP {
   enum HTTPMethod {
-      MethodStart,
-      Get, Post, Put, Head,
-      Delete, Patch, Options,
-      MethodEnd
+    MethodStart,
+    Get, Post, Put, Head,
+    Delete, Patch, Options,
+    MethodEnd
   };
 
   const char *__httpMethodToString(HTTPMethod method);
   HTTPMethod __httpMethodFromString(string str);
 
   enum HTTPVersion {
-      VersionStart,
-      Http09, Http10, Http11, Http2, Http3,
-      VersionEnd
+    VersionStart,
+    Http09, Http10, Http11, Http2, Http3,
+    VersionEnd
   };
 
   const char *__httpVersionToString(HTTPVersion version);
   HTTPVersion __httpVersionFromString(string str);
 
   enum HTTPProtocol {
-      ProtocolStart,
-      Https, Http,
-      ProtocolEnd
+    ProtocolStart,
+    Https, Http,
+    ProtocolEnd
   };
 
   const char *__httpProtocolToString(HTTPProtocol protocol);
   HTTPProtocol __httpProtocolFromString(string str);
 
   enum HTTPConnection {
-      ConnectionStart,
-      ConnectionKeepAlive, ConnectionClose,
-      ConnectionEnd
+    ConnectionStart,
+    ConnectionKeepAlive, ConnectionClose,
+    ConnectionEnd
   };
 
   const char *__httpConnectionToString(HTTPConnection con);
   HTTPConnection __httpConnectionFromString(string raw);
 
-  struct HTTPUri {
-      string hostname, path, search;
-      HTTPProtocol protocol{HTTPProtocol::Http};
-
-      static HTTPUri parse(const string &raw);
+  enum HTTPEncoding {
+    Chunked, Compress, Deflate, GZIP, Identity
   };
+
+  const char *__httpEncodingToString();
+
+  struct HTTPUri {
+    string hostname, path, search;
+    HTTPProtocol protocol{HTTPProtocol::Http};
+
+    static HTTPUri parse(const string &raw);
+  };
+
+  struct HTTPHead {
+    HTTPMethod method;
+    HTTPVersion version;
+    string uri;
+
+    static HTTPHead parse(const string &raw);
+  };
+
+  const char *__getMessageForStatusCode(uint32_t code);
+
+  enum HTTPCharset {
+    HTTPCharsetStart,
+    UTF8,
+    HTTPCharsetEnd
+  };
+
+  const char *__httpCharsetToString(HTTPCharset charset);
 }
 
 #endif

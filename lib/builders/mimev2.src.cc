@@ -133,4 +133,18 @@ namespace FSMTP::Builders {
 
         return result;
     }
+
+    string buildHeaders(const vector<MIME::MIMEHeader> &headers, size_t maxLen) {
+        string result;
+
+        for_each(headers.begin(), headers.end(), [&](const MIME::MIMEHeader &h) {
+            string temp = h.key;
+            temp += ": " + h.value;
+
+            if (temp.length() > maxLen) temp = foldHeader(temp, maxLen);
+            result += temp + "\r\n";
+        });
+
+        return result;
+    }
 }

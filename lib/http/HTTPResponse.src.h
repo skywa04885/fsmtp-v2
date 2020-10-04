@@ -19,23 +19,31 @@
 
 #include "../default.h"
 #include "../mime/types.src.h"
+#include "../mime/mimev2.src.h"
+#include "../builders/mimev2.src.h"
 #include "HTTPRequest.src.h"
+#include "../networking/sockets/ClientSocket.src.h"
 
 namespace FSMTP::HTTP {
   class HTTPResponse {
   public:
-		HTTPResponse(HTTPRequest &req);
+		HTTPResponse(HTTPRequest &req, shared_ptr<Sockets::ClientSocket> client);
 
-		HTTPResponse &sendHead();
+		HTTPResponse &sendHead(int32_t code);
 		HTTPResponse &sendHeaders();
+		HTTPResponse &sendBody(const char *data, size_t len);
+		HTTPResponse &buildHeaders();
 
-		HTTPResponse &sendFile(const string &file);
-		HTTPResponse &sendText(const string &text, MIME::FileTypes type);
+		HTTPResponse &sendFile(int32_t code, const string &file);
+		HTTPResponse &sendText(int32_t code, const string &text, MIME::FileTypes type, HTTPCharset charset);
 
 		~HTTPResponse();
   private:
+		bool m_Sent;
 		HTTPRequest &m_Request;	
+		HTTPConnection m_Connection;
 		vector<MIME::MIMEHeader> m_Headers;
+		shared_ptr<Sockets::ClientSocket> m_Client;
   };
 }
 

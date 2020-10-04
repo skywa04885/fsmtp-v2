@@ -28,10 +28,6 @@ namespace FSMTP::HTTP {
     public:
         HTTPRequest();
 
-        string build();
-        string buildHead();
-        string buildHeaders();
-
         HTTPRequest &parse(const string &raw);
         HTTPRequest &parseHeaders(strvec_it begin, strvec_it end);
         HTTPRequest &parseHead(const string &raw);
@@ -42,11 +38,12 @@ namespace FSMTP::HTTP {
         HTTPMethod getMethod();
         HTTPVersion getVersion();
 
+        string getUserAgent();
+
         ~HTTPRequest();
     private:
         HTTPUri m_URI;
-        HTTPMethod m_Method;
-        HTTPVersion m_Version;
+        HTTPHead m_Head;
         HTTPConnection m_Connection;
         vector<MIME::MIMEHeader> m_Headers;
     };

@@ -18,22 +18,8 @@
 
 namespace FSMTP::HTTP {
     HTTPRequest::HTTPRequest():
-        m_Method(HTTPMethod::Get),
-        m_Version(HTTPVersion::Http11),
         m_Connection(HTTPConnection::ConnectionClose)
     {};
-
-    string HTTPRequest::build() {
-
-    }
-
-    string HTTPRequest::buildHead() {
-
-    }
-    
-    string HTTPRequest::buildHeaders() {
-
-    }
 
     HTTPRequest &HTTPRequest::parse(const string &raw) {
         vector<string> lines = MIME::getMIMELines(raw);
@@ -46,7 +32,7 @@ namespace FSMTP::HTTP {
 
         // Checks the HTTP version, and if we even should parse
         //  the headers from it
-        if (this->m_Version == HTTPVersion::Http09) return *this;
+        if (this->m_Head.version == HTTPVersion::Http09) return *this;
 
         // Checks if there are any headers, if so start parsing
         //  them and store them into the current request
@@ -67,28 +53,12 @@ namespace FSMTP::HTTP {
 
     HTTPRequest &HTTPRequest::parseHeaders(strvec_it begin, strvec_it end) {
         this->m_Headers = MIME::_parseHeaders(begin, end, true);
-
         return *this;
     }
 
     HTTPRequest &HTTPRequest::parseHead(const string &raw) {
-        size_t start = 0, end = raw.find_first_of(' ');
-        
-        for (size_t i = 0; i < 3; ++i) {
-            string seg = raw.substr(start, end - start);
-            switch (i) {
-                case 0: this->m_Method = __httpMethodFromString(seg); break;
-                case 1: this->m_URI = HTTPUri::parse(seg); break;
-                case 2: this->m_Version = __httpVersionFromString(seg); break;
-            }
-
-            // Checks if we're at the end, else we proceed
-            //  to the next token
-            if (end == string::npos) break;
-            start = end + 1;
-            end = raw.find_first_of(' ', start);
-        }
-
+        this->m_Head = HTTPHead::parse(raw);
+        this->m_URI = HTTPUri::parse(this->m_Head.uri);
         return *this;
     }
 
@@ -96,9 +66,11 @@ namespace FSMTP::HTTP {
         logger << DEBUG;
 
         logger << "HTTPRequest {" << ENDL;
-        logger << "\tMethod: " << __httpMethodToString(this->m_Method) << ENDL;
-        logger << "\tVersion: " << __httpVersionToString(this->m_Version) << ENDL;
-        
+        logger << "\tHead: " << ENDL;
+        logger << "\t\tMethod: " << __httpMethodToString(this->m_Head.method) << ENDL;
+        logger << "\t\tVersion: " << __httpVersionToString(this->m_Head.version) << ENDL;
+        logger << "\t\tURI: " << this->m_Head.uri << ENDL;
+
         logger << "\tURI: " << ENDL;
         logger << "\t\tPath: " << this->m_URI.path << ENDL;
         logger << "\t\tHostname: " << this->m_URI.hostname << ENDL;
@@ -115,8 +87,7 @@ namespace FSMTP::HTTP {
         });
 
         logger << '}' << ENDL;
-
-        logger << ENDL;
+        logger << CLASSIC;
 
         return *this;
     }
@@ -125,10 +96,15 @@ namespace FSMTP::HTTP {
     { return this->m_URI; }
     
     HTTPMethod HTTPRequest::getMethod()
-    { return this->m_Method; }
+    { return this->m_Head.method; }
     
     HTTPVersion HTTPRequest::getVersion()
-    { return this->m_Version; }
+    { return this->m_Head.version; }
+
+    string HTTPRequest::getUserAgent() {
+        for (const MIME::MIMEHeader &h : this->m_Headers)
+            if (h.key == "user-agent") return h.value;
+    }
 
     HTTPRequest::~HTTPRequest() = default;
 }
