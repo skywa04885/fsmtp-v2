@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <signal.h>
 #include "lib/default.h"
 #include "lib/general/Global.src.h"
 #include "lib/args/args.src.h"

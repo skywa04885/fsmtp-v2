@@ -37,6 +37,9 @@ namespace FSMTP::HTTP {
         const HTTPUri &getURI();
         HTTPMethod getMethod();
         HTTPVersion getVersion();
+        HTTPConnection getConnection();
+        HTTPAllowedEncoding getAcceptEncoding();
+        const vector<MIME::MIMEHeader> &getHeaders();
 
         string getUserAgent();
 

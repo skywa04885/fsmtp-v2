@@ -101,6 +101,52 @@ namespace FSMTP::HTTP {
     HTTPVersion HTTPRequest::getVersion()
     { return this->m_Head.version; }
 
+    HTTPConnection HTTPRequest::getConnection()
+    { return this->m_Connection; }
+
+    const vector<MIME::MIMEHeader> &HTTPRequest::getHeaders()
+    { return this->m_Headers; }
+
+    HTTPAllowedEncoding HTTPRequest::getAcceptEncoding() {
+        HTTPAllowedEncoding result;
+        
+        auto it = find_if(this->m_Headers.begin(), this->m_Headers.end(), [&](const MIME::MIMEHeader &h) {
+            return (h.key == "accept-encoding");
+        });
+
+        // Checks if the header was found, if so start parsing the header
+        //  and making sense of the tokens
+        if (it != this->m_Headers.end()) {
+            auto &raw = it->value;
+            size_t start = 0, end = raw.find_first_of(',');
+            for (;;) {
+                // Gets the substring, checks if it is empty after which
+                //  we check which type of compression is allowed
+                string seg = raw.substr(start, end - start);
+                if (!seg.empty()) {
+                    if (*seg.begin() == ' ') seg.erase(seg.begin(), seg.begin() + 1);
+                    if (*(seg.end() - 1) == ' ') seg.pop_back();
+
+                    transform(seg.begin(), seg.end(), seg.begin(), [](const char c) {
+                        return tolower(c);
+                    });
+
+                    if (seg == "compress") result.setCompress();
+                    else if (seg == "gzip") result.setGZIP();
+                    else if (seg == "deflate") result.setDeflate();
+                }
+
+                // Checks if we're at the end, else we will get
+                //  another token
+                if (end == string::npos) break;
+                start = end + 1;
+                end = raw.find_first_of(',', start);
+            }
+        }
+
+        return result;
+    }
+
     string HTTPRequest::getUserAgent() {
         for (const MIME::MIMEHeader &h : this->m_Headers)
             if (h.key == "user-agent") return h.value;

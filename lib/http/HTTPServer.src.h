@@ -27,6 +27,7 @@
 
 #include "HTTPResponse.src.h"
 #include "HTTPRequest.src.h"
+#include "HTTPService.src.h"
 
 namespace FSMTP::HTTP {
 	class HTTPServer {
@@ -37,12 +38,16 @@ namespace FSMTP::HTTP {
 		HTTPServer &createContext();
 		HTTPServer &connectDatabases();
 		HTTPServer &startHandler(bool newThread);
+		HTTPServer &pushService(const string &domain, const HTTPService &service);
+
+		static void defaultCallback(HTTPRequest request, HTTPResponse response, shared_ptr<Sockets::ClientSocket> client);
 
 		~HTTPServer();
 	private:
-		Logger m_Logger;
 		unique_ptr<Sockets::ServerSocket> m_HTTPS, m_HTTP;
 		unique_ptr<Sockets::SSLContext> m_SSLContext;
+		unordered_map<string, HTTPService> m_Services;
+		Logger m_Logger;
 	};
 }
 

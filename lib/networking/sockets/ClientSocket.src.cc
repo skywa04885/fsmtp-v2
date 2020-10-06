@@ -88,7 +88,8 @@ namespace FSMTP::Sockets {
     //  of the IPv6 address, if so we set the real type to IPv4
     string prefix = this->getPrefix(false);
     if (prefix.substr(0, 7) == "::ffff:") this->m_RealType = Networking::IP::Protocol::Protocol_IPv4;
-    else this->m_RealType = Networking::IP::Protocol::Protocol_IPv6;
+    else if (this->m_Type == Networking::IP::Protocol::Protocol_IPv6) this->m_RealType = Networking::IP::Protocol::Protocol_IPv6;
+    else this->m_RealType = Networking::IP::Protocol::Protocol_IPv4;
 
     return *this;
   }
@@ -125,7 +126,7 @@ namespace FSMTP::Sockets {
         throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
       }
     } else {
-      if ((rc = recv(this->s_SocketFD, buffer, bufferSize, 0)) == -1) {
+      if ((rc = recv(this->s_SocketFD, buffer, bufferSize, 0)) < 0) {
         throw runtime_error(EXCEPT_DEBUG(strerror(errno)));
       }
     }
@@ -141,7 +142,7 @@ namespace FSMTP::Sockets {
         throw runtime_error(EXCEPT_DEBUG(SSL_STRERROR));
       }
     } else {
-      if ((rc = recv(this->s_SocketFD, buffer, bufferSize, MSG_PEEK)) == -1) {
+      if ((rc = recv(this->s_SocketFD, buffer, bufferSize, MSG_PEEK)) < 0) {
         throw runtime_error(EXCEPT_DEBUG(strerror(errno)));
       }
     }
@@ -164,6 +165,9 @@ namespace FSMTP::Sockets {
 
     while (endFound == false) {
       readLen = this->peek(buffer, bufferSize);
+      if (readLen <= 0) {
+        this_thread::sleep_for(milliseconds(40));
+      }
 
       string searchString;
       if (result.length() > delimSize) {

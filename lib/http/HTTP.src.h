@@ -58,10 +58,13 @@ namespace FSMTP::HTTP {
   HTTPConnection __httpConnectionFromString(string raw);
 
   enum HTTPEncoding {
-    Chunked, Compress, Deflate, GZIP, Identity
+    HTTPEncodingStart,
+    Chunked, Compress, Deflate, GZIP, Identity,
+    HTTPEncodingEnd
   };
 
-  const char *__httpEncodingToString();
+  const char *__httpEncodingToString(HTTPEncoding encoding);
+  HTTPEncoding __httpEncodingFromString(string raw);
 
   struct HTTPUri {
     string hostname, path, search;
@@ -87,6 +90,33 @@ namespace FSMTP::HTTP {
   };
 
   const char *__httpCharsetToString(HTTPCharset charset);
+
+  struct HTTPAllowedEncoding {
+  private:
+    uint8_t flags = 0x0;
+  public:
+    #define _HTTP_ALLOWED_ENCODING_FLAG_GZIP _BV(1)
+    #define _HTTP_ALLOWED_ENCODING_FLAG_COMPRESS _BV(2)
+    #define _HTTP_ALLOWED_ENCODING_FLAG_DEFLATE _BV(3)
+
+    inline void setDeflate()
+    { this->flags |= _HTTP_ALLOWED_ENCODING_FLAG_DEFLATE; }
+
+    inline void setCompress()
+    { this->flags |= _HTTP_ALLOWED_ENCODING_FLAG_COMPRESS; }
+
+    inline void setGZIP()
+    { this->flags |= _HTTP_ALLOWED_ENCODING_FLAG_GZIP; }
+
+    inline bool getDeflate()
+    { return BINARY_COMPARE(this->flags, _HTTP_ALLOWED_ENCODING_FLAG_DEFLATE); }
+
+    inline bool getCompress()
+    { return BINARY_COMPARE(this->flags, _HTTP_ALLOWED_ENCODING_FLAG_COMPRESS); }
+
+    inline bool getGZIP()
+    { return BINARY_COMPARE(this->flags, _HTTP_ALLOWED_ENCODING_FLAG_GZIP); }
+  };
 }
 
 #endif

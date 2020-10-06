@@ -63,6 +63,9 @@ namespace FSMTP::Server
 		vector<SMTPServiceFunction> s_PlainServices;
 		vector<SMTPServiceFunction> s_SecureServices;
 	private:
+		boost::asio::io_service m_IOServiceSSL, m_IOServicePlain;
+		unique_ptr<boost::asio::ip::tcp::acceptor> m_SSLAcceptor, m_PlainAcceptor;
+
 		unique_ptr<ServerSocket> s_SSLSocket, s_PlainSocket;
 		unique_ptr<SSLContext> s_SSLContext;
 		unique_ptr<CassandraConnection> s_Cassandra;

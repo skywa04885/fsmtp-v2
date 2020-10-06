@@ -45,6 +45,13 @@
 #include <inja/inja.hpp>
 #include <nlohmann/json.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
+#include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/asio.hpp>
+#include <boost/asio/ts/buffer.hpp>
+#include <boost/asio/ts/internet.hpp>
 
 // ==== C Libraries ====
 #include <sys/socket.h>

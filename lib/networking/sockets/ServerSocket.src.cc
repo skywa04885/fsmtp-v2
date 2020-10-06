@@ -143,9 +143,7 @@ ServerSocket &ServerSocket::startAcceptor(const bool newThread)
 
         thread t(this->s_Callback, client);
         t.detach();
-      } catch (const runtime_error &e) {
-        cerr << "Could not accept client: " << e.what() << endl;
-      }
+      } catch (...) {}
     }
   };
 

@@ -30,6 +30,8 @@ static const char *FALLBACK_CONFIG_FILE = "../fallback/config.json";
 
 int main(const int argc, const char **argv)
 {
+	signal(SIGPIPE, SIG_IGN);
+
 	// ==================================
 	// Default main
 	// ==================================

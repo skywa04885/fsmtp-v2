@@ -66,6 +66,7 @@ namespace FSMTP::HTTP {
 		auto &logger = this->m_Logger;
 
 		auto handler = [&](shared_ptr<ClientSocket> client) {
+			client->timeout(1);
 			Logger clogger("HTTP[" + client->getPrefix() + ']', LoggerLevel::DEBUG);
 			DEBUG_ONLY(clogger << "Client connected .." << ENDL);
 
@@ -73,21 +74,15 @@ namespace FSMTP::HTTP {
 			//  response, if this fails we catch it instead of crashing the server
 			try {
 				HTTPRequest request;
-
-				// Gets the initial request with the headers, after this we will
-				//  parse it, and check if we should also read an body, if it is
-				//  not the case, just respond
 				request.parse(client->readToDelim("\r\n\r\n"));
-				request.print(clogger);
-
+				DEBUG_ONLY(request.print(clogger));
+				
 				// Sends the test response
-				HTTPResponse resp(request, client);
-				resp.sendText(200, request.getUserAgent(), MIME::FileTypes::HypertextMarkupLanguage, HTTPCharset::UTF8);
+				HTTPResponse response(request, client);
+				defaultCallback(request, response, client);
 			} catch (const runtime_error &e) {
 				clogger << ERROR << "An runtime earror occured: '" << e.what() << '\'' << ENDL;
-			} catch (...) {
-				clogger << ERROR << "An unknown error occured !" << ENDL;
-			}
+			} 
 
 			DEBUG_ONLY(clogger << "Client disconnected .." << ENDL);
 		};
@@ -97,6 +92,37 @@ namespace FSMTP::HTTP {
 		logger << INFO << "Handlers started .." << ENDL << CLASSIC;
 
 		return *this;
+	}
+
+	void HTTPServer::defaultCallback(HTTPRequest request, HTTPResponse response, shared_ptr<Sockets::ClientSocket> client) {
+		auto &config = Global::getConfig();
+
+		nlohmann::json body;
+		body["client"]["port"] = client->getPort();
+		body["client"]["address"] = client->getPrefix();
+		body["client"]["protocol"] = (client->getRealProtocol() == Networking::IP::Protocol::Protocol_IPv4 ? "IPv4" : "IPv6");
+		
+		body["server"]["node"] = config["node_name"].asString();
+		body["server"]["domain"] = config["domain"].asString();
+		body["server"]["ipv6"] = config["ipv6"].asBool();
+
+		body["server"]["response"]["code"] = 404;
+		body["server"]["response"]["message"] = "No service registered to hostname / path";
+
+		body["server"]["request"]["user-agent"] = request.getUserAgent();
+		body["server"]["request"]["connection"] = __httpConnectionToString(request.getConnection());
+		body["server"]["request"]["version"] = __httpVersionToString(request.getVersion());
+		body["server"]["request"]["method"] = __httpMethodToString(request.getMethod());
+		body["server"]["request"]["uri"]["path"] = request.getURI().path;
+		body["server"]["request"]["uri"]["hostname"] = request.getURI().hostname;
+		body["server"]["request"]["uri"]["search"] = request.getURI().search;
+
+		auto &headers = request.getHeaders();
+		for_each(headers.begin(), headers.end(), [&](const MIME::MIMEHeader &h) {
+			body["server"]["request"]["headers"][h.key] = h.value;
+		});
+
+		response.sendText(404, body.dump(), MIME::FileTypes::JSON, HTTPCharset::UTF8);
 	}
 
 	HTTPServer::~HTTPServer() = default;

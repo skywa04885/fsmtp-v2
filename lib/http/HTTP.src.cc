@@ -228,4 +228,30 @@ namespace FSMTP::HTTP {
       default: return nullptr;
     }
   }
+
+  HTTPEncoding __httpEncodingFromString(string raw) {
+    transform(raw.begin(), raw.end(), raw.begin(), [](const char c) {
+      return tolower(c);
+    });
+
+    if (raw == "chunked") return HTTPEncoding::Chunked;
+    else if (raw == "deflate") return HTTPEncoding::Deflate;
+    else if (raw == "gzip") return HTTPEncoding::GZIP;
+    else if (raw == "compress") return HTTPEncoding::Compress;
+    else if (raw == "identity") return HTTPEncoding::Identity;
+    else throw runtime_error(EXCEPT_DEBUG(
+      "Invalid HTTP encoding: '" + raw + '\''));
+  }
+
+  const char *__httpEncodingToString(HTTPEncoding encoding) {
+    assert(encoding > HTTPEncoding::HTTPEncodingStart && encoding < HTTPEncoding::HTTPEncodingEnd);
+    switch (encoding) {
+      case HTTPEncoding::Chunked: return "chunked";
+      case HTTPEncoding::Deflate: return "deflate";
+      case HTTPEncoding::GZIP: return "gzip";
+      case HTTPEncoding::Compress: return "compress";
+      case HTTPEncoding::Identity: return "identity";
+      default: return nullptr;
+    }
+  }
 }

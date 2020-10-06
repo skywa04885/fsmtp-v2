@@ -120,6 +120,7 @@ namespace FSMTP::MIME {
 			make_pair(".ics", IcalenderFormat),
 			make_pair(".jar", JavaArchive),
 			make_pair(".jpeg", JPEGImage),
+			make_pair(".jpg", JPEGImage),
 			make_pair(".js", JavaScript),
 			make_pair(".json", JSON),
 			make_pair(".jsonld", JSON_LD),
@@ -174,8 +175,7 @@ namespace FSMTP::MIME {
 		});
 
 		auto it = __exts.find(ext);
-		if (it == __exts.end()) throw runtime_error(
-			EXCEPT_DEBUG("Invalid extension: '" + ext + '\''));
+		if (it == __exts.end()) return FileTypes::Binary;
 		return it->second;
 	}
 }
