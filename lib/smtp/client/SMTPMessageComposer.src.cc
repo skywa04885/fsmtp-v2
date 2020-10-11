@@ -255,7 +255,7 @@ namespace FSMTP::Mailer::Composer
 	string generateHeaders(const vector<MIME::MIMEHeader> &headers) {
 		string res;
 		for (const MIME::MIMEHeader &header : headers)
-			res += header.key + ": " + header.key + "\r\n";
+			res += header.key + ": " + header.value + "\r\n";
 		return res;
 	}
 
