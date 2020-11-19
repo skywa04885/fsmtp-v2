@@ -13,4 +13,5 @@ subprojects/*
 dependencies/*
 config.json
 logs/*
+.vscode/*
 temp/*
