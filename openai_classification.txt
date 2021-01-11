@@ -1,0 +1,2 @@
+Text:It may take a few moments for this transaction to appear in your account. We will deduct the amount from your bank account within the next 1-2 business days. Please make sure that you have sufficient funds in your bank account to prevent any fees.
+Category(Spam,Accounts,Payments,Shopping,Updates,Forum,Advertisement,Social):

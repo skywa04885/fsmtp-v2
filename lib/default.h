@@ -41,17 +41,13 @@
 
 // ==== Other C++ Library's ====
 #include <json/json.h>
+#include <nlohmann/json.hpp>
 #include <cassandra.h>
 #include <inja/inja.hpp>
-#include <nlohmann/json.hpp>
-#include <boost/multiprecision/cpp_int.hpp>
-#include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/copy.hpp>
-#include <boost/iostreams/filter/zlib.hpp>
+#include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
-#include <boost/asio.hpp>
-#include <boost/asio/ts/buffer.hpp>
-#include <boost/asio/ts/internet.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
 
 // ==== C Libraries ====
 #include <sys/socket.h>
@@ -131,6 +127,8 @@ private: string err; \
 #define _BASH_SUCCESS_MARK "\033[32m[\u2713]:\033[0m "
 #define _BASH_FAIL_MARK "\033[31m[\u2717]:\033[0m "
 #define _BASH_UNKNOWN_MARK "\033[35m[?]:\033[0m "
+
+#define _SMTP_DEBUG
 
 #ifdef _SMTP_DEBUG
 #define DEBUG_ONLY(A) A

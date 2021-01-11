@@ -30,6 +30,7 @@
 #include "lib/smtp/server/SMTPSpamDetection.src.h"
 #include "lib/smtp/client/SMTPMessageComposer.src.h"
 #include "lib/mime/mimev2.src.h"
+#include "lib/openai/Classification.src.h"
 
 using namespace FSMTP;
 

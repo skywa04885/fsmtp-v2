@@ -13,6 +13,7 @@ subdir('spf')
 subdir('builders')
 subdir('xfannst')
 subdir('http')
+subdir('openai')
 
 sources += files (
   'default.cc'

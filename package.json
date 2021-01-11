@@ -1,0 +1,23 @@
+{
+  "name": "fsmtp",
+  "version": "1.0.0",
+  "description": "NodeJS Mailer program with DKIM signer",
+  "main": "main.js",
+  "directories": {
+    "lib": "lib",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skywa04885/fsmtp-v2.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/skywa04885/fsmtp-v2/issues"
+  },
+  "homepage": "https://github.com/skywa04885/fsmtp-v2#readme"
+}

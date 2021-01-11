@@ -23,6 +23,16 @@ namespace FSMTP::MIME {
   string decodeMIMEContent(
     strvec_it from, strvec_it to, const EmailTransferEncoding encoding
   ) {
+    
+    // Quoted printable crashes !, fix layer
+
+    string result;
+    for_each(from, to, [&](const string &line) {
+      result += line + "\r\n";
+    });
+
+    return result;
+    /*
     // Switches the transfer encoding, this will determine
     //  how we're going to process the current email
     switch (encoding) {
@@ -47,6 +57,7 @@ namespace FSMTP::MIME {
         return result;
       };
     }
+    */
   }
 
   /**

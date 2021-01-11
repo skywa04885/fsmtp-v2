@@ -12,6 +12,7 @@ class InstallationTemplate(Enum):
 	DebianLinux = 0
 	ArchLinux = 1
 	UnknownLinux = 2
+	AlpineLinux = 3
 
 	def detect():
 		system = platform.system().lower()
@@ -20,7 +21,9 @@ class InstallationTemplate(Enum):
 		print(f'Detecting platform for \'{system}\' -> \'{release}\'')
 
 		if system == 'linux':
-			if release.find('arch') or release.find('manjaro'):
+			if release.find('alpine'):
+				return InstallationTemplate.AlpineLinux
+			elif release.find('arch') or release.find('manjaro'):
 				return InstallationTemplate.ArchLinux
 			elif release.find('ubuntu') or release.find('debian'):
 				return InstallationTemplate.DebianLinux
@@ -53,6 +56,8 @@ def install_dependencies(template):
 		commands.append('apt-get update')
 		commands.append('apt-get upgrade')
 		commands.append('apt-get install ninja-build meson python3 python3-pip gcc make cmake openssl pkg-config')
+	elif (template == InstallationTemplate.AlpineLinux):
+		commands.append('apk add build-base openssl meson make cmake ninja git libuv')
 
 	commands.append('ldconfig')
 	commands.append('pip3 install pyOpenSSL cassandra-driver || pip install pyOpenSSL cassandra-driver')
