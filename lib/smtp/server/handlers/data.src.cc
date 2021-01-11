@@ -39,6 +39,8 @@ namespace FSMTP::SMTP::Server::Handlers {
 		}
 		uint64_t end = duration_cast<microseconds>(high_resolution_clock::now().time_since_epoch()).count();
 
+std::cout << session->raw() << std::endl;
+
 		// Calculates the time difference so we can calculate the speed
 		//  of transmission
 		double timeDifference = static_cast<double>(end - start) / 1000 / 1000;
